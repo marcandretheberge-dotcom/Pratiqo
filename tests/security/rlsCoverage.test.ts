@@ -61,6 +61,7 @@ const EXPLICIT_RLS_HARDENING_FILES = [
   "120_planned_package_refund_executions.sql",
   "121_planned_package_payout_eligibility_ledger.sql",
   "122_planned_package_transfer_executions.sql",
+  "123_planned_package_transfer_reversal_executions.sql",
   "102_create_package_redemptions.sql",
   "103_add_package_redemption_reversal_rpc.sql",
   "109_harden_teacher_weekly_availability_intervals_rls.sql",

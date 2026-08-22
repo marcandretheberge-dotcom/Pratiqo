@@ -36,11 +36,11 @@ This is **not** automatic public cancellation. Learners cannot trigger Stripe re
 
 ## Blockers
 
-If any teacher transfer exists for package session bookings:
+If any teacher transfer exists for package session bookings (including unreversed planned package transfers):
 
 - Execution returns `transfer_reversal_required`;
-- Admin UI shows transfer reversal required message;
-- Future PR must handle reversal safely when progressive payouts exist.
+- Admin must reverse transfer via manual transfer reversal layer first;
+- Future PR: dispute handling.
 
 ## Quote freshness
 

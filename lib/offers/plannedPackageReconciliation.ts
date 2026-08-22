@@ -32,7 +32,12 @@ export type PlannedPackageAttentionReason =
   | "refund_exists_after_transfer"
   | "cancellation_request_after_transfer"
   | "transfer_amount_mismatch"
-  | "teacher_payment_not_ready_for_transfer";
+  | "teacher_payment_not_ready_for_transfer"
+  | "transfer_reversal_failed"
+  | "transfer_partially_reversed"
+  | "refund_waiting_on_transfer_reversal"
+  | "transfer_reversed_but_refund_not_executed"
+  | "transfer_reversal_insufficient_balance";
 
 export type PlannedPackagePayoutEligibilityReconciliationEntry = {
   id: string;
@@ -48,9 +53,14 @@ export type PlannedPackagePayoutEligibilityReconciliationEntry = {
 
 export type PlannedPackageTransferReconciliationEntry = {
   entryId: string;
+  transferExecutionId: string;
   status: string;
   amountCents: number;
   teacherNetCents: number | null;
+  reversedCents: number;
+  reversalStatus: string | null;
+  remainingReversibleCents: number;
+  latestReversalStatus: string | null;
 };
 
 export type PlannedPackageReconciliationInput = {
@@ -84,10 +94,13 @@ export type PlannedPackageReconciliationInput = {
   };
   transferExecutions?: {
     manualTransfersEnabled: boolean;
+    manualTransferReversalsEnabled?: boolean;
     entries: PlannedPackageTransferReconciliationEntry[];
     latestExecutionStatus: string | null;
+    latestReversalStatus: string | null;
     cancellationOpen: boolean;
     refundExecuted: boolean;
+    refundApproved: boolean;
   };
 };
 
@@ -307,6 +320,44 @@ export function reconcilePlannedPackageOrder(
         !payoutEntry.stripeTransferId
       ) {
         reasons.push("transfer_succeeded_but_entry_not_marked");
+      }
+    }
+
+    if (input.transferExecutions.manualTransferReversalsEnabled) {
+      if (input.transferExecutions.latestReversalStatus === "failed") {
+        reasons.push("transfer_reversal_failed");
+      }
+
+      for (const exec of input.transferExecutions.entries) {
+        if (
+          exec.status === "succeeded" &&
+          exec.reversedCents > 0 &&
+          exec.reversedCents < exec.amountCents
+        ) {
+          reasons.push("transfer_partially_reversed");
+        }
+      }
+
+      const refundWaiting =
+        input.transferExecutions.refundApproved &&
+        input.transferExecutions.entries.some(
+          (e) => e.status === "succeeded" && e.remainingReversibleCents > 0,
+        );
+      if (refundWaiting) {
+        reasons.push("refund_waiting_on_transfer_reversal");
+      }
+
+      const reversedAwaitingRefund =
+        input.transferExecutions.refundApproved &&
+        !input.transferExecutions.refundExecuted &&
+        input.transferExecutions.entries.some(
+          (e) =>
+            e.status === "succeeded" &&
+            e.remainingReversibleCents === 0 &&
+            e.reversedCents >= e.amountCents,
+        );
+      if (reversedAwaitingRefund) {
+        reasons.push("transfer_reversed_but_refund_not_executed");
       }
     }
   }

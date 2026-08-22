@@ -23,6 +23,8 @@ import {
   isPlannedPackagePayoutEligibilityLedgerEnabled,
 } from "@/lib/offers/plannedPackagePayoutEligibilityLedger";
 import { canUsePlannedPackageManualTransfers } from "@/lib/offers/plannedPackageManualTransfers";
+import { canUsePlannedPackageManualTransferReversals } from "@/lib/offers/plannedPackageManualTransferReversals";
+import { calculateRemainingReversibleTransferAmount } from "@/lib/offers/plannedPackageTransferReversal";
 import {
   fulfillPlannedPackageOrder,
   canUsePlannedPackageFulfillmentEngine,
@@ -66,15 +68,23 @@ type ReconciliationPayoutEligibilityOverlay = {
 
 type ReconciliationTransferOverlay = {
   manualTransfersEnabled: boolean;
+  manualTransferReversalsEnabled: boolean;
   entries: Array<{
     entryId: string;
+    transferExecutionId: string;
     status: string;
     amountCents: number;
     teacherNetCents: number | null;
+    reversedCents: number;
+    reversalStatus: string | null;
+    remainingReversibleCents: number;
+    latestReversalStatus: string | null;
   }>;
   latestExecutionStatus: string | null;
+  latestReversalStatus: string | null;
   cancellationOpen: boolean;
   refundExecuted: boolean;
+  refundApproved: boolean;
 };
 
 export type AdminPlannedPackageOrderListRow = {
@@ -299,10 +309,13 @@ function buildReconciliation(
   },
   transferOverlay: ReconciliationTransferOverlay = {
     manualTransfersEnabled: false,
+    manualTransferReversalsEnabled: false,
     entries: [],
     latestExecutionStatus: null,
+    latestReversalStatus: null,
     cancellationOpen: false,
     refundExecuted: false,
+    refundApproved: false,
   },
 ): ReturnType<typeof reconcilePlannedPackageOrder> {
   const paidAt = (row.paid_at as string | null) ?? null;
@@ -358,10 +371,13 @@ function buildReconciliation(
     transferExecutions: transferOverlay.manualTransfersEnabled
       ? {
           manualTransfersEnabled: true,
+          manualTransferReversalsEnabled: transferOverlay.manualTransferReversalsEnabled,
           entries: transferOverlay.entries,
           latestExecutionStatus: transferOverlay.latestExecutionStatus,
+          latestReversalStatus: transferOverlay.latestReversalStatus,
           cancellationOpen: transferOverlay.cancellationOpen,
           refundExecuted: transferOverlay.refundExecuted,
+          refundApproved: transferOverlay.refundApproved,
         }
       : undefined,
   });
@@ -450,21 +466,30 @@ async function loadTransferReconciliationOverlay(
   orderId: string,
 ): Promise<ReconciliationTransferOverlay> {
   const manualTransfersEnabled = canUsePlannedPackageManualTransfers();
+  const manualTransferReversalsEnabled = canUsePlannedPackageManualTransferReversals();
   if (!manualTransfersEnabled) {
     return {
       manualTransfersEnabled: false,
+      manualTransferReversalsEnabled: false,
       entries: [],
       latestExecutionStatus: null,
+      latestReversalStatus: null,
       cancellationOpen: false,
       refundExecuted: false,
+      refundApproved: false,
     };
   }
 
-  const [{ data: transfers }, { data: cancel }, { data: refundExec }, { data: eligibility }] =
+  const [{ data: transfers }, { data: reversals }, { data: cancel }, { data: refundExec }, { data: quote }, { data: eligibility }] =
     await Promise.all([
       admin
         .from("planned_package_transfer_executions")
-        .select("payout_eligibility_entry_id, status, amount_cents")
+        .select("id, payout_eligibility_entry_id, status, amount_cents, reversed_cents, reversal_status")
+        .eq("planned_package_order_id", orderId)
+        .order("created_at", { ascending: false }),
+      admin
+        .from("planned_package_transfer_reversal_executions")
+        .select("transfer_execution_id, status, failure_code")
         .eq("planned_package_order_id", orderId)
         .order("created_at", { ascending: false }),
       admin
@@ -482,6 +507,14 @@ async function loadTransferReconciliationOverlay(
         .limit(1)
         .maybeSingle(),
       admin
+        .from("planned_package_refund_quotes")
+        .select("quote_status")
+        .eq("planned_package_order_id", orderId)
+        .neq("quote_status", "superseded")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      admin
         .from("planned_package_payout_eligibility_entries")
         .select("id, teacher_net_cents")
         .eq("planned_package_order_id", orderId),
@@ -494,25 +527,51 @@ async function loadTransferReconciliationOverlay(
     ]),
   );
 
+  const reversalByTransfer = new Map<string, { status: string; failureCode: string | null }>();
+  for (const row of (reversals ?? []) as Record<string, unknown>[]) {
+    const transferExecutionId = String(row.transfer_execution_id ?? "");
+    if (!transferExecutionId || reversalByTransfer.has(transferExecutionId)) continue;
+    reversalByTransfer.set(transferExecutionId, {
+      status: String(row.status ?? ""),
+      failureCode: (row.failure_code as string | null) ?? null,
+    });
+  }
+
   const entries = ((transfers ?? []) as Record<string, unknown>[]).map((row) => {
     const entryId = String(row.payout_eligibility_entry_id ?? "");
+    const transferExecutionId = String(row.id ?? "");
+    const amountCents = Number(row.amount_cents ?? 0);
+    const reversedCents = Number(row.reversed_cents ?? 0);
+    const latestReversal = reversalByTransfer.get(transferExecutionId) ?? null;
     return {
       entryId,
+      transferExecutionId,
       status: String(row.status ?? ""),
-      amountCents: Number(row.amount_cents ?? 0),
+      amountCents,
       teacherNetCents: teacherNetByEntry.get(entryId) ?? null,
+      reversedCents,
+      reversalStatus: (row.reversal_status as string | null) ?? null,
+      remainingReversibleCents: calculateRemainingReversibleTransferAmount({
+        transferAmountCents: amountCents,
+        reversedCents,
+      }),
+      latestReversalStatus: latestReversal?.status ?? null,
     };
   });
 
-  const latestExecutionStatus =
-    entries.length > 0 ? entries[0]!.status : null;
+  const latestExecutionStatus = entries.length > 0 ? entries[0]!.status : null;
+  const latestReversalStatus =
+    ((reversals ?? []) as { status: string }[])[0]?.status ?? null;
 
   return {
     manualTransfersEnabled: true,
+    manualTransferReversalsEnabled,
     entries,
     latestExecutionStatus,
+    latestReversalStatus,
     cancellationOpen: Boolean(cancel),
     refundExecuted: Boolean(refundExec),
+    refundApproved: quote?.quote_status === "approved_for_manual_refund",
   };
 }
 

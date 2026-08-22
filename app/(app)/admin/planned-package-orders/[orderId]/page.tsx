@@ -88,6 +88,14 @@ export default function PlannedPackageOrderDetailPage() {
   const [transferConfirmText, setTransferConfirmText] = useState("");
   const [transferAcknowledged, setTransferAcknowledged] = useState(false);
   const [transferMessage, setTransferMessage] = useState<string | null>(null);
+  const [reversalBusyTransferId, setReversalBusyTransferId] = useState<string | null>(null);
+  const [reversalConfirmTransferId, setReversalConfirmTransferId] = useState<string | null>(null);
+  const [reversalConfirmText, setReversalConfirmText] = useState("");
+  const [reversalAcknowledged, setReversalAcknowledged] = useState(false);
+  const [reversalReason, setReversalReason] = useState("refund_required");
+  const [reversalAmountCents, setReversalAmountCents] = useState("");
+  const [reversalAdminNote, setReversalAdminNote] = useState("");
+  const [reversalMessage, setReversalMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user || !isAdmin || !orderId) return;
@@ -164,6 +172,59 @@ export default function PlannedPackageOrderDetailPage() {
     const translate = t as (translationKey: string) => string;
     const translated = translate(key);
     return translated === key ? blocker : translated;
+  }
+
+  async function handleExecuteTransferReversal(transferExecutionId: string) {
+    if (!order) return;
+    if (reversalConfirmText !== "REVERSE" || !reversalAcknowledged || !reversalReason) return;
+    setReversalBusyTransferId(transferExecutionId);
+    setReversalMessage(null);
+    try {
+      const amountParsed =
+        reversalAmountCents.trim() === ""
+          ? undefined
+          : Number.parseInt(reversalAmountCents, 10);
+      const res = await adminFetch(
+        `/api/admin/planned-package-orders/${order.id}/transfer-executions/${transferExecutionId}/reverse`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            confirm: "REVERSE",
+            reversalReason,
+            adminNote: reversalAdminNote.trim() || undefined,
+            amountCents: Number.isInteger(amountParsed) ? amountParsed : undefined,
+          }),
+        },
+      );
+      const data = (await res.json()) as { error?: string };
+      if (res.status === 403 && data.error === "manual_transfer_reversals_disabled") {
+        setReversalMessage(t("plannedPackageManualTransferReversalsDisabled"));
+        return;
+      }
+      if (!res.ok) {
+        if (data.error === "insufficient_connected_account_balance") {
+          setReversalMessage(t("plannedPackageManualTransferReversalInsufficientBalance"));
+        } else if (data.error === "transfer_already_fully_reversed") {
+          setReversalMessage(t("plannedPackageManualTransferReversalAlreadyFullyReversed"));
+        } else if (data.error === "reversal_amount_exceeds_remaining") {
+          setReversalMessage(t("plannedPackageManualTransferReversalAmountExceedsRemaining"));
+        } else {
+          setReversalMessage(data.error ?? t("plannedPackageManualTransferReversalFailed"));
+        }
+        return;
+      }
+      setReversalMessage(t("plannedPackageManualTransferReversalExecuted"));
+      setReversalConfirmTransferId(null);
+      setReversalConfirmText("");
+      setReversalAcknowledged(false);
+      setReversalAmountCents("");
+      setReversalAdminNote("");
+      await load();
+    } catch {
+      setReversalMessage(t("plannedPackageManualTransferReversalFailed"));
+    } finally {
+      setReversalBusyTransferId(null);
+    }
   }
 
   async function handleExecuteTransfer(entryId: string) {
@@ -728,6 +789,147 @@ export default function PlannedPackageOrderDetailPage() {
                                   <p className="font-mono break-all">
                                     {entry.latestTransferExecution.stripeTransferId ?? "—"}
                                   </p>
+                                  {entry.latestTransferExecution.reversalStatus ? (
+                                    <p className="mt-1 text-slate-700">
+                                      {entry.latestTransferExecution.reversalStatus === "fully_reversed"
+                                        ? t("plannedPackageManualTransferReversalStatusFullyReversed")
+                                        : entry.latestTransferExecution.reversalStatus === "partially_reversed"
+                                          ? t("plannedPackageManualTransferReversalStatusPartiallyReversed")
+                                          : entry.latestTransferExecution.reversalStatus === "failed"
+                                            ? t("plannedPackageManualTransferReversalFailed")
+                                            : t("plannedPackageManualTransferReversalStatusNotReversed")}
+                                    </p>
+                                  ) : null}
+                                  {entry.latestTransferReversalExecution?.status === "succeeded" ? (
+                                    <p className="mt-1 font-mono break-all text-teal-800">
+                                      {entry.latestTransferReversalExecution.stripeTransferReversalId ?? "—"}
+                                    </p>
+                                  ) : null}
+                                  {entry.canExecuteManualTransferReversal ? (
+                                    reversalConfirmTransferId === entry.latestTransferExecution.id ? (
+                                      <div className="mt-2 space-y-2">
+                                        <p className="text-rose-900">
+                                          {t("plannedPackageManualTransferReversalStripeWarning")}
+                                        </p>
+                                        <p className="text-rose-900">
+                                          {t("plannedPackageManualTransferReversalNoCustomerRefund")}
+                                        </p>
+                                        <p className="text-rose-900">
+                                          {t("plannedPackageManualTransferReversalInsufficientBalanceHint")}
+                                        </p>
+                                        <p className="text-slate-700">
+                                          {t("plannedPackageManualTransferReversalRemainingAmount")}:{" "}
+                                          {formatMoney(
+                                            entry.latestTransferExecution.remainingReversibleCents,
+                                            entry.currency,
+                                          )}
+                                        </p>
+                                        <label className="block text-slate-800">
+                                          {t("plannedPackageManualTransferReversalReasonLabel")}
+                                          <select
+                                            value={reversalReason}
+                                            onChange={(e) => setReversalReason(e.target.value)}
+                                            className="mt-1 w-full rounded-lg border border-rose-200 px-2 py-1"
+                                          >
+                                            <option value="refund_required">refund_required</option>
+                                            <option value="cancellation_after_transfer">
+                                              cancellation_after_transfer
+                                            </option>
+                                            <option value="dispute">dispute</option>
+                                            <option value="admin_correction">admin_correction</option>
+                                            <option value="teacher_no_show">teacher_no_show</option>
+                                            <option value="duplicate_transfer">duplicate_transfer</option>
+                                            <option value="other">other</option>
+                                          </select>
+                                        </label>
+                                        <label className="block text-slate-800">
+                                          {t("plannedPackageManualTransferReversalAmount")}
+                                          <input
+                                            type="number"
+                                            min={1}
+                                            value={reversalAmountCents}
+                                            onChange={(e) => setReversalAmountCents(e.target.value)}
+                                            placeholder={String(
+                                              entry.latestTransferExecution.remainingReversibleCents,
+                                            )}
+                                            className="mt-1 w-full rounded-lg border border-rose-200 px-2 py-1"
+                                          />
+                                        </label>
+                                        <label className="block text-slate-800">
+                                          {t("plannedPackageManualTransferReversalAdminNote")}
+                                          <input
+                                            type="text"
+                                            value={reversalAdminNote}
+                                            onChange={(e) => setReversalAdminNote(e.target.value)}
+                                            className="mt-1 w-full rounded-lg border border-rose-200 px-2 py-1"
+                                          />
+                                        </label>
+                                        <label className="flex items-start gap-2 text-rose-950">
+                                          <input
+                                            type="checkbox"
+                                            checked={reversalAcknowledged}
+                                            onChange={(e) => setReversalAcknowledged(e.target.checked)}
+                                            className="mt-0.5"
+                                          />
+                                          {t("plannedPackageManualTransferReversalConfirmAcknowledge")}
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={reversalConfirmText}
+                                          onChange={(e) => setReversalConfirmText(e.target.value)}
+                                          placeholder="REVERSE"
+                                          className="w-full rounded-lg border border-rose-200 px-2 py-1"
+                                        />
+                                        <div className="flex flex-wrap gap-2">
+                                          <button
+                                            type="button"
+                                            disabled={
+                                              reversalBusyTransferId === entry.latestTransferExecution.id ||
+                                              reversalConfirmText !== "REVERSE" ||
+                                              !reversalAcknowledged
+                                            }
+                                            onClick={() =>
+                                              void handleExecuteTransferReversal(
+                                                entry.latestTransferExecution!.id,
+                                              )
+                                            }
+                                            className="rounded-lg bg-rose-700 px-2 py-1 font-bold text-white disabled:opacity-60"
+                                          >
+                                            {t("plannedPackageManualTransferReversalExecuteStripe")}
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setReversalConfirmTransferId(null);
+                                              setReversalConfirmText("");
+                                              setReversalAcknowledged(false);
+                                            }}
+                                            className="rounded-lg border border-rose-200 px-2 py-1"
+                                          >
+                                            {t("cancel")}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        disabled={reversalBusyTransferId === entry.latestTransferExecution.id}
+                                        onClick={() => {
+                                          setReversalConfirmTransferId(entry.latestTransferExecution!.id);
+                                          setReversalAmountCents(
+                                            String(entry.latestTransferExecution!.remainingReversibleCents),
+                                          );
+                                        }}
+                                        className="mt-2 rounded-lg bg-amber-700 px-2 py-1 font-bold text-white disabled:opacity-60"
+                                      >
+                                        {t("plannedPackageManualTransferReversalExecute")}
+                                      </button>
+                                    )
+                                  ) : payout.manualTransferReversalsEnabled === false ? (
+                                    <p className="mt-1 text-amber-800">
+                                      {t("plannedPackageManualTransferReversalsDisabled")}
+                                    </p>
+                                  ) : null}
                                 </>
                               ) : entry.canExecuteManualTransfer ? (
                                 transferConfirmEntryId === entry.id ? (
@@ -812,6 +1014,7 @@ export default function PlannedPackageOrderDetailPage() {
                 </button>
                 {payoutMessage ? <p className="mt-2 text-sm text-slate-700">{payoutMessage}</p> : null}
                 {transferMessage ? <p className="mt-2 text-sm text-slate-700">{transferMessage}</p> : null}
+                {reversalMessage ? <p className="mt-2 text-sm text-slate-700">{reversalMessage}</p> : null}
               </>
             )}
           </Section>

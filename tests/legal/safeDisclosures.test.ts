@@ -889,6 +889,40 @@ const allowedPlannedPackageManualTransferFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Planned package manual transfer reversal — admin-only Stripe Connect reversal. */
+const allowedPlannedPackageManualTransferReversalFiles = new Set<string>([
+  "supabase/migrations/123_planned_package_transfer_reversal_executions.sql",
+  "lib/offers/plannedPackageManualTransferReversals.ts",
+  "lib/offers/plannedPackageTransferReversal.ts",
+  "lib/admin/plannedPackageTransferReversalOperations.ts",
+  "lib/admin/plannedPackageTransferOperations.ts",
+  "lib/admin/plannedPackagePayoutEligibilityOperations.ts",
+  "lib/admin/plannedPackageOrderOperations.ts",
+  "lib/offers/plannedPackageManualRefund.ts",
+  "lib/offers/plannedPackageReconciliation.ts",
+  "lib/offers/packageLaunchReadiness.ts",
+  "app/api/admin/planned-package-orders/[orderId]/transfer-executions/[transferExecutionId]/reverse/route.ts",
+  "app/(app)/admin/planned-package-orders/[orderId]/page.tsx",
+  "app/(app)/admin/package-launch-readiness/page.tsx",
+  "docs/product/package-manual-transfer-reversal.md",
+  "docs/product/package-manual-transfer-execution.md",
+  "docs/product/package-manual-refund-execution.md",
+  "docs/product/paid-packages-launch-checklist.md",
+  "docs/product/package-feature-flags.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/offers/plannedPackageTransferReversal.test.ts",
+  "tests/offers/plannedPackageManualTransfer.test.ts",
+  "tests/offers/plannedPackageManualRefund.test.ts",
+  "tests/offers/packageLaunchReadiness.test.ts",
+  "tests/security/rlsCoverage.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/legal/founderDecisionsAlignment.test.ts",
+  "package.json",
+]);
+
 /** Teacher offer cover images (PR 15). */
 const allowedTeacherOfferCoverImageFiles = new Set<string>([
   "supabase/migrations/104_teacher_offer_covers_bucket.sql",
@@ -1417,6 +1451,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedPlannedPackageManualRefundFiles.has(file)) continue;
     if (allowedPlannedPackagePayoutEligibilityFiles.has(file)) continue;
     if (allowedPlannedPackageManualTransferFiles.has(file)) continue;
+    if (allowedPlannedPackageManualTransferReversalFiles.has(file)) continue;
     if (allowedTeacherOfferCoverImageFiles.has(file)) continue;
     if (allowedTeacherOfferCancellationPreferenceFiles.has(file)) continue;
     if (allowedTeacherAvailabilityStartDateFiles.has(file)) continue;

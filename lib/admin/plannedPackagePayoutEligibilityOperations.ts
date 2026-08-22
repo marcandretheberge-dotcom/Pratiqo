@@ -20,19 +20,29 @@ import {
   type AdminTransferExecutionDto,
 } from "@/lib/admin/plannedPackageTransferOperations";
 import { canExecutePlannedPackageTransferInCurrentEnvironment } from "@/lib/offers/plannedPackageManualTransfer";
+import {
+  getManualTransferReversalAdminFlags,
+  loadAdminTransferReversalsForOrder,
+  type AdminTransferReversalExecutionDto,
+} from "@/lib/admin/plannedPackageTransferReversalOperations";
+import { canExecutePlannedPackageTransferReversalInCurrentEnvironment } from "@/lib/offers/plannedPackageTransferReversal";
 
 type AdminClient = ReturnType<typeof getSupabaseAdmin>;
 
 export type AdminPlannedPackagePayoutEligibilityEntry = PlannedPackagePayoutEligibilityEntryDto & {
   latestTransferExecution: AdminTransferExecutionDto | null;
+  latestTransferReversalExecution: AdminTransferReversalExecutionDto | null;
   canExecuteManualTransfer: boolean;
+  canExecuteManualTransferReversal: boolean;
 };
 
 export type AdminPlannedPackagePayoutEligibilityContext = {
   enabled: boolean;
   adminViewEnabled: boolean;
   manualTransfersEnabled: boolean;
+  manualTransferReversalsEnabled: boolean;
   canExecuteManualTransfer: boolean;
+  canExecuteManualTransferReversal: boolean;
   entries: AdminPlannedPackagePayoutEligibilityEntry[];
   noAutomaticPayoutCron: true;
 };
@@ -46,26 +56,37 @@ export async function getAdminPlannedPackagePayoutEligibilityContext(
 
   if (!enabled) {
     const flags = getManualTransferAdminFlags();
+    const reversalFlags = getManualTransferReversalAdminFlags();
     return {
       enabled: false,
       adminViewEnabled: isPlannedPackagePayoutAdminViewEnabled(),
       manualTransfersEnabled: flags.manualTransfersEnabled,
+      manualTransferReversalsEnabled: reversalFlags.manualTransferReversalsEnabled,
       canExecuteManualTransfer: false,
+      canExecuteManualTransferReversal: false,
       entries: [],
       noAutomaticPayoutCron: true,
     };
   }
 
-  const [entries, transferMap] = await Promise.all([
+  const [entries, transferMap, reversalMap] = await Promise.all([
     listPlannedPackagePayoutEligibilityForOrder(admin, orderId),
     loadAdminTransferExecutionsForOrder(admin, orderId),
+    loadAdminTransferReversalsForOrder(admin, orderId),
   ]);
 
   const flags = getManualTransferAdminFlags();
+  const reversalFlags = getManualTransferReversalAdminFlags();
   const canExecute = flags.manualTransfersEnabled && canExecutePlannedPackageTransferInCurrentEnvironment();
+  const canExecuteReversal =
+    reversalFlags.manualTransferReversalsEnabled &&
+    canExecutePlannedPackageTransferReversalInCurrentEnvironment();
 
   const enriched: AdminPlannedPackagePayoutEligibilityEntry[] = entries.map((entry) => {
     const latestTransferExecution = transferMap.get(entry.id) ?? null;
+    const latestTransferReversalExecution = latestTransferExecution
+      ? (reversalMap.get(latestTransferExecution.id) ?? null)
+      : null;
     const canExecuteManualTransfer =
       canExecute &&
       entry.status === "eligible" &&
@@ -74,10 +95,16 @@ export async function getAdminPlannedPackagePayoutEligibilityContext(
       entry.transferStatus !== "transferred" &&
       !entry.stripeTransferId &&
       latestTransferExecution?.status !== "succeeded";
+    const canExecuteManualTransferReversal =
+      canExecuteReversal &&
+      latestTransferExecution?.status === "succeeded" &&
+      latestTransferExecution.remainingReversibleCents > 0;
     return {
       ...entry,
       latestTransferExecution,
+      latestTransferReversalExecution,
       canExecuteManualTransfer,
+      canExecuteManualTransferReversal,
     };
   });
 
@@ -85,7 +112,9 @@ export async function getAdminPlannedPackagePayoutEligibilityContext(
     enabled: true,
     adminViewEnabled,
     manualTransfersEnabled: flags.manualTransfersEnabled,
+    manualTransferReversalsEnabled: reversalFlags.manualTransferReversalsEnabled,
     canExecuteManualTransfer: canExecute,
+    canExecuteManualTransferReversal: canExecuteReversal,
     entries: enriched,
     noAutomaticPayoutCron: true,
   };
