@@ -11,6 +11,7 @@ import {
   isPlannedPackageCheckoutPreflightEnabled,
   isPlannedPackageCheckoutPreflightUiEnabled,
   PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N,
+  plannedPackagePreflightBlockerLabel,
 } from "@/lib/offers/plannedPackageCheckoutPreflight";
 import { getPackageLaunchReadiness } from "@/lib/offers/packageLaunchReadiness";
 
@@ -60,14 +61,25 @@ test("real checkout flag stays OFF; legal review not bypassed", () => {
 
 test("blocker codes map to i18n keys (no raw codes in UI)", () => {
   const ui = read("components/packages/PlannedPackageCheckoutPreflight.tsx");
-  assert.match(ui, /PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N/);
-  assert.match(ui, /blockerLabel/);
+  assert.match(ui, /plannedPackagePreflightBlockerLabel/);
   assert.doesNotMatch(ui, /Acheter maintenant/);
   assert.doesNotMatch(ui, /Payer\b/);
   assert.match(ui, /plannedPackagePaymentComingSoon/);
   assert.ok(Object.keys(PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N).includes("package_legal_review_required"));
   assert.ok(
     Object.keys(PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N).includes("planned_package_checkout_not_enabled"),
+  );
+  assert.equal(
+    PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N.package_legal_review_required,
+    "plannedPackagePreflightLegalReviewRequired",
+  );
+  assert.equal(
+    PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N.slot_conflict,
+    "plannedPackageActiveHoldConflict",
+  );
+  assert.equal(
+    plannedPackagePreflightBlockerLabel("planned_package_checkout_not_enabled", (k) => k),
+    "plannedPackagePreflightPaidNotEnabled",
   );
 });
 

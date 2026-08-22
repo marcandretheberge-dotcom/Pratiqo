@@ -3054,5 +3054,8 @@
   "plannedPackageHoldCancel": "Cancelar preparación",
   "plannedPackageHoldExpired": "La preparación del paquete expiró.",
   "plannedPackageHoldChooseNew": "Elige nuevas sesiones para continuar.",
-  "plannedPackageHoldPrepareFailed": "No se pudo preparar el paquete. Inténtalo de nuevo."
+  "plannedPackageHoldPrepareFailed": "No se pudo preparar el paquete. Inténtalo de nuevo.",
+  "plannedPackageGenericBlocker": "Este paquete no se puede preparar en este momento.",
+  "plannedPackageTemporaryHoldsDisabled": "La preparación temporal del paquete no está activada.",
+  "plannedPackageActiveHoldConflict": "Este horario no está disponible temporalmente."
 }

@@ -3054,5 +3054,8 @@
   "plannedPackageHoldCancel": "Annuler la préparation",
   "plannedPackageHoldExpired": "La préparation du forfait a expiré.",
   "plannedPackageHoldChooseNew": "Choisissez de nouvelles séances pour continuer.",
-  "plannedPackageHoldPrepareFailed": "Impossible de préparer le forfait. Veuillez réessayer."
+  "plannedPackageHoldPrepareFailed": "Impossible de préparer le forfait. Veuillez réessayer.",
+  "plannedPackageGenericBlocker": "Impossible de préparer ce forfait pour le moment.",
+  "plannedPackageTemporaryHoldsDisabled": "La préparation temporaire du forfait n’est pas activée.",
+  "plannedPackageActiveHoldConflict": "Cette plage est temporairement indisponible."
 }

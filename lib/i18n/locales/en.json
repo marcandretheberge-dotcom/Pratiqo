@@ -3054,5 +3054,8 @@
   "plannedPackageHoldCancel": "Cancel preparation",
   "plannedPackageHoldExpired": "Package preparation has expired.",
   "plannedPackageHoldChooseNew": "Choose new sessions to continue.",
-  "plannedPackageHoldPrepareFailed": "Could not prepare the package. Please try again."
+  "plannedPackageHoldPrepareFailed": "Could not prepare the package. Please try again.",
+  "plannedPackageGenericBlocker": "This package cannot be prepared right now.",
+  "plannedPackageTemporaryHoldsDisabled": "Temporary package preparation is not enabled.",
+  "plannedPackageActiveHoldConflict": "This time slot is temporarily unavailable."
 }

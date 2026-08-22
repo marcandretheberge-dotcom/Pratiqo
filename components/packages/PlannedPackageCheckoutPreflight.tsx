@@ -6,9 +6,8 @@ import { getClientAccessToken } from "@/lib/auth/clientAccessToken";
 import { getSupabaseClient } from "@/lib/supabase";
 import {
   isPlannedPackageCheckoutPreflightUiEnabled,
-  PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N,
+  plannedPackagePreflightBlockerLabel,
   type PlannedPackageCheckoutPreflightResult,
-  type PlannedPackagePreflightBlocker,
 } from "@/lib/offers/plannedPackageCheckoutPreflight";
 import { PlannedPackagePendingOrderPanel } from "@/components/packages/PlannedPackagePendingOrder";
 import { isPlannedPackageTemporaryHoldsUiEnabled } from "@/lib/offers/plannedPackageTemporaryHolds";
@@ -18,14 +17,6 @@ type Props = {
   teacherProfileHref?: string;
   onEditSessions?: () => void;
 };
-
-function blockerLabel(
-  code: PlannedPackagePreflightBlocker,
-  t: (key: string) => string,
-): string {
-  const key = PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N[code];
-  return t(key);
-}
 
 export function PlannedPackageCheckoutPreflight({
   draftId,
@@ -137,7 +128,7 @@ export function PlannedPackageCheckoutPreflight({
 
           {result.blockers.length > 0 ? (
             <ul className="space-y-1 text-xs text-amber-950" data-testid="planned-package-preflight-blockers">
-              {[...new Set(result.blockers.map((b) => blockerLabel(b, t)))].map((label) => (
+              {[...new Set(result.blockers.map((b) => plannedPackagePreflightBlockerLabel(b, t)))].map((label) => (
                 <li key={label}>{label}</li>
               ))}
             </ul>
