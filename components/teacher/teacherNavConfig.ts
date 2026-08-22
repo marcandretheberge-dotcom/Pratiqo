@@ -15,6 +15,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { isTeacherPackageVisibilityUiEnabled } from "@/lib/offers/teacherPackages";
+import { isTeacherPlannedPackageDashboardUiEnabled } from "@/lib/offers/plannedPackageTeacherDashboard";
 
 export type TeacherNavLabelKey =
   | "teacherDashboard"
@@ -27,6 +28,7 @@ export type TeacherNavLabelKey =
   | "teacherHistoryTitle"
   | "teacherOffersNav"
   | "teacherPackagesNav"
+  | "teacherPlannedPackagesNav"
   | "teacherNavMyProfile"
   | "resolutionCenterTitle"
   | "settings";
@@ -75,13 +77,15 @@ const MAIN_NAV: TeacherNavItem[] = [
 ];
 
 function buildMainNav(): TeacherNavItem[] {
-  if (!isTeacherPackageVisibilityUiEnabled()) return MAIN_NAV;
+  const entitlementsOn = isTeacherPackageVisibilityUiEnabled();
+  const plannedOn = isTeacherPlannedPackageDashboardUiEnabled();
+  if (!entitlementsOn && !plannedOn) return MAIN_NAV;
   const packagesItem: TeacherNavItem = {
     href: "/teacher/packages",
-    labelKey: "teacherPackagesNav",
+    labelKey: plannedOn ? "teacherPlannedPackagesNav" : "teacherPackagesNav",
     icon: Package,
   };
-  // Keep packages with offers in the main group when the feature flag is on.
+  // Keep packages with offers in the main group when either packages flag is on.
   const offersIdx = MAIN_NAV.findIndex((item) => item.href === "/teacher/offers");
   if (offersIdx < 0) return [...MAIN_NAV, packagesItem];
   return [...MAIN_NAV.slice(0, offersIdx + 1), packagesItem, ...MAIN_NAV.slice(offersIdx + 1)];

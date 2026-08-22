@@ -35,6 +35,7 @@ Required before **public** launch:
 - [ ] Manual transfer reversal reviewed (admin-only; no automatic refund)
 - [ ] Staging E2E QA runbook completed (`docs/product/planned-package-e2e-staging-qa.md`)
 - [ ] Student planned package dashboard reviewed (read-only; no self-serve refund)
+- [ ] Teacher planned package dashboard reviewed (read-only; no teacher transfer/refund/reversal)
 - [ ] Teacher/student copy reviewed against glossary
 - [ ] Package feature flags controlled (defaults OFF; staged enablement)
 - [ ] Test purchase/refund scenarios completed

@@ -76,6 +76,10 @@ import {
   isStudentPlannedPackageDashboardUiEnabled,
 } from "./plannedPackageStudentDashboard";
 import {
+  isTeacherPlannedPackageDashboardEnabled,
+  isTeacherPlannedPackageDashboardUiEnabled,
+} from "./plannedPackageTeacherDashboard";
+import {
   isTeacherPackageVisibilityEnabled,
   isTeacherPackageVisibilityUiEnabled,
 } from "./teacherPackages";
@@ -95,6 +99,7 @@ export const PACKAGE_LAUNCH_REQUIRED_DOCS = [
   "docs/product/package-public-copy-draft.md",
   "docs/product/planned-package-e2e-staging-qa.md",
   "docs/product/student-planned-package-dashboard.md",
+  "docs/product/teacher-planned-package-dashboard.md",
 ] as const;
 
 export const PACKAGE_LAUNCH_COPY_GUARD_TESTS = [
@@ -129,7 +134,8 @@ export type PackageLaunchFlagId =
   | "packageRedemptionBooking"
   | "studentPackageDashboard"
   | "studentPlannedPackageDashboard"
-  | "teacherPackageVisibility";
+  | "teacherPackageVisibility"
+  | "teacherPlannedPackageDashboard";
 
 export type PackageLaunchFlagSnapshot = {
   id: PackageLaunchFlagId;
@@ -173,6 +179,7 @@ export type PackageLaunchReadiness = {
     studentPackageDashboard: boolean;
     studentPlannedPackageDashboard: boolean;
     teacherPackageVisibility: boolean;
+    teacherPlannedPackageDashboard: boolean;
   };
   flagDetails: PackageLaunchFlagSnapshot[];
   docs: {
@@ -275,6 +282,12 @@ export type PackageLaunchReadiness = {
     studentPlannedPackageDashboardSafeDto: boolean;
     studentPlannedPackageDashboardNoPayoutInternals: boolean;
     studentPlannedPackageDashboardNoSelfServeRefund: boolean;
+    teacherPlannedPackageDashboardPresent: boolean;
+    teacherPlannedPackageDashboardGated: boolean;
+    teacherPlannedPackageDashboardSafeDto: boolean;
+    teacherPlannedPackageDashboardNoTeacherTransferExecution: boolean;
+    teacherPlannedPackageDashboardNoTeacherRefundExecution: boolean;
+    teacherPlannedPackageDashboardNoTeacherReversalExecution: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -461,6 +474,15 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
     explanationFr: "Affiche les forfaits achetés avec le professeur (lecture seule).",
     launchMeaningFr: "Visibilité professeur — ne mute pas les soldes.",
   },
+  {
+    id: "teacherPlannedPackageDashboard",
+    envName: "ENABLE_TEACHER_PLANNED_PACKAGE_DASHBOARD",
+    uiEnvName: "NEXT_PUBLIC_ENABLE_TEACHER_PLANNED_PACKAGE_DASHBOARD",
+    explanationFr:
+      "Affiche les forfaits planifiés vendus par le professeur — lecture seule, sans exécution de versement/remboursement.",
+    launchMeaningFr:
+      "Visibilité professeur seulement — pas d’exécution teacher self-serve ni lancement public.",
+  },
 ] as const;
 
 function isLegalReviewCompletedSignal(): boolean {
@@ -493,9 +515,11 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const studentPackageDashboard = isStudentPackageDashboardEnabled();
   const studentPlannedPackageDashboard = isStudentPlannedPackageDashboardEnabled();
   const teacherPackageVisibility = isTeacherPackageVisibilityEnabled();
+  const teacherPlannedPackageDashboard = isTeacherPlannedPackageDashboardEnabled();
   const studentUi = isStudentPackageDashboardUiEnabled();
   const studentPlannedUi = isStudentPlannedPackageDashboardUiEnabled();
   const teacherUi = isTeacherPackageVisibilityUiEnabled();
+  const teacherPlannedUi = isTeacherPlannedPackageDashboardUiEnabled();
 
   const flags = {
     plannedPackages,
@@ -519,6 +543,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     studentPackageDashboard,
     studentPlannedPackageDashboard,
     teacherPackageVisibility,
+    teacherPlannedPackageDashboard,
   };
 
   const flagDetails: PackageLaunchFlagSnapshot[] = PACKAGE_LAUNCH_FLAG_META.map((meta) => {
@@ -527,6 +552,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     if (meta.id === "studentPackageDashboard") uiEnabled = studentUi;
     else if (meta.id === "studentPlannedPackageDashboard") uiEnabled = studentPlannedUi;
     else if (meta.id === "teacherPackageVisibility") uiEnabled = teacherUi;
+    else if (meta.id === "teacherPlannedPackageDashboard") uiEnabled = teacherPlannedUi;
     else if (meta.id === "bookingOfferSelection") uiEnabled = bookingOfferSelection;
     else if (meta.id === "plannedPackages") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGES === "true";
@@ -670,6 +696,12 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     studentPlannedPackageDashboardSafeDto: true,
     studentPlannedPackageDashboardNoPayoutInternals: true,
     studentPlannedPackageDashboardNoSelfServeRefund: true,
+    teacherPlannedPackageDashboardPresent: true,
+    teacherPlannedPackageDashboardGated: true,
+    teacherPlannedPackageDashboardSafeDto: true,
+    teacherPlannedPackageDashboardNoTeacherTransferExecution: true,
+    teacherPlannedPackageDashboardNoTeacherRefundExecution: true,
+    teacherPlannedPackageDashboardNoTeacherReversalExecution: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,
@@ -726,6 +758,8 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     studentPlannedPackageDashboard ||
     studentPlannedUi ||
     teacherPackageVisibility ||
+    teacherPlannedPackageDashboard ||
+    teacherPlannedUi ||
     studentUi ||
     teacherUi;
 

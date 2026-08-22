@@ -249,6 +249,17 @@ See also:
 | Safe preview | ON for UX review without mutating balances |
 | Production note | Visibility only |
 
+### `ENABLE_TEACHER_PLANNED_PACKAGE_DASHBOARD` (+ `NEXT_PUBLIC_ENABLE_TEACHER_PLANNED_PACKAGE_DASHBOARD`)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Server planned-package teacher API + `/teacher/packages` section |
+| Who sees effect | Teachers see their own sold planned package orders, sessions, and high-level payout status (read-only) |
+| Dependencies | Planned package orders / bookings / eligibility data existing |
+| Safe preview | ON in staging after fulfillment + eligibility work |
+| Production note | Visibility only — **no** teacher self-serve transfer, refund, or reversal |
+
 ### `ENABLE_OFFER_POLICY_ENFORCEMENT` (+ `NEXT_PUBLIC_ENABLE_OFFER_POLICY_ENFORCEMENT`)
 
 | | |

@@ -445,6 +445,36 @@ const allowedStudentPlannedPackageDashboardFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Teacher planned package dashboard — read-only teacher visibility. */
+const allowedTeacherPlannedPackageDashboardFiles = new Set<string>([
+  "lib/offers/plannedPackageTeacherDashboard.ts",
+  "lib/offers/plannedPackageTeacherStatus.ts",
+  "lib/offers/plannedPackageTeacherDto.ts",
+  "lib/offers/packageLaunchReadiness.ts",
+  "lib/offers/teacherPackages.ts",
+  "app/api/teacher/planned-packages/route.ts",
+  "app/api/teacher/planned-packages/[orderId]/route.ts",
+  "app/(app)/teacher/packages/page.tsx",
+  "components/teacher/TeacherPackageDashboard.tsx",
+  "components/teacher/TeacherPlannedPackageCard.tsx",
+  "components/teacher/teacherNavConfig.ts",
+  "app/(app)/admin/package-launch-readiness/page.tsx",
+  "docs/product/teacher-planned-package-dashboard.md",
+  "docs/product/student-planned-package-dashboard.md",
+  "docs/product/package-feature-flags.md",
+  "docs/product/paid-packages-launch-checklist.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/offers/teacherPlannedPackageDashboard.test.ts",
+  "tests/offers/packageLaunchReadiness.test.ts",
+  "tests/offers/marketplaceIndependentTeacherGuardrails.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/legal/founderDecisionsAlignment.test.ts",
+  "package.json",
+]);
+
 function touchesFounderDecisionScope(file: string): boolean {
   return (
     liveFiles.includes(file) ||
@@ -621,6 +651,7 @@ test("branch did not touch restricted systems", () => {
     if (allowedPlannedPackageManualTransferReversalFiles.has(file)) continue;
     if (allowedPlannedPackageE2eQaFiles.has(file)) continue;
     if (allowedStudentPlannedPackageDashboardFiles.has(file)) continue;
+    if (allowedTeacherPlannedPackageDashboardFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

@@ -56,10 +56,13 @@ const CODE_SURFACES = [
   "components/student/StudentPackageCard.tsx",
   "components/teacher/TeacherPackageDashboard.tsx",
   "components/teacher/TeacherPackageCard.tsx",
+  "components/teacher/TeacherPlannedPackageCard.tsx",
   "app/api/package-entitlements/route.ts",
   "app/api/package-entitlements/[entitlementId]/redeem/route.ts",
   "app/api/student/packages/route.ts",
   "app/api/teacher/packages/route.ts",
+  "app/api/teacher/planned-packages/route.ts",
+  "app/api/teacher/planned-packages/[orderId]/route.ts",
   "app/api/teacher/offers/[offerId]/cover/route.ts",
 ];
 
@@ -72,7 +75,9 @@ const PACKAGE_OFFER_I18N_KEY_PREFIXES = [
   "cancelPackagePolicy",
   "studentPackages",
   "studentTabPackages",
+  "studentPlannedPackages",
   "teacherPackages",
+  "teacherPlannedPackages",
   "teacherOffer",
   "offerTypePackage",
   "publicOffer",

@@ -477,6 +477,22 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.flags.teacherPackageVisibility}
         />
         <ChecklistRow
+          label="Professeur — forfaits planifiés vendus gated (safe DTO)"
+          ok={readiness.checks.teacherPlannedPackageDashboardGated}
+        />
+        <ChecklistRow
+          label="Forfaits planifiés prof — pas d’exécution de versement"
+          ok={readiness.checks.teacherPlannedPackageDashboardNoTeacherTransferExecution}
+        />
+        <ChecklistRow
+          label="Forfaits planifiés prof — pas d’exécution de remboursement"
+          ok={readiness.checks.teacherPlannedPackageDashboardNoTeacherRefundExecution}
+        />
+        <ChecklistRow
+          label="Forfaits planifiés prof — pas d’exécution de reversal"
+          ok={readiness.checks.teacherPlannedPackageDashboardNoTeacherReversalExecution}
+        />
+        <ChecklistRow
           label="Visibilité admin / support (snapshots & source de paiement)"
           ok={readiness.checks.adminSupportVisibilityPresent}
         />
