@@ -11,7 +11,9 @@ import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
 import { formatLocalISODate, formatSlotLabel } from "@/lib/slots";
 import { canBookTeacherOnDate } from "@/lib/teachers/availabilityStartDate";
 
-export type PlannedPackageSlotAdmin = DateExceptionAdmin & WeeklyIntervalAdmin & {
+export type PlannedPackageSlotAdmin = DateExceptionAdmin & WeeklyIntervalAdmin;
+
+type TeacherRowAdmin = {
   from: (table: string) => {
     select: (columns: string) => {
       eq: (column: string, value: string) => {
@@ -73,7 +75,7 @@ export async function validatePlannedPackageDraftSlot(args: {
     return { ok: false, error: "slot_outside_teacher_availability" };
   }
 
-  const { data: teacher, error: teacherErr } = await admin
+  const { data: teacher, error: teacherErr } = await (admin as unknown as TeacherRowAdmin)
     .from("teachers")
     .select("id, available_from_date, schedule_mode")
     .eq("id", teacherId)

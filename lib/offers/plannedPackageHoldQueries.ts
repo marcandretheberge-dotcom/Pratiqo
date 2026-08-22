@@ -29,23 +29,35 @@ export type HoldIntervalRow = {
   pending_order_id: string;
 };
 
-/** Opportunistically mark expired holds/orders. */
+/**
+ * Opportunistically mark expired holds/orders.
+ * Only pending_payment orders expire — payment_confirmed+ holds stay until fulfillment converts them.
+ */
 export async function expireStalePlannedPackageHolds(
   admin: SupabaseClient = adminClient(),
   now: Date = new Date(),
 ): Promise<void> {
   if (!isPlannedPackageTemporaryHoldsEnabled()) return;
   const nowIso = now.toISOString();
+
+  const { data: expiredOrders } = await admin
+    .from("planned_package_pending_orders")
+    .update({ status: "expired" })
+    .eq("status", "pending_payment")
+    .lte("hold_expires_at", nowIso)
+    .select("id");
+
+  const ids = ((expiredOrders ?? []) as { id?: string }[])
+    .map((row) => row.id)
+    .filter((id): id is string => typeof id === "string");
+
+  if (ids.length === 0) return;
+
   await admin
     .from("planned_package_session_holds")
     .update({ status: "expired" })
     .eq("status", "active")
-    .lte("expires_at", nowIso);
-  await admin
-    .from("planned_package_pending_orders")
-    .update({ status: "expired" })
-    .eq("status", "pending_payment")
-    .lte("hold_expires_at", nowIso);
+    .in("pending_order_id", ids);
 }
 
 export async function listActiveHoldsForTeacherDay(args: {

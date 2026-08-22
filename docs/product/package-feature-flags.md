@@ -56,6 +56,17 @@ See also:
 | Safe preview | ON in staging after preflight works |
 | Production note | Default hold `PLANNED_PACKAGE_HOLD_MINUTES=15`. Does **not** charge or confirm bookings |
 
+### `ENABLE_PLANNED_PACKAGE_FULFILLMENT_ENGINE` (server only)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Server fulfillment helper + optional admin simulate-payment route |
+| Who sees effect | Trusted admin/service can convert `payment_confirmed` orders into confirmed session bookings |
+| Dependencies | Temporary holds (+ preflight + drafts + planned packages) |
+| Safe preview | ON in staging after holds work; use `ENABLE_PLANNED_PACKAGE_PAYMENT_SIMULATION` for admin simulation |
+| Production note | **No Stripe Checkout / PaymentIntent / transfer**. Does not publicly launch packages. Do not rely on `NEXT_PUBLIC_*` for fulfillment |
+
 ### `NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION`
 
 | | |

@@ -704,6 +704,7 @@ const allowedPlannedPackageCheckoutPreflightFiles = new Set<string>([
 /** Planned package temporary holds / pending orders — no payment. */
 const allowedPlannedPackageTemporaryHoldsFiles = new Set<string>([
   "supabase/migrations/115_planned_package_pending_orders_and_holds.sql",
+  "supabase/migrations/116_planned_package_fulfillment_engine.sql",
   "lib/offers/plannedPackageTemporaryHolds.ts",
   "lib/offers/plannedPackageHoldQueries.ts",
   "lib/offers/createPlannedPackagePendingOrder.ts",
@@ -713,6 +714,7 @@ const allowedPlannedPackageTemporaryHoldsFiles = new Set<string>([
   "app/api/teachers/[id]/slots/route.ts",
   "app/api/planned-packages/session-drafts/[draftId]/pending-order/route.ts",
   "app/api/planned-packages/pending-orders/[orderId]/cancel/route.ts",
+  "app/api/planned-packages/pending-orders/[orderId]/simulate-payment-confirmed/route.ts",
   "components/packages/PlannedPackagePendingOrder.tsx",
   "components/packages/PlannedPackageCheckoutPreflight.tsx",
   "app/(app)/admin/package-launch-readiness/page.tsx",

@@ -193,6 +193,40 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.plannedPackageTemporaryHoldsNoPayment}
         />
         <ChecklistRow
+          label="Moteur de fulfillment présent"
+          ok={readiness.checks.plannedPackageFulfillmentEnginePresent}
+        />
+        <ChecklistRow
+          label={`Fulfillment gated (ENABLE_PLANNED_PACKAGE_FULFILLMENT_ENGINE) : ${
+            readiness.flags.plannedPackageFulfillmentEngine ? "ON" : "OFF"
+          }`}
+          ok={readiness.checks.plannedPackageFulfillmentEngineGated}
+        />
+        <ChecklistRow
+          label="Fulfillment idempotent"
+          ok={readiness.checks.plannedPackageFulfillmentIdempotent}
+        />
+        <ChecklistRow
+          label="Fulfillment atomique (toutes les séances ou aucune)"
+          ok={readiness.checks.plannedPackageFulfillmentAtomic}
+        />
+        <ChecklistRow
+          label="Réservations liées à la commande forfait"
+          ok={readiness.checks.plannedPackageFulfillmentLinksBookings}
+        />
+        <ChecklistRow
+          label="Holds convertis après fulfillment"
+          ok={readiness.checks.plannedPackageFulfillmentConvertsHolds}
+        />
+        <ChecklistRow
+          label="Pas de checkout Stripe forfait encore"
+          ok={readiness.checks.plannedPackageFulfillmentNoStripeCheckout}
+        />
+        <ChecklistRow
+          label="Pas de versement professeur encore"
+          ok={readiness.checks.plannedPackageFulfillmentNoPayoutRelease}
+        />
+        <ChecklistRow
           label="Checkout forfait toujours bloqué"
           ok={readiness.checks.plannedPackagePublicPurchaseBlocked}
         />

@@ -29,6 +29,10 @@ import {
   isPlannedPackageTemporaryHoldsEnabled,
 } from "./plannedPackageTemporaryHolds";
 import {
+  canUsePlannedPackageFulfillmentEngine,
+  isPlannedPackageFulfillmentEngineEnabled,
+} from "./plannedPackageFulfillment";
+import {
   isStudentPackageDashboardEnabled,
   isStudentPackageDashboardUiEnabled,
 } from "./studentPackages";
@@ -68,6 +72,7 @@ export type PackageLaunchFlagId =
   | "plannedPackageSessionDrafts"
   | "plannedPackageCheckoutPreflight"
   | "plannedPackageTemporaryHolds"
+  | "plannedPackageFulfillmentEngine"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -100,6 +105,7 @@ export type PackageLaunchReadiness = {
     plannedPackageSessionDrafts: boolean;
     plannedPackageCheckoutPreflight: boolean;
     plannedPackageTemporaryHolds: boolean;
+    plannedPackageFulfillmentEngine: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -135,6 +141,14 @@ export type PackageLaunchReadiness = {
     plannedPackageTemporaryHoldsSchemaPresent: boolean;
     plannedPackageTemporaryHoldsGated: boolean;
     plannedPackageTemporaryHoldsNoPayment: boolean;
+    plannedPackageFulfillmentEnginePresent: boolean;
+    plannedPackageFulfillmentEngineGated: boolean;
+    plannedPackageFulfillmentIdempotent: boolean;
+    plannedPackageFulfillmentAtomic: boolean;
+    plannedPackageFulfillmentLinksBookings: boolean;
+    plannedPackageFulfillmentConvertsHolds: boolean;
+    plannedPackageFulfillmentNoStripeCheckout: boolean;
+    plannedPackageFulfillmentNoPayoutRelease: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -184,6 +198,14 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
     explanationFr:
       "Crée une commande en attente avec rétention temporaire des plages — sans paiement.",
     launchMeaningFr: "Holds courts seulement — pas de réservation confirmée ni Stripe.",
+  },
+  {
+    id: "plannedPackageFulfillmentEngine",
+    envName: "ENABLE_PLANNED_PACKAGE_FULFILLMENT_ENGINE",
+    uiEnvName: null,
+    explanationFr:
+      "Convertit une commande payment_confirmed en réservations de séances confirmées (idempotent, sans Stripe).",
+    launchMeaningFr: "Moteur serveur seulement — pas de checkout public ni versement.",
   },
   {
     id: "bookingOfferSelection",
@@ -242,6 +264,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackageSessionDrafts = isPlannedPackageSessionDraftsEnabled();
   const plannedPackageCheckoutPreflight = isPlannedPackageCheckoutPreflightEnabled();
   const plannedPackageTemporaryHolds = isPlannedPackageTemporaryHoldsEnabled();
+  const plannedPackageFulfillmentEngine = isPlannedPackageFulfillmentEngineEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -256,6 +279,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageSessionDrafts,
     plannedPackageCheckoutPreflight,
     plannedPackageTemporaryHolds,
+    plannedPackageFulfillmentEngine,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -327,6 +351,15 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageTemporaryHoldsGated:
       !canUsePlannedPackageTemporaryHolds() || plannedPackageCheckoutPreflight,
     plannedPackageTemporaryHoldsNoPayment: true,
+    plannedPackageFulfillmentEnginePresent: true,
+    plannedPackageFulfillmentEngineGated:
+      !canUsePlannedPackageFulfillmentEngine() || plannedPackageTemporaryHolds,
+    plannedPackageFulfillmentIdempotent: true,
+    plannedPackageFulfillmentAtomic: true,
+    plannedPackageFulfillmentLinksBookings: true,
+    plannedPackageFulfillmentConvertsHolds: true,
+    plannedPackageFulfillmentNoStripeCheckout: true,
+    plannedPackageFulfillmentNoPayoutRelease: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,
