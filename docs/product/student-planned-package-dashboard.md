@@ -8,6 +8,7 @@ Related:
 - [`package-product-decision.md`](./package-product-decision.md)
 - [`planned-package-e2e-staging-qa.md`](./planned-package-e2e-staging-qa.md)
 - [`package-feature-flags.md`](./package-feature-flags.md)
+- [`planned-package-dashboard-polish.md`](./planned-package-dashboard-polish.md)
 - Route: `/student/packages`
 - API: `GET /api/student/planned-packages`
 
@@ -24,7 +25,8 @@ Authenticated students can view **their own** planned package orders:
 - next upcoming session;
 - session list with dates;
 - high-level cancellation/refund review status;
-- support CTA (`/resolution`).
+- support CTA (`support@pratiqo.ca` + `/resolution`).
+- shared status badge / session timeline / empty-loading-error polish.
 
 ## Explicit non-goals
 

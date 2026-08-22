@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
@@ -15,7 +15,12 @@ import { isTeacherPlannedPackageDashboardUiEnabled } from "@/lib/offers/plannedP
 import type { TeacherPlannedPackageDto } from "@/lib/offers/plannedPackageTeacherDto";
 import { TeacherPackageCard } from "@/components/teacher/TeacherPackageCard";
 import { TeacherPlannedPackageCard } from "@/components/teacher/TeacherPlannedPackageCard";
-import { AppSectionListSkeleton } from "@/components/loading/AppSkeletons";
+import { PlannedPackageEmptyState } from "@/components/packages/PlannedPackageEmptyState";
+import {
+  PlannedPackageLoadError,
+  PlannedPackageLoadingState,
+} from "@/components/packages/PlannedPackageLoadState";
+import { PLANNED_PACKAGE_TEACHER_OFFERS_HREF } from "@/lib/offers/plannedPackageDashboardLinks";
 
 export function TeacherPackageDashboard() {
   const { user, profile } = useAuth();
@@ -164,7 +169,7 @@ export function TeacherPackageDashboard() {
     packages.length === 0 && plannedPackages.length === 0 && !loading && !error;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:py-8" data-testid="teacher-packages-dashboard">
+    <div className="mx-auto max-w-3xl overflow-x-hidden px-4 py-6 sm:py-8" data-testid="teacher-packages-dashboard">
       <div className="mb-6 flex items-center gap-3">
         <Link
           href="/dashboard"
@@ -186,40 +191,28 @@ export function TeacherPackageDashboard() {
       </div>
 
       {loading ? (
-        <AppSectionListSkeleton />
+        <PlannedPackageLoadingState label={t("plannedPackageDashboardLoading")} />
       ) : error ? (
-        <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {error}
-        </p>
+        <PlannedPackageLoadError
+          message={t("plannedPackageDashboardLoadError")}
+          hint={t("plannedPackageDashboardLoadErrorHint")}
+        />
       ) : isEmpty ? (
-        <div
-          className="rounded-2xl border border-dashed border-[#DCEAE3] bg-[#F3FAF6]/60 px-5 py-10 text-center"
-          data-testid="teacher-packages-empty"
-        >
-          <Package className="mx-auto text-teal-700/70" size={36} aria-hidden />
-          <p className="mt-3 text-base font-semibold text-slate-800">
-            {plannedUiEnabled
-              ? t("teacherPlannedPackagesEmptyTitle")
-              : t("teacherPackagesEmptyTitle")}
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            {t("teacherPackagesEmptyBody")}
-          </p>
-          <div className="mt-5 flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
-            <Link
-              href="/teacher/offers"
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800"
-            >
-              {t("teacherPackagesViewOffers")}
-            </Link>
-            <Link
-              href="/teacher/offers"
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#DCEAE3] bg-white px-5 text-sm font-bold text-teal-800 hover:bg-teal-50"
-            >
-              {t("teacherPackagesCreateOffer")}
-            </Link>
-          </div>
-        </div>
+        <PlannedPackageEmptyState
+          testId="teacher-packages-empty"
+          title={
+            plannedUiEnabled
+              ? t("plannedPackageDashboardTeacherEmptyTitle")
+              : t("teacherPackagesEmptyTitle")
+          }
+          body={
+            plannedUiEnabled
+              ? t("plannedPackageDashboardTeacherEmptyBody")
+              : t("teacherPackagesEmptyBody")
+          }
+          ctaHref={PLANNED_PACKAGE_TEACHER_OFFERS_HREF}
+          ctaLabel={t("plannedPackageDashboardManageOffers")}
+        />
       ) : (
         <div className="space-y-8">
           {plannedUiEnabled && plannedActive.length > 0 ? (

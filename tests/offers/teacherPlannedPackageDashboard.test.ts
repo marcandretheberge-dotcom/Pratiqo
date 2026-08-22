@@ -308,7 +308,7 @@ test("dashboard UI and nav gate planned package flags", () => {
 
   const card = read("components/teacher/TeacherPlannedPackageCard.tsx");
   assert.match(card, /teacherPlannedPackagesProposedByYou/);
-  assert.match(card, /teacherPlannedPackagesNoTransferExecution/);
+  assert.match(card, /plannedPackageDashboardNoFinancialAction/);
   assert.doesNotMatch(card, /stripe_|teacher_net|platform_fee|Salaire|Employeur/);
 
   const nav = read("components/teacher/teacherNavConfig.ts");

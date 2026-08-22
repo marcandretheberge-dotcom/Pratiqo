@@ -156,6 +156,14 @@ function PlannedPackageOrdersInner() {
           <h1 className="text-2xl font-bold text-slate-900">{t("plannedPackageAdminOpsTitle")}</h1>
         </div>
         <p className="text-sm text-slate-600">{t("plannedPackageAdminOpsSubtitle")}</p>
+        <p className="text-sm">
+          <Link
+            href="/admin/package-launch-readiness"
+            className="font-semibold text-teal-800 hover:underline"
+          >
+            {t("plannedPackageDashboardAdminReadinessLink")}
+          </Link>
+        </p>
       </header>
 
       {disabled ? (
@@ -226,7 +234,18 @@ function PlannedPackageOrdersInner() {
               {t("plannedPackageAdminOpsLoading")}
             </div>
           ) : orders.length === 0 ? (
-            <p className="text-sm text-slate-600">{t("plannedPackageAdminOpsEmpty")}</p>
+            <div
+              className="rounded-2xl border border-dashed border-[#DCEAE3] bg-[#F3FAF6]/60 px-5 py-10 text-center"
+              data-testid="admin-planned-packages-empty"
+            >
+              <Package className="mx-auto text-teal-700/70" size={36} aria-hidden />
+              <p className="mt-3 text-base font-semibold text-slate-800">
+                {t("plannedPackageDashboardAdminEmptyTitle")}
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                {t("plannedPackageDashboardAdminEmptyBody")}
+              </p>
+            </div>
           ) : (
             <div className="overflow-x-auto rounded-2xl border border-[#DCEAE3] bg-white shadow-sm">
               <table className="min-w-full text-sm">
