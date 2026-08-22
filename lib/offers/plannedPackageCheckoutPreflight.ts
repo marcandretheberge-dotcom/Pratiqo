@@ -7,6 +7,7 @@
 
 import { canUsePlannedPackageSessionDrafts } from "./plannedPackageSessionDrafts";
 import { isPlannedPackagesEnabled } from "./plannedPackages";
+import type { TranslationKey } from "@/lib/i18n/types";
 
 export const ENABLE_PLANNED_PACKAGE_CHECKOUT_PREFLIGHT_FLAG =
   "ENABLE_PLANNED_PACKAGE_CHECKOUT_PREFLIGHT";
@@ -69,10 +70,7 @@ export type PlannedPackageCheckoutPreflightResult = {
 };
 
 /** i18n keys for human-readable blockers (never show raw codes in UI). */
-export const PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N: Record<
-  PlannedPackagePreflightBlocker,
-  string
-> = {
+export const PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N = {
   planned_packages_disabled: "plannedPackagePreflightPackagesDisabled",
   session_drafts_disabled: "plannedPackagePreflightDraftsDisabled",
   checkout_preflight_disabled: "plannedPackagePreflightDisabled",
@@ -88,14 +86,24 @@ export const PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N: Record<
   slot_outside_teacher_availability: "plannedPackagePreflightSessionUnavailable",
   teacher_unavailable_on_date: "plannedPackagePreflightSessionUnavailable",
   slot_outside_teacher_exception_hours: "plannedPackagePreflightSessionUnavailable",
-  slot_conflict: "plannedPackagePreflightSessionUnavailable",
+  slot_conflict: "plannedPackageActiveHoldConflict",
   teacher_payment_not_ready: "plannedPackagePreflightTeacherPaymentNotReady",
   package_legal_review_required: "plannedPackagePreflightLegalReviewRequired",
   planned_package_checkout_not_enabled: "plannedPackagePreflightPaidNotEnabled",
   progressive_payout_not_ready: "plannedPackagePreflightPaidNotEnabled",
   package_refund_policy_draft: "plannedPackagePreflightPaidNotEnabled",
   package_purchase_disabled: "plannedPackagePreflightPaidNotEnabled",
-};
+} as const satisfies Record<PlannedPackagePreflightBlocker, TranslationKey>;
+
+export type PlannedPackagePreflightTranslator = (key: TranslationKey) => string;
+
+/** Resolve a blocker code to localized copy via typed TranslationKey map. */
+export function plannedPackagePreflightBlockerLabel(
+  code: PlannedPackagePreflightBlocker,
+  t: PlannedPackagePreflightTranslator,
+): string {
+  return t(PLANNED_PACKAGE_PREFLIGHT_BLOCKER_I18N[code]);
+}
 
 export function isPlannedPackageCheckoutPreflightEnabled(): boolean {
   return (
