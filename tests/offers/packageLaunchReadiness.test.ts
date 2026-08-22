@@ -68,6 +68,7 @@ test("helper lists all package-related flags and never returns production_ready"
     "plannedPackageTemporaryHolds",
     "plannedPackages",
     "studentPackageDashboard",
+    "studentPlannedPackageDashboard",
     "teacherPackageVisibility",
   ].sort());
   for (const id of ids) {
