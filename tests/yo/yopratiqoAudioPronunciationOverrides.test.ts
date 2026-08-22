@@ -437,6 +437,13 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // Defended by tests/offers/plannedPackageFulfillment.test.ts.
     "app/api/planned-packages/pending-orders/[orderId]/simulate-payment-confirmed/route.ts",
     "app/api/planned-packages/pending-orders/[orderId]/checkout/route.ts",
+    // packages/planned-package-admin-ops-reconciliation — admin diagnostics + safe retry.
+    // Defended by tests/offers/plannedPackageAdminOps.test.ts.
+    "app/api/admin/planned-package-orders/route.ts",
+    "app/api/admin/planned-package-orders/[orderId]/route.ts",
+    "app/api/admin/planned-package-orders/[orderId]/retry-fulfillment/route.ts",
+    "app/(app)/admin/planned-package-orders/page.tsx",
+    "app/(app)/admin/planned-package-orders/[orderId]/page.tsx",
   ]);
   const forbidden = [
     /^app\/api\//,

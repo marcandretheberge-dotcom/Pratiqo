@@ -30,6 +30,8 @@ function isPlannedPackageSession(md: Record<string, string> | undefined): boolea
 export async function confirmPlannedPackageStripeCheckout(args: {
   session: Stripe.Checkout.Session;
   paymentIntentId: string;
+  webhookEventId?: string;
+  webhookEventType?: string;
 }): Promise<{ ok: boolean; orderId?: string; error?: string; idempotent?: boolean }> {
   const md = args.session.metadata as Record<string, string> | undefined;
   if (!isPlannedPackageSession(md)) {
@@ -85,6 +87,18 @@ export async function confirmPlannedPackageStripeCheckout(args: {
 
   const paymentReference = args.paymentIntentId || args.session.id;
   const nowIso = new Date().toISOString();
+  const webhookMeta: Record<string, unknown> = {
+    stripe_checkout_session_id: args.session.id,
+    stripe_payment_intent_id: args.paymentIntentId,
+    stripe_checkout_status: "complete",
+    paid_at: nowIso,
+    stripe_checkout_completed_at: nowIso,
+  };
+  if (args.webhookEventId) webhookMeta.last_webhook_event_id = args.webhookEventId;
+  if (args.webhookEventType) webhookMeta.last_webhook_event_type = args.webhookEventType;
+  if (args.webhookEventId || args.webhookEventType) {
+    webhookMeta.last_webhook_received_at = nowIso;
+  }
 
   if (status === "pending_payment") {
     const marked = await markPlannedPackageOrderPaymentConfirmed({
@@ -98,13 +112,19 @@ export async function confirmPlannedPackageStripeCheckout(args: {
     }
   }
 
+  const { data: beforeFulfill } = await admin
+    .from("planned_package_pending_orders")
+    .select("fulfillment_attempt_count")
+    .eq("id", orderId)
+    .maybeSingle();
+  const attemptCount = Number(beforeFulfill?.fulfillment_attempt_count ?? 0) + 1;
+
   await admin
     .from("planned_package_pending_orders")
     .update({
-      stripe_checkout_session_id: args.session.id,
-      stripe_payment_intent_id: args.paymentIntentId,
-      stripe_checkout_status: "complete",
-      paid_at: nowIso,
+      ...webhookMeta,
+      fulfillment_attempt_count: attemptCount,
+      last_fulfillment_attempt_at: nowIso,
     })
     .eq("id", orderId);
 
@@ -117,6 +137,12 @@ export async function confirmPlannedPackageStripeCheckout(args: {
   });
 
   if (!fulfillment.ok) {
+    await admin
+      .from("planned_package_pending_orders")
+      .update({
+        fulfillment_error: (fulfillment.errors[0] ?? "fulfillment_failed").slice(0, 500),
+      })
+      .eq("id", orderId);
     return { ok: false, orderId, error: fulfillment.errors[0] ?? "fulfillment_failed" };
   }
 
@@ -125,18 +151,28 @@ export async function confirmPlannedPackageStripeCheckout(args: {
 
 export async function expirePlannedPackageStripeCheckout(
   session: Stripe.Checkout.Session,
+  webhookMeta?: { eventId?: string; eventType?: string },
 ): Promise<void> {
   const md = session.metadata as Record<string, string> | undefined;
   if (!isPlannedPackageSession(md)) return;
 
   const orderId = md!.planned_package_order_id;
   const admin = adminClient();
+  const nowIso = new Date().toISOString();
+
+  const update: Record<string, unknown> = {
+    stripe_checkout_status: "expired",
+    stripe_checkout_expired_at: nowIso,
+  };
+  if (webhookMeta?.eventId) update.last_webhook_event_id = webhookMeta.eventId;
+  if (webhookMeta?.eventType) update.last_webhook_event_type = webhookMeta.eventType;
+  if (webhookMeta?.eventId || webhookMeta?.eventType) {
+    update.last_webhook_received_at = nowIso;
+  }
 
   await admin
     .from("planned_package_pending_orders")
-    .update({
-      stripe_checkout_status: "expired",
-    })
+    .update(update)
     .eq("id", orderId)
     .eq("status", "pending_payment");
 }
