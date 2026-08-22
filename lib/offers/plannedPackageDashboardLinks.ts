@@ -12,6 +12,7 @@ export const PLANNED_PACKAGE_STUDENT_EXPLORE_HREF = "/student/search";
 export const PLANNED_PACKAGE_TEACHER_OFFERS_HREF = "/teacher/offers";
 export const PLANNED_PACKAGE_ADMIN_READINESS_HREF = "/admin/package-launch-readiness";
 export const PLANNED_PACKAGE_ADMIN_ORDERS_HREF = "/admin/planned-package-orders";
+export const PLANNED_PACKAGE_ADMIN_LAUNCH_MONITOR_HREF = "/admin/planned-package-launch-monitor";
 export const PLANNED_PACKAGE_STUDENT_DASHBOARD_HREF = "/student/packages";
 export const PLANNED_PACKAGE_TEACHER_DASHBOARD_HREF = "/teacher/packages";
 

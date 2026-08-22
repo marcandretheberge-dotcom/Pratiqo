@@ -801,6 +801,15 @@ export default function AdminPackageLaunchReadinessPage() {
           <p className="mt-0.5 text-sm text-slate-600">
             Diagnostic interne · intermédiaire technologique · forfaits proposés par les professeurs
           </p>
+          <p className="mt-2 text-sm">
+            <Link
+              href="/admin/planned-package-launch-monitor"
+              className="font-semibold text-teal-800 underline"
+            >
+              Suivi lancement forfaits
+            </Link>
+            <span className="text-slate-500"> · observabilité post-lancement (lecture seule)</span>
+          </p>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
             Les offres de cours standards peuvent fonctionner séparément. Les forfaits payants
             restent bloqués jusqu’à la revue légale et la validation du modèle de remboursement.

@@ -12,8 +12,10 @@ Related:
 - [`paid-packages-launch-checklist.md`](./paid-packages-launch-checklist.md)
 - [`planned-package-public-launch-gate.md`](./planned-package-public-launch-gate.md)
 - [`planned-package-public-launch-activation.md`](./planned-package-public-launch-activation.md)
+- [`planned-package-launch-monitoring.md`](./planned-package-launch-monitoring.md)
 - Admin: `/admin/package-launch-readiness`
 - Diagnostics API: `GET /api/admin/planned-package-e2e-qa` (requires `ENABLE_PLANNED_PACKAGE_E2E_QA_TOOLS=true`, non-production)
+- Launch monitor: `/admin/planned-package-launch-monitor` (admin ops)
 
 ---
 

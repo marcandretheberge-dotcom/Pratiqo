@@ -117,6 +117,7 @@ export const PACKAGE_LAUNCH_REQUIRED_DOCS = [
   "docs/product/planned-package-dashboard-polish.md",
   "docs/product/planned-package-public-launch-gate.md",
   "docs/product/planned-package-public-launch-activation.md",
+  "docs/product/planned-package-launch-monitoring.md",
 ] as const;
 
 export const PACKAGE_LAUNCH_COPY_GUARD_TESTS = [

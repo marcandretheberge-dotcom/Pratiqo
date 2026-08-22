@@ -39,6 +39,7 @@ export type AdminOverviewModuleId =
   | "stripe_diagnostics"
   | "package_launch_readiness"
   | "planned_package_orders"
+  | "planned_package_launch_monitor"
   | "promotions"
   | "ambassadors"
   | "seo"
@@ -122,6 +123,15 @@ export const ADMIN_COMMAND_CENTER_MODULES: readonly AdminOverviewModule[] = [
       "Diagnostic paiement, fulfillment, holds et réconciliation — sans versement ni remboursement.",
     cta: "Voir les commandes",
     href: "/admin/planned-package-orders",
+    status: "ready",
+  },
+  {
+    id: "planned_package_launch_monitor",
+    title: "Suivi lancement forfaits",
+    description:
+      "Santé checkout/webhook, états bloqués, dashboards et rollback — lecture seule, sans mutation.",
+    cta: "Voir le suivi",
+    href: "/admin/planned-package-launch-monitor",
     status: "ready",
   },
   {

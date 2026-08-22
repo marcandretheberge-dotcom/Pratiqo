@@ -94,6 +94,8 @@ test("admin homepage renders marketplace command center modules", () => {
     "payments",
     "stripe_diagnostics",
     "package_launch_readiness",
+    "planned_package_orders",
+    "planned_package_launch_monitor",
     "promotions",
     "ambassadors",
     "seo",
