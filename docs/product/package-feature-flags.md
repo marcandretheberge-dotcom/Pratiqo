@@ -67,6 +67,25 @@ See also:
 | Safe preview | ON in staging after holds work; use `ENABLE_PLANNED_PACKAGE_PAYMENT_SIMULATION` for admin simulation |
 | Production note | **No Stripe Checkout / PaymentIntent / transfer**. Does not publicly launch packages. Do not rely on `NEXT_PUBLIC_*` for fulfillment |
 
+### `ENABLE_PLANNED_PACKAGE_STRIPE_CHECKOUT` (+ `NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_STRIPE_CHECKOUT`)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Pending-order checkout API + gated UI buy button |
+| Who sees effect | Authenticated student may start Stripe Checkout for their pending order |
+| Dependencies | Fulfillment engine + holds + preflight + drafts + planned packages |
+| Safe preview | ON in staging with `ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE` + Stripe test keys |
+| Production note | Requires `PACKAGE_LEGAL_REVIEW_COMPLETED=true`. Platform charge only — `transfer_group` set, **no transfer/payout** |
+
+### `ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE` (optional)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Allows non-production checkout without legal completion when Stripe test keys are configured |
+| Production note | Ignored in production — legal review always required |
+
 ### `NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION`
 
 | | |

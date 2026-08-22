@@ -436,6 +436,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // packages/planned-package-fulfillment-engine — trusted fulfill only; no Stripe.
     // Defended by tests/offers/plannedPackageFulfillment.test.ts.
     "app/api/planned-packages/pending-orders/[orderId]/simulate-payment-confirmed/route.ts",
+    "app/api/planned-packages/pending-orders/[orderId]/checkout/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,

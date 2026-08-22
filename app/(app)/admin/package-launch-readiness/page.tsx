@@ -227,6 +227,28 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
           ok={readiness.checks.plannedPackageFulfillmentNoPayoutRelease}
         />
         <ChecklistRow
+          label="Stripe Checkout forfait planifié présent"
+          ok={readiness.checks.plannedPackageStripeCheckoutPresent}
+        />
+        <ChecklistRow
+          label={`Stripe Checkout gated (ENABLE_PLANNED_PACKAGE_STRIPE_CHECKOUT) : ${
+            readiness.flags.plannedPackageStripeCheckout ? "ON" : "OFF"
+          }`}
+          ok={readiness.checks.plannedPackageStripeCheckoutGated}
+        />
+        <ChecklistRow
+          label="Stripe Checkout bloqué sans revue légale (production)"
+          ok={readiness.checks.plannedPackageStripeCheckoutLegalGated}
+        />
+        <ChecklistRow
+          label="Stripe Checkout sans transfer / versement"
+          ok={readiness.checks.plannedPackageStripeCheckoutNoTransfer}
+        />
+        <ChecklistRow
+          label="Webhook checkout → moteur fulfillment"
+          ok={readiness.checks.plannedPackageStripeCheckoutWebhookFulfillment}
+        />
+        <ChecklistRow
           label="Checkout forfait toujours bloqué"
           ok={readiness.checks.plannedPackagePublicPurchaseBlocked}
         />

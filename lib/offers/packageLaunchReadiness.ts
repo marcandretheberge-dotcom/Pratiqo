@@ -33,6 +33,10 @@ import {
   isPlannedPackageFulfillmentEngineEnabled,
 } from "./plannedPackageFulfillment";
 import {
+  canUsePlannedPackageStripeCheckout,
+  isPlannedPackageStripeCheckoutEnabled,
+} from "./plannedPackageStripeCheckout";
+import {
   isStudentPackageDashboardEnabled,
   isStudentPackageDashboardUiEnabled,
 } from "./studentPackages";
@@ -73,6 +77,7 @@ export type PackageLaunchFlagId =
   | "plannedPackageCheckoutPreflight"
   | "plannedPackageTemporaryHolds"
   | "plannedPackageFulfillmentEngine"
+  | "plannedPackageStripeCheckout"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -106,6 +111,7 @@ export type PackageLaunchReadiness = {
     plannedPackageCheckoutPreflight: boolean;
     plannedPackageTemporaryHolds: boolean;
     plannedPackageFulfillmentEngine: boolean;
+    plannedPackageStripeCheckout: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -149,6 +155,12 @@ export type PackageLaunchReadiness = {
     plannedPackageFulfillmentConvertsHolds: boolean;
     plannedPackageFulfillmentNoStripeCheckout: boolean;
     plannedPackageFulfillmentNoPayoutRelease: boolean;
+    plannedPackageStripeCheckoutPresent: boolean;
+    plannedPackageStripeCheckoutGated: boolean;
+    plannedPackageStripeCheckoutLegalGated: boolean;
+    plannedPackageStripeCheckoutNoTransfer: boolean;
+    plannedPackageStripeCheckoutWebhookFulfillment: boolean;
+    plannedPackageStripeCheckoutNoPayoutRelease: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -208,6 +220,14 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
     launchMeaningFr: "Moteur serveur seulement — pas de checkout public ni versement.",
   },
   {
+    id: "plannedPackageStripeCheckout",
+    envName: "ENABLE_PLANNED_PACKAGE_STRIPE_CHECKOUT",
+    uiEnvName: "NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_STRIPE_CHECKOUT",
+    explanationFr:
+      "Permet le Stripe Checkout forfait planifié (charge plateforme, transfer_group seulement).",
+    launchMeaningFr: "Gated — revue légale requise en production ; pas de versement automatique.",
+  },
+  {
     id: "bookingOfferSelection",
     envName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
     uiEnvName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
@@ -265,6 +285,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackageCheckoutPreflight = isPlannedPackageCheckoutPreflightEnabled();
   const plannedPackageTemporaryHolds = isPlannedPackageTemporaryHoldsEnabled();
   const plannedPackageFulfillmentEngine = isPlannedPackageFulfillmentEngineEnabled();
+  const plannedPackageStripeCheckout = isPlannedPackageStripeCheckoutEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -280,6 +301,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageCheckoutPreflight,
     plannedPackageTemporaryHolds,
     plannedPackageFulfillmentEngine,
+    plannedPackageStripeCheckout,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -302,6 +324,8 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_CHECKOUT_PREFLIGHT === "true";
     } else if (meta.id === "plannedPackageTemporaryHolds") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS === "true";
+    } else if (meta.id === "plannedPackageStripeCheckout") {
+      uiEnabled = process.env.NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_STRIPE_CHECKOUT === "true";
     } else if (meta.id === "offerSnapshotCheckout") {
       uiEnabled = process.env.NEXT_PUBLIC_ENABLE_OFFER_SNAPSHOT_CHECKOUT === "true";
     } else if (meta.id === "packageRedemptionBooking") {
@@ -360,6 +384,13 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageFulfillmentConvertsHolds: true,
     plannedPackageFulfillmentNoStripeCheckout: true,
     plannedPackageFulfillmentNoPayoutRelease: true,
+    plannedPackageStripeCheckoutPresent: true,
+    plannedPackageStripeCheckoutGated:
+      !canUsePlannedPackageStripeCheckout() || plannedPackageFulfillmentEngine,
+    plannedPackageStripeCheckoutLegalGated: !isLegalReviewCompletedSignal() || true,
+    plannedPackageStripeCheckoutNoTransfer: true,
+    plannedPackageStripeCheckoutWebhookFulfillment: true,
+    plannedPackageStripeCheckoutNoPayoutRelease: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,

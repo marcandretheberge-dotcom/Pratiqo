@@ -31,6 +31,10 @@ import {
 } from "@/lib/payments/webhookRiskEvents";
 import { issueLessonPaymentReceipt } from "@/lib/payments/receipts";
 import { maybeCreatePackageEntitlementAfterPaidBooking } from "@/lib/offers/packageEntitlements";
+import {
+  confirmPlannedPackageStripeCheckout,
+  expirePlannedPackageStripeCheckout,
+} from "@/lib/offers/confirmPlannedPackageStripeCheckout";
 
 export const runtime = "nodejs";
 
@@ -683,7 +687,9 @@ export async function POST(req: Request) {
             ? (piField as Stripe.PaymentIntent).id
             : null;
 
-      if (md?.checkout_kind === "group_session" && piId) {
+      if (md?.package_type === "planned_package" && piId) {
+        await confirmPlannedPackageStripeCheckout({ session: sess, paymentIntentId: piId });
+      } else if (md?.checkout_kind === "group_session" && piId) {
         await confirmGroupSessionCheckout(md, piId);
       } else {
         const bookingId = sess.metadata?.booking_id;
@@ -725,6 +731,11 @@ export async function POST(req: Request) {
           });
         }
       }
+    }
+
+    if (event.type === "checkout.session.expired") {
+      const sess = event.data.object as Stripe.Checkout.Session;
+      await expirePlannedPackageStripeCheckout(sess);
     }
 
     if (

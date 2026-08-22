@@ -55,6 +55,7 @@ test("helper lists all package-related flags and never returns production_ready"
     "packageRedemptionBooking",
     "plannedPackageCheckoutPreflight",
     "plannedPackageFulfillmentEngine",
+    "plannedPackageStripeCheckout",
     "plannedPackageSessionDrafts",
     "plannedPackageTemporaryHolds",
     "plannedPackages",
