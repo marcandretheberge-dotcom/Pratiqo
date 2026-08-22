@@ -624,6 +624,103 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
         </p>
       </Section>
 
+      <Section title="Public launch gate">
+        <div data-testid="package-launch-public-gate">
+          <ChecklistRow
+            label="Flag achat public présent (ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE)"
+            ok={readiness.checks.plannedPackagePublicLaunchGatePresent}
+          />
+          <ChecklistRow
+            label="Flag achat public défaut OFF"
+            ok={readiness.checks.plannedPackagePublicPurchaseFlagDefaultOff}
+          />
+          <ChecklistRow
+            label="Revue légale requise (PACKAGE_LEGAL_REVIEW_COMPLETED)"
+            ok={readiness.checks.legalReviewMarkedRequired}
+          />
+          <ChecklistRow
+            label="Version des conditions forfait définie"
+            ok={readiness.checks.plannedPackagePublicTermsVersionDefined}
+          />
+          <ChecklistRow
+            label="Consentement élève capturé (pending order)"
+            ok={readiness.checks.plannedPackageLearnerTermsConsentCaptured}
+          />
+          <ChecklistRow
+            label="Accusé de réception professeur requis pour publier"
+            ok={readiness.checks.plannedPackageTeacherTermsRequired}
+          />
+          <ChecklistRow
+            label="Mode canary supporté"
+            ok={readiness.checks.plannedPackageCanaryModeSupported}
+          />
+          <ChecklistRow
+            label="Flags tableaux élève/professeur requis pour public_ready"
+            ok={readiness.checks.plannedPackagePublicLaunchDashboardsRequired}
+          />
+          <ChecklistRow
+            label="Admin ops requis pour public_ready"
+            ok={readiness.checks.plannedPackagePublicLaunchAdminOpsRequired}
+          />
+          <ChecklistRow
+            label="Infrastructure remboursement requise"
+            ok={readiness.checks.plannedPackagePublicLaunchRefundInfraRequired}
+          />
+          <ChecklistRow
+            label="Infrastructure versement requise"
+            ok={readiness.checks.plannedPackagePublicLaunchPayoutInfraRequired}
+          />
+          <ChecklistRow
+            label="E2E QA requis pour public_ready"
+            ok={readiness.checks.plannedPackagePublicLaunchE2eQaRequired}
+          />
+          <ChecklistRow
+            label="Garde-fous de copie publique actifs"
+            ok={readiness.checks.plannedPackageUnsafeCopyGuardActive}
+          />
+          <ChecklistRow
+            label="Aucun mouvement d’argent automatique ajouté"
+            ok={readiness.checks.plannedPackageNoAutomaticMoneyMovement}
+          />
+          <ChecklistRow
+            label="Aucun lancement public actif par défaut"
+            ok={readiness.checks.plannedPackageNoPublicLaunchByDefault}
+          />
+          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+            <p>
+              <span className="font-semibold">Mode de lancement :</span>{" "}
+              <span data-testid="package-launch-mode">{readiness.publicLaunchGate.launchMode}</span>
+            </p>
+            <p className="mt-1">
+              <span className="font-semibold">Version conditions :</span>{" "}
+              <span data-testid="package-launch-terms-version">
+                {readiness.publicLaunchGate.termsVersion}
+              </span>
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Modes : disabled · staging_only · admin_preview · limited_teacher_canary · public_ready
+            </p>
+          </div>
+          <div
+            className="mt-3 rounded-xl border border-teal-100 bg-teal-50/60 px-3 py-2 text-sm text-slate-700"
+            data-testid="package-launch-admin-preview"
+          >
+            <p className="font-semibold text-teal-900">Aperçu admin (lecture seule)</p>
+            <p className="mt-1 text-xs text-slate-600">
+              CTA activé : {readiness.publicLaunchGate.adminPreview.ctaEnabledCopyKey}
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              Consentement / annulation : clés i18n listées — aucune mutation (
+              {String(readiness.publicLaunchGate.adminPreview.mutatesData)})
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              Bloqueurs aperçu :{" "}
+              {readiness.publicLaunchGate.adminPreview.blockers.join(", ") || "aucun"}
+            </p>
+          </div>
+        </div>
+      </Section>
+
       <Section title="6. Bloqueurs / alertes">
         {readiness.blockers.length === 0 ? (
           <p className="flex items-center gap-2 text-sm text-teal-800">

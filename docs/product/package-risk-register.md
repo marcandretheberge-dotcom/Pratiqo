@@ -24,6 +24,9 @@ Owner: Product / Engineering / Legal / Ops (primary listed)
 | Package refund calculated incorrectly | Critical | Tested calculator; admin audit trail; legal-approved formulas | **Yes** | Eng + Legal |
 | Legal review missing but feature flags enabled | Critical | `PACKAGE_LEGAL_REVIEW_COMPLETED` gate; readiness page; defaults OFF; no UI toggles | **Yes** | Ops + Eng |
 | Misleading public copy | High | Glossary + automated copy guards; marketing review | **Yes** | Product + Legal |
+| Public purchase enabled without full launch gate | Critical | `ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE` default OFF; `PLANNED_PACKAGE_LAUNCH_MODE`; readiness Public launch gate section | **Yes** | Ops + Eng |
+| Canary allowlist empty or invalid while in canary mode | High | Gate blocks purchase; readiness warnings for invalid UUIDs | **Yes** (canary) | Ops + Eng |
+| Learner/teacher terms not acknowledged | High | Consent on pending order + teacher publish gate + terms version constant | **Yes** | Eng + Legal |
 
 ---
 
@@ -31,4 +34,5 @@ Owner: Product / Engineering / Legal / Ops (primary listed)
 
 - Phase 1 (planned packages) reduces several hour-bank risks but does **not** remove refund/dispute/chargeback work.
 - Phase 2 (protected teacher credits) **adds** ledger and double-spend risks — do not launch without those mitigations.
+- Public launch gate docs: [`planned-package-public-launch-gate.md`](./planned-package-public-launch-gate.md).
 - This register does not change Stripe, commission, payout, or entitlement mutation code by itself.

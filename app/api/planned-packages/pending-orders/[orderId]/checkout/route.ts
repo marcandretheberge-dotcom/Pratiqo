@@ -49,10 +49,19 @@ export async function POST(req: Request, ctx: Params) {
     return NextResponse.json({ error: "order_not_found" }, { status: 400 });
   }
 
+  let learnerPackageTermsAccepted = false;
+  try {
+    const body = (await req.json()) as { learnerPackageTermsAccepted?: unknown };
+    learnerPackageTermsAccepted = body?.learnerPackageTermsAccepted === true;
+  } catch {
+    // Empty body is allowed only when terms were already stored on the order.
+  }
+
   try {
     const result = await createPlannedPackageStripeCheckoutSession({
       orderId,
       studentId: auth.userId,
+      learnerPackageTermsAccepted,
     });
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });

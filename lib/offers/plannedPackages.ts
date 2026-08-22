@@ -8,8 +8,13 @@
  * See docs/product/package-product-decision.md
  */
 
-import { isPackageEntitlementsEnabled } from "./packageEntitlements";
 import type { TeacherOfferType } from "./types";
+import {
+  canPubliclyPurchasePlannedPackageViaGate,
+  evaluatePlannedPackagePublicLaunchGate,
+  isTeacherPackageTermsAccepted,
+  type PlannedPackagePublicLaunchBlockerCode,
+} from "./plannedPackagePublicLaunchGate";
 
 export const ENABLE_PLANNED_PACKAGES_FLAG = "ENABLE_PLANNED_PACKAGES";
 export const NEXT_PUBLIC_ENABLE_PLANNED_PACKAGES_FLAG = "NEXT_PUBLIC_ENABLE_PLANNED_PACKAGES";
@@ -21,12 +26,7 @@ export const PLANNED_PACKAGE_SESSION_COUNT_MAX = 52;
 /** DB / API offer_type used for Phase 1 planned packages (no schema rename). */
 export const PLANNED_PACKAGE_OFFER_TYPE: TeacherOfferType = "package";
 
-export type PlannedPackageLaunchBlockerCode =
-  | "package_legal_review_required"
-  | "package_purchase_disabled"
-  | "planned_packages_disabled"
-  | "progressive_payout_not_ready"
-  | "package_refund_policy_draft";
+export type PlannedPackageLaunchBlockerCode = PlannedPackagePublicLaunchBlockerCode;
 
 export function isPlannedPackagesEnabled(): boolean {
   return (
@@ -51,30 +51,15 @@ export function isPackageLegalReviewCompleted(): boolean {
 }
 
 /**
- * Public purchase path remains blocked while legal, entitlements, payout, or refund
- * gates are incomplete. This skeleton PR always keeps progressive payout / refund draft blockers.
+ * Public purchase blockers from the centralized launch gate.
+ * Defaults keep purchase OFF (public purchase flag + infrastructure + legal).
  */
 export function getPlannedPackagePublicLaunchBlockers(): PlannedPackageLaunchBlockerCode[] {
-  const blockers: PlannedPackageLaunchBlockerCode[] = [];
-
-  if (!isPlannedPackagesEnabled()) {
-    blockers.push("planned_packages_disabled");
-  }
-  if (!isPackageLegalReviewCompleted()) {
-    blockers.push("package_legal_review_required");
-  }
-  if (!isPackageEntitlementsEnabled()) {
-    blockers.push("package_purchase_disabled");
-  }
-  // Not implemented in this PR — keep public launch blocked.
-  blockers.push("progressive_payout_not_ready");
-  blockers.push("package_refund_policy_draft");
-
-  return blockers;
+  return evaluatePlannedPackagePublicLaunchGate().blockers;
 }
 
 export function canPubliclyPurchasePlannedPackage(): boolean {
-  return getPlannedPackagePublicLaunchBlockers().length === 0;
+  return canPubliclyPurchasePlannedPackageViaGate();
 }
 
 function isPlannedPackageSessionDraftsFlagOn(): boolean {
@@ -86,21 +71,47 @@ function isPlannedPackageSessionDraftsFlagOn(): boolean {
 
 /** Prefer hide planned packages on public profile until purchase path is ready. */
 export function canShowPlannedPackageOnPublicProfile(): boolean {
-  if (canPubliclyPurchasePlannedPackage()) return true;
-  // Controlled session-draft preview (still no purchase CTA).
-  return isPlannedPackagesEnabled() && isPlannedPackageSessionDraftsFlagOn();
+  return evaluatePlannedPackagePublicLaunchGate().canShowPackagePublicly;
 }
 
 export function assertPlannedPackagePublishAllowed(
   offerType: TeacherOfferType | string | null | undefined,
+  options?: {
+    teacherPackageTermsAcceptedAt?: string | null;
+    teacherPackageTermsPolicyVersion?: string | null;
+  },
 ): { ok: true } | { ok: false; error: "offer_not_publishable"; blockers: PlannedPackageLaunchBlockerCode[] } {
   if (!isPlannedPackageOfferType(offerType)) return { ok: true };
-  // Session-draft mode may publish for profile visibility / draft selection only.
-  // Purchase remains blocked via canPubliclyPurchasePlannedPackage().
-  if (isPlannedPackagesEnabled() && isPlannedPackageSessionDraftsFlagOn()) return { ok: true };
+
+  // Session-draft preview may publish for visibility when drafts are on,
+  // but teacher must acknowledge package terms before public package offers.
+  if (isPlannedPackagesEnabled() && isPlannedPackageSessionDraftsFlagOn()) {
+    if (
+      !isTeacherPackageTermsAccepted({
+        acceptedAt: options?.teacherPackageTermsAcceptedAt,
+        policyVersion: options?.teacherPackageTermsPolicyVersion,
+      })
+    ) {
+      return {
+        ok: false,
+        error: "offer_not_publishable",
+        blockers: ["teacher_package_terms_required"],
+      };
+    }
+    return { ok: true };
+  }
+
   const blockers = getPlannedPackagePublicLaunchBlockers();
+  if (
+    !isTeacherPackageTermsAccepted({
+      acceptedAt: options?.teacherPackageTermsAcceptedAt,
+      policyVersion: options?.teacherPackageTermsPolicyVersion,
+    })
+  ) {
+    blockers.push("teacher_package_terms_required");
+  }
   if (blockers.length === 0) return { ok: true };
-  return { ok: false, error: "offer_not_publishable", blockers };
+  return { ok: false, error: "offer_not_publishable", blockers: [...new Set(blockers)] };
 }
 
 export function assertPlannedPackageDraftAllowed(

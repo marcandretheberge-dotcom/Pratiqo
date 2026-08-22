@@ -37,12 +37,19 @@ Required before **public** launch:
 - [ ] Student planned package dashboard reviewed (read-only; no self-serve refund)
 - [ ] Teacher planned package dashboard reviewed (read-only; no teacher transfer/refund/reversal)
 - [ ] Planned package dashboard polish / cross-links reviewed (no financial actions)
+- [ ] Public launch gate reviewed (`docs/product/planned-package-public-launch-gate.md`)
+- [ ] `ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE` remains OFF until go-live
+- [ ] `PLANNED_PACKAGE_LAUNCH_MODE` set intentionally (not accidentally `public_ready`)
+- [ ] Learner consent + teacher terms acknowledgment verified
+- [ ] Canary allowlist verified if using `limited_teacher_canary`
 - [ ] Teacher/student copy reviewed against glossary
 - [ ] Package feature flags controlled (defaults OFF; staged enablement)
 - [ ] Test purchase/refund scenarios completed
 - [ ] Teacher Connect readiness gate before purchase
 - [ ] Marketplace copy guard tests green
 - [ ] Admin readiness page shows no critical blockers for intended preview env
+
+**Rollback (public purchase only):** set both public purchase flags to `false`. Existing bookings/dashboards/admin ops remain; no financial records deleted.
 
 **Out of Phase 1:** generic Pratiqo-wide credits; automatic abusive expiration; full up-front package payout.
 

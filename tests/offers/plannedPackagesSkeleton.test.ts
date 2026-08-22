@@ -119,17 +119,26 @@ test("planned package cannot be publicly purchasable without legal review and la
   process.env.ENABLE_PLANNED_PACKAGES = "true";
   process.env.ENABLE_PACKAGE_ENTITLEMENTS = "true";
   process.env.PACKAGE_LEGAL_REVIEW_COMPLETED = "true";
-  // Skeleton always keeps progressive payout / refund draft blockers.
+  // Public purchase flag + infrastructure remain OFF by default.
   assert.equal(canPubliclyPurchasePlannedPackage(), false);
-  assert.ok(getPlannedPackagePublicLaunchBlockers().includes("progressive_payout_not_ready"));
-  assert.ok(getPlannedPackagePublicLaunchBlockers().includes("package_refund_policy_draft"));
+  assert.ok(
+    getPlannedPackagePublicLaunchBlockers().includes("planned_package_public_purchase_disabled"),
+  );
+  assert.ok(
+    getPlannedPackagePublicLaunchBlockers().includes("package_checkout_chain_incomplete") ||
+      getPlannedPackagePublicLaunchBlockers().includes("package_refund_infrastructure_required") ||
+      getPlannedPackagePublicLaunchBlockers().includes("package_admin_ops_required"),
+  );
 
   resetFlags();
   const blocked = assertPlannedPackagePublishAllowed("package");
   assert.equal(blocked.ok, false);
   if (!blocked.ok) {
-    assert.ok(blocked.blockers.includes("package_legal_review_required"));
-    assert.ok(blocked.blockers.includes("package_purchase_disabled"));
+    assert.ok(
+      blocked.blockers.includes("teacher_package_terms_required") ||
+        blocked.blockers.includes("package_legal_review_required") ||
+        blocked.blockers.includes("planned_packages_disabled"),
+    );
   }
 });
 

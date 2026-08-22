@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { TeacherOfferPublishChecklist } from "@/components/teacher/TeacherOfferPublishChecklist";
 import { TeacherOfferPreview } from "@/components/teacher/TeacherOfferPreview";
 import { TeacherOfferCoverUpload } from "@/components/teacher/TeacherOfferCoverUpload";
+import { PlannedPackageTeacherTermsAck } from "@/components/packages/PlannedPackageTeacherTermsAck";
 import type { TeacherOfferDto, TeacherOfferPolicyPreference } from "@/lib/offers/types";
 
 type Props = {
@@ -203,6 +204,9 @@ export function TeacherOfferForm({
                   <p className="mt-1 text-xs text-slate-500" data-testid="planned-package-draft-notice">
                     {t("teacherOffersPlannedPackageHint")}
                   </p>
+                ) : null}
+                {packagesAvailable && isPackage ? (
+                  <PlannedPackageTeacherTermsAck required />
                 ) : null}
                 <FieldError errors={errors} keys={["offerType"]} />
               </div>
