@@ -3286,5 +3286,18 @@
   "plannedPackageAdminOpsReason_transfer_partially_reversed": "Transfer partially reversed",
   "plannedPackageAdminOpsReason_refund_waiting_on_transfer_reversal": "Refund waiting on transfer reversal",
   "plannedPackageAdminOpsReason_transfer_reversed_but_refund_not_executed": "Transfer reversed but refund not executed",
-  "plannedPackageAdminOpsReason_transfer_reversal_insufficient_balance": "Insufficient connected balance for reversal"
+  "plannedPackageAdminOpsReason_transfer_reversal_insufficient_balance": "Insufficient connected balance for reversal",
+  "plannedPackageE2eQaTitle": "Package E2E verification",
+  "plannedPackageE2eQaDiagnostics": "Planned package diagnostics",
+  "plannedPackageE2eQaReadyForStaging": "Ready for staging test",
+  "plannedPackageE2eQaMissingMigration": "Missing migration",
+  "plannedPackageE2eQaMissingFlag": "Missing flag",
+  "plannedPackageE2eQaWebhookConfigured": "Stripe webhook configured",
+  "plannedPackageE2eQaWebhookMissing": "Stripe webhook missing",
+  "plannedPackageE2eQaStripeTestModeRequired": "Stripe test mode required",
+  "plannedPackageE2eQaNoSecretsDisplayed": "No secrets are displayed",
+  "plannedPackageE2eQaPublicLaunchBlocked": "Public launch still blocked",
+  "plannedPackageE2eQaViewRunbook": "View QA runbook",
+  "plannedPackageE2eQaLifecycleTestRequired": "Full lifecycle test required",
+  "plannedPackageE2eQaFinancialAdminOnly": "Financial actions remain admin-only"
 }

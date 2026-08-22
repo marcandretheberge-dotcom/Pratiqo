@@ -923,6 +923,27 @@ const allowedPlannedPackageManualTransferReversalFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Planned package E2E staging QA harness — diagnostics only, no money movement. */
+const allowedPlannedPackageE2eQaFiles = new Set<string>([
+  "lib/offers/plannedPackageE2eQaTools.ts",
+  "lib/offers/plannedPackageE2eQa.ts",
+  "lib/offers/packageLaunchReadiness.ts",
+  "app/api/admin/planned-package-e2e-qa/route.ts",
+  "app/(app)/admin/package-launch-readiness/page.tsx",
+  "docs/product/planned-package-e2e-staging-qa.md",
+  "docs/product/package-feature-flags.md",
+  "docs/product/paid-packages-launch-checklist.md",
+  "lib/i18n/locales/fr.json",
+  "lib/i18n/locales/en.json",
+  "lib/i18n/locales/es.json",
+  ".env.example",
+  "tests/offers/plannedPackageE2eLifecycle.test.ts",
+  "tests/offers/packageLaunchReadiness.test.ts",
+  "tests/legal/safeDisclosures.test.ts",
+  "tests/legal/founderDecisionsAlignment.test.ts",
+  "package.json",
+]);
+
 /** Teacher offer cover images (PR 15). */
 const allowedTeacherOfferCoverImageFiles = new Set<string>([
   "supabase/migrations/104_teacher_offer_covers_bucket.sql",
@@ -1452,6 +1473,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedPlannedPackagePayoutEligibilityFiles.has(file)) continue;
     if (allowedPlannedPackageManualTransferFiles.has(file)) continue;
     if (allowedPlannedPackageManualTransferReversalFiles.has(file)) continue;
+    if (allowedPlannedPackageE2eQaFiles.has(file)) continue;
     if (allowedTeacherOfferCoverImageFiles.has(file)) continue;
     if (allowedTeacherOfferCancellationPreferenceFiles.has(file)) continue;
     if (allowedTeacherAvailabilityStartDateFiles.has(file)) continue;

@@ -153,6 +153,17 @@ See also:
 | Dependencies | Manual transfers + payout eligibility ledger + admin view + admin ops |
 | Production note | Requires `PACKAGE_LEGAL_REVIEW_COMPLETED=true`; no customer refund in this layer |
 
+### `ENABLE_PLANNED_PACKAGE_E2E_QA_TOOLS` (server only)
+
+| | |
+|--|--|
+| Default | OFF |
+| Runtime | Admin E2E diagnostics API + readiness section details |
+| Who sees effect | Admins in staging/dev — read-only lifecycle diagnostics |
+| Dependencies | None (diagnostics only) |
+| Safe preview | ON in staging after migrations 114–123 |
+| Production note | **Rejected in production** even if set. No money movement. Does not enable public launch |
+
 ### `ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE` (optional)
 
 | | |

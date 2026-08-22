@@ -33,6 +33,7 @@ Required before **public** launch:
 - [ ] Payout eligibility ledger synced for completed sessions
 - [ ] Manual transfer execution reviewed (admin-only; no automatic payout cron)
 - [ ] Manual transfer reversal reviewed (admin-only; no automatic refund)
+- [ ] Staging E2E QA runbook completed (`docs/product/planned-package-e2e-staging-qa.md`)
 - [ ] Teacher/student copy reviewed against glossary
 - [ ] Package feature flags controlled (defaults OFF; staged enablement)
 - [ ] Test purchase/refund scenarios completed

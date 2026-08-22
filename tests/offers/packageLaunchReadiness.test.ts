@@ -62,6 +62,7 @@ test("helper lists all package-related flags and never returns production_ready"
     "plannedPackageManualRefunds",
     "plannedPackageManualTransfers",
     "plannedPackageManualTransferReversals",
+    "plannedPackageE2eQaTools",
     "plannedPackagePayoutEligibilityLedger",
     "plannedPackageSessionDrafts",
     "plannedPackageTemporaryHolds",

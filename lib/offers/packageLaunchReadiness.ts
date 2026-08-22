@@ -60,6 +60,10 @@ import {
   isPlannedPackageManualTransferReversalsEnabled,
 } from "./plannedPackageManualTransferReversals";
 import {
+  canUsePlannedPackageE2eQaTools,
+  isPlannedPackageE2eQaToolsEnabled,
+} from "./plannedPackageE2eQaTools";
+import {
   canUsePlannedPackageStripeCheckout,
   isPlannedPackageStripeCheckoutEnabled,
 } from "./plannedPackageStripeCheckout";
@@ -85,6 +89,7 @@ export const PACKAGE_LAUNCH_REQUIRED_DOCS = [
   "docs/product/package-risk-register.md",
   "docs/product/package-refund-cancellation-policy-draft.md",
   "docs/product/package-public-copy-draft.md",
+  "docs/product/planned-package-e2e-staging-qa.md",
 ] as const;
 
 export const PACKAGE_LAUNCH_COPY_GUARD_TESTS = [
@@ -112,6 +117,7 @@ export type PackageLaunchFlagId =
   | "plannedPackagePayoutEligibilityLedger"
   | "plannedPackageManualTransfers"
   | "plannedPackageManualTransferReversals"
+  | "plannedPackageE2eQaTools"
   | "bookingOfferSelection"
   | "offerSnapshotCheckout"
   | "packageEntitlements"
@@ -153,6 +159,7 @@ export type PackageLaunchReadiness = {
     plannedPackagePayoutEligibilityLedger: boolean;
     plannedPackageManualTransfers: boolean;
     plannedPackageManualTransferReversals: boolean;
+    plannedPackageE2eQaTools: boolean;
     bookingOfferSelection: boolean;
     offerSnapshotCheckout: boolean;
     packageEntitlements: boolean;
@@ -243,6 +250,19 @@ export type PackageLaunchReadiness = {
     plannedPackageManualTransferReversalNoAutomaticRefund: boolean;
     plannedPackageManualTransferReversalNoNewTransfer: boolean;
     plannedPackageManualTransferReversalNoStripePayout: boolean;
+    plannedPackageE2eQaDocsPresent: boolean;
+    plannedPackageE2eQaDiagnosticsPresent: boolean;
+    plannedPackageE2eQaLifecycleSmokePresent: boolean;
+    plannedPackageE2eQaToolsGated: boolean;
+    plannedPackageE2eQaNoPublicLaunchByDefault: boolean;
+    plannedPackageE2eQaLegalReviewStillRequired: boolean;
+    plannedPackageE2eQaStripeLiveRejectedForTools: boolean;
+    plannedPackageE2eQaAdminOnlyMoneyMovement: boolean;
+    plannedPackageE2eQaIdempotencyTestsPresent: boolean;
+    plannedPackageE2eQaMigrationsDocumented: boolean;
+    plannedPackageE2eQaNoAutomaticPayoutCron: boolean;
+    plannedPackageE2eQaNoAutomaticRefundCron: boolean;
+    plannedPackageE2eQaNoAutomaticReversalCron: boolean;
     plannedPackagePublicPurchaseBlocked: boolean;
     progressivePayoutNotImplemented: boolean;
     refundPolicyStillDraft: boolean;
@@ -370,6 +390,15 @@ export const PACKAGE_LAUNCH_FLAG_META: ReadonlyArray<{
       "Admin-only après transfer confirmé — revue légale requise en production ; remboursement reste séparé.",
   },
   {
+    id: "plannedPackageE2eQaTools",
+    envName: "ENABLE_PLANNED_PACKAGE_E2E_QA_TOOLS",
+    uiEnvName: null,
+    explanationFr:
+      "Diagnostics QA staging pour le cycle forfait planifié — lecture seule, aucun mouvement d’argent.",
+    launchMeaningFr:
+      "Staging/dev seulement — rejeté en production ; ne lance pas les forfaits publiquement.",
+  },
+  {
     id: "bookingOfferSelection",
     envName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
     uiEnvName: "NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION",
@@ -435,6 +464,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
   const plannedPackagePayoutEligibilityLedger = isPlannedPackagePayoutEligibilityLedgerEnabled();
   const plannedPackageManualTransfers = isPlannedPackageManualTransfersEnabled();
   const plannedPackageManualTransferReversals = isPlannedPackageManualTransferReversalsEnabled();
+  const plannedPackageE2eQaTools = isPlannedPackageE2eQaToolsEnabled();
   const bookingOfferSelection = isBookingOfferSelectionEnabled();
   const offerSnapshotCheckout = isOfferSnapshotCheckoutEnabled();
   const packageEntitlements = isPackageEntitlementsEnabled();
@@ -458,6 +488,7 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackagePayoutEligibilityLedger,
     plannedPackageManualTransfers,
     plannedPackageManualTransferReversals,
+    plannedPackageE2eQaTools,
     bookingOfferSelection,
     offerSnapshotCheckout,
     packageEntitlements,
@@ -596,6 +627,19 @@ export function getPackageLaunchReadiness(): PackageLaunchReadiness {
     plannedPackageManualTransferReversalNoAutomaticRefund: true,
     plannedPackageManualTransferReversalNoNewTransfer: true,
     plannedPackageManualTransferReversalNoStripePayout: true,
+    plannedPackageE2eQaDocsPresent: true,
+    plannedPackageE2eQaDiagnosticsPresent: true,
+    plannedPackageE2eQaLifecycleSmokePresent: true,
+    plannedPackageE2eQaToolsGated: !canUsePlannedPackageE2eQaTools() || plannedPackageE2eQaTools,
+    plannedPackageE2eQaNoPublicLaunchByDefault: !canPubliclyPurchasePlannedPackage(),
+    plannedPackageE2eQaLegalReviewStillRequired: !isLegalReviewCompletedSignal(),
+    plannedPackageE2eQaStripeLiveRejectedForTools: true,
+    plannedPackageE2eQaAdminOnlyMoneyMovement: true,
+    plannedPackageE2eQaIdempotencyTestsPresent: true,
+    plannedPackageE2eQaMigrationsDocumented: true,
+    plannedPackageE2eQaNoAutomaticPayoutCron: true,
+    plannedPackageE2eQaNoAutomaticRefundCron: true,
+    plannedPackageE2eQaNoAutomaticReversalCron: true,
     plannedPackagePublicPurchaseBlocked: !canPubliclyPurchasePlannedPackage(),
     progressivePayoutNotImplemented: true,
     refundPolicyStillDraft: true,
