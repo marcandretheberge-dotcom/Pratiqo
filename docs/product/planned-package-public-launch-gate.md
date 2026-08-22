@@ -89,23 +89,41 @@ Admin/internal ops terms (Stripe, transfer, refund execution, etc.) remain allow
 
 ## Rollback
 
-To disable public package purchase:
+### Emergency rollback (stop new public purchases)
 
 ```
 ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE=false
 NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE=false
 ```
 
+### Full package visibility rollback
+
+```
+ENABLE_PLANNED_PACKAGES=false
+NEXT_PUBLIC_ENABLE_PLANNED_PACKAGES=false
+```
+
+### Dashboard-only rollback
+
+```
+ENABLE_STUDENT_PLANNED_PACKAGE_DASHBOARD=false
+NEXT_PUBLIC_ENABLE_STUDENT_PLANNED_PACKAGE_DASHBOARD=false
+ENABLE_TEACHER_PLANNED_PACKAGE_DASHBOARD=false
+NEXT_PUBLIC_ENABLE_TEACHER_PLANNED_PACKAGE_DASHBOARD=false
+```
+
 Expected:
 
 - existing confirmed package bookings remain visible;
-- new package purchase CTA disabled;
-- admin ops remain available;
-- student/teacher dashboards remain available if their flags stay ON;
+- new package purchase CTA disabled (emergency / full rollback);
+- admin ops remain available if admin flags stay ON;
+- student/teacher dashboards remain available if their flags stay ON (unless dashboard-only rollback);
 - no financial records deleted;
 - pending holds expire normally.
 
 No destructive rollback scripts.
+
+Activation runbook: [`planned-package-public-launch-activation.md`](./planned-package-public-launch-activation.md).
 
 ---
 

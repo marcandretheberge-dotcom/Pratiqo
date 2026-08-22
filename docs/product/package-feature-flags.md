@@ -271,18 +271,48 @@ See also:
 | Safe preview | ON in staging after package cancel/restore is validated |
 | Production note | Keep OFF until teacher preferences + legal copy are ready. Does **not** create Stripe refunds |
 
+### `ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE` (+ `NEXT_PUBLIC_ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE`)
+
+| | |
+|--|--|
+| Default | OFF unless hosting env sets `true` (see activation profile) |
+| Runtime | Public CTA + purchase boundaries via `plannedPackagePublicLaunchGate` |
+| Who sees effect | Learners may start package purchase when full chain + legal + terms pass |
+| Dependencies | Full planned-package chain + dashboards + admin ops + refund/payout infra |
+| Safe preview | Canary / staging modes before `public_ready` |
+| Production note | Still blocked without `PACKAGE_LEGAL_REVIEW_COMPLETED=true` |
+
+### `PLANNED_PACKAGE_LAUNCH_MODE`
+
+| | |
+|--|--|
+| Default | `disabled` |
+| Runtime | Launch gate mode selector |
+| Values | `disabled` · `staging_only` · `admin_preview` · `limited_teacher_canary` · `public_ready` |
+| Production note | Activation profile uses `public_ready` — does not bypass legal/terms/Stripe |
+
 ### `PACKAGE_LEGAL_REVIEW_COMPLETED` (ops signal only)
 
 | | |
 |--|--|
 | Default | unset / OFF |
-| Runtime | Admin readiness helper only |
-| Who sees effect | Admins on readiness page |
+| Runtime | Public launch gate + admin readiness |
+| Who sees effect | Blocks public purchase when missing; admins see readiness blocker |
 | Dependencies | Counsel sign-off outside the app |
 | Safe preview | Leave unset |
-| Production note | Set `true` only after Québec counsel review — does not auto-enable other flags |
+| Production note | Set `true` **only** after Québec counsel review — never hardcode in app code |
 
-## Safe preview combination (staging)
+## Public launch activation profile
+
+See [`planned-package-public-launch-activation.md`](./planned-package-public-launch-activation.md) and `.env.example` / `.env.production.example`.
+
+```
+PLANNED_PACKAGE_LAUNCH_MODE=public_ready
+# + all planned package / dashboard / ops / refund / payout flags = true
+# PACKAGE_LEGAL_REVIEW_COMPLETED=true  # only after real legal sign-off
+```
+
+## Safe preview combination (legacy entitlement path)
 
 ```
 NEXT_PUBLIC_ENABLE_BOOKING_OFFER_SELECTION=true
@@ -295,4 +325,4 @@ ENABLE_TEACHER_PACKAGE_VISIBILITY=true
 NEXT_PUBLIC_ENABLE_TEACHER_PACKAGE_VISIBILITY=true
 ```
 
-Keep production flags OFF until legal launch checklist is complete.
+Keep `PACKAGE_LEGAL_REVIEW_COMPLETED` unset until counsel completes review.

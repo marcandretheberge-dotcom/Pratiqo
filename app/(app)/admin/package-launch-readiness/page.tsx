@@ -626,13 +626,62 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
 
       <Section title="Public launch gate">
         <div data-testid="package-launch-public-gate">
+          <div
+            className={
+              readiness.activationStatus === "public_launch_ready"
+                ? "mb-3 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2 text-sm text-teal-900"
+                : readiness.activationStatus === "legal_review_blocked"
+                  ? "mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950"
+                  : "mb-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+            }
+            data-testid="package-launch-activation-status"
+            data-status={readiness.activationStatus}
+          >
+            {readiness.activationStatus === "public_launch_ready"
+              ? "Gate de lancement public prêt"
+              : readiness.activationStatus === "legal_review_blocked"
+                ? "Lancement public bloqué : revue légale requise"
+                : "Flags de lancement public incomplets"}
+          </div>
+          <ChecklistRow
+            label="Flags de lancement public activés"
+            ok={readiness.checks.plannedPackagePublicLaunchFlagsEnabled}
+          />
+          <ChecklistRow
+            label="Mode lancement public (public_ready)"
+            ok={readiness.launchProfile.launchModeIsPublicReady}
+          />
+          <ChecklistRow
+            label="Tous les flags de forfaits attendus sont ON"
+            ok={readiness.launchProfile.missingFlags.length === 0}
+          />
+          <ChecklistRow
+            label="Lancement public bloqué : revue légale requise"
+            ok={!readiness.checks.plannedPackagePublicLaunchLegalBlocked}
+          />
+          <ChecklistRow
+            label="Gate de lancement public prêt"
+            ok={readiness.checks.plannedPackagePublicLaunchGateReady}
+          />
+          <ChecklistRow
+            label="Les conditions apprenant restent requises"
+            ok={readiness.checks.plannedPackageLearnerTermsStillRequired}
+          />
+          <ChecklistRow
+            label="Les conditions professeur restent requises"
+            ok={readiness.checks.plannedPackageTeacherTermsStillRequired}
+          />
+          <ChecklistRow
+            label="La configuration Stripe reste requise"
+            ok={readiness.checks.plannedPackageStripeSetupStillRequired}
+          />
+          <ChecklistRow
+            label="Rollback disponible (documenté)"
+            ok={readiness.checks.plannedPackageRollbackDocumented}
+          />
           <ChecklistRow
             label="Flag achat public présent (ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE)"
             ok={readiness.checks.plannedPackagePublicLaunchGatePresent}
-          />
-          <ChecklistRow
-            label="Flag achat public défaut OFF"
-            ok={readiness.checks.plannedPackagePublicPurchaseFlagDefaultOff}
           />
           <ChecklistRow
             label="Revue légale requise (PACKAGE_LEGAL_REVIEW_COMPLETED)"
@@ -651,39 +700,11 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
             ok={readiness.checks.plannedPackageTeacherTermsRequired}
           />
           <ChecklistRow
-            label="Mode canary supporté"
-            ok={readiness.checks.plannedPackageCanaryModeSupported}
-          />
-          <ChecklistRow
-            label="Flags tableaux élève/professeur requis pour public_ready"
-            ok={readiness.checks.plannedPackagePublicLaunchDashboardsRequired}
-          />
-          <ChecklistRow
-            label="Admin ops requis pour public_ready"
-            ok={readiness.checks.plannedPackagePublicLaunchAdminOpsRequired}
-          />
-          <ChecklistRow
-            label="Infrastructure remboursement requise"
-            ok={readiness.checks.plannedPackagePublicLaunchRefundInfraRequired}
-          />
-          <ChecklistRow
-            label="Infrastructure versement requise"
-            ok={readiness.checks.plannedPackagePublicLaunchPayoutInfraRequired}
-          />
-          <ChecklistRow
-            label="E2E QA requis pour public_ready"
-            ok={readiness.checks.plannedPackagePublicLaunchE2eQaRequired}
-          />
-          <ChecklistRow
-            label="Garde-fous de copie publique actifs"
-            ok={readiness.checks.plannedPackageUnsafeCopyGuardActive}
-          />
-          <ChecklistRow
             label="Aucun mouvement d’argent automatique ajouté"
             ok={readiness.checks.plannedPackageNoAutomaticMoneyMovement}
           />
           <ChecklistRow
-            label="Aucun lancement public actif par défaut"
+            label="Lecteurs de flags toujours explicites (pas de ON hardcodé)"
             ok={readiness.checks.plannedPackageNoPublicLaunchByDefault}
           />
           <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
@@ -698,7 +719,10 @@ function ReadinessBody({ readiness }: { readiness: PackageLaunchReadiness }) {
               </span>
             </p>
             <p className="mt-1 text-xs text-slate-500">
-              Modes : disabled · staging_only · admin_preview · limited_teacher_canary · public_ready
+              Profil prévu : {readiness.launchProfile.intendedLaunchProfile} · Flags manquants :{" "}
+              {readiness.launchProfile.missingFlags.length === 0
+                ? "aucun"
+                : readiness.launchProfile.missingFlags.join(", ")}
             </p>
           </div>
           <div
