@@ -18,7 +18,11 @@ export type PlannedPackagePendingOrderStatus =
   | "pending_payment"
   | "expired"
   | "cancelled"
-  | "paid";
+  | "paid"
+  | "payment_confirmed"
+  | "fulfilling"
+  | "fulfilled"
+  | "fulfillment_failed";
 
 export type PlannedPackageSessionHoldStatus =
   | "active"
