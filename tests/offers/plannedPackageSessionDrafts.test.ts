@@ -20,6 +20,12 @@ import {
 } from "@/lib/offers/plannedPackages";
 import { getPackageLaunchReadiness } from "@/lib/offers/packageLaunchReadiness";
 import { parseStartsAtToBookingSlot } from "@/lib/offers/validatePlannedPackageDraftSessions";
+import {
+  loadPlannedPackageTeacherForSlot,
+  validatePlannedPackageDraftSlot,
+  type PlannedPackageSlotAdmin,
+} from "@/lib/offers/validatePlannedPackageDraftSessions";
+import { formatLocalISODate } from "@/lib/slots";
 
 const root = process.cwd();
 
@@ -104,6 +110,129 @@ test("parseStartsAtToBookingSlot maps to local date + slot label", () => {
   assert.match(parsed!.slotDate, /^\d{4}-\d{2}-\d{2}$/);
   assert.match(parsed!.timeSlot, /^\d{1,2}h\d{2}$/);
   assert.ok(parsed!.endsAtIso > parsed!.startsAtIso);
+});
+
+function futureDraftSlot(hoursAhead = 48): {
+  slot: ReturnType<typeof parseStartsAtToBookingSlot> & object;
+  durationMinutes: number;
+} {
+  const start = new Date(Date.now() + hoursAhead * 60 * 60 * 1000);
+  start.setSeconds(0, 0);
+  start.setMinutes(Math.floor(start.getMinutes() / 15) * 15);
+  const durationMinutes = 60;
+  const slot = parseStartsAtToBookingSlot(start.toISOString(), durationMinutes);
+  assert.ok(slot);
+  return { slot: slot!, durationMinutes };
+}
+
+function teacherLookupAdmin(opts: {
+  teacher?: { id: string; available_from_date?: string | null; schedule_mode?: string | null } | null;
+  error?: { message?: string } | null;
+  omitMaybeSingle?: boolean;
+}): PlannedPackageSlotAdmin {
+  const filter = {
+    eq() {
+      return filter;
+    },
+    ...(opts.omitMaybeSingle
+      ? {}
+      : {
+          maybeSingle: async () => ({
+            data: opts.teacher ?? null,
+            error: opts.error ?? null,
+          }),
+        }),
+    then(resolve: (value: { data: unknown; error: unknown }) => unknown) {
+      return Promise.resolve(resolve({ data: [], error: null }));
+    },
+  };
+  return {
+    from() {
+      return {
+        select() {
+          return filter;
+        },
+      };
+    },
+  } as unknown as PlannedPackageSlotAdmin;
+}
+
+test("validatePlannedPackageDraftSlot loads teacher via maybeSingle safely", async () => {
+  delete process.env.ENABLE_TEACHER_SCHEDULE_EXCEPTIONS;
+  delete process.env.ENABLE_TEACHER_PRECISE_SCHEDULE_BOOKING;
+  const { slot, durationMinutes } = futureDraftSlot();
+  const admin = teacherLookupAdmin({
+    teacher: {
+      id: "t1",
+      available_from_date: null,
+      schedule_mode: "legacy_blocks",
+    },
+  });
+  const result = await validatePlannedPackageDraftSlot({
+    admin,
+    teacherId: "t1",
+    slot,
+    durationMinutes,
+  });
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.availabilitySource, "weekly_intervals_or_legacy");
+  }
+});
+
+test("missing teacher returns offer_not_found; missing maybeSingle does not throw", async () => {
+  delete process.env.ENABLE_TEACHER_SCHEDULE_EXCEPTIONS;
+  delete process.env.ENABLE_TEACHER_PRECISE_SCHEDULE_BOOKING;
+  const { slot, durationMinutes } = futureDraftSlot();
+
+  const missing = await validatePlannedPackageDraftSlot({
+    admin: teacherLookupAdmin({ teacher: null }),
+    teacherId: "missing",
+    slot,
+    durationMinutes,
+  });
+  assert.equal(missing.ok, false);
+  if (!missing.ok) assert.equal(missing.error, "offer_not_found");
+
+  const badShape = await loadPlannedPackageTeacherForSlot(
+    teacherLookupAdmin({ omitMaybeSingle: true }),
+    "t1",
+  );
+  assert.equal(badShape.ok, false);
+  if (!badShape.ok) assert.equal(badShape.error, "server_error");
+});
+
+test("available_from_date still blocks early slots", async () => {
+  delete process.env.ENABLE_TEACHER_SCHEDULE_EXCEPTIONS;
+  delete process.env.ENABLE_TEACHER_PRECISE_SCHEDULE_BOOKING;
+  const { slot, durationMinutes } = futureDraftSlot();
+  const farFuture = "2099-01-01";
+  const result = await validatePlannedPackageDraftSlot({
+    admin: teacherLookupAdmin({
+      teacher: { id: "t1", available_from_date: farFuture, schedule_mode: "legacy_blocks" },
+    }),
+    teacherId: "t1",
+    slot,
+    durationMinutes,
+  });
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.error, "slot_outside_teacher_availability");
+  // Sanity: slot date is before farFuture when using near-term futureDraftSlot
+  assert.ok(slot.slotDate < farFuture || formatLocalISODate(new Date()) < farFuture);
+});
+
+test("draft teacher lookup helper and validator avoid Stripe/bookings/entitlements", () => {
+  const validate = read("lib/offers/validatePlannedPackageDraftSessions.ts");
+  assert.match(validate, /loadPlannedPackageTeacherForSlot/);
+  assert.match(validate, /typeof maybeSingle !== "function"/);
+  assert.match(validate, /as unknown as PlannedPackageTeacherQuery/);
+  assert.doesNotMatch(validate, /\bany\b/);
+  assert.doesNotMatch(validate, /@ts-ignore|@ts-expect-error/);
+  assert.doesNotMatch(validate, /new Stripe\(/);
+  assert.doesNotMatch(validate, /from\("bookings"\)\.insert/);
+  assert.doesNotMatch(validate, /package_entitlements/);
+  assert.doesNotMatch(validate, /package_redemptions/);
+  assert.doesNotMatch(read("lib/bookings/dateExceptionGuard.ts"), /planned.package.teacher|PlannedPackageTeacher/);
 });
 
 test("draft API routes exist and require auth + flags; no Stripe/bookings/entitlements", () => {

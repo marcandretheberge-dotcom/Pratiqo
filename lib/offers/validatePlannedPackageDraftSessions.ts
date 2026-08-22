@@ -13,21 +13,18 @@ import { canBookTeacherOnDate } from "@/lib/teachers/availabilityStartDate";
 
 export type PlannedPackageSlotAdmin = DateExceptionAdmin & WeeklyIntervalAdmin;
 
-type TeacherRowAdmin = {
-  from: (table: string) => {
-    select: (columns: string) => {
-      eq: (column: string, value: string) => {
-        maybeSingle: () => Promise<{
-          data: {
-            id?: string;
-            available_from_date?: string | null;
-            schedule_mode?: string | null;
-          } | null;
-          error: { message?: string } | null;
-        }>;
-      };
-    };
-  };
+export type PlannedPackageTeacherRow = {
+  id?: string;
+  available_from_date?: string | null;
+  schedule_mode?: string | null;
+};
+
+/** Narrow query shape after `.eq(...)` — mirrors weeklyIntervalGuard maybeSingle access. */
+type PlannedPackageTeacherQuery = {
+  maybeSingle?: () => PromiseLike<{
+    data: PlannedPackageTeacherRow | null;
+    error: { message?: string } | null;
+  }>;
 };
 
 export type ParsedDraftSlot = {
@@ -58,6 +55,38 @@ export function parseStartsAtToBookingSlot(
   };
 }
 
+/**
+ * Load teacher row for draft slot validation without chaining maybeSingle on
+ * the DateExceptionAdmin ∩ WeeklyIntervalAdmin intersection (which resolves
+ * `.eq(...)` as DateExceptionFilter without maybeSingle).
+ */
+export async function loadPlannedPackageTeacherForSlot(
+  admin: PlannedPackageSlotAdmin,
+  teacherId: string,
+): Promise<
+  | { ok: true; teacher: PlannedPackageTeacherRow }
+  | { ok: false; error: "offer_not_found" | "server_error" }
+> {
+  const teacherQuery = admin
+    .from("teachers")
+    .select("id, available_from_date, schedule_mode")
+    .eq("id", teacherId) as unknown as PlannedPackageTeacherQuery;
+
+  const maybeSingle = teacherQuery.maybeSingle;
+  if (typeof maybeSingle !== "function") {
+    return { ok: false, error: "server_error" };
+  }
+
+  const { data: teacher, error: teacherErr } = await maybeSingle.call(teacherQuery);
+  if (teacherErr) {
+    return { ok: false, error: "server_error" };
+  }
+  if (!teacher?.id) {
+    return { ok: false, error: "offer_not_found" };
+  }
+  return { ok: true, teacher };
+}
+
 export async function validatePlannedPackageDraftSlot(args: {
   admin: PlannedPackageSlotAdmin;
   teacherId: string;
@@ -75,15 +104,11 @@ export async function validatePlannedPackageDraftSlot(args: {
     return { ok: false, error: "slot_outside_teacher_availability" };
   }
 
-  const { data: teacher, error: teacherErr } = await (admin as unknown as TeacherRowAdmin)
-    .from("teachers")
-    .select("id, available_from_date, schedule_mode")
-    .eq("id", teacherId)
-    .maybeSingle();
-
-  if (teacherErr || !teacher?.id) {
-    return { ok: false, error: "offer_not_found" };
+  const loaded = await loadPlannedPackageTeacherForSlot(admin, teacherId);
+  if (!loaded.ok) {
+    return { ok: false, error: loaded.error === "server_error" ? "server_error" : "offer_not_found" };
   }
+  const teacher = loaded.teacher;
 
   if (!canBookTeacherOnDate(teacher.available_from_date ?? null, slot.slotDate)) {
     return { ok: false, error: "slot_outside_teacher_availability" };
