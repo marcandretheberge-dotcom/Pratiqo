@@ -10,10 +10,10 @@ import type { TeacherSeoPublicationRow } from "@/lib/seo/teacherSeoPublication";
 import { countTeacherSubjects, fetchTeacherSubjectCountsByIds } from "@/lib/seo/teacherSubjectCounts";
 
 const SEO_ROW_SELECT =
-  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at";
+  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, marketplace_discovery_opt_out, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at";
 
 const SEO_PUBLICATION_ROW_SELECT =
-  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, image_url, price_per_lesson, intro_session_enabled, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason";
+  "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, marketplace_discovery_opt_out, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, image_url, price_per_lesson, intro_session_enabled, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason";
 
 const PROFILE_SEO_SELECT =
   "id, teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at";
@@ -29,6 +29,7 @@ type SeoRowRaw = {
   country_code: string | null;
   teaching_mode: string | null;
   is_public: boolean | null;
+  marketplace_discovery_opt_out?: boolean | null;
   deactivated_at: string | null;
   deleted_at: string | null;
   is_demo: boolean | null;
@@ -74,6 +75,7 @@ function flattenSeoRow(
     country_code: raw.country_code,
     teaching_mode: raw.teaching_mode,
     is_public: raw.is_public,
+    marketplace_discovery_opt_out: raw.marketplace_discovery_opt_out,
     deactivated_at: raw.deactivated_at,
     deleted_at: raw.deleted_at,
     is_demo: raw.is_demo,

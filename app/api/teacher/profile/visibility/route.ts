@@ -43,6 +43,7 @@ type TeacherVisibilityRow = {
   region: string | null;
   country_code: string | null;
   is_public: boolean | null;
+  marketplace_discovery_opt_out: boolean | null;
   is_demo: boolean | null;
   deactivated_at: string | null;
   deleted_at: string | null;
@@ -55,7 +56,7 @@ async function loadTeacherVisibilityContext(admin: ReturnType<typeof getSupabase
     admin
       .from("teachers")
       .select(
-        "id, user_id, name, bio, price_per_lesson, availability, city, region, country_code, is_public, is_demo, deactivated_at, deleted_at, identity_verified, stripe_identity_failed_reason",
+        "id, user_id, name, bio, price_per_lesson, availability, city, region, country_code, is_public, marketplace_discovery_opt_out, is_demo, deactivated_at, deleted_at, identity_verified, stripe_identity_failed_reason",
       )
       .eq("user_id", userId)
       .maybeSingle(),
@@ -114,6 +115,7 @@ function buildEvaluation(
     region: teacher.region,
     country_code: countryCode,
     is_public: teacher.is_public,
+    marketplace_discovery_opt_out: teacher.marketplace_discovery_opt_out,
     is_demo: teacher.is_demo,
     deactivated_at: teacher.deactivated_at,
     deleted_at: teacher.deleted_at,
@@ -151,6 +153,7 @@ export async function GET(req: Request) {
   return NextResponse.json({
     ok: true,
     is_public: loaded.teacher.is_public === true,
+    marketplace_discovery_opt_out: loaded.teacher.marketplace_discovery_opt_out === true,
     ...evaluation,
   });
 }
@@ -208,9 +211,15 @@ export async function PATCH(req: Request) {
       );
     }
 
+    const now = new Date().toISOString();
     const { error } = await admin
       .from("teachers")
-      .update({ is_public: false, updated_at: new Date().toISOString() })
+      .update({
+        is_public: false,
+        marketplace_discovery_opt_out: true,
+        marketplace_discovery_opt_out_at: now,
+        updated_at: now,
+      })
       .eq("id", teacher.id)
       .eq("user_id", user.id);
 
@@ -227,7 +236,12 @@ export async function PATCH(req: Request) {
       );
     }
 
-    return NextResponse.json({ ok: true, is_public: false, action: "unpublish" });
+    return NextResponse.json({
+      ok: true,
+      is_public: false,
+      marketplace_discovery_opt_out: true,
+      action: "unpublish",
+    });
   }
 
   const countryCode = teacher.country_code ?? loaded.profile?.country_code ?? "";
@@ -255,9 +269,15 @@ export async function PATCH(req: Request) {
     );
   }
 
+  const now = new Date().toISOString();
   const { error } = await admin
     .from("teachers")
-    .update({ is_public: true, updated_at: new Date().toISOString() })
+    .update({
+      is_public: true,
+      marketplace_discovery_opt_out: false,
+      marketplace_discovery_opt_out_at: null,
+      updated_at: now,
+    })
     .eq("id", teacher.id)
     .eq("user_id", user.id);
 
@@ -274,5 +294,10 @@ export async function PATCH(req: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true, is_public: true, action: "publish" });
+  return NextResponse.json({
+    ok: true,
+    is_public: true,
+    marketplace_discovery_opt_out: false,
+    action: "publish",
+  });
 }

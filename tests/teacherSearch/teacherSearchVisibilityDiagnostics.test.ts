@@ -108,6 +108,14 @@ test("admin completed teacher can be discoverable while unpublished warning is s
   assert.ok(result.warningReasonCodes.includes("WARNING_PROFILE_NOT_PUBLISHED"));
 });
 
+test("marketplace opt-out blocks search visibility even with discipline", () => {
+  const result = diagnose({
+    teacher: { ...teacher, is_public: false, marketplace_discovery_opt_out: true },
+  });
+  assert.equal(result.visibleInSearch, false);
+  assert.ok(result.blockingReasonCodes.includes("BLOCKER_MARKETPLACE_OPTED_OUT"));
+});
+
 test("teacher missing subject is excluded with reason", () => {
   const result = diagnose({
     teacher: { ...teacher, discipline: "", category: "" },
@@ -321,6 +329,20 @@ test("126 migration inline mirror WHERE matches function discovery filters excep
   assert.notEqual(where126, where125);
   assert.match(where126, /\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}/i);
   assert.doesNotMatch(where125, /\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}/i);
+});
+
+test("127 migration adds marketplace opt-out blocker without publication or Stripe gates", () => {
+  const migration = stripSqlComments(read("supabase/migrations/127_teacher_marketplace_discovery_opt_out.sql"));
+  const whereClause = extractRestoreMigrationWhereClause(migration);
+
+  assert.match(migration, /marketplace_discovery_opt_out boolean NOT NULL DEFAULT false/i);
+  assert.match(whereClause, /COALESCE\(t\.marketplace_discovery_opt_out, false\) = false/i);
+  assert.doesNotMatch(whereClause, /t\.is_public\s*=\s*true/i);
+  assert.doesNotMatch(whereClause, /stripe_account_id|stripe_connect_/i);
+  assert.match(
+    migration,
+    /t\.id\s+~\* '\^\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}\$'/i,
+  );
 });
 
 test("admin users API enriches teacher rows with search visibility diagnostics", () => {

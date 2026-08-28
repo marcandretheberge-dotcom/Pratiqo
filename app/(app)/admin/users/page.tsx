@@ -89,6 +89,7 @@ const SEARCH_VISIBILITY_BLOCKER_LABELS: Record<TeacherSearchVisibilityBlockerCod
   BLOCKER_MISSING_SUBJECT: "Discipline manquante",
   BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING: "Identité refusée",
   BLOCKER_BY_RLS_OR_PUBLIC_VIEW: "Absent de la projection publique",
+  BLOCKER_MARKETPLACE_OPTED_OUT: "Masqué volontairement du marketplace",
 };
 
 const SEARCH_VISIBILITY_WARNING_LABELS: Record<TeacherSearchVisibilityWarningCode, string> = {

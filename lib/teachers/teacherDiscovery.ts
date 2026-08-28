@@ -9,7 +9,8 @@ export type TeacherDiscoveryHiddenReason =
   | "teacher_inactive"
   | "demo_profile"
   | "missing_discipline"
-  | "identity_failed";
+  | "identity_failed"
+  | "marketplace_opted_out";
 
 export type TeacherDiscoveryWarning =
   | "profile_unpublished"
@@ -47,6 +48,7 @@ export type TeacherDiscoveryInput = {
     discipline?: string | null;
     category?: string | null;
     is_public?: boolean | null;
+    marketplace_discovery_opt_out?: boolean | null;
     is_demo?: boolean | null;
     deactivated_at?: string | null;
     deleted_at?: string | null;
@@ -99,6 +101,7 @@ export function evaluateTeacherDiscovery(input: TeacherDiscoveryInput): TeacherD
   }
   if (teacher?.deactivated_at || teacher?.deleted_at) hiddenReasons.push("teacher_inactive");
   if (teacher?.is_demo === true) hiddenReasons.push("demo_profile");
+  if (teacher?.marketplace_discovery_opt_out === true) hiddenReasons.push("marketplace_opted_out");
   if (
     !hasTeacherDisciplineSignal({
       discipline: teacher?.discipline,

@@ -10,7 +10,8 @@ export type TeacherSearchVisibilityBlockerCode =
   | "BLOCKER_INVALID_PUBLIC_IDS"
   | "BLOCKER_MISSING_SUBJECT"
   | "BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING"
-  | "BLOCKER_BY_RLS_OR_PUBLIC_VIEW";
+  | "BLOCKER_BY_RLS_OR_PUBLIC_VIEW"
+  | "BLOCKER_MARKETPLACE_OPTED_OUT";
 
 export type TeacherSearchVisibilityWarningCode =
   | "WARNING_PROFILE_NOT_PUBLISHED"
@@ -54,6 +55,7 @@ export type TeacherSearchVisibilityDiagnosisInput = {
     country_code?: string | null;
     location?: unknown;
     is_public?: boolean | null;
+    marketplace_discovery_opt_out?: boolean | null;
     is_demo?: boolean | null;
     deactivated_at?: string | null;
     deleted_at?: string | null;
@@ -169,6 +171,7 @@ export function diagnoseTeacherSearchVisibility(
 
   if (!teacher.id || !UUID_RE.test(teacher.id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
   if (!teacher.user_id || !UUID_RE.test(teacher.user_id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
+  if (teacher.marketplace_discovery_opt_out === true) blockers.push("BLOCKER_MARKETPLACE_OPTED_OUT");
   if (teacher.is_public !== true) warnings.push("WARNING_PROFILE_NOT_PUBLISHED");
   if (teacher.deactivated_at || teacher.deleted_at) blockers.push("BLOCKER_TEACHER_INACTIVE");
   if (teacher.is_demo === true) blockers.push("BLOCKER_DEMO_PROFILE");

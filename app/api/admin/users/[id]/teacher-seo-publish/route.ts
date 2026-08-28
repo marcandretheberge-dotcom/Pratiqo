@@ -107,6 +107,8 @@ export async function POST(req: Request, ctx: Params) {
         public_profile_enabled: true,
         search_indexing_consent: true,
         public_profile_last_indexable_at: now,
+        marketplace_discovery_opt_out: false,
+        marketplace_discovery_opt_out_at: null,
       })
       .eq("id", row.id);
 
@@ -125,10 +127,13 @@ export async function POST(req: Request, ctx: Params) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
   } else if (action === "hide_marketplace") {
+    const now = new Date().toISOString();
     const { error } = await admin
       .from("teachers")
       .update({
         is_public: false,
+        marketplace_discovery_opt_out: true,
+        marketplace_discovery_opt_out_at: now,
       })
       .eq("id", row.id);
 
@@ -136,10 +141,13 @@ export async function POST(req: Request, ctx: Params) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
   } else {
+    const now = new Date().toISOString();
     const { error } = await admin
       .from("teachers")
       .update({
         is_public: false,
+        marketplace_discovery_opt_out: true,
+        marketplace_discovery_opt_out_at: now,
         public_profile_enabled: false,
         search_indexing_consent: false,
         public_profile_last_indexable_at: null,

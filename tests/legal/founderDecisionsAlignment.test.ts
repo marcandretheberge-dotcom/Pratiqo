@@ -523,6 +523,7 @@ const allowedPlannedPackageDashboardPolishFiles = new Set<string>([
 const allowedTeacherDiscoveryFirstMigrationFiles = new Set<string>([
   "supabase/migrations/125_teacher_discovery_first_visibility.sql",
   "supabase/migrations/126_restore_list_public_teachers.sql",
+  "supabase/migrations/127_teacher_marketplace_discovery_opt_out.sql",
 ]);
 
 function touchesFounderDecisionScope(file: string): boolean {
@@ -668,6 +669,7 @@ test("PR #387 teacher discovery migration approval is exact and non-wildcard", (
   assert.deepEqual([...allowedTeacherDiscoveryFirstMigrationFiles], [
     "supabase/migrations/125_teacher_discovery_first_visibility.sql",
     "supabase/migrations/126_restore_list_public_teachers.sql",
+    "supabase/migrations/127_teacher_marketplace_discovery_opt_out.sql",
   ]);
   assert.equal(allowedTeacherDiscoveryFirstMigrationFiles.has("supabase/migrations/*"), false);
   assert.equal(allowedTeacherDiscoveryFirstMigrationFiles.has("supabase/migrations/126_unrelated.sql"), false);

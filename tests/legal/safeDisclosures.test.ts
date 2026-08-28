@@ -1376,9 +1376,11 @@ const allowedTeacherAvailabilityPreviewFiles = new Set<string>([
   "package.json",
 ]);
 
-/** Teacher discovery-first booking requests: one RLS-hardened no-payment request table. */
+/** Teacher discovery-first marketplace visibility migrations (125-127). */
 const allowedTeacherDiscoveryFirstFiles = new Set<string>([
   "supabase/migrations/125_teacher_discovery_first_visibility.sql",
+  "supabase/migrations/126_restore_list_public_teachers.sql",
+  "supabase/migrations/127_teacher_marketplace_discovery_opt_out.sql",
 ]);
 
 function touchesSafeDisclosureScope(file: string): boolean {

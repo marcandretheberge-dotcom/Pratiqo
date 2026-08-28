@@ -16,7 +16,10 @@ import {
   teacherHasSufficientPublicContent,
   type TeacherPublicSeoFields,
 } from "@/lib/seo/teacherPublicProfile";
-import type { TeacherMarketplaceVisibilityRow } from "@/lib/teachers/marketplaceVisibility";
+import {
+  isTeacherMarketplaceVisibleRow,
+  type TeacherMarketplaceVisibilityRow,
+} from "@/lib/teachers/marketplaceVisibility";
 import {
   deriveTeacherReadinessContract,
   type TeacherStripeReadinessBlocker,
@@ -68,6 +71,8 @@ export type TeacherSeoPublicationEvaluation = {
   adminPublished: boolean;
   publicProfileLastIndexableAt: string | null;
   isPublic: boolean;
+  marketplaceVisible: boolean;
+  marketplaceOptedOut: boolean;
   isPageVisible: boolean;
   isIndexable: boolean;
   isSitemapEligible: boolean;
@@ -87,7 +92,7 @@ export type TeacherSeoPublicationEvaluation = {
   canAdminPublish: boolean;
   /** Clears only public_profile_last_indexable_at (SEO / sitemap). */
   canAdminRemoveFromGoogle: boolean;
-  /** Sets is_public=false (marketplace visibility). */
+  /** Sets marketplace_discovery_opt_out=true (marketplace visibility). */
   canAdminHideFromMarketplace: boolean;
   /** @deprecated Use canAdminRemoveFromGoogle */
   canAdminUnpublish: boolean;
@@ -241,6 +246,8 @@ export function evaluateTeacherSeoPublication(
       ? row.public_profile_last_indexable_at
       : null;
   const isPublic = row.is_public === true;
+  const marketplaceVisible = isTeacherMarketplaceVisibleRow(row);
+  const marketplaceOptedOut = row.marketplace_discovery_opt_out === true;
   const isPageVisible = isTeacherPublicProfilePageVisible(row);
   const isIndexable = isTeacherPublicProfileIndexable(row);
   const isSitemapEligible = isIndexable;
@@ -278,7 +285,7 @@ export function evaluateTeacherSeoPublication(
   const canAdminPublish = adminPublishBlockers.length === 0 && !adminPublished;
   const accountGateOpen = isTeacherSeoAccountGateOpen(row);
   const canAdminRemoveFromGoogle = adminPublished && accountGateOpen;
-  const canAdminHideFromMarketplace = isPublic && accountGateOpen;
+  const canAdminHideFromMarketplace = marketplaceVisible && accountGateOpen;
 
   return {
     contentReady,
@@ -288,6 +295,8 @@ export function evaluateTeacherSeoPublication(
     adminPublished,
     publicProfileLastIndexableAt,
     isPublic,
+    marketplaceVisible,
+    marketplaceOptedOut,
     isPageVisible,
     isIndexable,
     isSitemapEligible,

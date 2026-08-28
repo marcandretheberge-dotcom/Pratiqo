@@ -1135,6 +1135,8 @@
   "teacherProfileVisibilityStatusPublicBody": "Ton profil est visible dans les recherches et peut recevoir des demandes de cours.",
   "teacherProfileVisibilityStatusAdminHidden": "Profil masqué",
   "teacherProfileVisibilityStatusAdminHiddenBody": "Ton profil n'est pas visible. Contacte support@pratiqo.ca si tu penses qu'il s'agit d'une erreur.",
+  "teacherProfileVisibilityStatusMarketplaceOptedOut": "Masqué de la recherche Pratiqo",
+  "teacherProfileVisibilityStatusMarketplaceOptedOutBody": "Tu as choisi de retirer ton profil de la recherche Pratiqo. Republie ton profil pour réapparaître dans les résultats.",
   "teacherProfilePublishButton": "Publier mon profil",
   "teacherProfileUnpublishButton": "Masquer mon profil",
   "teacherProfilePublishSuccess": "Ton profil est maintenant visible dans les recherches.",

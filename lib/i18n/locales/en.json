@@ -1135,6 +1135,8 @@
   "teacherProfileVisibilityStatusPublicBody": "Your profile is visible in search and can receive booking requests.",
   "teacherProfileVisibilityStatusAdminHidden": "Profile hidden",
   "teacherProfileVisibilityStatusAdminHiddenBody": "Your profile is not visible. Contact support@pratiqo.ca if you think this is an error.",
+  "teacherProfileVisibilityStatusMarketplaceOptedOut": "Hidden from Pratiqo search",
+  "teacherProfileVisibilityStatusMarketplaceOptedOutBody": "You chose to remove your profile from Pratiqo search. Publish your profile again to reappear in results.",
   "teacherProfilePublishButton": "Publish my profile",
   "teacherProfileUnpublishButton": "Hide my profile",
   "teacherProfilePublishSuccess": "Your profile is now visible in search.",

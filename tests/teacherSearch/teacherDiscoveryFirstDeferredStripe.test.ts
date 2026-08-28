@@ -31,6 +31,7 @@ test("minimal teacher profile with a discipline is discoverable and requestable"
       id: "00000000-0000-4000-8000-000000000001",
       user_id: "00000000-0000-4000-8000-000000000002",
       is_public: false,
+      marketplace_discovery_opt_out: false,
       discipline: "piano",
       deactivated_at: null,
       deleted_at: null,
@@ -43,6 +44,26 @@ test("minimal teacher profile with a discipline is discoverable and requestable"
   assert.equal(result.bookable, false);
   assert.equal(result.status, "profile_incomplete");
   assert.deepEqual(result.hiddenReasons, []);
+});
+
+test("teacher with marketplace opt-out is not discoverable", () => {
+  const result = evaluateTeacherDiscovery({
+    profile: { role: "teacher", is_active: true },
+    teacher: {
+      id: "00000000-0000-4000-8000-000000000001",
+      user_id: "00000000-0000-4000-8000-000000000002",
+      is_public: false,
+      marketplace_discovery_opt_out: true,
+      discipline: "piano",
+      deactivated_at: null,
+      deleted_at: null,
+    },
+    disciplineCount: 1,
+  });
+
+  assert.equal(result.discoverable, false);
+  assert.equal(result.status, "hidden");
+  assert.equal(result.hiddenReasons.includes("marketplace_opted_out"), true);
 });
 
 test("teacher without a discipline is not discoverable", () => {
@@ -263,6 +284,28 @@ test("migration 126 inline discovery WHERE mirrors the function body filters", (
     assert.match(where126, new RegExp(predicate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
     assert.match(where125, new RegExp(predicate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
   }
+});
+
+test("migration 127 adds marketplace opt-out columns and gate without reintroducing publication gates", () => {
+  assert.equal(
+    existsSync(join(ROOT, "supabase/migrations/127_teacher_marketplace_discovery_opt_out.sql")),
+    true,
+  );
+  const migration = stripSqlComments(read("supabase/migrations/127_teacher_marketplace_discovery_opt_out.sql"));
+  const whereClause = extractDiscoveryWhereClause(migration);
+
+  assert.match(migration, /marketplace_discovery_opt_out boolean NOT NULL DEFAULT false/i);
+  assert.match(migration, /marketplace_discovery_opt_out_at timestamptz NULL/i);
+  assert.match(migration, /admin_role_change_audit/i);
+  assert.match(migration, /teacher_seo_hide_marketplace%/i);
+  assert.match(migration, /profile-remove-public-teacher%/i);
+  assert.match(whereClause, /COALESCE\(t\.marketplace_discovery_opt_out, false\) = false/i);
+  assert.doesNotMatch(whereClause, /t\.is_public\s*=\s*true/i);
+  assert.doesNotMatch(whereClause, /t\.price_per_lesson/i);
+  assert.match(
+    migration,
+    /t\.id\s+~\* '\^\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}\$'/i,
+  );
 });
 
 test("dashboard and docs document discovery-first lifecycle without exposing secrets", () => {
