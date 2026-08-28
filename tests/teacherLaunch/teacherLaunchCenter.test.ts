@@ -427,15 +427,21 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
     // SEO, or PostGIS behavior.
     "supabase/migrations/125_teacher_discovery_first_visibility.sql",
     "supabase/migrations/126_restore_list_public_teachers.sql",
+    // PR #390: explicit teacher marketplace discovery opt-out.
+    "supabase/migrations/127_teacher_marketplace_discovery_opt_out.sql",
   ]);
 
   assert.deepEqual(
     [...approvedMigrationExceptions].filter(
-      (file) => file.includes("teacher_discovery_first") || file.includes("restore_list_public_teachers"),
+      (file) =>
+        file.includes("teacher_discovery_first") ||
+        file.includes("restore_list_public_teachers") ||
+        file.includes("marketplace_discovery_opt_out"),
     ),
     [
       "supabase/migrations/125_teacher_discovery_first_visibility.sql",
       "supabase/migrations/126_restore_list_public_teachers.sql",
+      "supabase/migrations/127_teacher_marketplace_discovery_opt_out.sql",
     ],
   );
   assert.equal(approvedMigrationExceptions.has("supabase/migrations/*"), false);
