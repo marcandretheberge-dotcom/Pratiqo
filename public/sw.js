@@ -1,9 +1,11 @@
-const CACHE_NAME = "pratiqo-static-v1";
+const CACHE_NAME = "pratiqo-static-v2";
 
 const PRECACHE_URLS = [
   "/offline",
   "/manifest.json",
+  "/apple-touch-icon.png",
   "/icons/icon-192.png",
+  "/icons/icon-192-maskable.png",
   "/icons/icon-512.png",
   "/icons/icon-512-maskable.png",
   "/favicon.ico",
@@ -44,6 +46,7 @@ function isStaticAsset(pathname) {
   return (
     STATIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ||
     pathname === "/manifest.json" ||
+    pathname === "/apple-touch-icon.png" ||
     pathname === "/favicon.ico" ||
     pathname.endsWith(".webmanifest")
   );

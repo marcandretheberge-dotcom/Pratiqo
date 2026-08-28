@@ -2,6 +2,7 @@
 
 import React from "react";
 import { AuthProvider } from "../components/AuthProvider";
+import { InstallAppPrompt } from "@/components/app/InstallAppPrompt";
 import { PwaServiceWorker } from "@/components/PwaServiceWorker";
 import { LocaleProvider } from "../lib/locale-context";
 import { PostHogPageView } from "@/components/analytics/PostHogPageView";
@@ -12,6 +13,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <LocaleProvider>
       <CookieConsentProvider>
         <AuthProvider>{children}</AuthProvider>
+        <InstallAppPrompt />
         <PwaServiceWorker />
         <PostHogPageView />
       </CookieConsentProvider>
