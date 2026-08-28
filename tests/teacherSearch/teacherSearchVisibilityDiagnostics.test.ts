@@ -260,6 +260,69 @@ test("125 migration keeps private location stripped from public projection", () 
   assert.doesNotMatch(selectBlock, /t\.location\s+AS location/i);
 });
 
+function extractRestoreMigrationWhereClause(sql: string): string {
+  const normalized = stripSqlComments(sql);
+  const match = normalized.match(
+    /FROM public\.teachers t\s+INNER JOIN public\.profiles p ON p\.id = t\.user_id\s+WHERE([\s\S]*?)\)\s+AS discovered;/i,
+  );
+  return match?.[1]?.trim() ?? "";
+}
+
+test("126 migration recreates public discovery SQL with canonical UUID filter", () => {
+  const migration = stripSqlComments(read("supabase/migrations/126_restore_list_public_teachers.sql"));
+
+  assert.match(migration, /DROP FUNCTION IF EXISTS public\.list_public_teachers\(\)/i);
+  assert.match(migration, /DROP VIEW IF EXISTS public\.teachers_public/i);
+  assert.match(migration, /CREATE FUNCTION public\.list_public_teachers\(\)/i);
+  assert.match(migration, /CREATE VIEW public\.teachers_public/i);
+  assert.match(
+    migration,
+    /t\.id\s+~\* '\^\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}\$'/i,
+  );
+  assert.doesNotMatch(
+    migration,
+    /t\.id\s+~\* '\^\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}\$'/i,
+  );
+});
+
+test("126 migration keeps discovery-first blockers without Stripe or publication gates", () => {
+  const migration = stripSqlComments(read("supabase/migrations/126_restore_list_public_teachers.sql"));
+  const whereClause = extractRestoreMigrationWhereClause(migration);
+
+  assert.match(whereClause, /p\.role\s*=\s*'teacher'/i);
+  assert.match(whereClause, /FROM public\.teacher_disciplines td/i);
+  assert.match(whereClause, /COALESCE\(t\.identity_status, 'none'\) <> 'failed'/i);
+  assert.doesNotMatch(whereClause, /t\.is_public\s*=\s*true/i);
+  assert.doesNotMatch(whereClause, /t\.price_per_lesson/i);
+  assert.doesNotMatch(whereClause, /NULLIF\(BTRIM\(t\.bio\), ''\) IS NOT NULL/i);
+  assert.doesNotMatch(whereClause, /stripe_account_id|stripe_connect_/i);
+  assert.doesNotMatch(whereClause, /availability\s+IS NOT NULL/i);
+});
+
+test("126 migration keeps private location stripped and hides manual identity source", () => {
+  const migration = stripSqlComments(read("supabase/migrations/126_restore_list_public_teachers.sql"));
+  const returnBlock = migration.match(/RETURNS TABLE \(([\s\S]*?)\)\s+LANGUAGE/i)?.[1] ?? "";
+  const selectBlock =
+    migration.match(/FROM \(\s+SELECT([\s\S]*?)FROM public\.teachers t/i)?.[1] ?? "";
+
+  assert.doesNotMatch(returnBlock, /stripe_account_id|stripe_connect_|identity_verified_manually/i);
+  assert.match(selectBlock, /COALESCE\(t\.location, '\{\}'::jsonb\) - 'private'::text AS location/i);
+});
+
+test("126 migration inline mirror WHERE matches function discovery filters except UUID regex", () => {
+  const migration126 = stripSqlComments(read("supabase/migrations/126_restore_list_public_teachers.sql"));
+  const migration125 = stripSqlComments(read("supabase/migrations/125_teacher_discovery_first_visibility.sql"));
+  const where126 = extractRestoreMigrationWhereClause(migration126);
+  const where125 =
+    migration125
+      .match(/FROM public\.teachers t\s+INNER JOIN public\.profiles p ON p\.id = t\.user_id\s+WHERE([\s\S]*?);/i)?.[1]
+      ?.trim() ?? "";
+
+  assert.notEqual(where126, where125);
+  assert.match(where126, /\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}/i);
+  assert.doesNotMatch(where125, /\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}/i);
+});
+
 test("admin users API enriches teacher rows with search visibility diagnostics", () => {
   const route = read("app/api/admin/users/route.ts");
   assert.match(route, /diagnoseTeacherSearchVisibility/);

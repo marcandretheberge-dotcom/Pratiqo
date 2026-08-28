@@ -331,10 +331,13 @@ test("commission model branch may update canonical commission files but not rest
     // commissions, Membre Pro, auth provider flow, YoPratiqo, public SEO, or
     // PostGIS behavior.
     "supabase/migrations/125_teacher_discovery_first_visibility.sql",
+    // Hotfix: restores list_public_teachers() after the 125 UUID-regex typo.
+    "supabase/migrations/126_restore_list_public_teachers.sql",
   ]);
 
   assert.deepEqual([...approvedTeacherDiscoveryFirstMigrationExceptions], [
     "supabase/migrations/125_teacher_discovery_first_visibility.sql",
+    "supabase/migrations/126_restore_list_public_teachers.sql",
   ]);
   assert.equal(approvedTeacherDiscoveryFirstMigrationExceptions.has("supabase/migrations/*"), false);
   assert.equal(
