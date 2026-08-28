@@ -323,6 +323,25 @@ test("commission model branch may update canonical commission files but not rest
     "supabase/migrations/121_planned_package_payout_eligibility_ledger.sql",
   ]);
 
+  const approvedTeacherDiscoveryFirstMigrationExceptions = new Set<string>([
+    // PR #387: teacher discovery-first visibility + deferred no-payment requests.
+    // This exact migration persists learner requests for discovery-visible
+    // teachers before Stripe setup is complete. It does not alter Stripe
+    // checkout, webhooks, payment math, refunds, transfers, payouts,
+    // commissions, Membre Pro, auth provider flow, YoPratiqo, public SEO, or
+    // PostGIS behavior.
+    "supabase/migrations/125_teacher_discovery_first_visibility.sql",
+  ]);
+
+  assert.deepEqual([...approvedTeacherDiscoveryFirstMigrationExceptions], [
+    "supabase/migrations/125_teacher_discovery_first_visibility.sql",
+  ]);
+  assert.equal(approvedTeacherDiscoveryFirstMigrationExceptions.has("supabase/migrations/*"), false);
+  assert.equal(
+    approvedTeacherDiscoveryFirstMigrationExceptions.has("supabase/migrations/126_unrelated.sql"),
+    false,
+  );
+
   const violations: string[] = [];
   for (const file of changed) {
     if (approvedStripeRouteExceptions.has(file)) continue;
@@ -330,6 +349,7 @@ test("commission model branch may update canonical commission files but not rest
     if (approvedStudentConsentMigrationExceptions.has(file)) continue;
     if (approvedAmbassadorMigrationExceptions.has(file)) continue;
     if (approvedPlannedPackageMigrationExceptions.has(file)) continue;
+    if (approvedTeacherDiscoveryFirstMigrationExceptions.has(file)) continue;
     // Launch-safety PR exception: group-session checkout is disabled at launch,
     // and this branch only centralizes the fail-closed gate so public disabled
     // SEO surfaces share the same source of truth. The helper above verifies the
