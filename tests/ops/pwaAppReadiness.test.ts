@@ -21,18 +21,26 @@ const manifest = manifestRoute();
 assert.deepEqual(publicManifest, manifest);
 assert.equal(manifest.name, "Pratiqo");
 assert.equal(manifest.short_name, "Pratiqo");
-assert.equal(manifest.description, "Trouve un professeur local ou développe tes compétences avec Pratiqo.");
+assert.equal(manifest.description, "Trouvez et réservez des professeurs indépendants près de chez vous.");
 assert.equal(manifest.start_url, "/");
 assert.equal(manifest.scope, "/");
 assert.equal(manifest.display, "standalone");
-assert.equal(manifest.background_color, "#F1EFE8");
+assert.equal(manifest.background_color, "#ffffff");
 assert.equal(manifest.theme_color, "#1D9E75");
 assert.equal(manifest.lang, "fr-CA");
+assert.deepEqual(manifest.categories, ["education", "lifestyle", "productivity"]);
 assert.ok(Array.isArray(manifest.icons) && manifest.icons.length >= 2);
+assert.ok(manifest.icons.some((icon) => icon.src === "/icons/icon-192-maskable.png" && icon.purpose === "maskable"));
 assert.ok(manifest.icons.some((icon) => icon.src === "/icons/icon-512-maskable.png" && icon.purpose === "maskable"));
 ok("generated manifest has required installability fields and public manifest mirrors it");
 
-for (const icon of ["public/icons/icon-192.png", "public/icons/icon-512.png", "public/icons/icon-512-maskable.png"]) {
+for (const icon of [
+  "public/apple-touch-icon.png",
+  "public/icons/icon-192.png",
+  "public/icons/icon-512.png",
+  "public/icons/icon-192-maskable.png",
+  "public/icons/icon-512-maskable.png",
+]) {
   assert.ok(existsSync(path.join(root, icon)), `${icon} exists`);
 }
 ok("PWA icons exist");
@@ -40,21 +48,22 @@ ok("PWA icons exist");
 const layout = read("app/layout.tsx");
 assert.match(layout, /import type \{ Metadata, Viewport \} from "next"/);
 assert.match(layout, /applicationName:\s*"Pratiqo"/);
-assert.match(layout, /manifest:\s*"\/manifest\.webmanifest"/);
+assert.match(layout, /manifest:\s*"\/manifest\.json"/);
 assert.match(layout, /appleWebApp:\s*\{/);
 assert.match(layout, /capable:\s*true/);
 assert.match(layout, /title:\s*"Pratiqo"/);
 assert.match(layout, /statusBarStyle:\s*"default"/);
 assert.match(layout, /export const viewport: Viewport = \{/);
 assert.match(layout, /viewportFit:\s*"cover"/);
-assert.match(layout, /themeColor:\s*"#1D9E75"/);
-assert.match(layout, /url: "\/icons\/icon-192\.png", sizes: "192x192"/);
+assert.match(layout, /themeColor:\s*PRATIQO_PWA_THEME_COLOR/);
+assert.match(layout, /url: "\/apple-touch-icon\.png", sizes: "180x180"/);
 assert.doesNotMatch(layout, /<meta name="theme-color"/);
 assert.doesNotMatch(layout, /<link rel="manifest"/);
 ok("root layout uses Next metadata and viewport exports for PWA and Apple app tags");
 
 assert.ok(existsSync(path.join(root, "app/offline/page.tsx")), "offline page exists");
-assert.match(read("app/offline/page.tsx"), /Vous semblez hors ligne/);
+assert.match(read("app/offline/page.tsx"), /OfflineFallback/);
+assert.match(read("components/app/OfflineFallback.tsx"), /offlineTitle/);
 ok("offline fallback page exists");
 
 const sw = read("public/sw.js");
@@ -68,6 +77,7 @@ ok("service worker caches static assets and bypasses sensitive routes");
 
 const providers = read("app/providers.tsx");
 assert.match(providers, /PwaServiceWorker/);
+assert.match(providers, /InstallAppPrompt/);
 ok("service worker registration is mounted from app providers");
 
 const runbook = read("docs/APP_READINESS_RUNBOOK.md");
@@ -98,8 +108,12 @@ const ignoredUntracked = new Set([
 const allowedPrefixes = [
   "app/layout.tsx",
   "app/manifest.ts",
+  "app/app/page.tsx",
   "app/offline/page.tsx",
   "app/providers.tsx",
+  "components/app/AppInstallHelpContent.tsx",
+  "components/app/InstallAppPrompt.tsx",
+  "components/app/OfflineFallback.tsx",
   "components/PwaServiceWorker.tsx",
   "components/BookingModal.tsx",
   "components/Dashboard.tsx",
@@ -108,9 +122,15 @@ const allowedPrefixes = [
   "docs/APP_READINESS_RUNBOOK.md",
   "public/manifest.json",
   "public/sw.js",
+  "public/apple-touch-icon.png",
   "public/icons/icon-192.png",
+  "public/icons/icon-192-maskable.png",
   "public/icons/icon-512.png",
   "public/icons/icon-512-maskable.png",
+  "lib/pwa/copy.ts",
+  "lib/pwa/manifest.ts",
+  "docs/product/pratiqo-pwa-app.md",
+  "tests/app/pwaInstallableMobileShell.test.ts",
   "tests/ops/pwaAppReadiness.test.ts",
   "tests/ops/pwaInstallabilityVerification.test.ts",
   "tests/teacherProfile/homeLessonsMinorLaunchGate.test.ts",

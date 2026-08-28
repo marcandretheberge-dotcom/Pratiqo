@@ -11,14 +11,17 @@ This runbook prepares Pratiqo as an installable PWA before any future native iOS
 - Display mode: `standalone`.
 - Start URL and scope: `/`.
 - Theme color: `#1D9E75`.
-- Background color: `#F1EFE8`.
+- Background color: `#ffffff`.
 - Required icons exist:
   - `/icons/icon-192.png`
   - `/icons/icon-512.png`
+  - `/icons/icon-192-maskable.png`
   - `/icons/icon-512-maskable.png`
+  - `/apple-touch-icon.png`
 - HTTPS enabled in production.
 - Root layout links the manifest and Apple touch icon.
 - Root layout declares Apple mobile web app meta tags.
+- `/app` explains manual install steps for iPhone and Android.
 - Chrome installability checked in Lighthouse or DevTools.
 - iOS Add to Home Screen checked manually on Safari.
 
