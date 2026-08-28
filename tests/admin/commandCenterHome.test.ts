@@ -109,6 +109,9 @@ test("admin homepage shows real or unavailable KPI states", () => {
   assert.match(page, /data-admin-kpi/);
   assert.match(page, /Professeurs inscrits/);
   assert.match(page, /Profils visibles/);
+  assert.match(page, /Visibles mais paiement à configurer/);
+  assert.match(page, /Professeurs cachés sans discipline/);
+  assert.match(page, /Professeurs réservables/);
   assert.match(page, /Profils bloqués/);
   assert.match(page, /Apprenants inscrits/);
   assert.match(page, /Réservations/);
@@ -241,19 +244,54 @@ test("loadAdminOverview returns count-only metrics and tolerates query failures"
                     return Promise.resolve({
                       data: [
                         {
+                          id: "teacher-1",
+                          name: "Marie",
+                          discipline: "Piano",
+                          category: "Musique",
+                          bio: "",
+                          image_url: null,
+                          city: "",
+                          region: "QC",
                           price_per_lesson: null,
                           availability: [],
                           stripe_account_id: null,
                           stripe_connect_onboarding_complete: false,
                           stripe_connect_charges_enabled: false,
+                          stripe_connect_payouts_enabled: false,
                           is_demo: false,
                         },
                         {
+                          id: "teacher-2",
+                          name: "Anne",
+                          discipline: "Espagnol",
+                          category: "Langues",
+                          bio: "Bio complète",
+                          image_url: "/photo.jpg",
+                          city: "Montréal",
+                          region: "QC",
                           price_per_lesson: 40,
                           availability: ["mon"],
                           stripe_account_id: "acct_1",
                           stripe_connect_onboarding_complete: true,
                           stripe_connect_charges_enabled: true,
+                          stripe_connect_payouts_enabled: true,
+                          is_demo: false,
+                        },
+                        {
+                          id: "teacher-3",
+                          name: "Sans discipline",
+                          discipline: "",
+                          category: "",
+                          bio: "Bio complète",
+                          image_url: "/photo.jpg",
+                          city: "Québec",
+                          region: "QC",
+                          price_per_lesson: 40,
+                          availability: ["mon"],
+                          stripe_account_id: "acct_2",
+                          stripe_connect_onboarding_complete: true,
+                          stripe_connect_charges_enabled: true,
+                          stripe_connect_payouts_enabled: true,
                           is_demo: false,
                         },
                       ],
@@ -285,6 +323,10 @@ test("loadAdminOverview returns count-only metrics and tolerates query failures"
   assert.equal(overview.stripeIncompleteTeachers, 1);
   assert.equal(overview.teachersMissingRate, 1);
   assert.equal(overview.teachersMissingAvailability, 1);
+  assert.equal(overview.teachersHiddenNoDiscipline, 1);
+  assert.equal(overview.teachersProfileIncomplete, 1);
+  assert.equal(overview.teachersBookable, 1);
+  assert.equal(overview.teachersVisiblePaymentSetupRequired, 1);
   assert.equal(overview.bookingsTotal, null);
   assert.equal(overview.bookingIssues, null);
   assertAdminOverviewPrivacySafe(overview);

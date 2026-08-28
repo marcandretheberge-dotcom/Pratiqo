@@ -6,10 +6,16 @@
  * requireAdminApi / requireAdminPage.
  */
 
+import { hasTeacherDisciplineSignal } from "@/lib/teachers/teacherDiscovery";
+
 export type AdminOverview = {
   teachersTotal: number | null;
   teachersVisible: number | null;
   teachersBlocked: number | null;
+  teachersHiddenNoDiscipline: number | null;
+  teachersProfileIncomplete: number | null;
+  teachersBookable: number | null;
+  teachersVisiblePaymentSetupRequired: number | null;
   studentsTotal: number | null;
   bookingsTotal: number | null;
   pendingTeacherVerifications: number | null;
@@ -196,6 +202,10 @@ export function emptyAdminOverview(): AdminOverview {
     teachersTotal: null,
     teachersVisible: null,
     teachersBlocked: null,
+    teachersHiddenNoDiscipline: null,
+    teachersProfileIncomplete: null,
+    teachersBookable: null,
+    teachersVisiblePaymentSetupRequired: null,
     studentsTotal: null,
     bookingsTotal: null,
     pendingTeacherVerifications: null,
@@ -237,6 +247,12 @@ export function buildAdminPriorityAlerts(overview: AdminOverview): AdminPriority
   const candidates: AdminPriorityAlert[] = [
     {
       id: "teachers-blocked",
+      label: "Professeurs cachés sans discipline",
+      count: overview.teachersHiddenNoDiscipline,
+      href: "/admin/users",
+    },
+    {
+      id: "teachers-blocked-total",
       label: "Profils enseignants non visibles",
       count: overview.teachersBlocked,
       href: "/admin/users",
@@ -297,10 +313,30 @@ function isStripeIncomplete(row: {
   stripe_account_id?: string | null;
   stripe_connect_onboarding_complete?: boolean | null;
   stripe_connect_charges_enabled?: boolean | null;
+  stripe_connect_payouts_enabled?: boolean | null;
 }): boolean {
   if (!row.stripe_account_id?.trim()) return true;
   if (!row.stripe_connect_onboarding_complete) return true;
   if (!row.stripe_connect_charges_enabled) return true;
+  if (!row.stripe_connect_payouts_enabled) return true;
+  return false;
+}
+
+function isProfileIncomplete(row: {
+  name?: string | null;
+  bio?: string | null;
+  image_url?: string | null;
+  price_per_lesson?: number | string | null;
+  availability?: unknown;
+  city?: string | null;
+  region?: string | null;
+}): boolean {
+  if (!row.name?.trim()) return true;
+  if (!row.bio?.trim()) return true;
+  if (!row.image_url?.trim()) return true;
+  if (!hasValidRate(row.price_per_lesson)) return true;
+  if (isEmptyAvailability(row.availability)) return true;
+  if (!row.city?.trim() || !row.region?.trim()) return true;
   return false;
 }
 
@@ -380,7 +416,7 @@ export async function loadAdminOverview(admin: {
     const { data: teacherRows, error } = await db
       .from("teachers")
       .select(
-        "price_per_lesson, availability, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, deactivated_at, deleted_at, is_demo",
+        "id, name, discipline, category, bio, image_url, price_per_lesson, availability, city, region, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, deactivated_at, deleted_at, is_demo",
       )
       .is("deactivated_at", null)
       .is("deleted_at", null);
@@ -394,23 +430,45 @@ export async function loadAdminOverview(admin: {
       const rows = (teacherRows ?? []) as Array<{
         price_per_lesson?: number | string | null;
         availability?: unknown;
+        id?: string | null;
+        name?: string | null;
+        discipline?: string | null;
+        category?: string | null;
+        image_url?: string | null;
+        city?: string | null;
+        region?: string | null;
         stripe_account_id?: string | null;
         stripe_connect_onboarding_complete?: boolean | null;
         stripe_connect_charges_enabled?: boolean | null;
+        stripe_connect_payouts_enabled?: boolean | null;
         is_demo?: boolean | null;
       }>;
       const active = rows.filter((row) => row.is_demo !== true);
+      const discoverable = active.filter((row) =>
+        hasTeacherDisciplineSignal({
+          discipline: row.discipline,
+          category: row.category,
+        }),
+      );
       overview.stripeIncompleteTeachers = active.filter(isStripeIncomplete).length;
       overview.teachersMissingRate = active.filter((row) => !hasValidRate(row.price_per_lesson)).length;
       overview.teachersMissingAvailability = active.filter((row) =>
         isEmptyAvailability(row.availability),
       ).length;
+      overview.teachersHiddenNoDiscipline = active.length - discoverable.length;
+      overview.teachersProfileIncomplete = discoverable.filter(isProfileIncomplete).length;
+      overview.teachersBookable = discoverable.filter((row) => !isStripeIncomplete(row) && hasValidRate(row.price_per_lesson)).length;
+      overview.teachersVisiblePaymentSetupRequired = discoverable.filter(isStripeIncomplete).length;
     }
   } catch (e) {
     console.error("[admin/overview] teacher operational scan threw", e);
     overview.stripeIncompleteTeachers = null;
     overview.teachersMissingRate = null;
     overview.teachersMissingAvailability = null;
+    overview.teachersHiddenNoDiscipline = null;
+    overview.teachersProfileIncomplete = null;
+    overview.teachersBookable = null;
+    overview.teachersVisiblePaymentSetupRequired = null;
   }
 
   assertAdminOverviewPrivacySafe(overview);

@@ -47,9 +47,20 @@ function eligibleDraft(overrides: Record<string, unknown> = {}) {
   };
 }
 
-test("private draft teacher is not marketplace-visible", () => {
+test("private draft teacher with a discipline is marketplace-discoverable but not SEO-indexable", () => {
   const row = eligibleDraft({ is_public: false });
-  assert.equal(isTeacherMarketplaceVisibleRow(row), false);
+  assert.equal(isTeacherMarketplaceVisibleRow(row), true);
+  assert.equal(
+    isTeacherPublicProfileIndexable({
+      ...row,
+      public_profile_enabled: true,
+      search_indexing_consent: true,
+      public_profile_slug: "marie-dubois",
+      teacher_onboarding_complete: true,
+      subject_count: 1,
+    }),
+    false,
+  );
 });
 
 test("incomplete teacher cannot publish", () => {
@@ -160,14 +171,27 @@ test("publish/unpublish and onboarding copy exist in FR EN ES", () => {
   }
 });
 
-test("onboarding completion copy does not imply automatic public launch", () => {
-  const fr = read("lib/i18n/locales/fr.json");
-  const en = read("lib/i18n/locales/en.json");
-  const es = read("lib/i18n/locales/es.json");
-  assert.match(fr, /publiez votre profil/i);
-  assert.match(en, /publish your profile/i);
-  assert.match(es, /publica tu perfil/i);
-  assert.doesNotMatch(fr + en + es, /automatically visible|visible immédiatement|visible automáticamente/i);
+test("onboarding completion copy reflects discipline-first discovery without automatic launch promises", () => {
+  const locales = {
+    fr: JSON.parse(read("lib/i18n/locales/fr.json")) as Record<string, string>,
+    en: JSON.parse(read("lib/i18n/locales/en.json")) as Record<string, string>,
+    es: JSON.parse(read("lib/i18n/locales/es.json")) as Record<string, string>,
+  };
+
+  assert.match(locales.fr.teacherOnboardingSavedNotPublishedBody, /discipline/i);
+  assert.match(locales.en.teacherOnboardingSavedNotPublishedBody, /subject/i);
+  assert.match(locales.es.teacherOnboardingSavedNotPublishedBody, /materia/i);
+  assert.match(locales.fr.teacherMinimalSetupPrivateUntilComplete, /visible avec au moins une discipline/i);
+  assert.match(locales.en.teacherMinimalSetupPrivateUntilComplete, /visible with at least one subject/i);
+  assert.match(locales.es.teacherMinimalSetupPrivateUntilComplete, /visible con al menos una materia/i);
+  assert.doesNotMatch(
+    [
+      locales.fr.teacherOnboardingSavedNotPublishedBody,
+      locales.en.teacherOnboardingSavedNotPublishedBody,
+      locales.es.teacherOnboardingSavedNotPublishedBody,
+    ].join("\n"),
+    /automatically visible|visible immédiatement|visible automáticamente/i,
+  );
 });
 
 let passed = 0;

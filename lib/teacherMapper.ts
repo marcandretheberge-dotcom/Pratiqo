@@ -20,7 +20,7 @@ export type TeacherRow = {
   category: string;
   rating: number;
   reviews: number;
-  price_per_lesson: number;
+  price_per_lesson: number | string | null;
   monthly_subscription: number | null;
   bio: string;
   image_url: string | null;
@@ -71,6 +71,7 @@ export function isLaunchEligibleTeacherRow(row: Pick<TeacherRow, "id" | "user_id
 }
 
 export function teacherRowToTeacher(row: TeacherRow): Teacher {
+  const pricePerLesson = Number(row.price_per_lesson);
   const loc = typeof row.location === "object" && row.location !== null ? (row.location as Record<string, unknown>) : {};
   const publicLoc = typeof loc.public === "object" && loc.public !== null ? (loc.public as Record<string, unknown>) : null;
   const latCandidate =
@@ -94,7 +95,7 @@ export function teacherRowToTeacher(row: TeacherRow): Teacher {
     rating: row.rating,
     reviews: row.reviews,
     distance: 0,
-    pricePerLesson: Number(row.price_per_lesson),
+    pricePerLesson: Number.isFinite(pricePerLesson) && pricePerLesson > 0 ? pricePerLesson : 0,
     monthlySubscription: row.monthly_subscription != null ? Number(row.monthly_subscription) : undefined,
     bio: row.bio,
     imageUrl: resolveTeacherPublicPhoto(

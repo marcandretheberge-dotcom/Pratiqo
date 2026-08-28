@@ -172,23 +172,23 @@ function formatCents(value: number | null | undefined): string {
 }
 
 const VISIBILITY_BLOCKER_LABELS: Record<string, string> = {
-  BLOCKER_PROFILE_NOT_PUBLISHED: "Profil public désactivé",
   BLOCKER_TEACHER_ROW_MISSING: "Profil professeur manquant",
   BLOCKER_PROFILE_INACTIVE: "Profil/compte inactif",
   BLOCKER_TEACHER_INACTIVE: "Profil enseignant désactivé",
   BLOCKER_DEMO_PROFILE: "Profil démo exclu",
   BLOCKER_INVALID_PUBLIC_IDS: "Identifiants publics invalides",
-  BLOCKER_MISSING_PUBLIC_DATA: "Données publiques manquantes",
-  BLOCKER_MISSING_BASE_RATE: "Tarif manquant",
   BLOCKER_MISSING_SUBJECT: "Matière manquante",
-  BLOCKER_MISSING_TEACHING_FORMAT: "Format de cours manquant",
-  BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE: "Localisation manquante pour cours en personne",
-  BLOCKER_UNSUPPORTED_COUNTRY: "Pays/marché non supporté",
   BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING: "Identité échouée",
   BLOCKER_BY_RLS_OR_PUBLIC_VIEW: "Absent de la projection publique",
 };
 
 const VISIBILITY_WARNING_LABELS: Record<string, string> = {
+  WARNING_PROFILE_NOT_PUBLISHED: "Profil public désactivé",
+  WARNING_MISSING_PUBLIC_DATA: "Données publiques manquantes",
+  WARNING_MISSING_BASE_RATE: "Tarif manquant",
+  WARNING_MISSING_TEACHING_FORMAT: "Format de cours manquant",
+  WARNING_MISSING_PUBLIC_LOCATION_OR_ONLINE: "Localisation manquante pour cours en personne",
+  WARNING_UNSUPPORTED_COUNTRY: "Pays/marché non supporté",
   WARNING_IDENTITY_NOT_VERIFIED: "Identité non vérifiée",
   WARNING_NO_AVAILABILITY: "Aucune disponibilité",
   WARNING_NO_INTRO_LESSON: "Pas de cours d’introduction",

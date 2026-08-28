@@ -10,6 +10,7 @@ import { primaryRoleForPreAuthIntent } from "@/lib/auth/preAuthOnboardingIntent"
 import { DRAFT_TEACHER_ROW_INSERT } from "@/lib/teachers/ensureTeacherProfileRow";
 import { isTeacherProfileComplete } from "@/lib/teacherOnboarding";
 import { isTeacherMarketplaceVisibleRow } from "@/lib/teachers/marketplaceVisibility";
+import { evaluateTeacherProfilePublishEligibility } from "@/lib/teachers/profilePublishEligibility";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 import {
   buildTeacherOnboardingUpdate,
@@ -220,12 +221,12 @@ test("wizard no longer calls separate /api/teacher/pricing endpoint", () => {
 
 // ── Search visibility ──────────────────────────────────────────────────────
 
-test("draft teacher row has is_public false (hidden from search)", () => {
+test("draft teacher row starts unpublished while discovery uses discipline instead of publication", () => {
   assert.equal(DRAFT_TEACHER_ROW_INSERT.is_public, false);
   assert.equal(DRAFT_TEACHER_ROW_INSERT.price_per_lesson, MIN_LESSON_PRICE_DOLLARS);
 });
 
-test("incomplete teacher is not marketplace-visible", () => {
+test("incomplete teacher profile can be marketplace-visible once it has a discipline", () => {
   assert.equal(
     isTeacherProfileComplete({
       name: "Marie",
@@ -246,11 +247,50 @@ test("incomplete teacher is not marketplace-visible", () => {
       id: "00000000-0000-4000-8000-000000000001",
       user_id: "00000000-0000-4000-8000-000000000002",
       is_public: false,
+      discipline: "piano",
+      deactivated_at: null,
+      deleted_at: null,
+    }),
+    true,
+  );
+});
+
+test("teacher without a discipline is not marketplace-visible", () => {
+  assert.equal(
+    isTeacherMarketplaceVisibleRow({
+      id: "00000000-0000-4000-8000-000000000001",
+      user_id: "00000000-0000-4000-8000-000000000002",
+      is_public: true,
+      discipline: "",
+      category: "",
+      disciplineCount: 0,
       deactivated_at: null,
       deleted_at: null,
     }),
     false,
   );
+});
+
+test("profile publish evaluation reports marketplace visibility from discipline count", () => {
+  const result = evaluateTeacherProfilePublishEligibility({
+    id: "00000000-0000-4000-8000-000000000001",
+    user_id: "00000000-0000-4000-8000-000000000002",
+    name: "Marie",
+    bio: "",
+    disciplineCount: 1,
+    price_per_lesson: null,
+    availability: [],
+    city: "",
+    region: "QC",
+    country_code: "CA",
+    is_public: false,
+    deactivated_at: null,
+    deleted_at: null,
+  });
+
+  assert.equal(result.marketplaceVisible, true);
+  assert.equal(result.canPublish, false);
+  assert.ok(result.blockers.includes("setup_incomplete"));
 });
 
 test("complete teacher with valid price remains marketplace-eligible", () => {

@@ -81,23 +81,23 @@ function formatDate(iso: string | null): string {
 }
 
 const SEARCH_VISIBILITY_BLOCKER_LABELS: Record<TeacherSearchVisibilityBlockerCode, string> = {
-  BLOCKER_PROFILE_NOT_PUBLISHED: "Profil non publié",
   BLOCKER_TEACHER_ROW_MISSING: "Ligne enseignant manquante",
   BLOCKER_PROFILE_INACTIVE: "Compte masqué ou désactivé",
   BLOCKER_TEACHER_INACTIVE: "Profil enseignant désactivé",
   BLOCKER_DEMO_PROFILE: "Profil démo exclu",
   BLOCKER_INVALID_PUBLIC_IDS: "Identifiants publics invalides",
-  BLOCKER_MISSING_PUBLIC_DATA: "Données publiques manquantes",
-  BLOCKER_MISSING_BASE_RATE: "Tarif de base manquant",
   BLOCKER_MISSING_SUBJECT: "Discipline manquante",
-  BLOCKER_MISSING_TEACHING_FORMAT: "Format d'enseignement manquant",
-  BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE: "Zone publique ou option en ligne manquante",
-  BLOCKER_UNSUPPORTED_COUNTRY: "Pays non ouvert aux professeurs",
   BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING: "Identité refusée",
   BLOCKER_BY_RLS_OR_PUBLIC_VIEW: "Absent de la projection publique",
 };
 
 const SEARCH_VISIBILITY_WARNING_LABELS: Record<TeacherSearchVisibilityWarningCode, string> = {
+  WARNING_PROFILE_NOT_PUBLISHED: "Profil non publié",
+  WARNING_MISSING_PUBLIC_DATA: "Données publiques manquantes",
+  WARNING_MISSING_BASE_RATE: "Tarif de base manquant",
+  WARNING_MISSING_TEACHING_FORMAT: "Format d'enseignement manquant",
+  WARNING_MISSING_PUBLIC_LOCATION_OR_ONLINE: "Zone publique ou option en ligne manquante",
+  WARNING_UNSUPPORTED_COUNTRY: "Pays non ouvert aux professeurs",
   WARNING_IDENTITY_NOT_VERIFIED: "Identité non vérifiée",
   WARNING_NO_AVAILABILITY: "Aucune disponibilité configurée",
   WARNING_NO_INTRO_LESSON: "Aucune leçon intro configurée",

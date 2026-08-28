@@ -1,0 +1,205 @@
+import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { evaluateTeacherDiscovery } from "@/lib/teachers/teacherDiscovery";
+
+type TestFn = () => void;
+const tests: Array<{ name: string; fn: TestFn }> = [];
+
+function test(name: string, fn: TestFn) {
+  tests.push({ name, fn });
+}
+
+const ROOT = process.cwd();
+
+function read(rel: string): string {
+  return readFileSync(join(ROOT, rel), "utf8");
+}
+
+function stripSqlComments(sql: string): string {
+  return sql
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split(/\r?\n/)
+    .map((line) => line.replace(/--.*$/, ""))
+    .join("\n");
+}
+
+test("minimal teacher profile with a discipline is discoverable and requestable", () => {
+  const result = evaluateTeacherDiscovery({
+    profile: { role: "teacher", is_active: true },
+    teacher: {
+      id: "00000000-0000-4000-8000-000000000001",
+      user_id: "00000000-0000-4000-8000-000000000002",
+      is_public: false,
+      discipline: "piano",
+      deactivated_at: null,
+      deleted_at: null,
+    },
+    disciplineCount: 1,
+  });
+
+  assert.equal(result.discoverable, true);
+  assert.equal(result.requestable, true);
+  assert.equal(result.bookable, false);
+  assert.equal(result.status, "profile_incomplete");
+  assert.deepEqual(result.hiddenReasons, []);
+});
+
+test("teacher without a discipline is not discoverable", () => {
+  const result = evaluateTeacherDiscovery({
+    profile: { role: "teacher", is_active: true },
+    teacher: {
+      id: "00000000-0000-4000-8000-000000000001",
+      user_id: "00000000-0000-4000-8000-000000000002",
+      is_public: true,
+      discipline: "",
+      category: "",
+    },
+    disciplineCount: 0,
+  });
+
+  assert.equal(result.discoverable, false);
+  assert.equal(result.requestable, false);
+  assert.equal(result.bookable, false);
+  assert.equal(result.status, "hidden");
+  assert.equal(result.hiddenReasons.includes("missing_discipline"), true);
+});
+
+test("payment readiness changes bookable status only, not discoverability", () => {
+  const result = evaluateTeacherDiscovery({
+    profile: { role: "teacher", is_active: true },
+    teacher: {
+      id: "00000000-0000-4000-8000-000000000001",
+      user_id: "00000000-0000-4000-8000-000000000002",
+      discipline: "espagnol",
+      profile_complete: true,
+      payment_ready: true,
+    },
+    disciplineCount: 1,
+  });
+
+  assert.equal(result.discoverable, true);
+  assert.equal(result.requestable, true);
+  assert.equal(result.bookable, true);
+  assert.equal(result.status, "bookable");
+});
+
+test("migration creates no-payment teacher booking requests with RLS", () => {
+  assert.equal(
+    existsSync(join(ROOT, "supabase/migrations/125_teacher_discovery_first_visibility.sql")),
+    true,
+  );
+  const migration = stripSqlComments(read("supabase/migrations/125_teacher_discovery_first_visibility.sql"));
+
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.teacher_booking_requests/i);
+  assert.match(migration, /No-payment learner interest requests/i);
+  assert.match(migration, /ALTER TABLE IF EXISTS public\.teacher_booking_requests ENABLE ROW LEVEL SECURITY/i);
+  assert.match(migration, /GRANT SELECT ON public\.teacher_booking_requests TO authenticated/i);
+  assert.match(migration, /GRANT ALL ON public\.teacher_booking_requests TO service_role/i);
+  assert.match(migration, /CREATE UNIQUE INDEX IF NOT EXISTS idx_teacher_booking_requests_open_unique/i);
+  assert.match(migration, /COALESCE\(learner_profile_id/i);
+});
+
+test("public teacher view no longer requires profile completion or Stripe readiness", () => {
+  const migration = stripSqlComments(read("supabase/migrations/125_teacher_discovery_first_visibility.sql"));
+
+  assert.doesNotMatch(migration, /WHERE[\s\S]*t\.is_public\s*=\s*true/i);
+  assert.doesNotMatch(migration, /NULLIF\(BTRIM\(t\.bio\), ''\) IS NOT NULL/i);
+  assert.doesNotMatch(migration, /t\.price_per_lesson\s*>\s*0/i);
+  assert.doesNotMatch(migration, /UPPER\(BTRIM\(COALESCE\(t\.country_code, ''\)\)\)\s*=\s*'CA'/i);
+  assert.doesNotMatch(migration, /stripe_account_id|stripe_connect_onboarding_complete|stripe_connect_charges_enabled|stripe_connect_payouts_enabled/i);
+  assert.match(migration, /FROM public\.teacher_disciplines td/i);
+});
+
+test("public teacher projection still strips private payment and location details", () => {
+  const migration = stripSqlComments(read("supabase/migrations/125_teacher_discovery_first_visibility.sql"));
+  const returnBlock = migration.match(/RETURNS TABLE \(([\s\S]*?)\)\s+LANGUAGE/i)?.[1] ?? "";
+  const selectBlock = migration.match(/AS \$\$\s+SELECT([\s\S]*?)FROM public\.teachers t/i)?.[1] ?? "";
+
+  assert.doesNotMatch(returnBlock, /stripe_/i);
+  assert.doesNotMatch(returnBlock, /identity_verified_manually/i);
+  assert.doesNotMatch(selectBlock, /stripe_account_id|stripe_connect_/i);
+  assert.match(selectBlock, /COALESCE\(t\.location, '\{\}'::jsonb\) - 'private'::text AS location/i);
+});
+
+test("booking API creates deferred requests before pending paid bookings", () => {
+  const route = read("app/api/bookings/route.ts");
+  const deferIdx = route.indexOf("teacher_booking_requests");
+  const bookingIdx = route.indexOf("const created = await createPendingPaymentBooking");
+  const stripeIdx = route.indexOf("/api/stripe/checkout");
+
+  assert.ok(deferIdx > -1, "expected teacher_booking_requests path");
+  assert.ok(bookingIdx > -1, "expected existing paid booking path");
+  assert.ok(deferIdx < bookingIdx, "deferred request must happen before paid booking creation");
+  assert.equal(stripeIdx, -1, "booking API must not call Stripe checkout directly");
+  assert.match(route, /teacher_payment_setup_required/);
+  assert.match(route, /teacher_profile_setup_required/);
+  assert.match(route, /validateMinimumLessonPriceDollars/);
+  assert.match(route, /status: 202/);
+});
+
+test("booking modal handles deferred request without continuing to Stripe checkout", () => {
+  const modal = read("components/BookingModal.tsx");
+  const deferredIdx = modal.indexOf("createRes.status === 202");
+  const stripeIdx = modal.indexOf('fetch("/api/stripe/checkout"');
+
+  assert.ok(deferredIdx > -1, "expected deferred response handling");
+  assert.ok(stripeIdx > -1, "expected existing Stripe checkout path to remain");
+  assert.ok(deferredIdx < stripeIdx, "deferred response must return before checkout fetch");
+  assert.match(modal, /deferredRequestSent/);
+  assert.match(modal, /bookingSendRequest/);
+  assert.match(modal, /bookingDeferredRequestNoPaymentNote/);
+});
+
+test("teacher request email uses existing email infrastructure", () => {
+  const email = read("lib/email/templates/teacherDiscovery.ts");
+  const profileEmail = read("lib/email/templates/teacherProfileImprovement.ts");
+  const exportsFile = read("lib/email.ts");
+
+  assert.match(email, /buildEmail/);
+  assert.match(email, /send\(/);
+  assert.match(email, /payment setup/i);
+  assert.match(email, /dashboard/);
+  assert.match(email, /Un apprenant veut réserver un cours avec vous/);
+  assert.match(email, /This request is not a paid booking/);
+  assert.match(profileEmail, /Your profile is now visible/);
+  assert.match(profileEmail, /Stripe[\s\S]*paid booking/);
+  assert.match(exportsFile, /sendTeacherProfileImprovementEmail/);
+  assert.match(exportsFile, /sendTeacherBookingRequestEmail/);
+});
+
+test("search cards do not display zero-dollar placeholder pricing", () => {
+  const searchPage = read("app/(app)/student/search/page.tsx");
+  const mapper = read("lib/teacherMapper.ts");
+
+  assert.match(searchPage, /teacherDiscoveryPricePending/);
+  assert.match(mapper, /pricePerLesson: Number\.isFinite\(pricePerLesson\) && pricePerLesson > 0 \? pricePerLesson : 0/);
+});
+
+test("restricted payment systems are not modified by this branch", () => {
+  const statusFixture = read("app/api/bookings/route.ts");
+  assert.doesNotMatch(statusFixture, /STRIPE_SECRET_KEY|stripe\.checkout|payment_intent|transfer_group|commission/i);
+});
+
+test("dashboard and docs document discovery-first lifecycle without exposing secrets", () => {
+  const dashboardCard = read("components/dashboard/teacher/TeacherProfileStatusCard.tsx");
+  const adminOverview = read("lib/admin/overview.ts");
+  const adminPage = read("app/(app)/admin/page.tsx");
+  const docs = read("docs/product/teacher-discovery-first.md");
+
+  assert.match(dashboardCard, /teacherDashDiscoveryFirstVisibleBody/);
+  assert.match(dashboardCard, /teacherDashDiscoveryFirstStripeBody/);
+  assert.match(adminOverview, /teachersHiddenNoDiscipline/);
+  assert.match(adminOverview, /teachersVisiblePaymentSetupRequired/);
+  assert.match(adminOverview, /teachersBookable/);
+  assert.match(adminPage, /Visibles mais paiement à configurer/);
+  assert.match(docs, /must not charge the learner before the teacher can receive money/i);
+  assert.doesNotMatch(docs, /stripe_account_id|service_role/i);
+});
+
+for (const { name, fn } of tests) {
+  fn();
+  console.log(`ok - ${name}`);
+}
+
+console.log(`[teacherSearch:teacherDiscoveryFirstDeferredStripe] ${tests.length} tests passed`);

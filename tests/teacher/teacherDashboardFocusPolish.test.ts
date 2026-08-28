@@ -89,7 +89,9 @@ test("no booking / Stripe / package mutation surfaces changed by this polish", (
   assert.match(dash, /postCancelBooking/);
   const action = read("components/dashboard/teacher/TeacherDashboardActionCenter.tsx");
   const status = read("components/dashboard/teacher/TeacherProfileStatusCard.tsx");
-  assert.doesNotMatch(action + status, /stripe|commission|payout|refund/i);
+  assert.doesNotMatch(action + status, /@stripe\/|stripe\.|createCheckout|application_fee/i);
+  assert.doesNotMatch(action + status, /reversePackageRedemption|forfeitPackageRedemption|redeemPackageSession/);
+  assert.doesNotMatch(action + status, /from ["']@\/lib\/payments|from ["']@\/lib\/commissions/i);
 });
 
 test("marketplace-safe FR action copy", () => {

@@ -995,14 +995,20 @@ function TeacherCard({
         </span>
         <span className="font-bold text-[#0F766E] min-[420px]:text-right">
           {/* When teacher_offers launches, this card should display the minimum active published offer price with “À partir de” copy. */}
-          <PriceDisplay
-            amount={Number(teacher.pricePerLesson)}
-            sourceCurrency={teacher.currency ?? "CAD"}
-            perHour
-            primaryClassName="font-bold tabular-nums text-[#0F766E]"
-            secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
-            className="justify-end"
-          />
+          {Number(teacher.pricePerLesson) > 0 ? (
+            <PriceDisplay
+              amount={Number(teacher.pricePerLesson)}
+              sourceCurrency={teacher.currency ?? "CAD"}
+              perHour
+              primaryClassName="font-bold tabular-nums text-[#0F766E]"
+              secondaryClassName="block w-full text-[9px] font-semibold text-slate-500"
+              className="justify-end"
+            />
+          ) : (
+            <span className="inline-flex rounded-full bg-teal-50 px-2.5 py-1 text-[11px] font-semibold text-teal-800">
+              {t("teacherDiscoveryPricePending")}
+            </span>
+          )}
         </span>
       </div>
     </button>

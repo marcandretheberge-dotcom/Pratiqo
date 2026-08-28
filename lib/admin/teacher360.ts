@@ -496,10 +496,10 @@ function buildRecommendedActions(input: {
   const actions: AdminTeacher360Action[] = [];
   const { teacher, blockers, warnings } = input;
 
-  if (blockers.includes("BLOCKER_PROFILE_NOT_PUBLISHED")) {
+  if (warnings.includes("WARNING_PROFILE_NOT_PUBLISHED")) {
     actions.push({ id: "publish-profile", label: "Publier le profil", href: null, status: "coming_soon" });
   }
-  if (blockers.includes("BLOCKER_MISSING_BASE_RATE")) {
+  if (warnings.includes("WARNING_MISSING_BASE_RATE")) {
     actions.push({ id: "add-rate", label: "Ajouter un tarif", href: `/admin/users/${teacher.user_id ?? ""}`, status: "coming_soon" });
   }
   if (blockers.includes("BLOCKER_MISSING_SUBJECT")) {

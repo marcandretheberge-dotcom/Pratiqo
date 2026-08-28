@@ -117,6 +117,17 @@ export default function AdminDashboardPage() {
     () => [
       { id: "teachersTotal", label: "Professeurs inscrits", value: overview.teachersTotal },
       { id: "teachersVisible", label: "Profils visibles", value: overview.teachersVisible },
+      {
+        id: "teachersVisiblePaymentSetupRequired",
+        label: "Visibles mais paiement à configurer",
+        value: overview.teachersVisiblePaymentSetupRequired,
+      },
+      {
+        id: "teachersHiddenNoDiscipline",
+        label: "Professeurs cachés sans discipline",
+        value: overview.teachersHiddenNoDiscipline,
+      },
+      { id: "teachersBookable", label: "Professeurs réservables", value: overview.teachersBookable },
       { id: "teachersBlocked", label: "Profils bloqués", value: overview.teachersBlocked },
       { id: "studentsTotal", label: "Apprenants inscrits", value: overview.studentsTotal },
       { id: "bookings", label: "Réservations", value: overview.bookingsTotal },

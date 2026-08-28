@@ -1376,6 +1376,11 @@ const allowedTeacherAvailabilityPreviewFiles = new Set<string>([
   "package.json",
 ]);
 
+/** Teacher discovery-first booking requests: one RLS-hardened no-payment request table. */
+const allowedTeacherDiscoveryFirstFiles = new Set<string>([
+  "supabase/migrations/125_teacher_discovery_first_visibility.sql",
+]);
+
 function touchesSafeDisclosureScope(file: string): boolean {
   return (
     liveDisclosureFiles.includes(file) ||
@@ -1585,6 +1590,7 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedTeacherScheduleExceptionsCoreFiles.has(file)) continue;
     if (allowedTeacherScheduleProfileLookupFiles.has(file)) continue;
     if (allowedTeacherAvailabilityPreviewFiles.has(file)) continue;
+    if (allowedTeacherDiscoveryFirstFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);
