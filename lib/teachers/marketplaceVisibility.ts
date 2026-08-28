@@ -15,6 +15,7 @@ export type TeacherMarketplaceVisibilityRow = {
   id: string;
   user_id?: string | null;
   is_public?: boolean | null;
+  marketplace_discovery_opt_out?: boolean | null;
   is_demo?: boolean | null;
   discipline?: string | null;
   category?: string | null;
@@ -46,6 +47,7 @@ export function isTeacherMarketplaceVisibleRow(row: TeacherMarketplaceVisibility
       discipline: row.discipline,
       category: row.category,
       is_public: row.is_public,
+      marketplace_discovery_opt_out: row.marketplace_discovery_opt_out,
       is_demo: row.is_demo,
       deactivated_at: row.deactivated_at,
       deleted_at: row.deleted_at,

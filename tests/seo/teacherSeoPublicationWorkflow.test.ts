@@ -98,7 +98,7 @@ test("teacher consent intent fields without admin publish", () => {
     public_profile_slug: "marie-d-espagnol-levis",
   };
   assert.equal(teacherHasRequestedSeoPublication(row), true);
-  assert.equal(isTeacherPublicProfilePageVisible(row), false);
+  assert.equal(isTeacherPublicProfilePageVisible(row), true);
   assert.equal(isTeacherPublicProfileIndexable(row), false);
   const evaluation = evaluateTeacherSeoPublication(row, "fr");
   assert.ok(evaluation.missingReasonKeys.includes("not_admin_published"));
@@ -339,12 +339,12 @@ test("admin unpublish clears admin publication marker only", () => {
   assert.doesNotMatch(unpublishBlock![0], /is_public:\s*false/);
 });
 
-test("admin hide_marketplace action sets is_public false without clearing SEO marker in same update", () => {
+test("admin hide_marketplace action sets marketplace opt-out without clearing SEO marker in same update", () => {
   const adminRoute = read("app/api/admin/users/[id]/teacher-seo-publish/route.ts");
   assert.match(adminRoute, /hide_marketplace/);
   const hideBlock = adminRoute.match(/action === "hide_marketplace"[\s\S]*?} else \{/);
   assert.ok(hideBlock);
-  assert.match(hideBlock![0], /is_public:\s*false/);
+  assert.match(hideBlock![0], /marketplace_discovery_opt_out:\s*true/);
   assert.doesNotMatch(hideBlock![0], /public_profile_last_indexable_at:\s*null/);
 });
 
@@ -405,16 +405,16 @@ test("teacher seo publication API route exists server-side", () => {
   assert.doesNotMatch(teacherRoute, /is_public:\s*true/);
 });
 
-test("admin seo publish route sets is_public on publish and hide_marketplace only", () => {
+test("admin seo publish route sets marketplace opt-out clear on publish and opt-out on hide_marketplace", () => {
   const adminRoute = read("app/api/admin/users/[id]/teacher-seo-publish/route.ts");
   assert.match(adminRoute, /requireAdminApi/);
   assert.match(adminRoute, /collectTeacherSeoAdminPublishBlockers/);
   const publishBlock = adminRoute.match(/action === "publish"[\s\S]*?} else if \(action === "unpublish"\)/);
   assert.ok(publishBlock);
-  assert.match(publishBlock![0], /is_public:\s*true/);
+  assert.match(publishBlock![0], /marketplace_discovery_opt_out:\s*false/);
   const hideBlock = adminRoute.match(/action === "hide_marketplace"[\s\S]*?} else \{/);
   assert.ok(hideBlock);
-  assert.match(hideBlock![0], /is_public:\s*false/);
+  assert.match(hideBlock![0], /marketplace_discovery_opt_out:\s*true/);
   assert.doesNotMatch(adminRoute, /deactivated_at/);
 });
 

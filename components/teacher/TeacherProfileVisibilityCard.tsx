@@ -40,14 +40,18 @@ export function TeacherProfileVisibilityCard({
   const [message, setMessage] = useState<string | null>(null);
   const [messageKind, setMessageKind] = useState<"ok" | "error">("ok");
   const [isPublic, setIsPublic] = useState(teacher.is_public === true);
+  const [marketplaceOptOut, setMarketplaceOptOut] = useState(
+    teacher.marketplace_discovery_opt_out === true,
+  );
 
   const evaluation = useMemo(
     () =>
       evaluateTeacherProfilePublishEligibility({
         ...teacher,
         is_public: isPublic,
+        marketplace_discovery_opt_out: marketplaceOptOut,
       }),
-    [teacher, isPublic],
+    [teacher, isPublic, marketplaceOptOut],
   );
 
   const statusLabelKey = teacherProfileVisibilityStatusLabelKey(
@@ -79,7 +83,11 @@ export function TeacherProfileVisibilityCard({
         },
         body: JSON.stringify({ action }),
       });
-      const body = (await res.json().catch(() => ({}))) as { error?: string; is_public?: boolean };
+      const body = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        is_public?: boolean;
+        marketplace_discovery_opt_out?: boolean;
+      };
 
       if (!res.ok) {
         setMessage(body.error || t("anErrorOccurred"));
@@ -90,6 +98,7 @@ export function TeacherProfileVisibilityCard({
 
       const nextPublic = body.is_public === true;
       setIsPublic(nextPublic);
+      setMarketplaceOptOut(body.marketplace_discovery_opt_out === true);
       onVisibilityChange?.(nextPublic);
       setMessage(
         nextPublic ? t("teacherProfilePublishSuccess") : t("teacherProfileUnpublishSuccess"),
@@ -104,6 +113,7 @@ export function TeacherProfileVisibilityCard({
 
   const statusTone: Record<TeacherProfileVisibilityStatus, string> = {
     admin_hidden: "border-rose-200 bg-rose-50/80 text-rose-950",
+    marketplace_opted_out: "border-slate-300 bg-slate-100/80 text-slate-900",
     public: "border-teal-200 bg-teal-50/80 text-teal-950",
     incomplete: "border-amber-200 bg-amber-50/80 text-amber-950",
     ready_to_publish: "border-sky-200 bg-sky-50/80 text-sky-950",

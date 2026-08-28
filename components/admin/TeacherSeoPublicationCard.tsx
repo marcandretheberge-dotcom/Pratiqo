@@ -212,7 +212,11 @@ export function TeacherSeoPublicationCard({
             {copy.marketplaceVisibilityLabel}
           </dt>
           <dd className="mt-1 font-semibold text-slate-900">
-            {evaluation.isPublic ? copy.marketplacePublic : copy.marketplacePrivate}
+            {evaluation.marketplaceOptedOut
+              ? copy.marketplaceOptedOut
+              : evaluation.marketplaceVisible
+                ? copy.marketplacePublic
+                : copy.marketplacePrivate}
           </dd>
         </div>
         <div data-testid="admin-teacher-seo-payment-status">

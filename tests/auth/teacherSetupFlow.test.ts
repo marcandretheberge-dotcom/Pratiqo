@@ -80,7 +80,7 @@ test("verification page expands first incomplete section in setup mode", () => {
 
 test("verification management page does not expose public profile link for private or inactive teachers", () => {
   const page = read("app/(app)/teacher/verification/page.tsx");
-  assert.match(page, /is_public, deactivated_at, deleted_at/);
+  assert.match(page, /is_public, marketplace_discovery_opt_out, deactivated_at, deleted_at/);
   assert.match(page, /canOpenPublicProfile/);
   assert.match(page, /teacherRow\.is_public === true/);
   assert.match(page, /!teacherRow\.deactivated_at && !teacherRow\.deleted_at/);

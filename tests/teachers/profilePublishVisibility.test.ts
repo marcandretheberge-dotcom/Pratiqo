@@ -102,6 +102,14 @@ test("identity verification failure blocks publish without exposing raw identity
   assert.equal(isTeacherMarketplaceVisibleRow(eligibleDraft({ identity_verification_failed: true, is_public: true })), false);
 });
 
+test("marketplace opt-out hides teacher even with discipline", () => {
+  const row = eligibleDraft({ marketplace_discovery_opt_out: true });
+  assert.equal(isTeacherMarketplaceVisibleRow(row), false);
+  const evaluation = evaluateTeacherProfilePublishEligibility(row);
+  assert.equal(evaluation.status, "marketplace_opted_out");
+  assert.equal(evaluation.marketplaceVisible, false);
+});
+
 test("published teacher can unpublish", () => {
   const evaluation = evaluateTeacherProfilePublishEligibility(eligibleDraft({ is_public: true }));
   assert.equal(evaluation.canUnpublish, true);
@@ -131,10 +139,18 @@ test("visibility API requires auth and teacher role checks", () => {
   assert.match(route, /isIdentityVerificationFailed/);
 });
 
-test("publish updates only is_public and never touches Stripe or commission fields", () => {
+test("publish/unpublish route sets marketplace opt-out flag", () => {
   const route = read("app/api/teacher/profile/visibility/route.ts");
-  assert.match(route, /update\(\{ is_public: true/);
-  assert.match(route, /update\(\{ is_public: false/);
+  assert.match(route, /marketplace_discovery_opt_out:\s*true/);
+  assert.match(route, /marketplace_discovery_opt_out_at:/);
+  assert.match(route, /marketplace_discovery_opt_out:\s*false/);
+  assert.match(route, /marketplace_discovery_opt_out_at:\s*null/);
+});
+
+test("publish updates is_public and marketplace opt-out without touching Stripe or commission fields", () => {
+  const route = read("app/api/teacher/profile/visibility/route.ts");
+  assert.match(route, /is_public: true,/);
+  assert.match(route, /is_public: false,/);
   assert.doesNotMatch(route, /stripe_connect/);
   assert.doesNotMatch(route, /commission/);
   assert.doesNotMatch(route, /plan/);
@@ -168,6 +184,7 @@ test("publish/unpublish and onboarding copy exist in FR EN ES", () => {
     assert.ok(json.teacherProfileUnpublishButton);
     assert.ok(json.teacherOnboardingSavedNotPublishedBody);
     assert.ok(json.teacherProfileVisibilityStatusPublic);
+    assert.ok(json.teacherProfileVisibilityStatusMarketplaceOptedOut);
   }
 });
 

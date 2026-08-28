@@ -158,6 +158,7 @@ export function Dashboard() {
     availabilityCount: number;
     preciseIntervalCount: number;
     is_public: boolean | null;
+    marketplace_discovery_opt_out?: boolean | null;
     is_demo: boolean | null;
     deactivated_at: string | null;
     deleted_at: string | null;
@@ -651,7 +652,7 @@ export function Dashboard() {
       const { data: t } = await supabase
         .from("teachers")
         .select(
-          "id, name, discipline, price_per_lesson, bio, image_url, timezone, city, region, availability, is_public, is_demo, deactivated_at, deleted_at, identity_verified, stripe_identity_failed_reason, country_code",
+          "id, name, discipline, price_per_lesson, bio, image_url, timezone, city, region, availability, is_public, marketplace_discovery_opt_out, is_demo, deactivated_at, deleted_at, identity_verified, stripe_identity_failed_reason, country_code",
         )
         .eq("user_id", user.id)
         .maybeSingle();
@@ -672,6 +673,7 @@ export function Dashboard() {
         region?: string | null;
         availability?: unknown[] | null;
         is_public?: boolean | null;
+        marketplace_discovery_opt_out?: boolean | null;
         is_demo?: boolean | null;
         deactivated_at?: string | null;
         deleted_at?: string | null;
@@ -710,6 +712,7 @@ export function Dashboard() {
         availabilityCount: Array.isArray(row.availability) ? row.availability.length : 0,
         preciseIntervalCount,
         is_public: row.is_public ?? false,
+        marketplace_discovery_opt_out: row.marketplace_discovery_opt_out ?? false,
         is_demo: row.is_demo ?? false,
         deactivated_at: row.deactivated_at ?? null,
         deleted_at: row.deleted_at ?? null,

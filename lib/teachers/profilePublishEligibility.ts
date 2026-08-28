@@ -9,6 +9,7 @@ import { isTeacherMarketplaceVisibleRow } from "@/lib/teachers/marketplaceVisibi
 
 export type TeacherProfileVisibilityStatus =
   | "admin_hidden"
+  | "marketplace_opted_out"
   | "public"
   | "incomplete"
   | "ready_to_publish"
@@ -26,6 +27,7 @@ export type TeacherProfilePublishInput = {
   region?: string | null;
   country_code?: string | null;
   is_public?: boolean | null;
+  marketplace_discovery_opt_out?: boolean | null;
   is_demo?: boolean | null;
   deactivated_at?: string | null;
   deleted_at?: string | null;
@@ -81,6 +83,7 @@ export function evaluateTeacherProfilePublishEligibility(
     id: input.id,
     user_id: input.user_id,
     is_public: input.is_public,
+    marketplace_discovery_opt_out: input.marketplace_discovery_opt_out,
     is_demo: input.is_demo,
     deactivated_at: input.deactivated_at,
     deleted_at: input.deleted_at,
@@ -95,6 +98,8 @@ export function evaluateTeacherProfilePublishEligibility(
   let status: TeacherProfileVisibilityStatus;
   if (isAdminOrProfileBlocked(input)) {
     status = "admin_hidden";
+  } else if (input.marketplace_discovery_opt_out === true) {
+    status = "marketplace_opted_out";
   } else if (input.is_public === true) {
     status = "public";
   } else if (!setupComplete) {
@@ -131,6 +136,8 @@ export function teacherProfileVisibilityStatusLabelKey(
   switch (status) {
     case "admin_hidden":
       return "teacherProfileVisibilityStatusAdminHidden";
+    case "marketplace_opted_out":
+      return "teacherProfileVisibilityStatusMarketplaceOptedOut";
     case "public":
       return "teacherProfileVisibilityStatusPublic";
     case "incomplete":
@@ -148,6 +155,8 @@ export function teacherProfileVisibilityStatusBodyKey(
   switch (status) {
     case "admin_hidden":
       return "teacherProfileVisibilityStatusAdminHiddenBody";
+    case "marketplace_opted_out":
+      return "teacherProfileVisibilityStatusMarketplaceOptedOutBody";
     case "public":
       return "teacherProfileVisibilityStatusPublicBody";
     case "incomplete":

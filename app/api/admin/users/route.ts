@@ -90,6 +90,7 @@ type AdminTeacherVisibilityRow = {
   country_code: string | null;
   location: unknown;
   is_public: boolean | null;
+  marketplace_discovery_opt_out?: boolean | null;
   is_demo: boolean | null;
   deactivated_at: string | null;
   deleted_at: string | null;
@@ -156,7 +157,7 @@ export async function GET(req: Request) {
       admin
         .from("teachers")
         .select(
-          "id, user_id, name, discipline, category, bio, availability, price_per_lesson, teaching_mode, city, region, country_code, location, is_public, is_demo, deactivated_at, deleted_at, identity_verified, intro_session_enabled, intro_session_price_cents, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason",
+          "id, user_id, name, discipline, category, bio, availability, price_per_lesson, teaching_mode, city, region, country_code, location, is_public, marketplace_discovery_opt_out, is_demo, deactivated_at, deleted_at, identity_verified, intro_session_enabled, intro_session_price_cents, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason",
         )
         .in("user_id", teacherProfileIds),
       admin.from("teachers_public").select("id, user_id").in("user_id", teacherProfileIds),

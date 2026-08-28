@@ -105,6 +105,8 @@ async function clearTeacherSeoOnly(admin: AdminClient, userId: string): Promise<
     .from("teachers")
     .update({
       is_public: false,
+      marketplace_discovery_opt_out: true,
+      marketplace_discovery_opt_out_at: now,
       updated_at: now,
       ...TEACHER_SEO_CLEAR_FIELDS,
     })
@@ -133,6 +135,8 @@ export async function adminDeactivateProfile(
     .from("teachers")
     .update({
       updated_at: now,
+      marketplace_discovery_opt_out: true,
+      marketplace_discovery_opt_out_at: now,
       ...TEACHER_SEO_CLEAR_FIELDS,
     })
     .eq("user_id", userId);
@@ -165,6 +169,8 @@ export async function adminReactivateProfile(admin: AdminClient, userId: string)
     .update({
       is_public: true,
       deactivated_at: null,
+      marketplace_discovery_opt_out: false,
+      marketplace_discovery_opt_out_at: null,
       updated_at: now,
     })
     .eq("user_id", userId);

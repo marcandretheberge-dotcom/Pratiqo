@@ -8,6 +8,7 @@ type AdminTeacherSeoPublicationCopy = {
   marketplaceVisibilityLabel: string;
   marketplacePublic: string;
   marketplacePrivate: string;
+  marketplaceOptedOut: string;
   teacherRequestLabel: string;
   teacherRequestYes: string;
   teacherRequestNo: string;
@@ -59,6 +60,7 @@ const COPY: Record<Locale, AdminTeacherSeoPublicationCopy> = {
     marketplaceVisibilityLabel: "Visibilité marketplace Pratiqo",
     marketplacePublic: "Visible dans la recherche Pratiqo",
     marketplacePrivate: "Masqué de la recherche Pratiqo",
+    marketplaceOptedOut: "Profil masqué volontairement",
     teacherRequestLabel: "Demande du professeur",
     teacherRequestYes: "Demandé",
     teacherRequestNo: "Non demandé",
@@ -80,7 +82,7 @@ const COPY: Record<Locale, AdminTeacherSeoPublicationCopy> = {
     publishConfirm: "Publier ce profil dans Google (sitemap + indexation) ?",
     removeFromGoogleConfirm:
       "Retirer ce profil de Google et du sitemap (sans masquer le marketplace Pratiqo) ?",
-    hideMarketplaceConfirm: "Masquer ce profil de la recherche Pratiqo (is_public=false) ?",
+    hideMarketplaceConfirm: "Masquer ce profil de la recherche Pratiqo (opt-out marketplace) ?",
     requestCorrectionsConfirm:
       "Demander des corrections (retire le consentement SEO et dépublie) ?",
     publishSuccess: "Profil publié dans Google.",
@@ -128,6 +130,7 @@ const COPY: Record<Locale, AdminTeacherSeoPublicationCopy> = {
     marketplaceVisibilityLabel: "Pratiqo marketplace visibility",
     marketplacePublic: "Visible in Pratiqo search",
     marketplacePrivate: "Hidden from Pratiqo search",
+    marketplaceOptedOut: "Hidden from marketplace",
     teacherRequestLabel: "Teacher request",
     teacherRequestYes: "Requested",
     teacherRequestNo: "Not requested",
@@ -149,7 +152,7 @@ const COPY: Record<Locale, AdminTeacherSeoPublicationCopy> = {
     publishConfirm: "Publish this profile in Google (sitemap + indexing)?",
     removeFromGoogleConfirm:
       "Remove this profile from Google and the sitemap (without hiding from Pratiqo marketplace)?",
-    hideMarketplaceConfirm: "Hide this profile from Pratiqo search (is_public=false)?",
+    hideMarketplaceConfirm: "Hide this profile from Pratiqo search (marketplace opt-out)?",
     requestCorrectionsConfirm:
       "Request corrections (removes SEO consent and unpublishes)?",
     publishSuccess: "Profile published in Google.",
@@ -197,6 +200,7 @@ const COPY: Record<Locale, AdminTeacherSeoPublicationCopy> = {
     marketplaceVisibilityLabel: "Visibilidad en el marketplace Pratiqo",
     marketplacePublic: "Visible en la búsqueda de Pratiqo",
     marketplacePrivate: "Oculto de la búsqueda de Pratiqo",
+    marketplaceOptedOut: "Perfil oculto voluntariamente",
     teacherRequestLabel: "Solicitud del profesor",
     teacherRequestYes: "Solicitado",
     teacherRequestNo: "No solicitado",
@@ -218,7 +222,7 @@ const COPY: Record<Locale, AdminTeacherSeoPublicationCopy> = {
     publishConfirm: "¿Publicar este perfil en Google (sitemap + indexación)?",
     removeFromGoogleConfirm:
       "¿Retirar este perfil de Google y del sitemap (sin ocultarlo del marketplace de Pratiqo)?",
-    hideMarketplaceConfirm: "¿Ocultar este perfil de la búsqueda de Pratiqo (is_public=false)?",
+    hideMarketplaceConfirm: "¿Ocultar este perfil de la búsqueda de Pratiqo (opt-out marketplace)?",
     requestCorrectionsConfirm:
       "¿Solicitar correcciones (retira el consentimiento SEO y despublica)?",
     publishSuccess: "Perfil publicado en Google.",

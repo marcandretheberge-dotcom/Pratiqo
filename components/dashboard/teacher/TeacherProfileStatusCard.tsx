@@ -67,12 +67,14 @@ export function TeacherProfileStatusCard({
   const tone =
     evaluation.status === "public"
       ? "calm"
-      : evaluation.status === "incomplete" || evaluation.status === "admin_hidden"
+      : evaluation.status === "incomplete" ||
+          evaluation.status === "admin_hidden" ||
+          evaluation.status === "marketplace_opted_out"
         ? "action"
         : "neutral";
 
   const primaryCta =
-    evaluation.status === "ready_to_publish"
+    evaluation.status === "ready_to_publish" || evaluation.status === "marketplace_opted_out"
       ? { href: manageHref, label: t("teacherProfilePublishButton") }
       : evaluation.status === "incomplete"
         ? { href: manageHref.includes("?") ? manageHref : `${manageHref}?setup=1`, label: t("teacherDashFixProfileCta") }

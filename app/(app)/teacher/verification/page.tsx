@@ -98,6 +98,7 @@ type TeacherVerifyRow = {
   location?: unknown;
   home_lesson_enabled?: boolean | null;
   is_public?: boolean | null;
+  marketplace_discovery_opt_out?: boolean | null;
   deactivated_at?: string | null;
   deleted_at?: string | null;
   stripe_connect_onboarding_complete?: boolean | null;
@@ -256,7 +257,7 @@ export default function TeacherProfileManagementPage() {
       supabase
         .from("teachers")
         .select(
-          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, available_from_date, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, available_from_date, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, marketplace_discovery_opt_out, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -276,7 +277,7 @@ export default function TeacherProfileManagementPage() {
           const refetch = await supabase
             .from("teachers")
             .select(
-              "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, available_from_date, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+              "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, available_from_date, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, marketplace_discovery_opt_out, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
             )
             .eq("user_id", user.id)
             .maybeSingle();
@@ -1198,6 +1199,7 @@ export default function TeacherProfileManagementPage() {
             region: teacherRow.region,
             country_code: teacherRow.country_code,
             is_public: teacherRow.is_public,
+            marketplace_discovery_opt_out: teacherRow.marketplace_discovery_opt_out,
             deactivated_at: teacherRow.deactivated_at,
             deleted_at: teacherRow.deleted_at,
             identity_verification_failed: isIdentityVerificationFailed({
