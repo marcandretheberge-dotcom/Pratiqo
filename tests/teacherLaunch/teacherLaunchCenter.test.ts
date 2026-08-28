@@ -426,11 +426,17 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
     // payouts, commissions, Membre Pro, auth provider flow, YoPratiqo, public
     // SEO, or PostGIS behavior.
     "supabase/migrations/125_teacher_discovery_first_visibility.sql",
+    "supabase/migrations/126_restore_list_public_teachers.sql",
   ]);
 
   assert.deepEqual(
-    [...approvedMigrationExceptions].filter((file) => file.includes("teacher_discovery_first")),
-    ["supabase/migrations/125_teacher_discovery_first_visibility.sql"],
+    [...approvedMigrationExceptions].filter(
+      (file) => file.includes("teacher_discovery_first") || file.includes("restore_list_public_teachers"),
+    ),
+    [
+      "supabase/migrations/125_teacher_discovery_first_visibility.sql",
+      "supabase/migrations/126_restore_list_public_teachers.sql",
+    ],
   );
   assert.equal(approvedMigrationExceptions.has("supabase/migrations/*"), false);
   assert.equal(approvedMigrationExceptions.has("supabase/migrations/126_unrelated.sql"), false);

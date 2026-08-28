@@ -181,6 +181,90 @@ test("restricted payment systems are not modified by this branch", () => {
   assert.doesNotMatch(statusFixture, /STRIPE_SECRET_KEY|stripe\.checkout|payment_intent|transfer_group|commission/i);
 });
 
+function extractDiscoveryWhereClause(sql: string): string {
+  const normalized = stripSqlComments(sql);
+  const match = normalized.match(
+    /FROM public\.teachers t\s+INNER JOIN public\.profiles p ON p\.id = t\.user_id\s+WHERE([\s\S]*?)\)\s+AS discovered;/i,
+  );
+  return match?.[1]?.trim() ?? "";
+}
+
+test("migration 126 restores list_public_teachers and teachers_public", () => {
+  assert.equal(
+    existsSync(join(ROOT, "supabase/migrations/126_restore_list_public_teachers.sql")),
+    true,
+  );
+  const migration = stripSqlComments(read("supabase/migrations/126_restore_list_public_teachers.sql"));
+
+  assert.match(migration, /DROP VIEW IF EXISTS public\.teachers_public/i);
+  assert.match(migration, /DROP FUNCTION IF EXISTS public\.list_public_teachers\(\)/i);
+  assert.match(migration, /CREATE FUNCTION public\.list_public_teachers\(\)/i);
+  assert.match(migration, /CREATE VIEW public\.teachers_public[\s\S]*security_invoker\s*=\s*true/i);
+  assert.match(migration, /GRANT EXECUTE ON FUNCTION public\.list_public_teachers\(\) TO anon/i);
+  assert.match(migration, /GRANT SELECT ON public\.teachers_public TO anon/i);
+  assert.match(migration, /CREATE POLICY "teacher_offers_select_published_public"/i);
+});
+
+test("migration 126 keeps discovery-first gates and fixes the broken 125 UUID regex", () => {
+  const migration = stripSqlComments(read("supabase/migrations/126_restore_list_public_teachers.sql"));
+  const whereClause = extractDiscoveryWhereClause(migration);
+
+  assert.match(
+    migration,
+    /t\.id\s+~\* '\^\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}\$'/i,
+  );
+  assert.doesNotMatch(
+    migration,
+    /t\.id\s+~\* '\^\[0-9a-f\]\{8\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}\$'/i,
+  );
+  assert.doesNotMatch(whereClause, /t\.is_public\s*=\s*true/i);
+  assert.doesNotMatch(whereClause, /t\.price_per_lesson\s*>\s*0/i);
+  assert.doesNotMatch(whereClause, /NULLIF\(BTRIM\(t\.bio\), ''\) IS NOT NULL/i);
+  assert.doesNotMatch(whereClause, /stripe_account_id|stripe_connect_/i);
+  assert.match(whereClause, /p\.role\s*=\s*'teacher'/i);
+  assert.match(whereClause, /FROM public\.teacher_disciplines td/i);
+  assert.match(whereClause, /COALESCE\(t\.identity_status, 'none'\) <> 'failed'/i);
+});
+
+test("migration 126 public projection still strips private payment and location details", () => {
+  const migration = stripSqlComments(read("supabase/migrations/126_restore_list_public_teachers.sql"));
+  const returnBlock = migration.match(/RETURNS TABLE \(([\s\S]*?)\)\s+LANGUAGE/i)?.[1] ?? "";
+  const selectBlock =
+    migration.match(/FROM \(\s+SELECT([\s\S]*?)FROM public\.teachers t/i)?.[1] ?? "";
+
+  assert.doesNotMatch(returnBlock, /stripe_/i);
+  assert.doesNotMatch(returnBlock, /identity_verified_manually/i);
+  assert.doesNotMatch(selectBlock, /stripe_account_id|stripe_connect_/i);
+  assert.match(selectBlock, /COALESCE\(t\.location, '\{\}'::jsonb\) - 'private'::text AS location/i);
+});
+
+test("migration 126 inline discovery WHERE mirrors the function body filters", () => {
+  const migration126 = stripSqlComments(read("supabase/migrations/126_restore_list_public_teachers.sql"));
+  const migration125 = stripSqlComments(read("supabase/migrations/125_teacher_discovery_first_visibility.sql"));
+  const where126 = extractDiscoveryWhereClause(migration126);
+  const where125 =
+    migration125
+      .match(/FROM public\.teachers t\s+INNER JOIN public\.profiles p ON p\.id = t\.user_id\s+WHERE([\s\S]*?);/i)?.[1]
+      ?.trim() ?? "";
+
+  assert.notEqual(where126, "");
+  assert.notEqual(where125, "");
+  assert.notEqual(where126, where125);
+  assert.match(where126, /\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}/i);
+  assert.doesNotMatch(where125, /\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{4\}-\[0-9a-f\]\{12\}/i);
+
+  for (const predicate of [
+    "t.deactivated_at IS NULL",
+    "p.role = 'teacher'",
+    "COALESCE(t.is_demo, false) = false",
+    "FROM public.teacher_disciplines td",
+    "COALESCE(t.identity_status, 'none') <> 'failed'",
+  ]) {
+    assert.match(where126, new RegExp(predicate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+    assert.match(where125, new RegExp(predicate.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+  }
+});
+
 test("dashboard and docs document discovery-first lifecycle without exposing secrets", () => {
   const dashboardCard = read("components/dashboard/teacher/TeacherProfileStatusCard.tsx");
   const adminOverview = read("lib/admin/overview.ts");
