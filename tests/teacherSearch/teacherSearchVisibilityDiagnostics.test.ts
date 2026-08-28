@@ -78,19 +78,21 @@ test("search-visible teacher appears in search when teachers_public contains the
   assert.deepEqual(result.warningReasonCodes, []);
 });
 
-test("teachers_public membership no longer overrides TypeScript policy blockers", () => {
+test("teachers_public membership no longer depends on publication flag", () => {
   const result = diagnose({
     inTeachersPublicView: true,
     teacher: { ...teacher, is_public: null },
   });
-  assert.equal(result.visibleInSearch, false);
-  assert.ok(result.blockingReasonCodes.includes("BLOCKER_PROFILE_NOT_PUBLISHED"));
+  assert.equal(result.visibleInSearch, true);
+  assert.deepEqual(result.blockingReasonCodes, []);
+  assert.ok(result.warningReasonCodes.includes("WARNING_PROFILE_NOT_PUBLISHED"));
 });
 
-test("teachers.is_public null is not visible by TypeScript policy", () => {
+test("teachers.is_public null is warning-only by TypeScript policy", () => {
   const result = diagnose({ teacher: { ...teacher, is_public: null } });
-  assert.equal(result.visibleInSearch, false);
-  assert.ok(result.blockingReasonCodes.includes("BLOCKER_PROFILE_NOT_PUBLISHED"));
+  assert.equal(result.visibleInSearch, true);
+  assert.deepEqual(result.blockingReasonCodes, []);
+  assert.ok(result.warningReasonCodes.includes("WARNING_PROFILE_NOT_PUBLISHED"));
 });
 
 test("valid teacher can be policy-visible without relying on teachers_public as authority", () => {
@@ -99,10 +101,11 @@ test("valid teacher can be policy-visible without relying on teachers_public as 
   assert.deepEqual(result.blockingReasonCodes, []);
 });
 
-test("admin completed teacher can differ from search-visible with explicit public flag reason", () => {
+test("admin completed teacher can be discoverable while unpublished warning is shown", () => {
   const result = diagnose({ teacher: { ...teacher, is_public: false } });
-  assert.equal(result.visibleInSearch, false);
-  assert.ok(result.blockingReasonCodes.includes("BLOCKER_PROFILE_NOT_PUBLISHED"));
+  assert.equal(result.visibleInSearch, true);
+  assert.deepEqual(result.blockingReasonCodes, []);
+  assert.ok(result.warningReasonCodes.includes("WARNING_PROFILE_NOT_PUBLISHED"));
 });
 
 test("teacher missing subject is excluded with reason", () => {
@@ -114,10 +117,11 @@ test("teacher missing subject is excluded with reason", () => {
   assert.ok(result.blockingReasonCodes.includes("BLOCKER_MISSING_SUBJECT"));
 });
 
-test("teacher missing rate is excluded with reason", () => {
+test("teacher missing rate is warning-only, not a search exclusion reason", () => {
   const result = diagnose({ teacher: { ...teacher, price_per_lesson: null } });
-  assert.equal(result.visibleInSearch, false);
-  assert.ok(result.blockingReasonCodes.includes("BLOCKER_MISSING_BASE_RATE"));
+  assert.equal(result.visibleInSearch, true);
+  assert.deepEqual(result.blockingReasonCodes, []);
+  assert.ok(result.warningReasonCodes.includes("WARNING_MISSING_BASE_RATE"));
 });
 
 test("teacher missing public location is allowed when online format exists", () => {
@@ -127,11 +131,13 @@ test("teacher missing public location is allowed when online format exists", () 
   assert.equal(result.blockingReasonCodes.includes("BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE"), false);
 });
 
-test("teacher missing public location is flagged for in-person-only format", () => {
+test("teacher missing public location is warning-only for in-person-only format", () => {
   const result = diagnose({
     teacher: { ...teacher, teaching_mode: "person", city: null, region: null, location: {} },
   });
-  assert.ok(result.blockingReasonCodes.includes("BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE"));
+  assert.equal(result.visibleInSearch, true);
+  assert.deepEqual(result.blockingReasonCodes, []);
+  assert.ok(result.warningReasonCodes.includes("WARNING_MISSING_PUBLIC_LOCATION_OR_ONLINE"));
 });
 
 test("intro session disabled and null intro price are not search exclusion reasons", () => {
@@ -204,56 +210,53 @@ test("visible teacher can still carry warning status without blocker labels", ()
   assert.ok(result.warningReasonCodes.includes("WARNING_IDENTITY_NOT_VERIFIED"));
 });
 
-test("unsupported teacher country is a blocker for publish/search readiness", () => {
+test("unsupported teacher country is warning-only for discovery", () => {
   const result = diagnose({ teacher: { ...teacher, country_code: "UY" } });
-  assert.ok(result.blockingReasonCodes.includes("BLOCKER_UNSUPPORTED_COUNTRY"));
+  assert.equal(result.visibleInSearch, true);
+  assert.deepEqual(result.blockingReasonCodes, []);
+  assert.ok(result.warningReasonCodes.includes("WARNING_UNSUPPORTED_COUNTRY"));
 });
 
-test("086 migration changes publication SQL from permissive null to explicit true", () => {
-  const migration = stripSqlComments(read("supabase/migrations/086_align_teacher_public_search_visibility.sql"));
-  assert.match(migration, /CREATE OR REPLACE FUNCTION public\.list_public_teachers\(\)/i);
-  assert.match(migration, /WHERE\s+t\.is_public\s*=\s*true/i);
+test("125 migration makes discovery independent from publication flag", () => {
+  const migration = stripSqlComments(read("supabase/migrations/125_teacher_discovery_first_visibility.sql"));
+  assert.match(migration, /CREATE FUNCTION public\.list_public_teachers\(\)/i);
+  assert.doesNotMatch(migration, /WHERE[\s\S]*t\.is_public\s*=\s*true/i);
   assert.doesNotMatch(migration, /COALESCE\(t\.is_public,\s*true\)\s*=\s*true/i);
 });
 
-test("086 migration enforces SQL blockers that match the TypeScript launch policy", () => {
-  const migration = stripSqlComments(read("supabase/migrations/086_align_teacher_public_search_visibility.sql"));
+test("125 migration enforces minimal SQL blockers that match discovery-first policy", () => {
+  const migration = stripSqlComments(read("supabase/migrations/125_teacher_discovery_first_visibility.sql"));
   assert.match(migration, /p\.role\s*=\s*'teacher'/i);
-  assert.match(migration, /NULLIF\(BTRIM\(t\.name\), ''\) IS NOT NULL/i);
-  assert.match(migration, /NULLIF\(BTRIM\(t\.bio\), ''\) IS NOT NULL/i);
-  assert.match(migration, /UPPER\(BTRIM\(COALESCE\(t\.country_code, ''\)\)\)\s*=\s*'CA'/i);
-  assert.match(migration, /t\.price_per_lesson\s+IS NOT NULL/i);
-  assert.match(migration, /t\.price_per_lesson\s*>\s*0/i);
+  assert.doesNotMatch(migration, /NULLIF\(BTRIM\(t\.bio\), ''\) IS NOT NULL/i);
+  assert.doesNotMatch(migration, /UPPER\(BTRIM\(COALESCE\(t\.country_code, ''\)\)\)\s*=\s*'CA'/i);
+  assert.doesNotMatch(migration, /t\.price_per_lesson\s+IS NOT NULL/i);
+  assert.doesNotMatch(migration, /t\.price_per_lesson\s*>\s*0/i);
   assert.match(migration, /FROM public\.teacher_disciplines td/i);
-  assert.match(migration, /NULLIF\(BTRIM\(t\.teaching_mode\), ''\) IS NOT NULL/i);
+  assert.doesNotMatch(migration, /NULLIF\(BTRIM\(t\.teaching_mode\), ''\) IS NOT NULL/i);
 });
 
-test("086 migration keeps online-only location optional and in-person location required", () => {
-  const migration = stripSqlComments(read("supabase/migrations/086_align_teacher_public_search_visibility.sql"));
-  assert.match(migration, /LOWER\(BTRIM\(t\.teaching_mode\)\)\s+IN\s+\('online', 'both', 'all'\)/i);
-  assert.match(migration, /NULLIF\(BTRIM\(COALESCE\(t\.city, ''\)\), ''\) IS NOT NULL/i);
-  assert.match(migration, /NULLIF\(BTRIM\(COALESCE\(t\.region, ''\)\), ''\) IS NOT NULL/i);
-  assert.match(migration, /t\.location -> 'public' -> 'lat'/i);
-  assert.match(migration, /t\.location -> 'public' -> 'lng'/i);
+test("125 migration does not require public location for discovery", () => {
+  const migration = stripSqlComments(read("supabase/migrations/125_teacher_discovery_first_visibility.sql"));
+  assert.doesNotMatch(migration, /LOWER\(BTRIM\(t\.teaching_mode\)\)\s+IN\s+\('online', 'both', 'all'\)[\s\S]*NULLIF\(BTRIM\(COALESCE\(t\.city, ''\)\), ''\) IS NOT NULL/i);
+  assert.doesNotMatch(migration, /t\.location -> 'public' -> 'lat'[\s\S]*IS NOT NULL/i);
+  assert.doesNotMatch(migration, /t\.location -> 'public' -> 'lng'[\s\S]*IS NOT NULL/i);
 });
 
-test("086 migration does not enforce warning-only fields", () => {
-  const migration = stripSqlComments(read("supabase/migrations/086_align_teacher_public_search_visibility.sql"));
+test("125 migration does not enforce warning-only fields", () => {
+  const migration = stripSqlComments(read("supabase/migrations/125_teacher_discovery_first_visibility.sql"));
   assert.doesNotMatch(migration, /intro_session_enabled\s*=\s*true/i);
   assert.doesNotMatch(migration, /intro_session_price_cents\s*>\s*0/i);
   assert.doesNotMatch(migration, /availability\s+IS NOT NULL/i);
   assert.doesNotMatch(migration, /stripe_account_id|stripe_connect_/i);
   assert.doesNotMatch(migration, /AND\s+t\.identity_verified\s*=\s*true/i);
-  assert.match(
-    migration,
-    /t\.identity_verified\s*=\s*true\s+OR\s+NULLIF\(BTRIM\(COALESCE\(t\.stripe_identity_failed_reason, ''\)\), ''\) IS NULL/i,
-  );
+  assert.match(migration, /COALESCE\(t\.identity_status, 'none'\) <> 'failed'/i);
+  assert.match(migration, /NULLIF\(BTRIM\(COALESCE\(t\.stripe_identity_failed_reason, ''\)\), ''\) IS NULL/i);
 });
 
-test("086 migration keeps private location stripped from public projection", () => {
-  const migration = stripSqlComments(read("supabase/migrations/086_align_teacher_public_search_visibility.sql"));
-  const selectBlock = migration.match(/SELECT([\s\S]*?)FROM public\.teachers t/i)?.[1] ?? "";
-  assert.match(selectBlock, /\(t\.location - 'private'::text\) AS location/i);
+test("125 migration keeps private location stripped from public projection", () => {
+  const migration = stripSqlComments(read("supabase/migrations/125_teacher_discovery_first_visibility.sql"));
+  const selectBlock = migration.match(/AS \$\$\s+SELECT([\s\S]*?)FROM public\.teachers t/i)?.[1] ?? "";
+  assert.match(selectBlock, /COALESCE\(t\.location, '\{\}'::jsonb\) - 'private'::text AS location/i);
   assert.doesNotMatch(selectBlock, /t\.location\s+AS location/i);
 });
 

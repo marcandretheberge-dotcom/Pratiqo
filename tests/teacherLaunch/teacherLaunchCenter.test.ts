@@ -419,7 +419,21 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
     "supabase/migrations/119_planned_package_cancellation_refund_quotes.sql",
     "supabase/migrations/120_planned_package_refund_executions.sql",
     "supabase/migrations/121_planned_package_payout_eligibility_ledger.sql",
+    // PR #387: teacher discovery-first visibility + deferred no-payment requests.
+    // This exact migration is required to persist learner requests for teachers
+    // who are discovery-visible before Stripe setup is complete. It does not
+    // alter Stripe checkout, webhooks, payment math, refunds, transfers,
+    // payouts, commissions, Membre Pro, auth provider flow, YoPratiqo, public
+    // SEO, or PostGIS behavior.
+    "supabase/migrations/125_teacher_discovery_first_visibility.sql",
   ]);
+
+  assert.deepEqual(
+    [...approvedMigrationExceptions].filter((file) => file.includes("teacher_discovery_first")),
+    ["supabase/migrations/125_teacher_discovery_first_visibility.sql"],
+  );
+  assert.equal(approvedMigrationExceptions.has("supabase/migrations/*"), false);
+  assert.equal(approvedMigrationExceptions.has("supabase/migrations/126_unrelated.sql"), false);
 
   // Approved Stripe route exceptions for narrowly-scoped consent-gate
   // edits on later legal-mechanic PRs. Each entry is justified inline

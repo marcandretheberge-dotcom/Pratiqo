@@ -511,6 +511,19 @@ const allowedPlannedPackageDashboardPolishFiles = new Set<string>([
   "package.json",
 ]);
 
+/**
+ * PR #387 — teacher discovery-first visibility + deferred no-payment requests.
+ *
+ * Approved because the feature needs a minimal persistence layer for learner
+ * requests sent to discovery-visible teachers before Stripe setup is complete.
+ * This exact migration does not alter Stripe checkout, webhook processing,
+ * payment math, refunds, transfers, payouts, commissions, Membre Pro, auth
+ * provider flow, YoPratiqo, public SEO, or PostGIS behavior.
+ */
+const allowedTeacherDiscoveryFirstMigrationFiles = new Set<string>([
+  "supabase/migrations/125_teacher_discovery_first_visibility.sql",
+]);
+
 function touchesFounderDecisionScope(file: string): boolean {
   return (
     liveFiles.includes(file) ||
@@ -650,6 +663,32 @@ test("founder promotion wording is bounded and not income-guaranteeing", () => {
   assert.doesNotMatch(withoutNegatedGuaranteeSentences(text), /garantit\s+(?:un\s+)?revenu|guarantees?\s+(?:any\s+)?(?:minimum\s+)?income|garantiza\s+ingresos/i);
 });
 
+test("PR #387 teacher discovery migration approval is exact and non-wildcard", () => {
+  assert.deepEqual([...allowedTeacherDiscoveryFirstMigrationFiles], [
+    "supabase/migrations/125_teacher_discovery_first_visibility.sql",
+  ]);
+  assert.equal(allowedTeacherDiscoveryFirstMigrationFiles.has("supabase/migrations/*"), false);
+  assert.equal(allowedTeacherDiscoveryFirstMigrationFiles.has("supabase/migrations/126_unrelated.sql"), false);
+  assert.equal(allowedTeacherDiscoveryFirstMigrationFiles.has("app/api/stripe/checkout/route.ts"), false);
+});
+
+test("PR #387 teacher discovery migration remains additive and RLS-scoped", () => {
+  const migration = read("supabase/migrations/125_teacher_discovery_first_visibility.sql");
+
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.teacher_booking_requests/);
+  assert.match(migration, /ALTER TABLE IF EXISTS public\.teacher_booking_requests ENABLE ROW LEVEL SECURITY/);
+  assert.match(migration, /CREATE POLICY "teacher_booking_requests_select_participants"/);
+  assert.match(migration, /student_id = auth\.uid\(\)/);
+  assert.match(migration, /t\.user_id = auth\.uid\(\)/);
+  assert.match(migration, /REVOKE ALL ON public\.teacher_booking_requests FROM PUBLIC/);
+  assert.match(migration, /GRANT SELECT ON public\.teacher_booking_requests TO authenticated/);
+  assert.match(migration, /GRANT ALL ON public\.teacher_booking_requests TO service_role/);
+  assert.match(migration, /Does not reserve a slot or create financial liability/i);
+  assert.doesNotMatch(migration, /ALTER TABLE\s+public\.booking_payments/i);
+  assert.doesNotMatch(migration, /ALTER TABLE\s+public\.(?:stripe|payments|refunds|transfers|payouts)/i);
+  assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY/i);
+});
+
 test("branch did not touch restricted systems", () => {
   const changed = changedFilesAgainstMain();
   if (!changed) return;
@@ -689,6 +728,7 @@ test("branch did not touch restricted systems", () => {
     if (allowedStudentPlannedPackageDashboardFiles.has(file)) continue;
     if (allowedTeacherPlannedPackageDashboardFiles.has(file)) continue;
     if (allowedPlannedPackageDashboardPolishFiles.has(file)) continue;
+    if (allowedTeacherDiscoveryFirstMigrationFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

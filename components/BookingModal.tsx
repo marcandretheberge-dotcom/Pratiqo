@@ -214,6 +214,7 @@ export function BookingModal({
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [deferredRequestSent, setDeferredRequestSent] = useState(false);
   // Field-anchored inline errors. Used in addition to the bottom-of-Confirm
   // banner so missing fields highlight where the user can actually fix them
   // (replaces the prior silent-disable + far-away error pattern).
@@ -294,6 +295,10 @@ export function BookingModal({
   const requestClose = useCallback(() => {
     if (!isSubmitting) onClose();
   }, [isSubmitting, onClose]);
+
+  useEffect(() => {
+    setDeferredRequestSent(false);
+  }, [lessonType, selectedDate, selectedLearnerId, selectedSlot, teachingMode]);
 
   const todayIso = useMemo(() => formatLocalISODate(new Date()), []);
 
@@ -866,16 +871,16 @@ export function BookingModal({
       return;
     }
 
-    if (
-      !usePackageCredit &&
-      (!sessionBookable || !validateMinimumLessonPriceDollars(effectivePrice).ok)
-    ) {
+    const canStartPaidCheckout =
+      sessionBookable && validateMinimumLessonPriceDollars(effectivePrice).ok;
+    if ((usePackageCredit || sessionBookable) && !canStartPaidCheckout) {
       setCheckoutError(`${t("pricingMinLessonPrice")} ${t("pricingMinLessonPriceSuggestion")}`);
       return;
     }
 
     setIsSubmitting(true);
     setCheckoutError(null);
+    setDeferredRequestSent(false);
     let redirecting = false;
     try {
       if (!isBookingAtLeast24hAhead({ slot_date: selectedDate, time_slot: selectedSlot })) {
@@ -1052,7 +1057,15 @@ export function BookingModal({
         body: JSON.stringify(bookingCreateBody),
       });
       const createRaw = await createRes.text();
-      let createPayload: { id?: string; error?: string; availableFromDate?: string } = {};
+      let createPayload: {
+        id?: string;
+        error?: string;
+        availableFromDate?: string;
+        deferred?: boolean;
+        reason?: string;
+        requestId?: string | null;
+        emailSent?: boolean;
+      } = {};
       try {
         createPayload = createRaw ? (JSON.parse(createRaw) as typeof createPayload) : {};
       } catch {
@@ -1100,6 +1113,11 @@ export function BookingModal({
       }
       if (createRes.status === 400 && createPayload.error === "booking_minimum_notice") {
         setCheckoutError(t("bookingMinimumNoticeError"));
+        return;
+      }
+      if (createRes.status === 202 && createPayload.deferred === true) {
+        setDeferredRequestSent(true);
+        setCheckoutError(null);
         return;
       }
       if (!createRes.ok || !createPayload.id) {
@@ -2114,10 +2132,10 @@ export function BookingModal({
               {/* Credits toggle */}
               {!sessionBookable ? (
                 <div
-                  role="alert"
-                  className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                  role="status"
+                  className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900"
                 >
-                  {t("pricingMinLessonPrice")} {t("pricingMinLessonPriceSuggestion")}
+                  {t("bookingDeferredRequestSetupNote")}
                 </div>
               ) : null}
 
@@ -2189,11 +2207,22 @@ export function BookingModal({
                   {checkoutError}
                 </div>
               ) : null}
+              {deferredRequestSent ? (
+                <div
+                  role="status"
+                  className="rounded-xl border border-teal-200 bg-teal-50 px-3 py-2 text-xs leading-relaxed text-teal-900"
+                >
+                  <p className="font-semibold">{t("bookingDeferredRequestSentTitle")}</p>
+                  <p className="mt-1">{t("bookingDeferredRequestSentBody")}</p>
+                </div>
+              ) : null}
               <div className="rounded-2xl border border-[#DCEAE3] bg-[#F3FAF6] px-4 py-3 text-xs text-slate-700 flex gap-2">
                 <Info size={15} className="mt-0.5 shrink-0 text-teal-700" aria-hidden />
                 <span>
                   {usePackageCredit
                     ? t("bookingPackagePaymentFacilitatedNote")
+                    : !sessionBookable || deferredRequestSent
+                      ? t("bookingDeferredRequestNoPaymentNote")
                     : `${t("bookingPaymentNote")} ${paymentProcessedInCurrency}`}
                 </span>
               </div>
@@ -2222,8 +2251,14 @@ export function BookingModal({
                 </button>
                 <button
                   type="button"
-                  disabled={isSubmitting || teacherIdInvalid || !sessionBookable}
-                  onClick={() => void handleConfirmAndPay()}
+                  disabled={isSubmitting || teacherIdInvalid}
+                  onClick={() => {
+                    if (deferredRequestSent) {
+                      requestClose();
+                      return;
+                    }
+                    void handleConfirmAndPay();
+                  }}
                   className="flex h-12 flex-[2] items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-white shadow-md transition hover:opacity-95 disabled:opacity-50 sm:h-11"
                   style={{ backgroundColor: "var(--palette-teal-700)" }}
                 >
@@ -2236,6 +2271,16 @@ export function BookingModal({
                     <>
                       <CheckCircle2 size={18} />
                       {t("bookingPackageConfirm")}
+                    </>
+                  ) : deferredRequestSent ? (
+                    <>
+                      <CheckCircle2 size={18} />
+                      {t("bookingClose")}
+                    </>
+                  ) : !sessionBookable ? (
+                    <>
+                      <CheckCircle2 size={18} />
+                      {t("bookingSendRequest")}
                     </>
                   ) : (
                     <>

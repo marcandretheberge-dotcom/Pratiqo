@@ -457,6 +457,11 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "supabase/migrations/119_planned_package_cancellation_refund_quotes.sql",
     "supabase/migrations/120_planned_package_refund_executions.sql",
     "supabase/migrations/121_planned_package_payout_eligibility_ledger.sql",
+    // growth/teacher-discovery-first-deferred-stripe — no-payment interest
+    // request path for non-bookable teachers. Defended by
+    // tests/teacherSearch/teacherDiscoveryFirstDeferredStripe.test.ts.
+    "app/api/bookings/route.ts",
+    "supabase/migrations/125_teacher_discovery_first_visibility.sql",
   ]);
   const forbidden = [
     /^app\/api\//,

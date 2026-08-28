@@ -2,8 +2,11 @@
  * Marketplace visibility for teacher discovery (landing search, student search,
  * Explore, /api/teachers/plans metadata). Intentionally separate from SEO
  * indexability in lib/seo/teacherPublicProfile.ts — teachers do NOT need
- * search_indexing_consent or public_profile_enabled to appear here.
+ * search_indexing_consent, public_profile_enabled, `teachers.is_public`, full
+ * biography, rates, availability, or payment setup to appear here.
  */
+
+import { evaluateTeacherDiscovery } from "@/lib/teachers/teacherDiscovery";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -13,6 +16,10 @@ export type TeacherMarketplaceVisibilityRow = {
   user_id?: string | null;
   is_public?: boolean | null;
   is_demo?: boolean | null;
+  discipline?: string | null;
+  category?: string | null;
+  discipline_count?: number | null;
+  disciplineCount?: number | null;
   deactivated_at?: string | null;
   deleted_at?: string | null;
   identity_verification_failed?: boolean;
@@ -25,12 +32,25 @@ export type TeacherMarketplaceVisibilityRow = {
 /** Mirrors list_public_teachers() / teachers_public marketplace gates (not SEO). */
 export function isTeacherMarketplaceVisibleRow(row: TeacherMarketplaceVisibilityRow): boolean {
   if (!UUID_RE.test(row.id)) return false;
-  if (!row.user_id || !UUID_RE.test(row.user_id)) return false;
-  if (row.is_demo === true) return false;
-  if (row.is_public === false) return false;
-  if (row.deactivated_at || row.deleted_at) return false;
-  if (row.identity_verification_failed === true) return false;
-  if (row.profile_is_active === false) return false;
-  if (row.profile_deactivated_at || row.profile_deleted_at || row.profile_anonymized_at) return false;
-  return true;
+  return evaluateTeacherDiscovery({
+    profile: {
+      role: "teacher",
+      is_active: row.profile_is_active,
+      deactivated_at: row.profile_deactivated_at,
+      deleted_at: row.profile_deleted_at,
+      anonymized_at: row.profile_anonymized_at,
+    },
+    teacher: {
+      id: row.id,
+      user_id: row.user_id,
+      discipline: row.discipline,
+      category: row.category,
+      is_public: row.is_public,
+      is_demo: row.is_demo,
+      deactivated_at: row.deactivated_at,
+      deleted_at: row.deleted_at,
+      identity_verification_failed: row.identity_verification_failed,
+    },
+    disciplineCount: row.disciplineCount ?? row.discipline_count ?? 0,
+  }).discoverable;
 }

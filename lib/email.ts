@@ -41,6 +41,15 @@ export {
 export { sendNewPratiqoMessageEmail } from "@/lib/email/templates/messages";
 
 export {
+  buildTeacherBookingRequestEmail,
+  sendTeacherBookingRequestEmail,
+} from "@/lib/email/templates/teacherDiscovery";
+export {
+  buildTeacherProfileImprovementEmail,
+  sendTeacherProfileImprovementEmail,
+} from "@/lib/email/templates/teacherProfileImprovement";
+
+export {
   sendIdentityVerified,
   sendIdentityFailed,
 } from "@/lib/email/templates/identity";

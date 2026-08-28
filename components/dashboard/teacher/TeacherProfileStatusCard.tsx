@@ -60,6 +60,9 @@ export function TeacherProfileStatusCard({
   const statusLabel = t(teacherProfileVisibilityStatusLabelKey(evaluation.status) as TranslationKey);
   const statusBody = t(teacherProfileVisibilityStatusBodyKey(evaluation.status) as TranslationKey);
   const missingCount = evaluation.missingSectionIds.length;
+  const discoveryFirstBody = evaluation.marketplaceVisible
+    ? t("teacherDashDiscoveryFirstVisibleBody" as TranslationKey)
+    : null;
 
   const tone =
     evaluation.status === "public"
@@ -91,10 +94,16 @@ export function TeacherProfileStatusCard({
       </h2>
       <p className="mt-2 text-base font-bold text-slate-900">{statusLabel}</p>
       <p className="mt-1 text-sm leading-relaxed text-slate-600">
-        {evaluation.status === "incomplete" && missingCount > 0
+        {discoveryFirstBody ??
+        (evaluation.status === "incomplete" && missingCount > 0
           ? t("teacherDashProfileBlockersBody").replace("{count}", String(missingCount))
-          : statusBody}
+          : statusBody)}
       </p>
+      {evaluation.marketplaceVisible ? (
+        <p className="mt-2 rounded-xl border border-teal-100 bg-teal-50 px-3 py-2 text-xs leading-relaxed text-teal-900">
+          {t("teacherDashDiscoveryFirstStripeBody" as TranslationKey)}
+        </p>
+      ) : null}
       <Link
         href={primaryCta.href}
         className={cn(

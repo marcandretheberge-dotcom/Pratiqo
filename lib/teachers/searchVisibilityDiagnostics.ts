@@ -1,23 +1,24 @@
 import { isIdentityVerificationFailed } from "@/lib/teachers/identityPublishGate";
 import { isTeacherMarketSupported } from "@/lib/config/markets";
+import { hasTeacherDisciplineSignal } from "@/lib/teachers/teacherDiscovery";
 
 export type TeacherSearchVisibilityBlockerCode =
-  | "BLOCKER_PROFILE_NOT_PUBLISHED"
   | "BLOCKER_TEACHER_ROW_MISSING"
   | "BLOCKER_PROFILE_INACTIVE"
   | "BLOCKER_TEACHER_INACTIVE"
   | "BLOCKER_DEMO_PROFILE"
   | "BLOCKER_INVALID_PUBLIC_IDS"
-  | "BLOCKER_MISSING_PUBLIC_DATA"
-  | "BLOCKER_MISSING_BASE_RATE"
   | "BLOCKER_MISSING_SUBJECT"
-  | "BLOCKER_MISSING_TEACHING_FORMAT"
-  | "BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE"
-  | "BLOCKER_UNSUPPORTED_COUNTRY"
   | "BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING"
   | "BLOCKER_BY_RLS_OR_PUBLIC_VIEW";
 
 export type TeacherSearchVisibilityWarningCode =
+  | "WARNING_PROFILE_NOT_PUBLISHED"
+  | "WARNING_MISSING_PUBLIC_DATA"
+  | "WARNING_MISSING_BASE_RATE"
+  | "WARNING_MISSING_TEACHING_FORMAT"
+  | "WARNING_MISSING_PUBLIC_LOCATION_OR_ONLINE"
+  | "WARNING_UNSUPPORTED_COUNTRY"
   | "WARNING_IDENTITY_NOT_VERIFIED"
   | "WARNING_NO_AVAILABILITY"
   | "WARNING_NO_INTRO_LESSON"
@@ -168,22 +169,28 @@ export function diagnoseTeacherSearchVisibility(
 
   if (!teacher.id || !UUID_RE.test(teacher.id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
   if (!teacher.user_id || !UUID_RE.test(teacher.user_id)) blockers.push("BLOCKER_INVALID_PUBLIC_IDS");
-  if (teacher.is_public !== true) blockers.push("BLOCKER_PROFILE_NOT_PUBLISHED");
+  if (teacher.is_public !== true) warnings.push("WARNING_PROFILE_NOT_PUBLISHED");
   if (teacher.deactivated_at || teacher.deleted_at) blockers.push("BLOCKER_TEACHER_INACTIVE");
   if (teacher.is_demo === true) blockers.push("BLOCKER_DEMO_PROFILE");
   if (hasText(teacher.country_code) && !isTeacherMarketSupported(teacher.country_code)) {
-    blockers.push("BLOCKER_UNSUPPORTED_COUNTRY");
+    warnings.push("WARNING_UNSUPPORTED_COUNTRY");
   }
   if (!hasText(teacher.name) || !hasText(teacher.bio) || !hasText(teacher.country_code)) {
-    blockers.push("BLOCKER_MISSING_PUBLIC_DATA");
+    warnings.push("WARNING_MISSING_PUBLIC_DATA");
   }
-  if ((input.disciplineCount ?? 0) <= 0 && !hasText(teacher.discipline) && !hasText(teacher.category)) {
+  if (
+    !hasTeacherDisciplineSignal({
+      discipline: teacher.discipline,
+      category: teacher.category,
+      disciplineCount: input.disciplineCount,
+    })
+  ) {
     blockers.push("BLOCKER_MISSING_SUBJECT");
   }
-  if (!hasText(teacher.teaching_mode)) blockers.push("BLOCKER_MISSING_TEACHING_FORMAT");
-  if (!hasValidRate(teacher.price_per_lesson)) blockers.push("BLOCKER_MISSING_BASE_RATE");
+  if (!hasText(teacher.teaching_mode)) warnings.push("WARNING_MISSING_TEACHING_FORMAT");
+  if (!hasValidRate(teacher.price_per_lesson)) warnings.push("WARNING_MISSING_BASE_RATE");
   if (!isOnlineCapable(teacher.teaching_mode) && !hasPublicLocationSignal(teacher)) {
-    blockers.push("BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE");
+    warnings.push("WARNING_MISSING_PUBLIC_LOCATION_OR_ONLINE");
   }
   if (identityFailed) blockers.push("BLOCKER_FAILED_IDENTITY_IF_SEARCH_BLOCKING");
 

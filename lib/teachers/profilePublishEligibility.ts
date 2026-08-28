@@ -89,6 +89,7 @@ export function evaluateTeacherProfilePublishEligibility(
     profile_deactivated_at: input.profile_deactivated_at,
     profile_deleted_at: input.profile_deleted_at,
     profile_anonymized_at: input.profile_anonymized_at,
+    disciplineCount: input.disciplineCount ?? 0,
   });
 
   let status: TeacherProfileVisibilityStatus;
