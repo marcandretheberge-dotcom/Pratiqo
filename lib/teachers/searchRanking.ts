@@ -9,6 +9,8 @@ import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
  */
 
 const PLACEHOLDER_PHOTO_RE = /picsum\.photos|placehold\.co|via\.placeholder|dummyimage\.com/i;
+const PLACEHOLDER_BIO_RE =
+  /^(n\/?a|na|none|null|undefined|todo|tbd|bio|description|à\s*compléter|a\s*completer|coming\s*soon|\.+|-+)$/i;
 
 /** True when the listing photo is a real avatar (not empty / stock placeholder). */
 export function teacherHasUsableProfilePhoto(imageUrl: string | null | undefined): boolean {
@@ -27,8 +29,17 @@ export function teacherHasAvailability(availability: unknown): boolean {
   return Array.isArray(availability) && availability.length > 0;
 }
 
+/** Meaningful public bio for ranking (not blank / placeholder fluff). */
+export function teacherHasMeaningfulBio(bio: string | null | undefined): boolean {
+  const raw = String(bio ?? "").trim();
+  if (raw.length < 30) return false;
+  if (PLACEHOLDER_BIO_RE.test(raw)) return false;
+  return true;
+}
+
+/** @deprecated Prefer teacherHasMeaningfulBio — kept for older call sites. */
 export function teacherHasBio(bio: string | null | undefined): boolean {
-  return String(bio ?? "").trim().length >= 20;
+  return teacherHasMeaningfulBio(bio);
 }
 
 export function teacherHasLocationSignal(teacher: Pick<Teacher, "city" | "region" | "teachingMode" | "location">): boolean {
@@ -50,7 +61,20 @@ export function teacherHasDisciplineSignal(teacher: Pick<Teacher, "discipline" |
 }
 
 /**
- * 0–100 ranking completeness. Photo is counted separately as a hard sort key.
+ * Hard quality bucket used before founder boost.
+ * 3 = photo + bio, 2 = photo only, 1 = bio only, 0 = neither.
+ */
+export function teacherSearchQualityTier(teacher: Teacher): number {
+  const photo = teacherHasUsableProfilePhoto(teacher.imageUrl);
+  const bio = teacherHasMeaningfulBio(teacher.bio);
+  if (photo && bio) return 3;
+  if (photo) return 2;
+  if (bio) return 1;
+  return 0;
+}
+
+/**
+ * 0–100 ranking completeness. Photo/bio are also hard sort keys above this score.
  */
 export function computeTeacherProfileCompletenessScore(teacher: Teacher): number {
   let score = 0;
@@ -58,7 +82,7 @@ export function computeTeacherProfileCompletenessScore(teacher: Teacher): number
   if (teacherHasDisciplineSignal(teacher)) score += 20;
   if (teacherHasUsableRate(teacher.pricePerLesson)) score += 15;
   if (teacherHasAvailability(teacher.availability)) score += 15;
-  if (teacherHasBio(teacher.bio)) score += 15;
+  if (teacherHasMeaningfulBio(teacher.bio)) score += 15;
   if (teacherHasLocationSignal(teacher)) score += 10;
   return score;
 }
@@ -79,7 +103,7 @@ function foldName(value: string): string {
     .trim();
 }
 
-/** Exact/name-specific match may waive the photo-first hard rule. */
+/** Exact/name-specific match may waive the photo/bio quality hard rule. */
 export function teacherMatchesExactNameQuery(teacher: Teacher, searchQuery: string | null | undefined): boolean {
   const q = foldName(searchQuery ?? "");
   if (!q || q.length < 2) return false;
@@ -91,8 +115,8 @@ export function teacherMatchesExactNameQuery(teacher: Teacher, searchQuery: stri
 /**
  * Deterministic quality ordering for public search (relevance mode).
  *
- * Hard rule: usable photo before no-photo, except exact/name-specific matches.
- * Within each photo group: founder → completeness → rate → availability → id.
+ * Order: exact name → photo+bio tier → founder → completeness → rate → availability → id.
+ * Founder never outranks a higher photo/bio quality tier.
  */
 export function compareTeachersBySearchQuality(
   a: Teacher,
@@ -104,12 +128,11 @@ export function compareTeachersBySearchQuality(
   const bExact = teacherMatchesExactNameQuery(b, q);
   if (aExact !== bExact) return aExact ? -1 : 1;
 
-  const aPhoto = teacherHasUsableProfilePhoto(a.imageUrl);
-  const bPhoto = teacherHasUsableProfilePhoto(b.imageUrl);
-  // Exact-name matches may outrank non-matches regardless of photo.
-  // Among peers (both exact or both non-exact), photo still wins.
-  if (aExact === bExact && aPhoto !== bPhoto) {
-    return aPhoto ? -1 : 1;
+  // Among peers (both exact or both non-exact), quality tier wins before founder.
+  if (aExact === bExact) {
+    const aTier = teacherSearchQualityTier(a);
+    const bTier = teacherSearchQualityTier(b);
+    if (aTier !== bTier) return bTier - aTier;
   }
 
   const aFounder = teacherIsFounderForRanking(a, opts?.isFounder);

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Teacher } from "../types";
 import { disciplineLabelToTeacherCategory, displayTeacherMarketplaceCategory, getDisciplineById } from "./disciplines";
+import { resolveDisciplineId } from "./taxonomy/disciplines";
 import { applyAdditionalDisciplines, isPlaceholderDisciplineLabel, type TeacherDisciplineRow } from "./teacherMapper";
 
 type DisciplineDbRow = {
@@ -81,6 +82,19 @@ export function teacherMatchesExploreSearch(teacher: Teacher, searchQuery: strin
   if (foldAscii(String(teacher.city ?? "")).includes(q)) return true;
   if (foldAscii(String(teacher.region ?? "")).includes(q)) return true;
   if (foldAscii(String(teacher.location?.neighborhood ?? "")).includes(q)) return true;
+
+  // Alias-aware: "aquagym" / "swimming" resolve to aquaforme / natation.
+  const resolvedQueryId = resolveDisciplineId(searchQuery);
+  if (resolvedQueryId) {
+    if (resolveDisciplineId(teacher.discipline) === resolvedQueryId) return true;
+    for (const row of teacher.disciplineDisplay ?? []) {
+      if (resolveDisciplineId(row.disciplineId) === resolvedQueryId) return true;
+    }
+    for (const ad of teacher.additionalDisciplines ?? []) {
+      if (resolveDisciplineId(ad.disciplineId) === resolvedQueryId) return true;
+    }
+  }
+
   for (const row of teacher.disciplineDisplay ?? []) {
     if (foldAscii(row.label).includes(q)) return true;
     if (row.specialite && foldAscii(row.specialite).includes(q)) return true;
@@ -93,6 +107,8 @@ export function teacherMatchesExploreSearch(teacher: Teacher, searchQuery: strin
   for (const ad of teacher.additionalDisciplines ?? []) {
     const d = getDisciplineById(ad.disciplineId);
     if (d?.label && foldAscii(d.label).includes(q)) return true;
+    if (d?.labelEn && foldAscii(d.labelEn).includes(q)) return true;
+    if (d?.labelEs && foldAscii(d.labelEs).includes(q)) return true;
     if (foldAscii(ad.specialite).includes(q)) return true;
     if (foldAscii(ad.disciplineId).includes(q)) return true;
   }
