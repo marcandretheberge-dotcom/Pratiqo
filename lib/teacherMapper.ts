@@ -4,6 +4,7 @@ import { normalizeLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 import { normalizeAvailableFromDate } from "@/lib/teachers/availabilityStartDate";
 import { displayTeacherMarketplaceCategory, getDisciplineById } from "./disciplines";
 import { resolveDisciplineId } from "./taxonomy/disciplines";
+import { isUnsetDraftMusicCategory } from "./teachers/adminDiscipline";
 
 /** One row from `teacher_disciplines` (same teacher_id may appear in ordered list). */
 export type TeacherDisciplineRow = {
@@ -211,6 +212,14 @@ function legacyDisciplineFallback(teacher: Teacher): TeacherDisciplineDisplay[] 
         specialite: "",
       },
     ];
+  }
+  // Draft rows historically used category "music" + discipline "—". Never show Musique
+  // for that unset pattern (language teachers were mislabeled).
+  if (
+    isUnsetDraftMusicCategory(String(teacher.category ?? ""), teacher.discipline) ||
+    !String(teacher.category ?? "").trim()
+  ) {
+    return [{ disciplineId: "autre", label: "Autre", specialite: "" }];
   }
   const categoryLabel = displayTeacherMarketplaceCategory(String(teacher.category ?? ""));
   if (!isPlaceholderDisciplineLabel(categoryLabel) && categoryLabel !== "Autre") {

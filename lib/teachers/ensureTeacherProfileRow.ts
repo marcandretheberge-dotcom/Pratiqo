@@ -10,7 +10,11 @@ const TEACHER_IMAGE_FALLBACK = "https://picsum.photos/seed/teacher/400/400";
 /** Draft row defaults — hidden from search until teacher completes setup. */
 export const DRAFT_TEACHER_ROW_INSERT = {
   discipline: "—",
-  category: "music",
+  /**
+   * Never default to music/musique — that mislabeled language teachers as Musique
+   * once drafts became discoverable. Empty until the teacher (or admin) sets a real discipline.
+   */
+  category: "",
   rating: 0,
   reviews: 0,
   /**
