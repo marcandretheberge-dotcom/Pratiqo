@@ -93,6 +93,9 @@ export const PRATIQO_MARKETS: Record<MarketCode, MarketAccessConfig> = {
   },
 } as const;
 
+/** Default teacher market while Pratiqo is launched in Canada only. */
+export const DEFAULT_LAUNCHED_TEACHER_COUNTRY_CODE = PRATIQO_MARKETS.CA.countryCode;
+
 export type MarketGate =
   | "teacher_onboarding"
   | "student_booking"
@@ -104,6 +107,24 @@ export function normalizeCountryCode(value: unknown): string {
     .trim()
     .toUpperCase()
     .slice(0, 2);
+}
+
+/**
+ * Blank/null teacher country defaults to the launched market (CA) for pricing
+ * and draft creation. Explicit unsupported codes (e.g. FR, UY) stay unchanged.
+ */
+export function resolveTeacherMarketCountryCode(countryCode: unknown): {
+  countryCode: string;
+  defaultedFromBlank: boolean;
+} {
+  const normalized = normalizeCountryCode(countryCode);
+  if (!normalized) {
+    return {
+      countryCode: DEFAULT_LAUNCHED_TEACHER_COUNTRY_CODE,
+      defaultedFromBlank: true,
+    };
+  }
+  return { countryCode: normalized, defaultedFromBlank: false };
 }
 
 export function getMarketByCountryCode(

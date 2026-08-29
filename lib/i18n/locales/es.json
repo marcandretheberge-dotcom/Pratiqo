@@ -3461,5 +3461,17 @@
   "plannedPackageDashboardNoFinancialAction": "Esta página no permite ninguna acción financiera.",
   "plannedPackageDashboardPaymentSetupCta": "Completar la configuración de pagos",
   "plannedPackageDashboardAdminReadinessLink": "Preparación del lanzamiento de paquetes",
-  "plannedPackageDashboardAdminOwnerGatedNote": "Los paneles de alumno/profesor siguen ligados al propietario:"
+  "plannedPackageDashboardAdminOwnerGatedNote": "Los paneles de alumno/profesor siguen ligados al propietario:",
+  "teacherPricingMarketNotSupported": "Este país todavía no está disponible para pagos. Verifica tu país de enseñanza.",
+  "teacherPricingUnauthorized": "Tu sesión expiró. Vuelve a iniciar sesión para guardar tu tarifa.",
+  "teacherPricingTeacherNotFound": "No se pudo encontrar tu perfil de profesor. Inténtalo de nuevo en un momento.",
+  "teacherPricingValidationError": "Los datos de la tarifa no son válidos. Verifica e inténtalo de nuevo.",
+  "weeklyIntervalsUnauthorized": "Tu sesión expiró. Vuelve a iniciar sesión para guardar la disponibilidad.",
+  "weeklyIntervalsTeacherNotFound": "No se pudo encontrar tu perfil de profesor. Inténtalo de nuevo en un momento.",
+  "weeklyIntervalsInvalidPayload": "Los rangos de disponibilidad enviados no son válidos. Verifica e inténtalo de nuevo.",
+  "weeklyIntervalsValidationError": "Algunos rangos de disponibilidad no son válidos. Verifica los horarios e inténtalo de nuevo.",
+  "weeklyIntervalsDbDeleteFailed": "No se pudo actualizar la disponibilidad (paso de eliminación). Inténtalo de nuevo.",
+  "weeklyIntervalsDbInsertFailed": "No se pudieron guardar los rangos de disponibilidad. Inténtalo de nuevo.",
+  "weeklyIntervalsAvailabilitySyncFailed": "Los rangos se guardaron, pero la sincronización falló. Inténtalo de nuevo.",
+  "weeklyIntervalsServerError": "Error del servidor al guardar la disponibilidad. Inténtalo de nuevo."
 }

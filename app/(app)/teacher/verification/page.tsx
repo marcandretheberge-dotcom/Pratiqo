@@ -764,7 +764,13 @@ export default function TeacherProfileManagementPage() {
       try {
         const { data: sess } = await getSupabaseClient().auth.getSession();
         const token = sess.session?.access_token;
-        if (!token) throw new Error("missing_session");
+        if (!token) {
+          const error = t("teacherPricingUnauthorized");
+          setPricingInlineError(error);
+          setPricingSaveState("error");
+          if (source === "manual") showMsg(error, "error");
+          return false;
+        }
         const res = await fetch("/api/teacher/pricing", {
           method: "PATCH",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -774,8 +780,32 @@ export default function TeacherProfileManagementPage() {
             intro_session_price_cents: introPriceCents,
           }),
         });
-        const j = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-        if (!res.ok) throw new Error(j.error || "pricing_save_failed");
+        const j = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          error?: string;
+          code?: string;
+          country_code?: string;
+        };
+        if (!res.ok) {
+          const code = typeof j.code === "string" ? j.code : "";
+          const error =
+            code === "market_not_supported"
+              ? t("teacherPricingMarketNotSupported")
+              : code === "teacher_not_found"
+                ? t("teacherPricingTeacherNotFound")
+                : code === "unauthorized"
+                  ? t("teacherPricingUnauthorized")
+                  : code === "minimum_lesson_price" || code === "validation_error" || code === "invalid_payload"
+                    ? typeof j.error === "string" && j.error.trim()
+                      ? j.error
+                      : t("teacherPricingValidationError")
+                    : t("teacherRateAutosaveError");
+          console.warn("[teacher/verification] pricing_save_failed", { code: code || "unknown", status: res.status });
+          setPricingInlineError(error);
+          setPricingSaveState("error");
+          if (source === "manual") showMsg(error, "error");
+          return false;
+        }
 
         const latestDraft = pricingDraftRef.current;
         const savedDraftStillCurrent = pricingDraftsMatch(draft, latestDraft);
@@ -788,6 +818,7 @@ export default function TeacherProfileManagementPage() {
                   price_per_lesson: priceNum,
                   intro_session_enabled: draft.introEnabled,
                   intro_session_price_cents: introPriceCents,
+                  ...(typeof j.country_code === "string" ? { country_code: j.country_code } : {}),
                 }
               : row,
           );

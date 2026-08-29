@@ -259,13 +259,27 @@ export function TeacherWeeklyIntervalsEditor({
       });
       const json = (await res.json().catch(() => ({}))) as { error?: string; intervals?: WeeklyIntervalInput[] };
       if (!res.ok) {
+        const code = json.error ?? "";
         const map: Partial<Record<string, TranslationKey>> = {
           overlapping_intervals: "weeklyIntervalsOverlap",
           end_before_or_equal_start: "weeklyIntervalsEndAfterStart",
           overnight_not_allowed: "weeklyIntervalsEndAfterStart",
           weekly_intervals_disabled: "weeklyIntervalsDisabled",
+          unauthorized: "weeklyIntervalsUnauthorized",
+          teacher_not_found: "weeklyIntervalsTeacherNotFound",
+          invalid_payload: "weeklyIntervalsInvalidPayload",
+          validation_error: "weeklyIntervalsValidationError",
+          intervals_conflict: "weeklyIntervalsOverlap",
+          db_delete_failed: "weeklyIntervalsDbDeleteFailed",
+          db_insert_failed: "weeklyIntervalsDbInsertFailed",
+          availability_sync_failed: "weeklyIntervalsAvailabilitySyncFailed",
+          server_error: "weeklyIntervalsServerError",
         };
-        setErrorKey(map[json.error ?? ""] ?? "weeklyIntervalsSaveError");
+        console.warn("[teacher/weekly-intervals-editor] save_failed", {
+          code: code || "unknown",
+          status: res.status,
+        });
+        setErrorKey(map[code] ?? "weeklyIntervalsSaveError");
         setSaveState("error");
         return false;
       }

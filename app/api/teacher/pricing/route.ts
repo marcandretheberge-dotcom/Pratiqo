@@ -8,6 +8,7 @@ import { validateTeacherLessonOffers, type TeacherLessonOfferInput } from "@/lib
 import {
   isTeacherMarketSupported,
   marketNotSupportedPayload,
+  resolveTeacherMarketCountryCode,
 } from "@/lib/config/markets";
 
 export const runtime = "nodejs";
@@ -70,13 +71,23 @@ async function getAuthenticatedTeacher(req: Request) {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
   if (!token) {
-    return { error: NextResponse.json({ error: "Missing Authorization bearer token." }, { status: 401 }) };
+    return {
+      error: NextResponse.json(
+        { error: "Missing Authorization bearer token.", code: "unauthorized" },
+        { status: 401 },
+      ),
+    };
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) {
-    return { error: NextResponse.json({ error: "Missing Supabase env." }, { status: 500 }) };
+    return {
+      error: NextResponse.json(
+        { error: "Missing Supabase env.", code: "server_error" },
+        { status: 500 },
+      ),
+    };
   }
 
   const supabaseUser = createClient(url, anonKey);
@@ -85,7 +96,12 @@ async function getAuthenticatedTeacher(req: Request) {
     error: userErr,
   } = await supabaseUser.auth.getUser(token);
   if (userErr || !user) {
-    return { error: NextResponse.json({ error: "Invalid or expired session." }, { status: 401 }) };
+    return {
+      error: NextResponse.json(
+        { error: "Invalid or expired session.", code: "unauthorized" },
+        { status: 401 },
+      ),
+    };
   }
 
   const admin = getSupabaseAdmin();
@@ -96,7 +112,12 @@ async function getAuthenticatedTeacher(req: Request) {
     .maybeSingle();
 
   if (teacherErr || !teacher?.id) {
-    return { error: NextResponse.json({ error: "Teacher profile not found." }, { status: 404 }) };
+    return {
+      error: NextResponse.json(
+        { error: "Teacher profile not found.", code: "teacher_not_found" },
+        { status: 404 },
+      ),
+    };
   }
 
   return {
@@ -149,20 +170,29 @@ export async function PATCH(req: Request) {
     admin: ReturnType<typeof getSupabaseAdmin>;
   };
 
-  if (!isTeacherMarketSupported(teacherCountryCode)) {
-    return NextResponse.json(marketNotSupportedPayload(teacherCountryCode), { status: 403 });
+  // Blank country defaults to launched market CA so draft teachers can save rates.
+  // Explicit unsupported countries (FR, UY, …) remain blocked.
+  const marketCountry = resolveTeacherMarketCountryCode(teacherCountryCode);
+  if (!isTeacherMarketSupported(marketCountry.countryCode)) {
+    return NextResponse.json(marketNotSupportedPayload(marketCountry.countryCode), { status: 403 });
   }
 
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid JSON body.", code: "invalid_payload" },
+      { status: 400 },
+    );
   }
 
   const parsed = teacherPricingPatchSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.flatten(), code: "validation_error" },
+      { status: 400 },
+    );
   }
 
   const locale = await resolveEmailLocaleForUser(admin, user.id);
@@ -180,7 +210,10 @@ export async function PATCH(req: Request) {
     .maybeSingle();
 
   if (currentErr || !currentRow) {
-    return NextResponse.json({ error: "Teacher profile not found." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Teacher profile not found.", code: "teacher_not_found" },
+      { status: 404 },
+    );
   }
 
   const mergedOffer = mergeTeacherOffer(currentRow as TeacherPricingRow, data);
@@ -191,6 +224,9 @@ export async function PATCH(req: Request) {
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
+  if (marketCountry.defaultedFromBlank) {
+    updates.country_code = marketCountry.countryCode;
+  }
   if (data.price_per_lesson !== undefined) {
     updates.price_per_lesson = data.price_per_lesson;
   }
@@ -218,8 +254,14 @@ export async function PATCH(req: Request) {
 
   const { error } = await admin.from("teachers").update(updates).eq("id", teacherId);
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.warn("[teacher/pricing] update_failed", { code: "server_error" });
+    return NextResponse.json({ error: error.message, code: "server_error" }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({
+    ok: true,
+    ...(marketCountry.defaultedFromBlank
+      ? { country_code: marketCountry.countryCode, country_defaulted: true }
+      : {}),
+  });
 }

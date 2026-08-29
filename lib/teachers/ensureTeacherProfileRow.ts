@@ -1,4 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  DEFAULT_LAUNCHED_TEACHER_COUNTRY_CODE,
+  normalizeCountryCode,
+} from "@/lib/config/markets";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 
 const TEACHER_IMAGE_FALLBACK = "https://picsum.photos/seed/teacher/400/400";
@@ -22,7 +26,14 @@ export const DRAFT_TEACHER_ROW_INSERT = {
   teaching_mode: "both",
   languages: [] as string[],
   levels: [] as string[],
+  /** Launched market default so pricing save is not blocked by blank country. */
+  country_code: DEFAULT_LAUNCHED_TEACHER_COUNTRY_CODE,
 } as const;
+
+function resolveDraftCountryCode(hint: string | null | undefined): string {
+  const normalized = typeof hint === "string" ? normalizeCountryCode(hint) : "";
+  return normalized || DEFAULT_LAUNCHED_TEACHER_COUNTRY_CODE;
+}
 
 function logEnsureTeacherRowFailure(
   stage: string,
@@ -102,6 +113,10 @@ export async function ensureTeacherProfileRow(
       ? profileHints.photo_url.trim()
       : TEACHER_IMAGE_FALLBACK;
 
+  const draftCountry = resolveDraftCountryCode(
+    typeof profileHints?.country_code === "string" ? profileHints.country_code : null,
+  );
+
   const { data: created, error: createErr } = await admin
     .from("teachers")
     .insert({
@@ -109,16 +124,16 @@ export async function ensureTeacherProfileRow(
       user_id: userId,
       name: teacherName,
       image_url: imageUrl,
-      country_code:
-        typeof profileHints?.country_code === "string" ? profileHints.country_code : null,
       ...DRAFT_TEACHER_ROW_INSERT,
+      // Explicit profile country wins when set; blank falls back to launched market.
+      country_code: draftCountry,
     })
     .select("id")
     .single();
 
   if (createErr || !created?.id) {
     logEnsureTeacherRowFailure("insert", userId, createErr, {
-      payloadKeys: ["id", "user_id", "name", "image_url", "country_code", ...Object.keys(DRAFT_TEACHER_ROW_INSERT)],
+      payloadKeys: ["id", "user_id", "name", "image_url", ...Object.keys(DRAFT_TEACHER_ROW_INSERT)],
     });
     return { result: null, error: createErr?.message ?? "Unable to create teacher profile." };
   }

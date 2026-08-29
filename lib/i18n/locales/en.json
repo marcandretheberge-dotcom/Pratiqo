@@ -3461,5 +3461,17 @@
   "plannedPackageDashboardNoFinancialAction": "This page does not allow any financial action.",
   "plannedPackageDashboardPaymentSetupCta": "Finish payment setup",
   "plannedPackageDashboardAdminReadinessLink": "Package launch readiness",
-  "plannedPackageDashboardAdminOwnerGatedNote": "Student/teacher dashboards stay owner-gated:"
+  "plannedPackageDashboardAdminOwnerGatedNote": "Student/teacher dashboards stay owner-gated:",
+  "teacherPricingMarketNotSupported": "This country is not available for payments yet. Check your teaching country.",
+  "teacherPricingUnauthorized": "Your session expired. Sign in again to save your rate.",
+  "teacherPricingTeacherNotFound": "Could not find your teacher profile. Try again in a moment.",
+  "teacherPricingValidationError": "The rate details are not valid. Check and try again.",
+  "weeklyIntervalsUnauthorized": "Your session expired. Sign in again to save availability.",
+  "weeklyIntervalsTeacherNotFound": "Could not find your teacher profile. Try again in a moment.",
+  "weeklyIntervalsInvalidPayload": "The availability ranges sent are invalid. Check and try again.",
+  "weeklyIntervalsValidationError": "Some availability ranges are invalid. Check the times and try again.",
+  "weeklyIntervalsDbDeleteFailed": "Could not update availability (delete step). Try again.",
+  "weeklyIntervalsDbInsertFailed": "Could not save availability ranges. Try again.",
+  "weeklyIntervalsAvailabilitySyncFailed": "Ranges were saved, but sync failed. Try again.",
+  "weeklyIntervalsServerError": "Server error while saving availability. Try again."
 }
