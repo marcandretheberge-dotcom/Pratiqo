@@ -4,6 +4,7 @@ import { teacherMatchesExploreCategory, teacherMatchesExploreSearch } from "@/li
 import type { TeacherSearchCriteria, TeacherSearchFormat } from "@/lib/teacherSearchCriteria";
 import { teacherStudentPrefScore } from "@/lib/studentLocationSearch";
 import { teacherMatchesAvailabilityWindow } from "@/lib/slots";
+import { compareTeachersBySearchQuality } from "@/lib/teachers/searchRanking";
 
 function foldAscii(s: string): string {
   return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
@@ -137,6 +138,7 @@ export function sortRows(
   rows: TeacherSearchRow[],
   opts: {
     sortMode: "relevance" | "nearest" | "trusted";
+    searchQuery?: string | null;
     studentPrefs?: {
       country_code: string | null;
       timezone: string | null;
@@ -145,6 +147,8 @@ export function sortRows(
       region: string | null;
       preferred_learning_format: string | null;
     } | null;
+    /** Test/override hook for founder ranking (defaults to isFounderTeacher). */
+    isFounder?: (teacherId: string) => boolean;
   },
 ): TeacherSearchRow[] {
   const prefs = opts.studentPrefs ?? null;
@@ -159,6 +163,14 @@ export function sortRows(
       const va = a.teacher.verificationLevel ?? 0;
       const vb = b.teacher.verificationLevel ?? 0;
       if (vb !== va) return vb - va;
+    }
+    // Relevance (default): photo → founder → completeness, then student prefs / rating.
+    if (mode === "relevance") {
+      const quality = compareTeachersBySearchQuality(a.teacher, b.teacher, {
+        searchQuery: opts.searchQuery,
+        isFounder: opts.isFounder,
+      });
+      if (quality !== 0) return quality;
     }
     const pd = scorePref(b.teacher) - scorePref(a.teacher);
     if (pd !== 0) return pd;

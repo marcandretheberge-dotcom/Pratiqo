@@ -457,7 +457,7 @@ export default function StudentSearchPage() {
     }
 
     // Unify sorting across search surfaces. Keep existing modes, but fold in student prefs.
-    const rows = sortRows(filtered, { sortMode, studentPrefs });
+    const rows = sortRows(filtered, { sortMode, searchQuery, studentPrefs });
     return rows;
   }, [
     teachers,

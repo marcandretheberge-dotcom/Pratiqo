@@ -188,5 +188,6 @@ export function disciplineLabelToTeacherCategory(label: string): string {
   }
   const legacyEnum = ["Scolaire", "Musique", "Langues", "Danse", "Sports", "Arts Martiaux"];
   if (legacyEnum.includes(label)) return label;
-  return label.trim() || "Musique";
+  // Do not invent Musique for blank/unknown — that caused false music labels on drafts.
+  return label.trim();
 }

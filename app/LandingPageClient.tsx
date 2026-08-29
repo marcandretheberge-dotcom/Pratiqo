@@ -308,7 +308,11 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       });
     }
 
-    const sorted = sortRows(rows, { sortMode: sortMode === "nearest" ? "nearest" : "relevance", studentPrefs: null });
+    const sorted = sortRows(rows, {
+      sortMode: sortMode === "nearest" ? "nearest" : "relevance",
+      searchQuery,
+      studentPrefs: null,
+    });
     return sorted.map((r) => r.teacher);
   }, [teachers, searchQuery, activeCat, sortMode, geo, mapBounds, formatFilter, adv]);
 

@@ -49,6 +49,7 @@ import {
   TeacherBadgesCard,
   type TeacherBadgeStatusRow,
 } from "@/components/admin/TeacherBadgesCard";
+import { TeacherDisciplineAdminCard } from "@/components/admin/TeacherDisciplineAdminCard";
 import { ProfileDeactivationCard } from "@/components/admin/ProfileDeactivationCard";
 import { TeacherSeoPublicationCard } from "@/components/admin/TeacherSeoPublicationCard";
 import {
@@ -565,6 +566,8 @@ export default async function AdminUserDetailPage({
   type TeacherSupportRow = {
     id: string;
     user_id: string;
+    discipline: string | null;
+    category: string | null;
     price_per_lesson: number | string | null;
     home_lesson_enabled: boolean | null;
     home_lesson_price: number | string | null;
@@ -586,6 +589,10 @@ export default async function AdminUserDetailPage({
       }
     | null = null;
   let teacherBadges: TeacherBadgeStatusRow[] | null = null;
+  let teacherDisciplineSnapshot: {
+    discipline: string | null;
+    category: string | null;
+  } | null = null;
   let teacherSeoPublication:
     | {
         teacherId: string;
@@ -599,7 +606,7 @@ export default async function AdminUserDetailPage({
     const { data: teacherRow } = await admin
       .from("teachers")
       .select(
-        "id, user_id, price_per_lesson, home_lesson_enabled, home_lesson_price, home_lesson_min_duration, default_lesson_duration_minutes, intro_session_enabled, intro_session_price_cents, intro_session_duration_minutes, intro_session_discount_percent, verified_experience_active, verified_experience_set_at, verified_experience_set_by",
+        "id, user_id, discipline, category, price_per_lesson, home_lesson_enabled, home_lesson_price, home_lesson_min_duration, default_lesson_duration_minutes, intro_session_enabled, intro_session_price_cents, intro_session_duration_minutes, intro_session_discount_percent, verified_experience_active, verified_experience_set_at, verified_experience_set_by",
       )
       .eq("user_id", profile.id)
       .maybeSingle();
@@ -607,6 +614,10 @@ export default async function AdminUserDetailPage({
     const row = teacherRow as TeacherSupportRow | null;
     if (row) {
       teacherProfileId = row.id;
+      teacherDisciplineSnapshot = {
+        discipline: row.discipline ?? null,
+        category: row.category ?? null,
+      };
       // Admin-controlled trust badges. Loaded server-side so the admin
       // never sees the boolean flicker, and so the audit metadata
       // (set_at / set_by) does NOT travel through the public
@@ -923,6 +934,14 @@ export default async function AdminUserDetailPage({
               <TeacherBadgesCard
                 teacherUserId={profile.id}
                 initialBadges={teacherBadges}
+              />
+            ) : null}
+
+            {teacherDisciplineSnapshot ? (
+              <TeacherDisciplineAdminCard
+                targetUserId={profile.id}
+                initialDiscipline={teacherDisciplineSnapshot.discipline}
+                initialCategory={teacherDisciplineSnapshot.category}
               />
             ) : null}
 
