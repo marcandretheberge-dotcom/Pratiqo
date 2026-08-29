@@ -3461,5 +3461,17 @@
   "plannedPackageDashboardNoFinancialAction": "Cette page ne permet aucune action financière.",
   "plannedPackageDashboardPaymentSetupCta": "Terminer la configuration des paiements",
   "plannedPackageDashboardAdminReadinessLink": "Préparation au lancement des forfaits",
-  "plannedPackageDashboardAdminOwnerGatedNote": "Les tableaux élève/professeur restent liés au propriétaire :"
+  "plannedPackageDashboardAdminOwnerGatedNote": "Les tableaux élève/professeur restent liés au propriétaire :",
+  "teacherPricingMarketNotSupported": "Ce pays n’est pas encore disponible pour les paiements. Vérifie ton pays d’enseignement.",
+  "teacherPricingUnauthorized": "Ta session a expiré. Reconnecte-toi pour enregistrer ton tarif.",
+  "teacherPricingTeacherNotFound": "Impossible de trouver ton profil professeur. Réessaie dans un instant.",
+  "teacherPricingValidationError": "Les informations de tarif ne sont pas valides. Vérifie et réessaie.",
+  "weeklyIntervalsUnauthorized": "Ta session a expiré. Reconnecte-toi pour enregistrer tes disponibilités.",
+  "weeklyIntervalsTeacherNotFound": "Impossible de trouver ton profil professeur. Réessaie dans un instant.",
+  "weeklyIntervalsInvalidPayload": "Les plages horaires envoyées sont invalides. Vérifie et réessaie.",
+  "weeklyIntervalsValidationError": "Certaines plages horaires sont invalides. Vérifie les heures et réessaie.",
+  "weeklyIntervalsDbDeleteFailed": "Impossible de mettre à jour les disponibilités (suppression). Réessaie.",
+  "weeklyIntervalsDbInsertFailed": "Impossible d’enregistrer les plages horaires. Réessaie.",
+  "weeklyIntervalsAvailabilitySyncFailed": "Les plages ont été enregistrées, mais la synchronisation a échoué. Réessaie.",
+  "weeklyIntervalsServerError": "Erreur serveur lors de l’enregistrement des disponibilités. Réessaie."
 }

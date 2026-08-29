@@ -24,11 +24,13 @@ test("migration 059 allows null draft price_per_lesson but rejects zero", () => 
 test("draft teacher row insert uses minimum valid price_per_lesson not zero or null", () => {
   assert.equal(DRAFT_TEACHER_ROW_INSERT.price_per_lesson, 20);
   assert.equal(DRAFT_TEACHER_ROW_INSERT.is_public, false);
+  assert.equal(DRAFT_TEACHER_ROW_INSERT.country_code, "CA");
   const src = read("lib/teachers/ensureTeacherProfileRow.ts");
   assert.doesNotMatch(src, /price_per_lesson:\s*0/);
   assert.doesNotMatch(src, /price_per_lesson:\s*null/);
   assert.match(src, /MIN_LESSON_PRICE_DOLLARS/);
   assert.match(src, /DRAFT_TEACHER_ROW_INSERT/);
+  assert.match(src, /DEFAULT_LAUNCHED_TEACHER_COUNTRY_CODE/);
 });
 
 test("ensure API does not return raw postgres constraint errors to clients", () => {

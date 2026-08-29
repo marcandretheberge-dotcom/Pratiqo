@@ -307,7 +307,12 @@ export function TeacherScheduleInteractiveGrid({
 
   const save = async (): Promise<boolean> => {
     const token = await getAccessToken();
-    if (!token) return false;
+    if (!token) {
+      setErrorKey("weeklyIntervalsUnauthorized");
+      setSaveError(true);
+      console.warn("[teacher/schedule] weekly_intervals_save", { code: "unauthorized" });
+      return false;
+    }
     setSaving(true);
     setErrorKey(null);
     setSaveError(false);
@@ -320,13 +325,39 @@ export function TeacherScheduleInteractiveGrid({
         },
         body: JSON.stringify({ intervals }),
       });
-      const json = (await res.json().catch(() => ({}))) as { intervals?: WeeklyIntervalInput[]; error?: string };
+      const json = (await res.json().catch(() => ({}))) as {
+        intervals?: WeeklyIntervalInput[];
+        error?: string;
+        code?: string;
+        detail?: string;
+      };
       if (!res.ok) {
-        setErrorKey(
-          json.error === "weekly_intervals_disabled"
-            ? "schedulePreciseDisabledTitle"
-            : "weeklyIntervalsSaveError",
-        );
+        const code = typeof json.code === "string" ? json.code : typeof json.error === "string" ? json.error : "";
+        const map: Partial<Record<string, TranslationKey>> = {
+          weekly_intervals_disabled: "schedulePreciseDisabledTitle",
+          unauthorized: "weeklyIntervalsUnauthorized",
+          teacher_not_found: "weeklyIntervalsTeacherNotFound",
+          invalid_payload: "weeklyIntervalsInvalidPayload",
+          validation_error: "weeklyIntervalsValidationError",
+          intervals_conflict: "weeklyIntervalsOverlap",
+          overlapping_intervals: "weeklyIntervalsOverlap",
+          duplicate_interval: "weeklyIntervalsOverlap",
+          end_before_or_equal_start: "weeklyIntervalsEndAfterStart",
+          overnight_not_allowed: "weeklyIntervalsEndAfterStart",
+          not_quarter_hour: "weeklyIntervalsInvalidRange",
+          invalid_day: "weeklyIntervalsInvalidRange",
+          invalid_time: "weeklyIntervalsInvalidRange",
+          db_delete_failed: "weeklyIntervalsDbDeleteFailed",
+          db_insert_failed: "weeklyIntervalsDbInsertFailed",
+          availability_sync_failed: "weeklyIntervalsAvailabilitySyncFailed",
+          server_error: "weeklyIntervalsServerError",
+        };
+        console.warn("[teacher/schedule] weekly_intervals_save", {
+          code: code || "unknown",
+          status: res.status,
+          detail: typeof json.detail === "string" ? json.detail : undefined,
+        });
+        setErrorKey(map[code] ?? "weeklyIntervalsSaveError");
         setSaveError(true);
         return false;
       }
@@ -334,6 +365,7 @@ export function TeacherScheduleInteractiveGrid({
       setFlashOk(true);
       return true;
     } catch {
+      console.warn("[teacher/schedule] weekly_intervals_save", { code: "network_error" });
       setErrorKey("weeklyIntervalsSaveError");
       setSaveError(true);
       return false;

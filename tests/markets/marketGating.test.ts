@@ -14,6 +14,8 @@ import {
   isNextMarket,
   isPayoutMarketSupported,
   isTeacherMarketSupported,
+  resolveTeacherMarketCountryCode,
+  DEFAULT_LAUNCHED_TEACHER_COUNTRY_CODE,
 } from "@/lib/config/markets";
 
 type TestFn = () => void | Promise<void>;
@@ -118,9 +120,18 @@ test("teacher onboarding is blocked outside Canada before completion", () => {
 });
 
 test("monetized teacher offers are blocked outside Canada", () => {
-  assert.match(pricingRoute, /isTeacherMarketSupported\(teacherCountryCode\)/);
-  assert.match(pricingRoute, /marketNotSupportedPayload\(teacherCountryCode\)/);
+  assert.match(pricingRoute, /resolveTeacherMarketCountryCode\(teacherCountryCode\)/);
+  assert.match(pricingRoute, /isTeacherMarketSupported\(marketCountry\.countryCode\)/);
+  assert.match(pricingRoute, /marketNotSupportedPayload\(marketCountry\.countryCode\)/);
   assert.match(locationRoute, /isTeacherMarketSupported\(countryCode\)/);
+});
+
+test("blank teacher country defaults to launched market for pricing", () => {
+  assert.equal(isTeacherMarketSupported(""), false);
+  assert.equal(DEFAULT_LAUNCHED_TEACHER_COUNTRY_CODE, "CA");
+  assert.equal(resolveTeacherMarketCountryCode(null).countryCode, "CA");
+  assert.equal(resolveTeacherMarketCountryCode(null).defaultedFromBlank, true);
+  assert.equal(isTeacherMarketSupported(resolveTeacherMarketCountryCode("").countryCode), true);
 });
 
 test("public teacher publishing is blocked outside Canada", () => {

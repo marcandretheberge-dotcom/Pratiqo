@@ -26,17 +26,50 @@ const putBodySchema = z
   })
   .strict();
 
+type WeeklyIntervalsErrorCode =
+  | "weekly_intervals_disabled"
+  | "unauthorized"
+  | "teacher_not_found"
+  | "invalid_payload"
+  | "validation_error"
+  | "intervals_conflict"
+  | "db_delete_failed"
+  | "db_insert_failed"
+  | "availability_sync_failed"
+  | "server_error";
+
+function jsonError(code: WeeklyIntervalsErrorCode, status: number, detail?: string) {
+  console.warn("[teacher/weekly-intervals]", { code, status });
+  return NextResponse.json(
+    {
+      error: code,
+      code,
+      ...(detail ? { detail } : {}),
+    },
+    { status },
+  );
+}
+
+function mapValidationCode(
+  error: string,
+): Extract<WeeklyIntervalsErrorCode, "validation_error" | "intervals_conflict"> {
+  if (error === "overlapping_intervals" || error === "duplicate_interval") {
+    return "intervals_conflict";
+  }
+  return "validation_error";
+}
+
 async function getAuthenticatedTeacher(req: Request) {
   const authHeader = req.headers.get("authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
   if (!token) {
-    return { error: NextResponse.json({ error: "unauthenticated" }, { status: 401 }) };
+    return { error: jsonError("unauthorized", 401) };
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) {
-    return { error: NextResponse.json({ error: "server_error" }, { status: 500 }) };
+    return { error: jsonError("server_error", 500) };
   }
 
   const supabaseUser = createClient(url, anonKey);
@@ -45,7 +78,7 @@ async function getAuthenticatedTeacher(req: Request) {
     error: userErr,
   } = await supabaseUser.auth.getUser(token);
   if (userErr || !user) {
-    return { error: NextResponse.json({ error: "unauthenticated" }, { status: 401 }) };
+    return { error: jsonError("unauthorized", 401) };
   }
 
   const admin = getSupabaseAdmin();
@@ -56,22 +89,10 @@ async function getAuthenticatedTeacher(req: Request) {
     .maybeSingle();
 
   if (teacherErr || !teacher?.id) {
-    return { error: NextResponse.json({ error: "teacher_not_found" }, { status: 404 }) };
+    return { error: jsonError("teacher_not_found", 404) };
   }
 
   return { teacherId: teacher.id as string, admin };
-}
-
-function validationErrorStatus(error: string): number {
-  return error === "overlapping_intervals" ||
-    error === "duplicate_interval" ||
-    error === "end_before_or_equal_start" ||
-    error === "overnight_not_allowed" ||
-    error === "not_quarter_hour" ||
-    error === "invalid_day" ||
-    error === "invalid_time"
-    ? 400
-    : 400;
 }
 
 /**
@@ -96,7 +117,7 @@ export async function GET(req: Request) {
     .order("start_time", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return jsonError("server_error", 500, error.message);
   }
 
   const intervals = mapDbRowsToNormalized(data ?? []).map((iv) => ({
@@ -121,7 +142,7 @@ export async function GET(req: Request) {
  */
 export async function PUT(req: Request) {
   if (!isTeacherScheduleInteractiveCellsEnabled()) {
-    return NextResponse.json({ error: "weekly_intervals_disabled" }, { status: 400 });
+    return jsonError("weekly_intervals_disabled", 400);
   }
 
   const auth = await getAuthenticatedTeacher(req);
@@ -135,19 +156,24 @@ export async function PUT(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
+    return jsonError("invalid_payload", 400);
   }
 
   const parsed = putBodySchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
+    return jsonError("invalid_payload", 400);
   }
 
   const validated = validateWeeklyIntervalSet(parsed.data.intervals);
   if (!validated.ok) {
+    const code = mapValidationCode(validated.error);
     return NextResponse.json(
-      { error: validated.error },
-      { status: validationErrorStatus(validated.error) },
+      {
+        error: code,
+        code,
+        detail: validated.error,
+      },
+      { status: 400 },
     );
   }
 
@@ -156,7 +182,7 @@ export async function PUT(req: Request) {
     .delete()
     .eq("teacher_id", teacherId);
   if (deleteErr) {
-    return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+    return jsonError("db_delete_failed", 500, deleteErr.message);
   }
 
   if (validated.intervals.length > 0) {
@@ -170,7 +196,7 @@ export async function PUT(req: Request) {
     }));
     const { error: insertErr } = await admin.from("teacher_weekly_availability_intervals").insert(rows);
     if (insertErr) {
-      return NextResponse.json({ error: insertErr.message }, { status: 500 });
+      return jsonError("db_insert_failed", 500, insertErr.message);
     }
   }
 
@@ -183,7 +209,7 @@ export async function PUT(req: Request) {
     })
     .eq("id", teacherId);
   if (syncErr) {
-    return NextResponse.json({ error: syncErr.message }, { status: 500 });
+    return jsonError("availability_sync_failed", 500, syncErr.message);
   }
 
   return NextResponse.json({
