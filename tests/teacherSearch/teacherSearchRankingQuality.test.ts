@@ -1,5 +1,5 @@
 /**
- * Public search ranking quality: photo-first, founder within groups, completeness.
+ * Public search ranking quality: photo+bio tiers before founder boost.
  * Visibility gates are intentionally unchanged.
  */
 import assert from "node:assert/strict";
@@ -9,8 +9,10 @@ import type { Teacher } from "@/types";
 import {
   compareTeachersBySearchQuality,
   computeTeacherProfileCompletenessScore,
+  teacherHasMeaningfulBio,
   teacherHasUsableProfilePhoto,
   teacherMatchesExactNameQuery,
+  teacherSearchQualityTier,
 } from "@/lib/teachers/searchRanking";
 import { sortRows, buildTeacherSearchRows } from "@/lib/teacherSearchEngine";
 import { isTeacherMarketplaceVisibleRow } from "@/lib/teachers/marketplaceVisibility";
@@ -50,12 +52,45 @@ function baseTeacher(overrides: Partial<Teacher> = {}): Teacher {
   };
 }
 
-const founders = new Set(["founder-with-photo", "founder-no-photo", "founder-incomplete"]);
+const founders = new Set([
+  "founder-with-photo",
+  "founder-no-photo",
+  "founder-incomplete",
+  "founder-photo-only",
+  "founder-empty",
+]);
 
 test("picsum / empty image is not a usable profile photo", () => {
   assert.equal(teacherHasUsableProfilePhoto(""), false);
   assert.equal(teacherHasUsableProfilePhoto("https://picsum.photos/seed/teacher/400/400"), false);
   assert.equal(teacherHasUsableProfilePhoto("https://cdn.example.com/real.webp"), true);
+});
+
+test("meaningful bio requires length and rejects placeholders", () => {
+  assert.equal(teacherHasMeaningfulBio(""), false);
+  assert.equal(teacherHasMeaningfulBio("trop court"), false);
+  assert.equal(teacherHasMeaningfulBio("n/a"), false);
+  assert.equal(
+    teacherHasMeaningfulBio("Professeure expérimentée de langues avec une approche claire."),
+    true,
+  );
+});
+
+test("quality tiers: photo+bio > photo only > bio only > neither", () => {
+  assert.equal(
+    teacherSearchQualityTier(
+      baseTeacher({ imageUrl: "https://cdn.example.com/x.webp", bio: "Bio assez longue pour compter dans le classement qualité." }),
+    ),
+    3,
+  );
+  assert.equal(teacherSearchQualityTier(baseTeacher({ imageUrl: "https://cdn.example.com/x.webp", bio: "" })), 2);
+  assert.equal(
+    teacherSearchQualityTier(
+      baseTeacher({ imageUrl: "", bio: "Bio assez longue pour compter dans le classement qualité." }),
+    ),
+    1,
+  );
+  assert.equal(teacherSearchQualityTier(baseTeacher({ imageUrl: "", bio: "" })), 0);
 });
 
 test("teacher with photo ranks before teacher without photo", () => {
@@ -71,6 +106,41 @@ test("teacher with photo ranks before teacher without photo", () => {
     rating: 5,
   });
   assert.ok(compareTeachersBySearchQuality(withPhoto, noPhoto) < 0);
+});
+
+test("teacher with photo + bio ranks before teacher with photo only", () => {
+  const photoBio = baseTeacher({
+    id: "photo-bio",
+    imageUrl: "https://cdn.example.com/a.webp",
+    bio: "Bio assez longue pour compter dans le classement qualité.",
+  });
+  const photoOnly = baseTeacher({
+    id: "photo-only",
+    imageUrl: "https://cdn.example.com/b.webp",
+    bio: "",
+    pricePerLesson: 90,
+  });
+  assert.ok(compareTeachersBySearchQuality(photoBio, photoOnly) < 0);
+});
+
+test("non-founder with photo + bio ranks before founder with no photo/no bio", () => {
+  const nonFounder = baseTeacher({
+    id: "regular-complete",
+    imageUrl: "https://cdn.example.com/regular.webp",
+    bio: "Bio assez longue pour compter dans le classement qualité.",
+  });
+  const founderEmpty = baseTeacher({
+    id: "founder-empty",
+    imageUrl: "",
+    bio: "",
+    pricePerLesson: 90,
+    rating: 5,
+  });
+  assert.ok(
+    compareTeachersBySearchQuality(nonFounder, founderEmpty, {
+      isFounder: (id) => founders.has(id),
+    }) < 0,
+  );
 });
 
 test("non-founder with photo ranks before founder without photo", () => {
@@ -90,17 +160,30 @@ test("non-founder with photo ranks before founder without photo", () => {
   );
 });
 
-test("founder with photo ranks before non-founder with photo when quality is similar", () => {
-  const founder = baseTeacher({
+test("founder boost works only within the same quality tier", () => {
+  const founderPhotoBio = baseTeacher({
     id: "founder-with-photo",
     imageUrl: "https://cdn.example.com/f.webp",
+    bio: "Bio assez longue pour compter dans le classement qualité.",
   });
-  const regular = baseTeacher({
+  const regularPhotoBio = baseTeacher({
     id: "regular-with-photo",
     imageUrl: "https://cdn.example.com/r.webp",
+    bio: "Bio assez longue pour compter dans le classement qualité.",
   });
   assert.ok(
-    compareTeachersBySearchQuality(founder, regular, {
+    compareTeachersBySearchQuality(founderPhotoBio, regularPhotoBio, {
+      isFounder: (id) => founders.has(id),
+    }) < 0,
+  );
+
+  const founderPhotoOnly = baseTeacher({
+    id: "founder-photo-only",
+    imageUrl: "https://cdn.example.com/fp.webp",
+    bio: "",
+  });
+  assert.ok(
+    compareTeachersBySearchQuality(regularPhotoBio, founderPhotoOnly, {
       isFounder: (id) => founders.has(id),
     }) < 0,
   );
@@ -133,7 +216,7 @@ test("among founders, more complete profile ranks above incomplete", () => {
   );
 });
 
-test("no-photo teachers remain marketplace-visible (ranking only)", () => {
+test("no-photo/no-bio teachers remain marketplace-visible (ranking only)", () => {
   assert.equal(
     isTeacherMarketplaceVisibleRow({
       id: "00000000-0000-4000-8000-000000000001",

@@ -869,6 +869,46 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
     aliases: { fr: ["hatha", "vinyasa"], en: ["hatha", "vinyasa"], es: ["hatha", "vinyasa"] },
   },
   {
+    canonicalId: "pilates",
+    category: "arts_skills",
+    emoji: "🧘",
+    labels: { fr: "Pilates", en: "Pilates", es: "Pilates" },
+    aliases: { fr: ["cours de pilates"], en: ["pilates class"], es: ["clase de pilates"] },
+  },
+  {
+    canonicalId: "swimming",
+    category: "arts_skills",
+    emoji: "🏊",
+    labels: { fr: "Natation", en: "Swimming", es: "Natación" },
+    aliases: {
+      fr: ["nager", "cours de natation", "natation adulte"],
+      en: ["swim", "swim lessons", "swimming lessons"],
+      es: ["nadar", "clases de natacion", "clases de natación"],
+    },
+  },
+  {
+    canonicalId: "aquafitness",
+    category: "arts_skills",
+    emoji: "💦",
+    labels: { fr: "Aquaforme", en: "Aquafitness", es: "Aqua fitness" },
+    aliases: {
+      fr: ["aquagym", "aqua gym", "aquafitness", "aqua fitness", "aquaforme"],
+      en: ["aqua gym", "aquagym", "water aerobics", "aqua aerobics"],
+      es: ["aquagym", "aqua gym", "aerobic acuatico", "aeróbic acuático"],
+    },
+  },
+  {
+    canonicalId: "zumba",
+    category: "arts_skills",
+    emoji: "🕺",
+    labels: { fr: "Zumba", en: "Zumba", es: "Zumba" },
+    aliases: {
+      fr: ["cours de zumba", "zumba fitness"],
+      en: ["zumba class", "zumba fitness"],
+      es: ["clase de zumba", "zumba fitness"],
+    },
+  },
+  {
     canonicalId: "excel",
     category: "arts_skills",
     emoji: "📊",
@@ -965,6 +1005,7 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
         "hip-hop",
         "danse latine",
         "danse contemporaine",
+        "zumba",
       ],
       en: [
         "dance class",
@@ -975,6 +1016,7 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
         "hip-hop",
         "latin dance",
         "contemporary dance",
+        "zumba",
       ],
       es: [
         "danza",
@@ -988,6 +1030,7 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
         "baile latino",
         "danza contemporánea",
         "danza contemporanea",
+        "zumba",
       ],
     },
   },

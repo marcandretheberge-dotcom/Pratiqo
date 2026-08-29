@@ -56,6 +56,9 @@ test("canonical admin discipline options include langues and musique", () => {
   assert.ok(ids.includes("musique"));
   assert.ok(ids.includes("francisation"));
   assert.ok(ids.includes("tuteurs"));
+  assert.ok(ids.includes("zumba"));
+  assert.ok(ids.includes("natation"));
+  assert.ok(ids.includes("aquaforme"));
   assert.equal(isAdminTeacherDisciplineId("langues"), true);
   assert.equal(isAdminTeacherDisciplineId("not-a-discipline"), false);
   assert.equal(isAdminTeacherDisciplineId(null), false);
