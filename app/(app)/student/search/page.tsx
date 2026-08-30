@@ -457,7 +457,13 @@ export default function StudentSearchPage() {
     }
 
     // Unify sorting across search surfaces. Keep existing modes, but fold in student prefs.
-    const rows = sortRows(filtered, { sortMode, searchQuery, studentPrefs });
+    const rows = sortRows(filtered, {
+      sortMode,
+      searchQuery,
+      studentPrefs,
+      format: searchFormat,
+      hasLocationContext: Boolean(geo) || Boolean(String(studentPrefs?.city ?? "").trim()),
+    });
     return rows;
   }, [
     teachers,

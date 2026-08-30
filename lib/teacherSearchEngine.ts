@@ -4,7 +4,7 @@ import { teacherMatchesExploreCategory, teacherMatchesExploreSearch } from "@/li
 import type { TeacherSearchCriteria, TeacherSearchFormat } from "@/lib/teacherSearchCriteria";
 import { teacherStudentPrefScore } from "@/lib/studentLocationSearch";
 import { teacherMatchesAvailabilityWindow } from "@/lib/slots";
-import { compareTeachersBySearchQuality } from "@/lib/teachers/searchRanking";
+import { compareTeachersBySearchQuality, computeTeacherSearchScore } from "@/lib/teachers/searchRanking";
 
 function foldAscii(s: string): string {
   return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
@@ -134,11 +134,24 @@ export function applyRadiusFilter(
   return rows.filter((x) => x.distanceKm != null && x.distanceKm <= radius);
 }
 
+function isOnlineSearchFormat(
+  format: TeacherSearchFormat | null | undefined,
+  prefs?: { preferred_learning_format: string | null } | null,
+): boolean {
+  if (format === "online") return true;
+  const pref = String(prefs?.preferred_learning_format ?? "")
+    .trim()
+    .toLowerCase();
+  return pref === "online";
+}
+
 export function sortRows(
   rows: TeacherSearchRow[],
   opts: {
     sortMode: "relevance" | "nearest" | "trusted";
     searchQuery?: string | null;
+    format?: TeacherSearchFormat | null;
+    hasLocationContext?: boolean;
     studentPrefs?: {
       country_code: string | null;
       timezone: string | null;
@@ -153,23 +166,54 @@ export function sortRows(
 ): TeacherSearchRow[] {
   const prefs = opts.studentPrefs ?? null;
   const mode = opts.sortMode;
+  const onlineSearch = isOnlineSearchFormat(opts.format, prefs);
+  const hasLocationContext =
+    opts.hasLocationContext === true ||
+    rows.some((r) => r.distanceKm != null) ||
+    Boolean(String(prefs?.city ?? "").trim() || String(prefs?.region ?? "").trim());
   const scorePref = (t: Teacher) => teacherStudentPrefScore(t, prefs);
+
+  const weightedCompare = (a: TeacherSearchRow, b: TeacherSearchRow) =>
+    compareTeachersBySearchQuality(a.teacher, b.teacher, {
+      searchQuery: opts.searchQuery,
+      distanceKmA: a.distanceKm,
+      distanceKmB: b.distanceKm,
+      onlineSearch,
+      hasLocationContext,
+      isFounder: opts.isFounder,
+    });
 
   const cmp = (a: TeacherSearchRow, b: TeacherSearchRow) => {
     if (mode === "nearest") {
-      if (a.distanceKm != null && b.distanceKm != null && a.distanceKm !== b.distanceKm) return a.distanceKm - b.distanceKm;
+      if (a.distanceKm != null && b.distanceKm != null && a.distanceKm !== b.distanceKm) {
+        return a.distanceKm - b.distanceKm;
+      }
+      // Distance ties (or missing): fall through to weighted trust/quality.
+      const quality = weightedCompare(a, b);
+      if (quality !== 0) return quality;
     }
     if (mode === "trusted") {
-      const va = a.teacher.verificationLevel ?? 0;
-      const vb = b.teacher.verificationLevel ?? 0;
-      if (vb !== va) return vb - va;
-    }
-    // Relevance (default): photo → founder → completeness, then student prefs / rating.
-    if (mode === "relevance") {
-      const quality = compareTeachersBySearchQuality(a.teacher, b.teacher, {
+      const scoreA = computeTeacherSearchScore(a.teacher, {
         searchQuery: opts.searchQuery,
+        distanceKm: a.distanceKm,
+        onlineSearch,
+        hasLocationContext,
         isFounder: opts.isFounder,
       });
+      const scoreB = computeTeacherSearchScore(b.teacher, {
+        searchQuery: opts.searchQuery,
+        distanceKm: b.distanceKm,
+        onlineSearch,
+        hasLocationContext,
+        isFounder: opts.isFounder,
+      });
+      if (scoreB.trustScore !== scoreA.trustScore) return scoreB.trustScore - scoreA.trustScore;
+      if (scoreB.total !== scoreA.total) return scoreB.total - scoreA.total;
+      return String(a.teacher.id).localeCompare(String(b.teacher.id));
+    }
+    // Relevance (default): full weighted score.
+    if (mode === "relevance") {
+      const quality = weightedCompare(a, b);
       if (quality !== 0) return quality;
     }
     const pd = scorePref(b.teacher) - scorePref(a.teacher);
@@ -179,4 +223,3 @@ export function sortRows(
 
   return [...rows].sort(cmp);
 }
-

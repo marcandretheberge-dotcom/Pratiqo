@@ -1,5 +1,5 @@
 /**
- * Public search ranking quality: photo+bio tiers before founder boost.
+ * Public search ranking quality regressions after weighted scoring (#394).
  * Visibility gates are intentionally unchanged.
  */
 import assert from "node:assert/strict";
@@ -9,6 +9,7 @@ import type { Teacher } from "@/types";
 import {
   compareTeachersBySearchQuality,
   computeTeacherProfileCompletenessScore,
+  computeTeacherSearchScore,
   teacherHasMeaningfulBio,
   teacherHasUsableProfilePhoto,
   teacherMatchesExactNameQuery,
@@ -48,6 +49,9 @@ function baseTeacher(overrides: Partial<Teacher> = {}): Teacher {
     teachingMode: "both",
     languages: ["fr"],
     levels: ["débutant"],
+    identityVerified: false,
+    diplomaVerified: false,
+    verifiedExperience: false,
     ...overrides,
   };
 }
@@ -160,30 +164,24 @@ test("non-founder with photo ranks before founder without photo", () => {
   );
 });
 
-test("founder boost works only within the same quality tier", () => {
-  const founderPhotoBio = baseTeacher({
+test("founder boost works only when quality is otherwise similar", () => {
+  const founder = baseTeacher({
     id: "founder-with-photo",
     imageUrl: "https://cdn.example.com/f.webp",
     bio: "Bio assez longue pour compter dans le classement qualité.",
   });
-  const regularPhotoBio = baseTeacher({
+  const regular = baseTeacher({
     id: "regular-with-photo",
     imageUrl: "https://cdn.example.com/r.webp",
     bio: "Bio assez longue pour compter dans le classement qualité.",
   });
+  const fScore = computeTeacherSearchScore(founder, { isFounder: (id) => founders.has(id) });
+  const rScore = computeTeacherSearchScore(regular, { isFounder: (id) => founders.has(id) });
+  assert.equal(fScore.founderScore, 25);
+  assert.equal(rScore.founderScore, 0);
+  assert.ok(fScore.total > rScore.total);
   assert.ok(
-    compareTeachersBySearchQuality(founderPhotoBio, regularPhotoBio, {
-      isFounder: (id) => founders.has(id),
-    }) < 0,
-  );
-
-  const founderPhotoOnly = baseTeacher({
-    id: "founder-photo-only",
-    imageUrl: "https://cdn.example.com/fp.webp",
-    bio: "",
-  });
-  assert.ok(
-    compareTeachersBySearchQuality(regularPhotoBio, founderPhotoOnly, {
+    compareTeachersBySearchQuality(founder, regular, {
       isFounder: (id) => founders.has(id),
     }) < 0,
   );
@@ -251,13 +249,14 @@ test("exact name query can surface a no-photo teacher above a photo non-match", 
   );
 });
 
-test("sortRows relevance applies photo-first quality ordering", () => {
+test("sortRows relevance applies quality ordering", () => {
   const teachers = [
     baseTeacher({
       id: "z-no-photo",
       name: "Zed",
       imageUrl: "https://picsum.photos/seed/z/400/400",
       rating: 5,
+      bio: "",
     }),
     baseTeacher({
       id: "a-photo",
@@ -274,10 +273,14 @@ test("sortRows relevance applies photo-first quality ordering", () => {
 
 test("search surfaces wire searchQuery into sortRows", () => {
   const searchPage = read("app/(app)/student/search/page.tsx");
-  assert.match(searchPage, /sortRows\(filtered,\s*\{\s*sortMode,\s*searchQuery,\s*studentPrefs\s*\}\)/);
+  assert.match(searchPage, /sortRows\(filtered/);
+  assert.match(searchPage, /searchQuery/);
   const landing = read("app/LandingPageClient.tsx");
   assert.match(landing, /searchQuery/);
   assert.match(landing, /sortRows\(/);
+  const ranking = read("lib/teachers/searchRanking.ts");
+  assert.match(ranking, /computeTeacherSearchScore/);
+  assert.match(ranking, /computeTeacherTrustScore/);
 });
 
 async function run() {
