@@ -311,6 +311,8 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
     const sorted = sortRows(rows, {
       sortMode: sortMode === "nearest" ? "nearest" : "relevance",
       searchQuery,
+      format: fmt,
+      hasLocationContext: Boolean(geo),
       studentPrefs: null,
     });
     return sorted.map((r) => r.teacher);

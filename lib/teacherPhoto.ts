@@ -71,3 +71,23 @@ export function isPublicAvatarPhotoUrl(url: string | null | undefined): boolean 
     return false;
   }
 }
+
+const PLACEHOLDER_PHOTO_RE = /picsum\.photos|placehold\.co|via\.placeholder|dummyimage\.com/i;
+const GOOGLE_OAUTH_PHOTO_RE = /googleusercontent\.com|ggpht\.com|lh[0-9]\.google/i;
+
+/** Ranking-only photo quality classification (not a visibility gate). */
+export type TeacherPhotoQualityKind =
+  | "uploaded"
+  | "google_oauth"
+  | "other_external"
+  | "placeholder"
+  | "none";
+
+export function getTeacherPhotoQualityKind(imageUrl: string | null | undefined): TeacherPhotoQualityKind {
+  const raw = typeof imageUrl === "string" ? imageUrl.trim() : "";
+  if (!raw) return "none";
+  if (PLACEHOLDER_PHOTO_RE.test(raw)) return "placeholder";
+  if (isPublicAvatarPhotoUrl(raw)) return "uploaded";
+  if (GOOGLE_OAUTH_PHOTO_RE.test(raw)) return "google_oauth";
+  return "other_external";
+}
