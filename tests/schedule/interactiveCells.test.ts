@@ -126,6 +126,19 @@ test("replaceDaypartIntervals keeps other days and dayparts", () => {
   assert.equal(intervalsForDaypart(next, 3, "matin").length, 1);
 });
 
+test("replaceDaypartIntervals drops invalid stale intervals", () => {
+  const all = [
+    { dayOfWeek: 1, startTime: "09:00", endTime: "11:00" },
+    { dayOfWeek: 1, startTime: "bad", endTime: "time" },
+    { dayOfWeek: 2, startTime: "xx", endTime: "yy" },
+  ];
+  const next = replaceDaypartIntervals(all, 1, "matin", [
+    { dayOfWeek: 1, startTime: "08:30", endTime: "10:30" },
+  ]);
+  assert.equal(next.length, 1);
+  assert.deepEqual(next[0], { dayOfWeek: 1, startTime: "08:30", endTime: "10:30" });
+});
+
 test("copyDaypartToAllWeekdays and weekdays helpers", () => {
   const source = [{ dayOfWeek: 3, startTime: "09:00", endTime: "11:00" }];
   const all = copyDaypartToAllWeekdays([], 3, "matin", source);

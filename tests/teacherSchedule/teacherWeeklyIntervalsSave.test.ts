@@ -60,6 +60,15 @@ test("interactive grid maps known schedule save error codes", () => {
   assert.match(grid, /weeklyIntervalsAvailabilitySyncFailed/);
   assert.match(grid, /console\.warn\("\[teacher\/schedule\] weekly_intervals_save"/);
   assert.match(grid, /map\[code\] \?\? "weeklyIntervalsSaveError"/);
+  assert.match(grid, /sanitizeWeeklyIntervalsForSave/);
+  assert.match(grid, /detailKey/);
+});
+
+test("API validation responses expose detail and optional index", () => {
+  const route = read("app/api/teacher/weekly-intervals/route.ts");
+  assert.match(route, /detail:\s*validated\.error/);
+  assert.match(route, /validated\.index/);
+  assert.match(route, /unrecognized_keys/);
 });
 
 test("weekly intervals editor maps structured DB/auth codes", () => {

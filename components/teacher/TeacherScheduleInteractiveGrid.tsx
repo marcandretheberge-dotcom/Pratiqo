@@ -30,7 +30,11 @@ import {
   TeacherScheduleCellEditor,
   cellEditorShellClass,
 } from "@/components/teacher/TeacherScheduleCellEditor";
-import type { WeeklyIntervalInput } from "@/lib/schedule/weeklyIntervals";
+import {
+  sanitizeWeeklyIntervalsForSave,
+  validateWeeklyIntervalSet,
+  type WeeklyIntervalInput,
+} from "@/lib/schedule/weeklyIntervals";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"] as const;
 const SLOTS = ["Matin", "Après-midi", "Soir"] as const;
@@ -317,22 +321,64 @@ export function TeacherScheduleInteractiveGrid({
     setErrorKey(null);
     setSaveError(false);
     try {
+      const sanitized = sanitizeWeeklyIntervalsForSave(intervals);
+      const hadExtraFields = intervals.some((iv) => {
+        const keys = Object.keys(iv as object);
+        return keys.some((k) => k !== "dayOfWeek" && k !== "startTime" && k !== "endTime");
+      });
+      // Keep client state clean after dropping stale invalid / exact duplicates / extra fields
+      // (e.g. startMin/endMin from NormalizedWeeklyInterval leaking into Apply).
+      if (
+        sanitized.droppedInvalidCount > 0 ||
+        sanitized.droppedDuplicateCount > 0 ||
+        hadExtraFields
+      ) {
+        setIntervals(sanitized.normalizedIntervals);
+      }
+
+      const precheck = validateWeeklyIntervalSet(sanitized.normalizedIntervals);
+      if (!precheck.ok) {
+        const map: Partial<Record<string, TranslationKey>> = {
+          overlapping_intervals: "weeklyIntervalsOverlap",
+          duplicate_interval: "weeklyIntervalsOverlap",
+          end_before_or_equal_start: "weeklyIntervalsEndAfterStart",
+          overnight_not_allowed: "weeklyIntervalsEndAfterStart",
+          not_quarter_hour: "weeklyIntervalsInvalidRange",
+          invalid_day: "weeklyIntervalsInvalidRange",
+          invalid_time: "weeklyIntervalsInvalidRange",
+        };
+        console.warn("[teacher/schedule] weekly_intervals_save", {
+          code: "client_validation",
+          detail: precheck.error,
+          index: typeof precheck.index === "number" ? precheck.index : undefined,
+          sanitizedIntervalCount: sanitized.normalizedIntervals.length,
+          droppedInvalidCount: sanitized.droppedInvalidCount,
+          droppedDuplicateCount: sanitized.droppedDuplicateCount,
+          droppedInvalidIndexes: sanitized.droppedInvalidIndexes,
+        });
+        setErrorKey(map[precheck.error] ?? "weeklyIntervalsValidationError");
+        setSaveError(true);
+        return false;
+      }
+
       const res = await fetch("/api/teacher/weekly-intervals", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ intervals }),
+        body: JSON.stringify({ intervals: sanitized.normalizedIntervals }),
       });
       const json = (await res.json().catch(() => ({}))) as {
         intervals?: WeeklyIntervalInput[];
         error?: string;
         code?: string;
         detail?: string;
+        index?: number;
       };
       if (!res.ok) {
         const code = typeof json.code === "string" ? json.code : typeof json.error === "string" ? json.error : "";
+        const detail = typeof json.detail === "string" ? json.detail : undefined;
         const map: Partial<Record<string, TranslationKey>> = {
           weekly_intervals_disabled: "schedulePreciseDisabledTitle",
           unauthorized: "weeklyIntervalsUnauthorized",
@@ -352,16 +398,23 @@ export function TeacherScheduleInteractiveGrid({
           availability_sync_failed: "weeklyIntervalsAvailabilitySyncFailed",
           server_error: "weeklyIntervalsServerError",
         };
+        // Prefer detail-specific copy when API returns validation detail.
+        const detailKey = detail ? map[detail] : undefined;
         console.warn("[teacher/schedule] weekly_intervals_save", {
           code: code || "unknown",
           status: res.status,
-          detail: typeof json.detail === "string" ? json.detail : undefined,
+          detail,
+          index: typeof json.index === "number" ? json.index : undefined,
+          sanitizedIntervalCount: sanitized.normalizedIntervals.length,
+          droppedInvalidCount: sanitized.droppedInvalidCount,
+          droppedDuplicateCount: sanitized.droppedDuplicateCount,
+          droppedInvalidIndexes: sanitized.droppedInvalidIndexes,
         });
-        setErrorKey(map[code] ?? "weeklyIntervalsSaveError");
+        setErrorKey(detailKey ?? map[code] ?? "weeklyIntervalsSaveError");
         setSaveError(true);
         return false;
       }
-      applyLoaded(Array.isArray(json.intervals) ? json.intervals : intervals);
+      applyLoaded(Array.isArray(json.intervals) ? json.intervals : sanitized.normalizedIntervals);
       setFlashOk(true);
       return true;
     } catch {
