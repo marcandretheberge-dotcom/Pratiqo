@@ -161,17 +161,39 @@ export async function PUT(req: Request) {
 
   const parsed = putBodySchema.safeParse(body);
   if (!parsed.success) {
-    return jsonError("invalid_payload", 400);
+    const issue = parsed.error.issues[0];
+    const detail =
+      issue?.code === "unrecognized_keys"
+        ? "unrecognized_keys"
+        : issue?.code === "invalid_type"
+          ? "invalid_type"
+          : "schema";
+    console.warn("[teacher/weekly-intervals]", { code: "invalid_payload", status: 400, detail });
+    return NextResponse.json(
+      {
+        error: "invalid_payload",
+        code: "invalid_payload",
+        detail,
+      },
+      { status: 400 },
+    );
   }
 
   const validated = validateWeeklyIntervalSet(parsed.data.intervals);
   if (!validated.ok) {
     const code = mapValidationCode(validated.error);
+    console.warn("[teacher/weekly-intervals]", {
+      code,
+      status: 400,
+      detail: validated.error,
+      index: typeof validated.index === "number" ? validated.index : undefined,
+    });
     return NextResponse.json(
       {
         error: code,
         code,
         detail: validated.error,
+        ...(typeof validated.index === "number" ? { index: validated.index } : {}),
       },
       { status: 400 },
     );

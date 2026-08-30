@@ -124,10 +124,25 @@ export function validateDaypartIntervals(args: {
   if (!set.ok) {
     return { ok: false, error: set.error as DaypartEditorValidationError };
   }
-  return { ok: true, intervals: set.intervals };
+  // Return API-safe WeeklyIntervalInput only — never leak startMin/endMin into
+  // client state. Those extras fail PUT Zod `.strict()` as invalid_payload.
+  return {
+    ok: true,
+    intervals: set.intervals.map((iv) => ({
+      dayOfWeek: iv.dayOfWeek,
+      startTime: iv.startTime,
+      endTime: iv.endTime,
+    })),
+  };
 }
 
-/** Replace daypart intervals for one weekday; keep other days/dayparts. */
+/**
+ * Replace daypart intervals for one weekday; keep other days/dayparts.
+ *
+ * Invalid/stale intervals are dropped (not preserved). `intervalsForDaypart`
+ * hides them from the cell UI, so keeping them here used to poison saves while
+ * the teacher only saw valid ranges.
+ */
 export function replaceDaypartIntervals(
   all: WeeklyIntervalInput[],
   dayOfWeek: number,
@@ -135,14 +150,20 @@ export function replaceDaypartIntervals(
   nextForCell: WeeklyIntervalInput[],
 ): WeeklyIntervalInput[] {
   const kept = all.filter((iv) => {
-    if (iv.dayOfWeek !== dayOfWeek) return true;
     const n = normalizeWeeklyInterval(iv);
-    if (!n.ok) return true;
+    // Drop unparseable / invalid intervals — they cannot be shown or edited in a daypart cell.
+    if (!n.ok) return false;
+    if (iv.dayOfWeek !== dayOfWeek) return true;
     const b = daypartBounds(daypart);
     const inDaypart = n.value.startMin >= b.startMin && n.value.endMin <= b.endMin;
     return !inDaypart;
   });
-  return [...kept, ...nextForCell].sort(
+  const cleanedNext = nextForCell.map((iv) => ({
+    dayOfWeek: iv.dayOfWeek,
+    startTime: iv.startTime,
+    endTime: iv.endTime,
+  }));
+  return [...kept, ...cleanedNext].sort(
     (a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime),
   );
 }

@@ -153,16 +153,18 @@ export function validateWeeklyIntervalSet(
   }
 
   const seen = new Set<string>();
-  for (const iv of normalized) {
+  for (let i = 0; i < normalized.length; i++) {
+    const iv = normalized[i]!;
     const key = `${iv.dayOfWeek}|${iv.startTime}|${iv.endTime}`;
-    if (seen.has(key)) return { ok: false, error: "duplicate_interval" };
+    if (seen.has(key)) return { ok: false, error: "duplicate_interval", index: i };
     seen.add(key);
   }
 
-  const byDay = new Map<number, NormalizedWeeklyInterval[]>();
-  for (const iv of normalized) {
+  const byDay = new Map<number, Array<NormalizedWeeklyInterval & { index: number }>>();
+  for (let i = 0; i < normalized.length; i++) {
+    const iv = normalized[i]!;
     const list = byDay.get(iv.dayOfWeek) ?? [];
-    list.push(iv);
+    list.push({ ...iv, index: i });
     byDay.set(iv.dayOfWeek, list);
   }
   for (const list of byDay.values()) {
@@ -171,13 +173,75 @@ export function validateWeeklyIntervalSet(
       const prev = list[i - 1]!;
       const cur = list[i]!;
       if (prev.startMin < cur.endMin && cur.startMin < prev.endMin) {
-        return { ok: false, error: "overlapping_intervals" };
+        return { ok: false, error: "overlapping_intervals", index: cur.index };
       }
     }
   }
 
   normalized.sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startMin - b.startMin);
   return { ok: true, intervals: normalized };
+}
+
+export type SanitizeWeeklyIntervalsResult = {
+  /** API-safe intervals only (dayOfWeek / startTime / endTime). */
+  normalizedIntervals: WeeklyIntervalInput[];
+  droppedInvalidCount: number;
+  droppedDuplicateCount: number;
+  /** Original indexes dropped as unparseable / invalid (not overlaps). */
+  droppedInvalidIndexes: number[];
+};
+
+/**
+ * Prepare intervals for PUT /api/teacher/weekly-intervals.
+ *
+ * - Strips extra fields (e.g. startMin/endMin from NormalizedWeeklyInterval)
+ *   that would fail the API's Zod `.strict()` schema as `invalid_payload`.
+ * - Drops stale intervals that fail normalize (hidden from daypart cells).
+ * - Dedupes exact duplicates only — real overlaps are NOT dropped (editor/API must reject them).
+ */
+export function sanitizeWeeklyIntervalsForSave(
+  intervals: ReadonlyArray<Partial<WeeklyIntervalInput> & Record<string, unknown>>,
+): SanitizeWeeklyIntervalsResult {
+  const seen = new Set<string>();
+  const normalizedIntervals: WeeklyIntervalInput[] = [];
+  const droppedInvalidIndexes: number[] = [];
+  let droppedDuplicateCount = 0;
+
+  for (let i = 0; i < intervals.length; i++) {
+    const raw = intervals[i] ?? {};
+    const candidate: WeeklyIntervalInput = {
+      dayOfWeek: Number(raw.dayOfWeek),
+      startTime: String(raw.startTime ?? ""),
+      endTime: String(raw.endTime ?? ""),
+    };
+    const n = normalizeWeeklyInterval(candidate);
+    if (!n.ok) {
+      droppedInvalidIndexes.push(i);
+      continue;
+    }
+    const key = `${n.value.dayOfWeek}|${n.value.startTime}|${n.value.endTime}`;
+    if (seen.has(key)) {
+      droppedDuplicateCount += 1;
+      continue;
+    }
+    seen.add(key);
+    normalizedIntervals.push({
+      dayOfWeek: n.value.dayOfWeek,
+      startTime: n.value.startTime,
+      endTime: n.value.endTime,
+    });
+  }
+
+  normalizedIntervals.sort(
+    (a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime),
+  );
+
+  return {
+    normalizedIntervals,
+    droppedInvalidCount: droppedInvalidIndexes.length,
+    droppedDuplicateCount,
+    droppedInvalidIndexes,
+  };
 }
 
 /** Lesson [startMin, startMin+duration) must lie entirely inside one interval. */
