@@ -125,6 +125,22 @@ test("yoga / pilates / entraînement privé remain searchable", () => {
   assert.equal(teacherMatchesExploreSearch(pt, "personal training"), true);
 });
 
+test("Coach sportif parent search includes musculation / entraînement privé teachers", () => {
+  const teacher = applyAdditionalDisciplines(baseTeacher(), [
+    row("musculation"),
+    row("entrainement_prive"),
+  ]);
+  assert.equal(teacherMatchesExploreSearch(teacher, "Coach sportif"), true);
+  assert.equal(teacherMatchesExploreSearch(teacher, "coach_sportif"), true);
+  assert.equal(teacherMatchesExploreSearch(teacher, "fitness"), true);
+});
+
+test("quoi autosuggest prefers Musculation over trapping only on Coach sportif", () => {
+  const muscu = searchSubjectBuckets("muscu", { locale: "fr", limit: 8 });
+  assert.ok(muscu.some((b) => b.bucket.canonicalId === "strength_training"));
+  assert.equal(muscu[0]?.bucket.canonicalId, "strength_training");
+});
+
 test("language and music existing values still work", () => {
   assert.equal(resolveDisciplineId("langues"), "langues");
   assert.equal(resolveDisciplineId("musique"), "musique");
