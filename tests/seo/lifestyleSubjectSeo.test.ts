@@ -188,8 +188,8 @@ test("structured data stays honest: BreadcrumbList only, no fake reviews or inve
 test("search aliases for lifestyle subjects still resolve", () => {
   const cases: Array<[string, Locale, string]> = [
     ["coach sportif", "fr", "coach_trainer"],
-    ["personal trainer", "en", "coach_trainer"],
-    ["entrenador personal", "es", "coach_trainer"],
+    ["personal trainer", "en", "personal_training"],
+    ["entrenador personal", "es", "personal_training"],
     ["cuisine", "fr", "cooking"],
     ["cooking class", "en", "cooking"],
     ["cocina", "es", "cooking"],

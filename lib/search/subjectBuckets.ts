@@ -806,7 +806,6 @@ export const SUBJECT_BUCKETS: SubjectBucket[] = [
       es: [
         "entrenador",
         "coach",
-        "entrenador personal",
         "preparador físico",
         "preparador fisico",
         "fitness",
