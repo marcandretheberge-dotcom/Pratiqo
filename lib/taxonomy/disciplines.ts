@@ -223,6 +223,9 @@ export const LEGACY_DISCIPLINE_ALIASES: Record<string, string> = {
   coding: "programmation",
   fitness_coach: "coach_sportif",
   coach_trainer: "coach_sportif",
+  // Parent / group search intents → coach_sportif (expanded via getExpandedDisciplineSearchIds).
+  fitness: "coach_sportif",
+  sport: "coach_sportif",
   personal_training: "entrainement_prive",
   personal_trainer: "entrainement_prive",
   swimming: "natation",
@@ -262,6 +265,60 @@ export function resolveDisciplineId(raw: string | null | undefined): string | nu
     }
   }
   return null;
+}
+
+/**
+ * Parent / group search intents → child specialty IDs.
+ * Selecting "Coach sportif" must include teachers with musculation, PT, etc.
+ * Leaf specialties (musculation, natation, …) are NOT expanded here.
+ */
+export const DISCIPLINE_SEARCH_GROUP_EXPANSIONS: Readonly<Record<string, readonly string[]>> = {
+  coach_sportif: [
+    "coach_sportif",
+    "mise_en_forme",
+    "conditionnement_physique",
+    "entrainement_prive",
+    "musculation",
+    "cardio",
+    "course_a_pied",
+    "mobilite",
+    "yoga",
+    "pilates",
+    "natation",
+    "aquaforme",
+    "arts_martiaux",
+    "zumba",
+  ],
+};
+
+/**
+ * Resolve a Quoi / search query into the set of discipline IDs that should match.
+ * Parent intents (coach_sportif) expand; leaf specialties return themselves only.
+ */
+export function getExpandedDisciplineSearchIds(input: string | null | undefined): Set<string> {
+  const out = new Set<string>();
+  const primary = resolveDisciplineId(input);
+  if (!primary) return out;
+  out.add(primary);
+  const expansion = DISCIPLINE_SEARCH_GROUP_EXPANSIONS[primary];
+  if (expansion) {
+    for (const id of expansion) {
+      if (BY_ID.has(id)) out.add(id);
+    }
+  }
+  return out;
+}
+
+/** Primary resolved id + expanded match set for search / ranking. */
+export function resolveDisciplineSearchIntent(input: string | null | undefined): {
+  primaryId: string | null;
+  expandedIds: Set<string>;
+} {
+  const primaryId = resolveDisciplineId(input);
+  return {
+    primaryId,
+    expandedIds: getExpandedDisciplineSearchIds(input),
+  };
 }
 
 export function getTaxonomyDisciplineById(id: string | null | undefined): PratiqoDiscipline | undefined {

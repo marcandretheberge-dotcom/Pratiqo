@@ -274,10 +274,20 @@ test("Coach aliases resolve in FR / EN / ES, including accent-insensitive traine
   assert.ok(hasMatch("entraîneur", "coach_trainer", "fr"));
   assert.ok(hasMatch("entraineur", "coach_trainer", "fr"));
   assert.ok(hasMatch("coach sportif", "coach_trainer", "fr"));
-  assert.ok(hasMatch("personal trainer", "coach_trainer", "en"));
-  assert.ok(hasMatch("private trainer", "coach_trainer", "en"));
+  assert.ok(hasMatch("fitness", "coach_trainer", "en"));
   assert.ok(hasMatch("entrenador", "coach_trainer", "es"));
   assert.ok(hasMatch("preparador fisico", "coach_trainer", "es"));
+});
+
+test("Fitness specialty buckets surface for musculation / entraînement / conditionnement", () => {
+  assert.ok(hasMatch("muscu", "strength_training", "fr"));
+  assert.ok(hasMatch("musculation", "strength_training", "fr"));
+  assert.ok(hasMatch("entraînement", "personal_training", "fr"));
+  assert.ok(hasMatch("entrainement", "personal_training", "fr"));
+  assert.ok(hasMatch("personal trainer", "personal_training", "en"));
+  assert.ok(hasMatch("private trainer", "personal_training", "en"));
+  assert.ok(hasMatch("conditionnement", "conditioning", "fr"));
+  assert.ok(hasMatch("cardio", "cardio", "fr"));
 });
 
 test("Cuisine aliases resolve in FR / EN / ES, including cooking and cocina", () => {

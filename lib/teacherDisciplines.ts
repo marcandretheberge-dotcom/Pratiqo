@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Teacher } from "../types";
 import { disciplineLabelToTeacherCategory, displayTeacherMarketplaceCategory, getDisciplineById } from "./disciplines";
-import { resolveDisciplineId } from "./taxonomy/disciplines";
+import { resolveDisciplineId, getExpandedDisciplineSearchIds } from "./taxonomy/disciplines";
 import { applyAdditionalDisciplines, isPlaceholderDisciplineLabel, type TeacherDisciplineRow } from "./teacherMapper";
 
 type DisciplineDbRow = {
@@ -83,15 +83,22 @@ export function teacherMatchesExploreSearch(teacher: Teacher, searchQuery: strin
   if (foldAscii(String(teacher.region ?? "")).includes(q)) return true;
   if (foldAscii(String(teacher.location?.neighborhood ?? "")).includes(q)) return true;
 
-  // Alias-aware: "aquagym" / "swimming" resolve to aquaforme / natation.
-  const resolvedQueryId = resolveDisciplineId(searchQuery);
-  if (resolvedQueryId) {
-    if (resolveDisciplineId(teacher.discipline) === resolvedQueryId) return true;
+  // Alias + parent-group aware: "Coach sportif" expands to musculation / PT / etc.
+  const expandedQueryIds = getExpandedDisciplineSearchIds(searchQuery);
+  if (expandedQueryIds.size > 0) {
+    const teacherIds = new Set<string>();
+    const primaryResolved = resolveDisciplineId(teacher.discipline);
+    if (primaryResolved) teacherIds.add(primaryResolved);
     for (const row of teacher.disciplineDisplay ?? []) {
-      if (resolveDisciplineId(row.disciplineId) === resolvedQueryId) return true;
+      const id = resolveDisciplineId(row.disciplineId);
+      if (id) teacherIds.add(id);
     }
     for (const ad of teacher.additionalDisciplines ?? []) {
-      if (resolveDisciplineId(ad.disciplineId) === resolvedQueryId) return true;
+      const id = resolveDisciplineId(ad.disciplineId);
+      if (id) teacherIds.add(id);
+    }
+    for (const id of teacherIds) {
+      if (expandedQueryIds.has(id)) return true;
     }
   }
 

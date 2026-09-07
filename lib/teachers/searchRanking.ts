@@ -3,7 +3,7 @@ import { isFounderTeacher } from "@/lib/teachers/founderTeachers";
 import { isPlaceholderDisciplineLabel } from "@/lib/teacherMapper";
 import { MIN_LESSON_PRICE_DOLLARS } from "@/lib/pricing/constants";
 import { getTeacherPhotoQualityKind } from "@/lib/teacherPhoto";
-import { resolveDisciplineId } from "@/lib/taxonomy/disciplines";
+import { resolveDisciplineId, resolveDisciplineSearchIntent } from "@/lib/taxonomy/disciplines";
 
 /**
  * Ranking-only helpers for public teacher search.
@@ -203,7 +203,7 @@ export function computeTeacherSearchMatchScore(
   const name = foldAscii(teacher.name ?? "");
   if (name && (name.includes(q) || q.includes(name))) return 280;
 
-  const resolvedQuery = resolveDisciplineId(searchQuery);
+  const intent = resolveDisciplineSearchIntent(searchQuery);
   const disciplineIds = new Set<string>();
   const labels: string[] = [];
 
@@ -224,8 +224,16 @@ export function computeTeacherSearchMatchScore(
     if (id) disciplineIds.add(id);
   }
 
-  if (resolvedQuery && disciplineIds.has(resolvedQuery)) return 250;
+  // Exact specialty / primary id match outranks parent-group expansion.
+  if (intent.primaryId && disciplineIds.has(intent.primaryId)) return 250;
   if (labels.some((l) => l === q)) return 250;
+  // Parent intent (e.g. coach_sportif) matching a child specialty.
+  if (
+    intent.expandedIds.size > 0 &&
+    [...disciplineIds].some((id) => intent.expandedIds.has(id))
+  ) {
+    return 170;
+  }
   if (labels.some((l) => l.includes(q) || q.includes(l))) return 180;
 
   const city = foldAscii(String(teacher.city ?? ""));
