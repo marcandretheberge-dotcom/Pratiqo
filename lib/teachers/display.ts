@@ -9,6 +9,7 @@ import {
   getTeacherProfileDisciplineChips,
   isPlaceholderDisciplineLabel,
 } from "@/lib/teacherMapper";
+import { formatTeachingZoneLabel, getPrimaryTeachingZone, getTeacherMapCoords } from "@/lib/teacherTeachingZones";
 
 const LANGUAGE_CODE_LABELS: Record<string, string> = {
   fr: "Français",
@@ -208,6 +209,8 @@ export function getTeacherAvailabilitySummary(teacher: Teacher, maxVisible = 2):
 }
 
 export function getTeacherPublicAreaLabel(teacher: Teacher): string | null {
+  const zoneLabel = formatTeachingZoneLabel(teacher.matchedTeachingZone ?? getPrimaryTeachingZone(teacher));
+  if (zoneLabel) return zoneLabel;
   const city = String(teacher.city ?? "").trim();
   if (city) return city;
   const neighborhood = String(teacher.location?.neighborhood ?? "").trim();
@@ -232,8 +235,9 @@ export function getTeacherPublicDistanceKm(
 ): number | null {
   const stored = Number(teacher.distance);
   if (Number.isFinite(stored) && stored > 0) return stored;
-  const lat = teacher.location?.lat;
-  const lng = teacher.location?.lng;
+  const coords = getTeacherMapCoords(teacher);
+  const lat = coords?.lat;
+  const lng = coords?.lng;
   if (
     typeof userLat !== "number" ||
     typeof userLng !== "number" ||

@@ -3,6 +3,7 @@
 import React from "react";
 import type { Teacher } from "../types";
 import { GoogleProgressiveMap } from "./GoogleProgressiveMap";
+import { getTeacherMapCoords } from "@/lib/teacherTeachingZones";
 
 /**
  * Carte Google (progressive) — réservée au plan **Entreprise**.
@@ -18,8 +19,16 @@ export function TeacherMap({
   isEnterprise: boolean;
 }) {
   if (!isEnterprise) return null;
-  const { lat, lng } = teacher.location;
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) {
+  const coords = getTeacherMapCoords(teacher);
+  const lat = coords?.lat;
+  const lng = coords?.lng;
+  if (
+    typeof lat !== "number" ||
+    typeof lng !== "number" ||
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    (lat === 0 && lng === 0)
+  ) {
     return null;
   }
 

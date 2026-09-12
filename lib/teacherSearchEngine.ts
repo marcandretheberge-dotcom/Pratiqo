@@ -1,5 +1,6 @@
 import type { Teacher } from "@/types";
 import { haversineDistance } from "@/lib/geo";
+import { getBestMatchingTeachingZone } from "@/lib/teacherTeachingZones";
 import { teacherMatchesExploreCategory, teacherMatchesExploreSearch } from "@/lib/teacherDisciplines";
 import type { TeacherSearchCriteria, TeacherSearchFormat } from "@/lib/teacherSearchCriteria";
 import { teacherStudentPrefScore } from "@/lib/studentLocationSearch";
@@ -69,6 +70,7 @@ export type TeacherSearchRow = {
   teacher: Teacher;
   /** null when geo not available or teacher has no coords. */
   distanceKm: number | null;
+  matchedTeachingZone?: Teacher["matchedTeachingZone"];
 };
 
 export function filterTeacherPool(teachers: Teacher[], criteria: TeacherSearchCriteria): Teacher[] {
@@ -111,16 +113,26 @@ export function filterTeacherPool(teachers: Teacher[], criteria: TeacherSearchCr
 
 export function buildTeacherSearchRows(
   teachers: Teacher[],
-  opts: { geo: { lat: number; lng: number } | null },
+  opts: {
+    geo: { lat: number; lng: number } | null;
+    locationText?: { city?: string | null; region?: string | null } | null;
+  },
 ): TeacherSearchRow[] {
-  const { geo } = opts;
-  return teachers.map((tt) => ({
-    teacher: tt,
-    distanceKm:
+  const { geo, locationText = null } = opts;
+  return teachers.map((tt) => {
+    const match = getBestMatchingTeachingZone(tt, { geo, locationText });
+    const fallbackDistanceKm =
       geo && typeof tt.location?.lat === "number" && typeof tt.location?.lng === "number"
         ? haversineDistance(geo.lat, geo.lng, tt.location.lat, tt.location.lng)
-        : null,
-  }));
+        : null;
+    const distanceKm = match.distanceKm ?? fallbackDistanceKm;
+    const teacher = match.zone ? { ...tt, matchedTeachingZone: match.zone, distance: distanceKm ?? tt.distance } : tt;
+    return {
+      teacher,
+      distanceKm,
+      matchedTeachingZone: match.zone,
+    };
+  });
 }
 
 export function applyRadiusFilter(

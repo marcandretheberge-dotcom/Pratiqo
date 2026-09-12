@@ -13,9 +13,9 @@ import {
 import { TeacherProfile, type TeacherBookContext } from "@/components/TeacherProfile";
 import { BookingModal, type BookingInitialLessonKind } from "@/components/BookingModal";
 import { useRouter } from "next/navigation";
-import { haversineDistance } from "@/lib/geo";
 import { hasConfirmedBooking } from "@/lib/maps";
 import { useAuth } from "@/components/AuthProvider";
+import { attachPublicTeachingZones, getTeacherMapCoords } from "@/lib/teacherTeachingZones";
 
 function isColumnMismatchError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
@@ -112,7 +112,8 @@ export default function TeacherProfileClient({
       }
       const base = teacherRowToTeacher(data);
       const discMap = await fetchTeacherDisciplinesMap(supabase, [id]).catch(() => new Map());
-      const merged = mergeTeachersWithDisciplines([base], discMap)[0] ?? base;
+      const mergedBase = mergeTeachersWithDisciplines([base], discMap);
+      const merged = (await attachPublicTeachingZones(supabase, mergedBase))[0] ?? mergedBase[0] ?? base;
       setTeacher((current) => ({
         ...merged,
         imageUrl: merged.imageUrl || current?.imageUrl || serverTeacherRef.current?.imageUrl || "",
@@ -175,9 +176,18 @@ export default function TeacherProfileClient({
   const profilePath = `/teacher/profile/${encodeURIComponent(displayTeacher.id)}`;
 
   const distanceKm =
-    !geo || geoDeniedOrUnavailable
+    !geo || geoDeniedOrUnavailable || !getTeacherMapCoords(displayTeacher)
       ? null
-      : haversineDistance(geo.lat, geo.lng, displayTeacher.location.lat, displayTeacher.location.lng);
+      : (() => {
+          const coords = getTeacherMapCoords(displayTeacher)!;
+          const toRad = (deg: number) => (deg * Math.PI) / 180;
+          const dLat = toRad(coords.lat - geo.lat);
+          const dLng = toRad(coords.lng - geo.lng);
+          const a =
+            Math.sin(dLat / 2) ** 2 +
+            Math.cos(toRad(geo.lat)) * Math.cos(toRad(coords.lat)) * Math.sin(dLng / 2) ** 2;
+          return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        })();
 
   return (
     <>

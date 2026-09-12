@@ -2,7 +2,6 @@
 
 import { MapPin, Star, Users, Video } from "lucide-react";
 import type { Teacher } from "@/types";
-import { haversineDistance } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import { PriceDisplay } from "@/components/PriceDisplay";
@@ -15,6 +14,7 @@ import { TeacherCardBioSnippet } from "@/components/teachers/TeacherCardBioSnipp
 import {
   getTeacherCompactFormatLabel,
   getTeacherPublicAreaLabel,
+  getTeacherPublicDistanceKm,
   PUBLIC_TEACHER_CARD_AVATAR_SIZE_CLASS,
   PUBLIC_TEACHER_CARD_AVATAR_SIZE_DESKTOP,
   PUBLIC_TEACHER_CARD_DISCIPLINE_CLASS,
@@ -46,17 +46,7 @@ export function LandingTeacherListingCard({
     rating: teacher.rating,
     reviewCount: teacher.reviews,
   });
-  const distKm =
-    geo && teacher.location?.lat != null && teacher.location?.lng != null
-      ? Math.round(
-          haversineDistance(
-            geo.lat,
-            geo.lng,
-            teacher.location.lat as number,
-            teacher.location.lng as number,
-          ),
-        )
-      : null;
+  const distKm = geo ? Math.round(getTeacherPublicDistanceKm(teacher, geo.lat, geo.lng) ?? 0) || null : null;
   const hasAvailability =
     Array.isArray(teacher.availability) &&
     teacher.availability.some((slot) => String(slot ?? "").trim().length > 0);

@@ -30,6 +30,7 @@ import { LandingResourcesSection } from "../components/marketing/LandingResource
 import type { TranslationKey } from "../lib/translations";
 import type { LandingFormatFilter } from "../lib/landingTeacherFilter";
 import { filterTeacherPool, buildTeacherSearchRows, sortRows } from "../lib/teacherSearchEngine";
+import { attachPublicTeachingZones, getTeacherMapCoords } from "@/lib/teacherTeachingZones";
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../components/TeacherSearchAdvancedPanel";
 import { logSearchEvent } from "../lib/searchAnalytics";
 import {
@@ -147,6 +148,12 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
 
   // Teachers + search state
   const [locationSearch, setLocationSearch] = useState("");
+  // Lieu autocomplete (formatted as "City, PROV"). Mid-typing strings are
+  // ignored so the summary row stays accurate while the user types.
+  const committedPlaceLabel = useMemo(() => {
+    const trimmed = locationSearch.trim();
+    return /,\s+[A-Z]{2}$/.test(trimmed) ? trimmed : null;
+  }, [locationSearch]);
   // Lieu typing intent — flipped to true the moment the user types any
   // non-empty text in the Lieu autocomplete (or selects a city). This
   // is what lets the page enter compact results mode while the user is
@@ -241,8 +248,9 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       const mapped = (data as unknown as TeacherRow[])
         .filter((r) => isLaunchEligibleTeacherRow(r))
         .map((r) => teacherRowToTeacher(r));
-      const discMap = await fetchTeacherDisciplinesMap(supabase, mapped.map((t) => t.id));
-      await mergePlans(mergeTeachersWithDisciplines(mapped, discMap));
+      const mappedWithZones = await attachPublicTeachingZones(supabase, mapped);
+      const discMap = await fetchTeacherDisciplinesMap(supabase, mappedWithZones.map((t) => t.id));
+      await mergePlans(mergeTeachersWithDisciplines(mappedWithZones, discMap));
       setLoadingTeachers(false);
     };
     void load();
@@ -294,12 +302,16 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       availabilityPeriod: adv.availabilityPeriod || undefined,
       teacherPreference: adv.teacherPreference || undefined,
     });
-    let rows = buildTeacherSearchRows(pool, { geo });
+    let rows = buildTeacherSearchRows(pool, {
+      geo,
+      locationText: { city: committedPlaceLabel ?? (locationSearch.trim() || null), region: null },
+    });
 
     if (mapBounds) {
       rows = rows.filter(({ teacher: tt }) => {
-        const lat = tt.location?.lat;
-        const lng = tt.location?.lng;
+        const coords = getTeacherMapCoords(tt);
+        const lat = coords?.lat;
+        const lng = coords?.lng;
         if (typeof lat !== "number" || typeof lng !== "number") return false;
         const { ne, sw } = mapBounds;
         // Handle antimeridian wrapping for longitude
@@ -316,7 +328,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       studentPrefs: null,
     });
     return sorted.map((r) => r.teacher);
-  }, [teachers, searchQuery, activeCat, sortMode, geo, mapBounds, formatFilter, adv]);
+  }, [teachers, searchQuery, activeCat, sortMode, geo, mapBounds, formatFilter, adv, committedPlaceLabel, locationSearch]);
 
   const resultCountRef = useRef(0);
   useEffect(() => {
@@ -440,12 +452,6 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
   }, [searchQuery, activeCat, geo, formatFilter, mapBounds, hasLieuTypingIntent, hasAdvancedFilter]);
 
   // Display the selected place label only when it's been *committed* via the
-  // Lieu autocomplete (formatted as "City, PROV"). Mid-typing strings are
-  // ignored so the summary row stays accurate while the user types.
-  const committedPlaceLabel = useMemo(() => {
-    const trimmed = locationSearch.trim();
-    return /,\s+[A-Z]{2}$/.test(trimmed) ? trimmed : null;
-  }, [locationSearch]);
   const subjectLabel = searchQuery.trim();
 
   return (

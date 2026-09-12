@@ -20,6 +20,7 @@ export type TeacherLocationMatchFields = {
   region?: string | null;
   timezone?: string | null;
   location?: { neighborhood?: string | undefined };
+  teachingZones?: Array<{ city?: string | null; region?: string | null; labelPublic?: string | null }>;
 };
 
 export function normalizeLocationToken(s: string | null | undefined): string {
@@ -31,6 +32,28 @@ function teacherCityLabel(t: TeacherLocationMatchFields): string | null {
   if (c) return c;
   const n = String(t.location?.neighborhood ?? "").trim();
   return n || null;
+}
+
+function teachingZoneLocationAffinity(t: TeacherLocationMatchFields, prefs: StudentLocationPrefs): number {
+  const zones = Array.isArray(t.teachingZones) ? t.teachingZones : [];
+  if (zones.length === 0) return 0;
+  const prefCity = normalizeLocationToken(prefs.city);
+  const prefRegion = normalizeLocationToken(prefs.region);
+  let score = 0;
+  for (const zone of zones) {
+    const city = normalizeLocationToken(zone.city);
+    const region = normalizeLocationToken(zone.region);
+    const label = normalizeLocationToken(zone.labelPublic);
+    if (prefRegion && region && prefRegion === region) score = Math.max(score, 18);
+    if (
+      prefCity &&
+      ((city && (prefCity === city || city.includes(prefCity) || prefCity.includes(city))) ||
+        (label && label.includes(prefCity)))
+    ) {
+      score = Math.max(score, 30);
+    }
+  }
+  return score;
 }
 
 function teachingModeAllowsOnline(mode: string | null | undefined): boolean {
@@ -87,13 +110,18 @@ export function teacherStudentPrefScore(t: TeacherLocationMatchFields, prefs: St
   if (pc && tc && pc === tc) score += onlineHeavy ? 2 : 12;
 
   if (!onlineHeavy) {
-    const pr = normalizeLocationToken(prefs.region);
-    const tr = normalizeLocationToken(t.region);
-    if (pr && tr && pr === tr) score += 18;
+    const zoneScore = teachingZoneLocationAffinity(t, prefs);
+    if (zoneScore > 0) {
+      score += zoneScore;
+    } else {
+      const pr = normalizeLocationToken(prefs.region);
+      const tr = normalizeLocationToken(t.region);
+      if (pr && tr && pr === tr) score += 18;
 
-    const pcity = normalizeLocationToken(prefs.city);
-    const tCity = normalizeLocationToken(teacherCityLabel(t));
-    if (pcity && tCity && (pcity === tCity || tCity.includes(pcity) || pcity.includes(tCity))) score += 30;
+      const pcity = normalizeLocationToken(prefs.city);
+      const tCity = normalizeLocationToken(teacherCityLabel(t));
+      if (pcity && tCity && (pcity === tCity || tCity.includes(pcity) || pcity.includes(tCity))) score += 30;
+    }
   }
 
   const pTz = String(prefs.timezone ?? "").trim();

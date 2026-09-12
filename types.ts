@@ -14,6 +14,33 @@ export type TeacherDisciplineDisplay = {
   specialite: string;
 };
 
+export type TeacherTeachingZoneKind =
+  | "primary_base"
+  | "work_study_city"
+  | "weekend_city"
+  | "service_area"
+  | "temporary";
+
+export type TeacherTeachingZone = {
+  id: string;
+  teacherId: string;
+  labelPublic: string;
+  city: string;
+  region?: string | null;
+  countryCode: string;
+  lat: number | null;
+  lng: number | null;
+  radiusKm: number;
+  zoneKind: TeacherTeachingZoneKind;
+  isPrimary: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  availabilityNotePublic?: string | null;
+  supportsAtTeacherPlace: boolean;
+  supportsAtStudentPlace: boolean;
+  supportsPublicPlace: boolean;
+};
+
 export interface Teacher {
   id: string;
   /** Compte Supabase (auth) lié à la fiche professeur — messagerie, etc. */
@@ -47,6 +74,8 @@ export interface Teacher {
   currency?: string | null;
   city?: string | null;
   region?: string | null;
+  teachingZones?: TeacherTeachingZone[];
+  matchedTeachingZone?: TeacherTeachingZone | null;
   isVerified: boolean;
   teachingMode: TeachingMode;
   languages: string[];

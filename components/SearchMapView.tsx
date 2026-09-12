@@ -17,6 +17,7 @@ import { TeacherAvatar } from "./TeacherAvatar";
 import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
 import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { formatApproxDistanceKm } from "@/lib/studentLocation";
+import { getTeacherMapCoords } from "@/lib/teacherTeachingZones";
 import { hasPublicTeacherReviews, isPublicTeacherIdentityVerified } from "@/lib/teachers/badges";
 import {
   getTeacherCompactFormatLabel,
@@ -95,15 +96,7 @@ const pratiqoClusterRenderer: Renderer = {
 };
 
 function hasCoords(t: Teacher) {
-  const lat = t?.location?.lat;
-  const lng = t?.location?.lng;
-  return (
-    typeof lat === "number" &&
-    typeof lng === "number" &&
-    Number.isFinite(lat) &&
-    Number.isFinite(lng) &&
-    !(lat === 0 && lng === 0)
-  );
+  return getTeacherMapCoords(t) != null;
 }
 
 export function SearchMapView({
@@ -333,6 +326,8 @@ export function SearchMapView({
     const newMarkers: google.maps.Marker[] = [];
 
     for (const teacher of teachersWithCoords) {
+      const coords = getTeacherMapCoords(teacher);
+      if (!coords) continue;
       const amount = Number(teacher.pricePerLesson || 0);
       const display =
         Number.isFinite(amount) && amount > 0
@@ -342,7 +337,7 @@ export function SearchMapView({
       const isHighlight = highlightedTeacherId != null && teacher.id === highlightedTeacherId;
       // NOTE: no `map` prop — the clusterer controls placement on the map.
       const marker = new google.maps.Marker({
-        position: { lat: teacher.location.lat, lng: teacher.location.lng },
+        position: coords,
         label: {
           text: label,
           color: "white",

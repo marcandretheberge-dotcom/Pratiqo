@@ -9,6 +9,7 @@ import {
 } from "@/lib/supabase/queries";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "@/lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
+import { attachPublicTeachingZones } from "@/lib/teacherTeachingZones";
 import type { Teacher } from "@/types";
 import {
   buildTeacherSeoTitle,
@@ -131,7 +132,9 @@ function rowToTeacherForProfile(row: TeacherRow): Teacher {
 async function attachDisciplines(teacher: Teacher): Promise<Teacher> {
   try {
     const discMap = await fetchTeacherDisciplinesMap(getSupabaseAdmin(), [teacher.id]);
-    return mergeTeachersWithDisciplines([teacher], discMap)[0] ?? teacher;
+    const merged = mergeTeachersWithDisciplines([teacher], discMap);
+    const withZones = await attachPublicTeachingZones(getSupabaseAdmin(), merged);
+    return withZones[0] ?? merged[0] ?? teacher;
   } catch {
     return teacher;
   }

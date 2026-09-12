@@ -76,6 +76,15 @@ export type AdminTeacher360 = {
     teachingRadiusKm: number | null;
     hasPublicMapSignal: boolean;
   };
+  publicTeachingZones: Array<{
+    label: string;
+    city: string | null;
+    region: string | null;
+    countryCode: string | null;
+    radiusKm: number | null;
+    isPrimary: boolean;
+    availabilityNotePublic: string | null;
+  }>;
   teachingCapabilities: {
     teachingMode: string | null;
     onlineCapable: boolean;
@@ -558,10 +567,45 @@ export async function loadAdminTeacher360(
     fetchLastSignInAt(admin, profile.id),
     admin.from("teachers_public").select("id").eq("id", teacher.id).maybeSingle(),
   ]);
+  let publicTeachingZones: AdminTeacher360["publicTeachingZones"] = [];
+  try {
+    const { data: zoneRows } = await admin
+      .from("teacher_teaching_zones")
+      .select("label_public, city, region, country_code, radius_km, is_primary, availability_note_public")
+      .eq("teacher_id", teacher.id)
+      .eq("is_active", true)
+      .order("is_primary", { ascending: false })
+      .order("sort_order", { ascending: true });
+    publicTeachingZones = ((zoneRows ?? []) as Array<{
+      label_public?: string | null;
+      city?: string | null;
+      region?: string | null;
+      country_code?: string | null;
+      radius_km?: number | null;
+      is_primary?: boolean | null;
+      availability_note_public?: string | null;
+    }>).map((zone) => ({
+      label: cleanString(zone.label_public) ?? cleanString(zone.city) ?? "Zone",
+      city: cleanString(zone.city),
+      region: cleanString(zone.region),
+      countryCode: cleanString(zone.country_code),
+      radiusKm: cleanNumber(zone.radius_km),
+      isPrimary: zone.is_primary === true,
+      availabilityNotePublic: cleanString(zone.availability_note_public),
+    }));
+  } catch (error) {
+    console.error("[admin/teacher360] teaching zones load failed", error);
+  }
 
   const visibility = diagnoseTeacherSearchVisibility({
     profile,
-    teacher,
+    teacher: {
+      ...teacher,
+      publicTeachingZones: publicTeachingZones.map((zone) => ({
+        city: zone.city,
+        labelPublic: zone.label,
+      })),
+    },
     disciplineCount: subjects.length,
     inTeachersPublicView: Boolean(publicViewResult.data),
   });
@@ -681,6 +725,7 @@ export async function loadAdminTeacher360(
     },
     privateLocation: extractPrivateLocation(teacher),
     publicLocation: extractPublicLocation(teacher),
+    publicTeachingZones,
     teachingCapabilities: teachingCapability(teacher.teaching_mode, teacher.home_lesson_enabled),
     availability: {
       ...availability,
