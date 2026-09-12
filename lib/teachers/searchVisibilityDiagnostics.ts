@@ -65,6 +65,7 @@ export type TeacherSearchVisibilityDiagnosisInput = {
     stripe_identity_failed_reason?: string | null;
     intro_session_enabled?: boolean | null;
     intro_session_price_cents?: number | string | null;
+    publicTeachingZones?: Array<{ city?: string | null; labelPublic?: string | null }>;
   } | null;
   disciplineCount?: number;
   inTeachersPublicView?: boolean;
@@ -101,6 +102,9 @@ function isOnlineCapable(teachingMode: string | null | undefined): boolean {
 
 function hasPublicLocationSignal(input: TeacherSearchVisibilityDiagnosisInput["teacher"]): boolean {
   if (!input) return false;
+  if (Array.isArray(input.publicTeachingZones) && input.publicTeachingZones.some((zone) => hasText(zone.city) || hasText(zone.labelPublic))) {
+    return true;
+  }
   if (hasText(input.city) && hasText(input.region)) return true;
   const location = typeof input.location === "object" && input.location !== null
     ? (input.location as Record<string, unknown>)

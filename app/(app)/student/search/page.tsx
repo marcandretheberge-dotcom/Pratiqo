@@ -33,6 +33,7 @@ import {
   type StudentSavedLocation,
 } from "@/lib/studentLocation";
 import { applyRadiusFilter, buildTeacherSearchRows, filterTeacherPool, sortRows } from "../../../../lib/teacherSearchEngine";
+import { attachPublicTeachingZones, getTeacherMapCoords } from "@/lib/teacherTeachingZones";
 import { parseGooglePlace } from "../../../../lib/googleAddressParser";
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../../../../components/TeacherSearchAdvancedPanel";
 import type { TeacherSearchFormat } from "../../../../lib/teacherSearchCriteria";
@@ -311,11 +312,12 @@ export default function StudentSearchPage() {
       const mapped = data
         .filter((r) => isLaunchEligibleTeacherRow(r as TeacherRow))
         .map((r) => teacherRowToTeacher(r as TeacherRow));
+      const mappedWithZones = await attachPublicTeachingZones(supabase, mapped);
       const discMap = await fetchTeacherDisciplinesMap(
         supabase,
-        mapped.map((x) => x.id),
+        mappedWithZones.map((x) => x.id),
       );
-      await mergePlans(mergeTeachersWithDisciplines(mapped, discMap));
+      await mergePlans(mergeTeachersWithDisciplines(mappedWithZones, discMap));
       setLoadingTeachers(false);
     };
     void load();
@@ -437,14 +439,18 @@ export default function StudentSearchPage() {
       availabilityDay: adv.availabilityDay || undefined,
       availabilityPeriod: adv.availabilityPeriod || undefined,
     });
-    const base = buildTeacherSearchRows(pool, { geo });
+    const base = buildTeacherSearchRows(pool, {
+      geo,
+      locationText: { city: studentPrefs?.city ?? null, region: studentPrefs?.region ?? null },
+    });
     let filtered = applyRadiusFilter(base, geo ? radius : radius === "online" ? "online" : "all");
 
     // Apply map-bounds filter when the user has clicked "Search this area"
     if (mapBounds) {
       filtered = filtered.filter(({ teacher: tt }) => {
-        const lat = tt.location?.lat;
-        const lng = tt.location?.lng;
+        const coords = getTeacherMapCoords(tt);
+        const lat = coords?.lat;
+        const lng = coords?.lng;
         if (typeof lat !== "number" || typeof lng !== "number") return false;
         const { ne, sw } = mapBounds;
         // Handle antimeridian wrapping for longitude

@@ -24,8 +24,8 @@ import { cn } from "../lib/utils";
 import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { useRouter } from "next/navigation";
-import { haversineDistance } from "../lib/geo";
 import { formatApproxDistanceKm } from "@/lib/studentLocation";
+import { formatTeachingZoneLabel, getTeacherMapCoords, sortTeachingZones } from "@/lib/teacherTeachingZones";
 import { TeacherMap } from "./TeacherMap";
 import { getTeacherProfileDisciplineChips } from "@/lib/teacherMapper";
 import {
@@ -323,26 +323,34 @@ export function TeacherProfile({
   }, [embeddedPlan, plan]);
 
   const studioMapCoordsOk = useMemo(() => {
-    const lat = teacher.location?.lat;
-    const lng = teacher.location?.lng;
+    const coords = getTeacherMapCoords(teacher);
+    const lat = coords?.lat;
+    const lng = coords?.lng;
     return typeof lat === "number" && typeof lng === "number" && Number.isFinite(lat) && Number.isFinite(lng);
-  }, [teacher.location?.lat, teacher.location?.lng]);
+  }, [teacher]);
 
   const showEnterpriseStudioMap =
     Boolean(showGoogleStudioMap) && displayPlan === "enterprise" && studioMapCoordsOk;
 
   const computedDistanceKm = useMemo(() => {
     if (!geo) return null;
-    const lat = teacher.location?.lat;
-    const lng = teacher.location?.lng;
+    const coords = getTeacherMapCoords(teacher);
+    const lat = coords?.lat;
+    const lng = coords?.lng;
     if (
       typeof lat !== "number" ||
       typeof lng !== "number" ||
       !Number.isFinite(lat) ||
       !Number.isFinite(lng)
     ) return null;
-    return haversineDistance(geo.lat, geo.lng, lat, lng);
-  }, [geo, teacher.location?.lat, teacher.location?.lng]);
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const dLat = toRad(lat - geo.lat);
+    const dLng = toRad(lng - geo.lng);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(geo.lat)) * Math.cos(toRad(lat)) * Math.sin(dLng / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }, [geo, teacher]);
 
   const displayDistanceKm = distanceKm !== undefined ? distanceKm : computedDistanceKm;
 
@@ -487,6 +495,10 @@ export function TeacherProfile({
       modes.push({ icon: <Home size={14} className="shrink-0 text-slate-500" aria-hidden />, label: t("modeHome") });
     return modes;
   }, [teacher.teachingMode, homeConfigured, t]);
+  const publicTeachingZones = useMemo(
+    () => sortTeachingZones((teacher.teachingZones ?? []).filter((zone) => zone.isActive)),
+    [teacher.teachingZones],
+  );
   const summaryCardIds = useMemo(
     () =>
       getTeacherProfileInBriefCardIds(teacher, {
@@ -781,6 +793,39 @@ export function TeacherProfile({
                         </p>
                       </div>
                     ) : null}
+                  </div>
+                ) : null}
+
+                {publicTeachingZones.length > 0 ? (
+                  <div data-testid="teacher-profile-teaching-zones" className="space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                      {t("teachingZonesPublicTitle")}
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {publicTeachingZones.map((zone) => {
+                        const label = formatTeachingZoneLabel(zone);
+                        if (!label) return null;
+                        return (
+                          <div
+                            key={zone.id}
+                            className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700"
+                          >
+                            <p className="flex items-center gap-1.5 font-bold text-slate-900">
+                              <MapPin size={13} className="shrink-0 text-teal-700" aria-hidden />
+                              <span>{label}</span>
+                              {zone.isPrimary ? (
+                                <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-800">
+                                  {t("teachingZonesPrimary")}
+                                </span>
+                              ) : null}
+                            </p>
+                            {zone.availabilityNotePublic ? (
+                              <p className="mt-1 leading-relaxed text-slate-600">{zone.availabilityNotePublic}</p>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : null}
 

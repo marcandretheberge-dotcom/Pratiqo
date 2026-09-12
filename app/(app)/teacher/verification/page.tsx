@@ -63,6 +63,8 @@ import {
   firstIncompleteTeacherSetupSection,
   type TeacherSetupSectionId,
 } from "../../../../lib/teachers/teacherSetupProgress";
+import type { TeacherTeachingZone, TeacherTeachingZoneKind } from "@/types";
+import { TEACHING_ZONE_KINDS, formatTeachingZoneLabel, sortTeachingZones } from "@/lib/teacherTeachingZones";
 
 type TeacherVerifyRow = {
   id: string;
@@ -155,6 +157,32 @@ type DisciplineCard = {
   minSort: number;
 };
 
+type TeachingZoneDraft = {
+  labelPublic: string;
+  city: string;
+  region: string;
+  countryCode: string;
+  radiusKm: string;
+  zoneKind: TeacherTeachingZoneKind;
+  availabilityNotePublic: string;
+  supportsAtTeacherPlace: boolean;
+  supportsAtStudentPlace: boolean;
+  supportsPublicPlace: boolean;
+};
+
+const EMPTY_TEACHING_ZONE_DRAFT: TeachingZoneDraft = {
+  labelPublic: "",
+  city: "",
+  region: "",
+  countryCode: "CA",
+  radiusKm: "10",
+  zoneKind: "service_area",
+  availabilityNotePublic: "",
+  supportsAtTeacherPlace: false,
+  supportsAtStudentPlace: true,
+  supportsPublicPlace: false,
+};
+
 export default function TeacherProfileManagementPage() {
   const { user, profile, loading } = useAuth();
   const { locale, t } = useLocale();
@@ -232,6 +260,10 @@ export default function TeacherProfileManagementPage() {
   const [zoneFuzzRadiusKm, setZoneFuzzRadiusKm] = useState<number | null>(null);
   const [zoneLat, setZoneLat] = useState<number | null>(null);
   const [zoneLng, setZoneLng] = useState<number | null>(null);
+  const [teachingZones, setTeachingZones] = useState<TeacherTeachingZone[]>([]);
+  const [teachingZonesLoading, setTeachingZonesLoading] = useState(false);
+  const [teachingZoneEditorId, setTeachingZoneEditorId] = useState<string | null>(null);
+  const [teachingZoneDraft, setTeachingZoneDraft] = useState<TeachingZoneDraft>(EMPTY_TEACHING_ZONE_DRAFT);
 
   // Diploma file state
   const [diplomaFile, setDiplomaFile] = useState<File | null>(null);
@@ -247,6 +279,27 @@ export default function TeacherProfileManagementPage() {
     () => !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
   );
   const zoneAddressRef = useRef<HTMLInputElement | null>(null);
+
+  const fetchTeachingZones = useCallback(async () => {
+    setTeachingZonesLoading(true);
+    try {
+      const { data: sess } = await getSupabaseClient().auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) {
+        setTeachingZones([]);
+        return;
+      }
+      const res = await fetch("/api/teacher/teaching-zones", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = (await res.json().catch(() => ({}))) as { zones?: TeacherTeachingZone[] };
+      setTeachingZones(sortTeachingZones(Array.isArray(body.zones) ? body.zones : []));
+    } catch {
+      setTeachingZones([]);
+    } finally {
+      setTeachingZonesLoading(false);
+    }
+  }, []);
 
   // ── Data loading ────────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -297,12 +350,14 @@ export default function TeacherProfileManagementPage() {
         .order("sort_order", { ascending: true });
       setDiscRows((drows as TeacherDisciplineDbRow[]) ?? []);
       setDiscLoading(false);
+      await fetchTeachingZones();
     } else {
       setDiscRows([]);
       setDiscLoading(false);
+      setTeachingZones([]);
     }
     setTeacherRowLoading(false);
-  }, [user?.id, profile?.role, t]);
+  }, [user?.id, profile?.role, fetchTeachingZones]);
 
   useEffect(() => {
     void load();
@@ -1001,6 +1056,130 @@ export default function TeacherProfileManagementPage() {
     } finally {
       setBusy(null);
     }
+  };
+
+  const resetTeachingZoneDraft = () => {
+    setTeachingZoneEditorId(null);
+    setTeachingZoneDraft(EMPTY_TEACHING_ZONE_DRAFT);
+  };
+
+  const saveTeachingZones = async (nextZones: TeacherTeachingZone[]) => {
+    setBusy("teachingZones");
+    setMessage(null);
+    try {
+      const { data: sess } = await getSupabaseClient().auth.getSession();
+      const token = sess.session?.access_token;
+      if (!token) throw new Error(t("verificationSessionExpired"));
+      const res = await fetch("/api/teacher/teaching-zones", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          zones: nextZones.map((zone, index) => ({
+            id: zone.id,
+            labelPublic: zone.labelPublic,
+            city: zone.city,
+            region: zone.region,
+            countryCode: zone.countryCode,
+            lat: zone.lat,
+            lng: zone.lng,
+            radiusKm: zone.radiusKm,
+            zoneKind: zone.zoneKind,
+            isPrimary: zone.isPrimary,
+            isActive: zone.isActive,
+            sortOrder: index,
+            availabilityNotePublic: zone.availabilityNotePublic,
+            supportsAtTeacherPlace: zone.supportsAtTeacherPlace,
+            supportsAtStudentPlace: zone.supportsAtStudentPlace,
+            supportsPublicPlace: zone.supportsPublicPlace,
+          })),
+        }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { zones?: TeacherTeachingZone[]; error?: string };
+      if (!res.ok) throw new Error(body.error || t("anErrorOccurred"));
+      setTeachingZones(sortTeachingZones(Array.isArray(body.zones) ? body.zones : []));
+      showMsg(t("savedOk"), "ok");
+      resetTeachingZoneDraft();
+    } catch (e) {
+      showMsg(e instanceof Error ? e.message : t("anErrorOccurred"), "error");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const submitTeachingZoneDraft = async () => {
+    const labelPublic = teachingZoneDraft.labelPublic.trim();
+    const city = teachingZoneDraft.city.trim();
+    const countryCode = teachingZoneDraft.countryCode.trim().toUpperCase();
+    const radiusKm = Number(teachingZoneDraft.radiusKm || 10);
+    if (!labelPublic || !city || !/^[A-Z]{2}$/.test(countryCode) || !Number.isFinite(radiusKm)) {
+      showMsg(t("teachingZonesValidationError"), "error");
+      return;
+    }
+    const existing = teachingZones.filter((zone) => zone.id !== teachingZoneEditorId);
+    if (!teachingZoneEditorId && existing.filter((zone) => zone.isActive).length >= 3) {
+      showMsg(t("teachingZonesMaxThreeError"), "error");
+      return;
+    }
+    const isFirst = existing.length === 0;
+    const nextZone: TeacherTeachingZone = {
+      id: teachingZoneEditorId ?? `draft-${Date.now()}`,
+      teacherId: teacherRow?.id ?? "",
+      labelPublic,
+      city,
+      region: teachingZoneDraft.region.trim() || null,
+      countryCode,
+      lat: null,
+      lng: null,
+      radiusKm: Math.max(1, Math.min(100, Math.round(radiusKm))),
+      zoneKind: teachingZoneDraft.zoneKind,
+      isPrimary: isFirst,
+      isActive: true,
+      sortOrder: existing.length,
+      availabilityNotePublic: teachingZoneDraft.availabilityNotePublic.trim() || null,
+      supportsAtTeacherPlace: teachingZoneDraft.supportsAtTeacherPlace,
+      supportsAtStudentPlace: teachingZoneDraft.supportsAtStudentPlace,
+      supportsPublicPlace: teachingZoneDraft.supportsPublicPlace,
+    };
+    const next = sortTeachingZones([...existing, nextZone]).map((zone, index) => ({
+      ...zone,
+      isPrimary: zone.isPrimary || (index === 0 && !existing.some((item) => item.isPrimary)),
+      sortOrder: index,
+    }));
+    await saveTeachingZones(next);
+  };
+
+  const editTeachingZone = (zone: TeacherTeachingZone) => {
+    setTeachingZoneEditorId(zone.id);
+    setTeachingZoneDraft({
+      labelPublic: zone.labelPublic,
+      city: zone.city,
+      region: zone.region ?? "",
+      countryCode: zone.countryCode,
+      radiusKm: String(zone.radiusKm),
+      zoneKind: zone.zoneKind,
+      availabilityNotePublic: zone.availabilityNotePublic ?? "",
+      supportsAtTeacherPlace: zone.supportsAtTeacherPlace,
+      supportsAtStudentPlace: zone.supportsAtStudentPlace,
+      supportsPublicPlace: zone.supportsPublicPlace,
+    });
+  };
+
+  const deleteTeachingZone = async (zoneId: string) => {
+    const next = teachingZones.filter((zone) => zone.id !== zoneId).map((zone, index) => ({
+      ...zone,
+      isPrimary: index === 0,
+      sortOrder: index,
+    }));
+    await saveTeachingZones(next);
+  };
+
+  const makeTeachingZonePrimary = async (zoneId: string) => {
+    const next = teachingZones.map((zone, index) => ({
+      ...zone,
+      isPrimary: zone.id === zoneId,
+      sortOrder: index,
+    }));
+    await saveTeachingZones(next);
   };
 
   // ── Identity (email fallback) ────────────────────────────────────────────────
@@ -1723,6 +1902,186 @@ export default function TeacherProfileManagementPage() {
               onSubmit={() => void submitZone()}
               t={t}
             />
+            <div className="mt-5 space-y-4 rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] p-4">
+              <div>
+                <p className="text-sm font-bold text-[#2C2C2A]">{t("teachingZonesManagerTitle")}</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#6B6A65]">{t("teachingZonesManagerDesc")}</p>
+              </div>
+              {teachingZonesLoading ? (
+                <p className="text-xs text-[#6B6A65]">{t("loading")}</p>
+              ) : teachingZones.length > 0 ? (
+                <div className="grid gap-2">
+                  {teachingZones.map((zone) => (
+                    <div
+                      key={zone.id}
+                      className="rounded-2xl border border-[#E8E6DF] bg-white p-3 text-xs text-[#2C2C2A]"
+                    >
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="font-bold">
+                            {formatTeachingZoneLabel(zone)}
+                            {zone.isPrimary ? (
+                              <span className="ml-2 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] text-teal-800">
+                                {t("teachingZonesPrimary")}
+                              </span>
+                            ) : null}
+                          </p>
+                          {zone.availabilityNotePublic ? (
+                            <p className="mt-1 text-[#6B6A65]">{zone.availabilityNotePublic}</p>
+                          ) : null}
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {!zone.isPrimary ? (
+                            <button
+                              type="button"
+                              onClick={() => void makeTeachingZonePrimary(zone.id)}
+                              className="rounded-full border border-teal-200 px-3 py-1 font-semibold text-teal-800"
+                            >
+                              {t("teachingZonesMakePrimary")}
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => editTeachingZone(zone)}
+                            className="rounded-full border border-[#E8E6DF] px-3 py-1 font-semibold text-[#2C2C2A]"
+                          >
+                            {t("edit")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void deleteTeachingZone(zone.id)}
+                            className="rounded-full border border-red-200 px-3 py-1 font-semibold text-red-700"
+                          >
+                            {t("delete")}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-2xl border border-dashed border-[#DCEAE3] bg-white p-3 text-xs text-[#6B6A65]">
+                  {t("teachingZonesEmpty")}
+                </p>
+              )}
+
+              <div className="grid gap-3 border-t border-[#E8E6DF] pt-4 sm:grid-cols-2">
+                <label className="space-y-1">
+                  <span className="text-xs font-semibold text-[#2C2C2A]">{t("teachingZonesLabelPublic")}</span>
+                  <input
+                    value={teachingZoneDraft.labelPublic}
+                    onChange={(e) => setTeachingZoneDraft((draft) => ({ ...draft, labelPublic: e.target.value }))}
+                    className="h-11 w-full rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                    placeholder="Montréal centre"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-semibold text-[#2C2C2A]">{t("teachingZonesCity")}</span>
+                  <input
+                    value={teachingZoneDraft.city}
+                    onChange={(e) => setTeachingZoneDraft((draft) => ({ ...draft, city: e.target.value }))}
+                    className="h-11 w-full rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                    placeholder="Montréal"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-semibold text-[#2C2C2A]">{t("teachingZonesRegion")}</span>
+                  <input
+                    value={teachingZoneDraft.region}
+                    onChange={(e) => setTeachingZoneDraft((draft) => ({ ...draft, region: e.target.value }))}
+                    className="h-11 w-full rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                    placeholder="QC"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-semibold text-[#2C2C2A]">{t("teachingZonesRadius")}</span>
+                  <input
+                    inputMode="numeric"
+                    value={teachingZoneDraft.radiusKm}
+                    onChange={(e) => setTeachingZoneDraft((draft) => ({ ...draft, radiusKm: e.target.value }))}
+                    className="h-11 w-full rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-semibold text-[#2C2C2A]">{t("teachingZonesKind")}</span>
+                  <select
+                    value={teachingZoneDraft.zoneKind}
+                    onChange={(e) =>
+                      setTeachingZoneDraft((draft) => ({
+                        ...draft,
+                        zoneKind: e.target.value as TeacherTeachingZoneKind,
+                      }))
+                    }
+                    className="h-11 w-full rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                  >
+                    {TEACHING_ZONE_KINDS.map((kind) => (
+                      <option key={kind} value={kind}>
+                        {t(`teachingZonesKind_${kind}` as TranslationKey)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs font-semibold text-[#2C2C2A]">{t("teachingZonesCountryCode")}</span>
+                  <input
+                    value={teachingZoneDraft.countryCode}
+                    onChange={(e) =>
+                      setTeachingZoneDraft((draft) => ({ ...draft, countryCode: e.target.value.toUpperCase() }))
+                    }
+                    className="h-11 w-full rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm uppercase outline-none focus:border-teal-500"
+                    maxLength={2}
+                  />
+                </label>
+                <label className="space-y-1 sm:col-span-2">
+                  <span className="text-xs font-semibold text-[#2C2C2A]">{t("teachingZonesAvailabilityNote")}</span>
+                  <input
+                    value={teachingZoneDraft.availabilityNotePublic}
+                    onChange={(e) =>
+                      setTeachingZoneDraft((draft) => ({ ...draft, availabilityNotePublic: e.target.value }))
+                    }
+                    className="h-11 w-full rounded-2xl border border-[#DCEAE3] bg-white px-3 text-sm outline-none focus:border-teal-500"
+                    placeholder={t("teachingZonesAvailabilityNotePlaceholder")}
+                  />
+                </label>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs font-semibold text-[#2C2C2A]">
+                {[
+                  ["supportsAtTeacherPlace", "teachingZonesSupportsAtTeacherPlace"],
+                  ["supportsAtStudentPlace", "teachingZonesSupportsAtStudentPlace"],
+                  ["supportsPublicPlace", "teachingZonesSupportsPublicPlace"],
+                ].map(([field, label]) => (
+                  <label key={field} className="inline-flex items-center gap-2 rounded-full border border-[#E8E6DF] bg-white px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(teachingZoneDraft[field as keyof TeachingZoneDraft])}
+                      onChange={(e) =>
+                        setTeachingZoneDraft((draft) => ({ ...draft, [field]: e.target.checked }))
+                      }
+                    />
+                    {t(label as TranslationKey)}
+                  </label>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={busy === "teachingZones"}
+                  onClick={() => void submitTeachingZoneDraft()}
+                  className="inline-flex min-h-11 items-center justify-center rounded-full bg-teal-700 px-4 text-sm font-bold text-white disabled:opacity-60"
+                >
+                  {busy === "teachingZones" ? t("savingDots") : t("teachingZonesSave")}
+                </button>
+                {teachingZoneEditorId ? (
+                  <button
+                    type="button"
+                    onClick={resetTeachingZoneDraft}
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#E8E6DF] px-4 text-sm font-semibold text-[#2C2C2A]"
+                  >
+                    {t("cancel")}
+                  </button>
+                ) : null}
+              </div>
+            </div>
           </div>
         </LaunchCard>
       </section>

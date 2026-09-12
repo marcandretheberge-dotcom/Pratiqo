@@ -8,6 +8,7 @@ import {
 } from "@/lib/supabase/queries";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "@/lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
+import { attachPublicTeachingZones } from "@/lib/teacherTeachingZones";
 import TeacherProfileClient from "@/app/teacher/profile/[id]/TeacherProfileClient";
 import { TeacherProfileSeoLinks } from "@/components/seo/TeacherProfileSeoLinks";
 import { getLocale } from "@/lib/i18n/server";
@@ -102,7 +103,8 @@ const getTeacherPublicProfileBundle = cacheSeoData(async (slug: string) => {
   let teacher = teacherRowToTeacher(withPhoto);
   try {
     const discMap = await fetchTeacherDisciplinesMap(getSupabaseAdmin(), [teacher.id]);
-    teacher = mergeTeachersWithDisciplines([teacher], discMap)[0] ?? teacher;
+    const merged = mergeTeachersWithDisciplines([teacher], discMap);
+    teacher = (await attachPublicTeachingZones(getSupabaseAdmin(), merged))[0] ?? merged[0] ?? teacher;
   } catch {
     // keep base teacher
   }

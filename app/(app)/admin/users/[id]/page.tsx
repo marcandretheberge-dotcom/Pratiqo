@@ -394,6 +394,26 @@ function Teacher360Panel({ data }: { data: AdminTeacher360 }) {
               <AdminField label="En ligne" value={yesNo(data.teachingCapabilities.onlineCapable)} />
               <AdminField label="Présentiel/domicile" value={yesNo(data.teachingCapabilities.inPersonCapable)} />
             </dl>
+            {data.publicTeachingZones.length > 0 ? (
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs font-bold uppercase tracking-widest text-slate-600">Zones publiques</p>
+                <ul className="mt-2 space-y-2 text-xs text-slate-700">
+                  {data.publicTeachingZones.map((zone) => (
+                    <li key={`${zone.label}-${zone.city ?? ""}`} className="rounded-xl bg-white p-2">
+                      <span className="font-bold text-slate-900">{zone.label}</span>
+                      {zone.isPrimary ? <span className="ml-2 text-teal-700">Principal</span> : null}
+                      <span className="block">
+                        {[zone.city, zone.region, zone.countryCode].filter(Boolean).join(", ") || "—"}
+                        {zone.radiusKm !== null ? ` · ${zone.radiusKm} km` : ""}
+                      </span>
+                      {zone.availabilityNotePublic ? (
+                        <span className="block text-slate-500">{zone.availabilityNotePublic}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
         </Admin360Card>
 
