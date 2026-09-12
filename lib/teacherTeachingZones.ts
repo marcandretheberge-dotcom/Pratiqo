@@ -90,7 +90,12 @@ export function attachTeachingZonesToTeachers(
   if (teachers.length === 0 || rows.length === 0) return teachers;
   const byTeacher = new Map<string, TeacherTeachingZone[]>();
   for (const row of rows) {
-    const zone = mapTeacherTeachingZoneRow(row);
+    let zone: TeacherTeachingZone;
+    try {
+      zone = mapTeacherTeachingZoneRow(row);
+    } catch {
+      continue;
+    }
     if (!zone.teacherId || !zone.labelPublic || !zone.city) continue;
     const current = byTeacher.get(zone.teacherId) ?? [];
     current.push(zone);
@@ -104,6 +109,15 @@ export function attachTeachingZonesToTeachers(
 }
 
 type SupabaseLike = Pick<SupabaseClient, "from">;
+
+function warnTeacherZonesUnavailable(context: string, error: unknown) {
+  const candidate = error as { code?: unknown; message?: unknown } | null | undefined;
+  console.warn("[teacher-zones] public zones unavailable; continuing with legacy teacher locations", {
+    context,
+    code: typeof candidate?.code === "string" ? candidate.code : undefined,
+    message: String(candidate?.message ?? error ?? "").slice(0, 180),
+  });
+}
 
 export async function fetchTeacherTeachingZonesForTeachers(
   supabase: SupabaseLike,
@@ -121,14 +135,8 @@ export async function fetchTeacherTeachingZonesForTeachers(
     .order("sort_order", { ascending: true });
 
   if (error) {
-    const message = String(error.message ?? "");
-    if (
-      process.env.NODE_ENV !== "production" &&
-      /teacher_teaching_zones_public|relation .* does not exist|schema cache/i.test(message)
-    ) {
-      return [];
-    }
-    throw error;
+    warnTeacherZonesUnavailable("fetch", error);
+    return [];
   }
   return (data ?? []) as TeacherTeachingZonePublicRow[];
 }
@@ -138,11 +146,16 @@ export async function attachPublicTeachingZones(
   teachers: Teacher[],
 ): Promise<Teacher[]> {
   if (teachers.length === 0) return teachers;
-  const rows = await fetchTeacherTeachingZonesForTeachers(
-    supabase,
-    teachers.map((teacher) => teacher.id),
-  );
-  return attachTeachingZonesToTeachers(teachers, rows);
+  try {
+    const rows = await fetchTeacherTeachingZonesForTeachers(
+      supabase,
+      teachers.map((teacher) => teacher.id),
+    );
+    return attachTeachingZonesToTeachers(teachers, rows);
+  } catch (error) {
+    warnTeacherZonesUnavailable("attach", error);
+    return teachers;
+  }
 }
 
 export function getPrimaryTeachingZone(teacher: Teacher): TeacherTeachingZone | null {
