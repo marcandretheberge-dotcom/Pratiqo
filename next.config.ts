@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { localDiscoveryRedirects } from "./lib/seo/localDiscoveryRedirects";
 
 /** Enforcing CSP — Phase A hardening; unsafe-inline kept where required; no eval in script/default. */
 const cspValue = [
@@ -72,6 +73,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      ...localDiscoveryRedirects(),
       // ── Canonical host: apex → www ────────────────────────────────────
       // Pratiqo's canonical production origin is `https://www.pratiqo.ca`
       // (see `lib/seo/site.ts` — used by metadataBase, every page's
@@ -139,11 +141,6 @@ const nextConfig: NextConfig = {
       // with economic advantages: reduced commission, ristourne/rewards).
       // /legal/teacher-pro is kept as a 308 redirect so any external/inbound
       // links keep working while the canonical route is /legal/membre-pro.
-      {
-        source: "/tuteurs-prive/:citySlug",
-        destination: "/tuteurs/:citySlug",
-        permanent: true,
-      },
       {
         source: "/legal/teacher-pro",
         destination: "/legal/membre-pro",

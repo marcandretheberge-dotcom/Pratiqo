@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MapPin } from "lucide-react";
 import {
   LOCAL_CITY_HUB_PATH_PREFIX,
+  discoveryCardsToMapTeachers,
   type LocalTeacherDiscoveryPageBundle,
 } from "@/lib/seo/localTeacherDiscoveryPages";
 import { LocalTeacherDiscoveryCards } from "@/components/seo/LocalTeacherDiscoveryCards";
@@ -156,7 +157,7 @@ export function LocalTeacherDiscoveryView({ bundle, locale }: Props) {
               <p className="mb-2 text-xs text-[#6B6760]">
                 Adresse exacte confidentielle; affichage approximatif sur la carte uniquement.
               </p>
-              <LocalTeacherDiscoveryMap bundle={bundle} />
+              <LocalTeacherDiscoveryMap cityName={bundle.city.name} mapCenter={bundle.mapCenter} mapTeachers={discoveryCardsToMapTeachers(bundle.teachers)} />
             </div>
           </section>
         ) : null}
@@ -167,9 +168,7 @@ export function LocalTeacherDiscoveryView({ bundle, locale }: Props) {
               <p className="text-[11px] font-bold uppercase tracking-widest text-[#6B6760]">{countLabel}</p>
               {bundle.isNearby && bundle.teachers.length > 0 ? (
                 <span className="rounded-full bg-[#FFF7E6] border border-[#F6C96E] px-2 py-0.5 text-[10px] font-semibold text-[#92600A]">
-                  {bundle.teachers.some((t) => t.isOnlineFallback)
-                    ? `professeurs en ligne ou proches de ${bundle.city.name}`
-                    : `proches de ${bundle.city.name}`}
+                  Autres options : en ligne ou dans une autre ville
                 </span>
               ) : null}
             </div>

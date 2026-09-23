@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 
-import sitemap from "../../app/sitemap";
+import { emptySupplySitemap as sitemap } from "./emptySupplySitemap";
 import { SITE_URL } from "../../lib/seo/site";
 import {
   buildCityDisciplineMetadata,
@@ -95,7 +95,7 @@ test("public SEO routes remain indexable by route policy", () => {
 test("robots policy includes sitemap and blocks private routes without blocking render assets", () => {
   assert.equal(getRobotsSitemapUrl(), "https://www.pratiqo.ca/sitemap.xml");
   const rules = getRobotsTxtRules();
-  const disallow = new Set(rules.flatMap((rule) => rule.disallow));
+  const disallow = new Set<string>(rules.flatMap((rule) => rule.disallow));
   for (const route of ["/admin", "/api/", "/teacher/settings", "/student/choose-companion", "/checkout/"]) {
     assert.ok(disallow.has(route), `${route} should be in robots disallow policy`);
   }

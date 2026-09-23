@@ -193,8 +193,9 @@ async function fetchLocalDiscoveryEntries(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly" as const,
       priority: row.path.startsWith("/tuteurs/") ? 0.8 : 0.75,
     }));
-  } catch {
-    return [];
+  } catch (error) {
+    console.error("[seo:sitemap] local discovery data unavailable");
+    throw error;
   }
 }
 

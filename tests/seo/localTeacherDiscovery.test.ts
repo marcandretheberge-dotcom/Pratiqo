@@ -6,14 +6,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import sitemap from "../../app/sitemap";
-import { SITE_URL } from "../../lib/seo/site";
+import { emptySupplySitemap as sitemap } from "./emptySupplySitemap";
 import {
   buildCityHubPath,
   buildSubjectCityH1,
   buildSubjectCityPath,
   buildSubjectCityTitle,
-  fetchIndexableDiscoveryTeachers,
   rankTeachersForCity,
   teacherMatchesDiscipline,
   teacherIsOnlineCapable,
@@ -88,10 +86,10 @@ test("canonical city hub route is /tuteurs/[citySlug]", () => {
   assert.match(cityHubPageSrc, /resolveCityHubDiscoveryPage/);
   assert.match(cityHubPageSrc, /fetchIndexableDiscoveryTeachers|localTeacherDiscoveryPages/);
   assert.match(cityHubPageSrc, /notFound\(\)/);
-  assert.match(cityHubPageSrc, /!bundle\.indexable/);
+  assert.match(cityHubPageSrc, /index: bundle\.indexable/);
 });
 
-test("subject+city route uses central discovery helper and 404s without supply", () => {
+test("subject+city route uses central discovery helper and noindexes without supply", () => {
   assert.equal(buildSubjectCityPath("espagnol", "saint-georges"), "/cours/espagnol/saint-georges");
   assert.match(subjectCityPageSrc, /resolveSubjectCityDiscoveryPage/);
   assert.match(subjectCityPageSrc, /LocalTeacherDiscoveryView/);
@@ -99,10 +97,10 @@ test("subject+city route uses central discovery helper and 404s without supply",
 });
 
 test("legacy /tuteurs-prive redirects to /tuteurs", () => {
-  assert.match(legacyRedirectSrc, /redirect\(/);
+  assert.match(legacyRedirectSrc, /permanentRedirect\(/);
   assert.match(legacyRedirectSrc, /buildCityHubPath/);
-  assert.match(nextConfigSrc, /tuteurs-prive\/:citySlug/);
-  assert.match(nextConfigSrc, /\/tuteurs\/:citySlug/);
+  assert.match(nextConfigSrc, /localDiscoveryRedirects/);
+  assert.match(read("lib/seo/localDiscoveryRedirects.ts"), /\/tuteurs\/:citySlug/);
 });
 
 test("Spanish Saint-Georges copy matches SEO brief", () => {

@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { SITE_URL } from "../../lib/seo/site";
-import sitemap from "../../app/sitemap";
+import { emptySupplySitemap as sitemap } from "./emptySupplySitemap";
 import {
   isGroupSessionsCheckoutEnabled,
   isGroupSessionsMarketplaceIndexable,

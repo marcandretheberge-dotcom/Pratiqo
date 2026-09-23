@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import type { LocalTeacherDiscoveryPageBundle } from "@/lib/seo/localTeacherDiscoveryPages";
-import { discoveryCardsToMapTeachers } from "@/lib/seo/localTeacherDiscoveryPages";
+import type { LocalTeacherDiscoveryPageBundle, discoveryCardsToMapTeachers } from "@/lib/seo/localTeacherDiscoveryPages";
 import type { Teacher } from "@/types";
 
 const SearchMapView = dynamic(
@@ -20,21 +19,22 @@ const SearchMapView = dynamic(
 );
 
 type Props = {
-  bundle: LocalTeacherDiscoveryPageBundle;
+  cityName: string;
+  mapCenter: LocalTeacherDiscoveryPageBundle["mapCenter"];
+  mapTeachers: ReturnType<typeof discoveryCardsToMapTeachers>;
 };
 
-export function LocalTeacherDiscoveryMap({ bundle }: Props) {
+export function LocalTeacherDiscoveryMap({ cityName, mapCenter, mapTeachers }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState<Teacher | null>(null);
 
-  const mapTeachers = discoveryCardsToMapTeachers(bundle.teachers);
   if (mapTeachers.length === 0) {
     return (
       <div
         className="rounded-2xl overflow-hidden border border-[#E8E6DF] shadow-sm flex items-center justify-center bg-[#F1EFE8] text-sm text-[#6B6760]"
         style={{ height: 280 }}
       >
-        Carte centrée sur {bundle.city.name} — localisation approximative non disponible pour les profils listés.
+        Carte centrée sur {cityName} — localisation approximative non disponible pour les profils listés.
       </div>
     );
   }
@@ -64,12 +64,12 @@ export function LocalTeacherDiscoveryMap({ bundle }: Props) {
     <div
       className="rounded-2xl overflow-hidden border border-[#E8E6DF] shadow-sm"
       style={{ height: 420 }}
-      aria-label={`Carte des professeurs à ${bundle.city.name}`}
+      aria-label={`Carte des professeurs à ${cityName}`}
     >
       <SearchMapView
         teachers={teachersForMap}
-        userLat={bundle.mapCenter.lat}
-        userLng={bundle.mapCenter.lng}
+        userLat={mapCenter.lat}
+        userLng={mapCenter.lng}
         selectedTeacher={selected}
         onTeacherSelect={setSelected}
         onViewProfile={(teacher) => {
@@ -78,7 +78,7 @@ export function LocalTeacherDiscoveryMap({ bundle }: Props) {
         }}
         onCloseSelected={() => setSelected(null)}
         mapHeight="420px"
-        initialZoom={bundle.mapCenter.zoom}
+        initialZoom={mapCenter.zoom}
       />
     </div>
   );
