@@ -72,32 +72,38 @@ test("precise booking flag ON uses per-teacher schedule_mode", () => {
 });
 
 test("activation refuses empty / invalid / overlapping intervals", () => {
+  const activationError = (input: Parameters<typeof evaluatePreciseScheduleActivation>[0]) => {
+    const result = evaluatePreciseScheduleActivation(input);
+    assert.equal(result.ok, false);
+    assert.ok("error" in result);
+    return result.error;
+  };
   assert.equal(
-    evaluatePreciseScheduleActivation({ intervals: [], preciseBookingEnabled: true }).error,
+    activationError({ intervals: [], preciseBookingEnabled: true }),
     "no_precise_intervals",
   );
   assert.equal(
-    evaluatePreciseScheduleActivation({
+    activationError({
       intervals: [{ dayOfWeek: 1, startTime: "11:00", endTime: "10:00" }],
       preciseBookingEnabled: true,
-    }).error,
+    }),
     "invalid_precise_intervals",
   );
   assert.equal(
-    evaluatePreciseScheduleActivation({
+    activationError({
       intervals: [
         { dayOfWeek: 1, startTime: "09:00", endTime: "11:00" },
         { dayOfWeek: 1, startTime: "10:00", endTime: "12:00" },
       ],
       preciseBookingEnabled: true,
-    }).error,
+    }),
     "overlapping_precise_intervals",
   );
   assert.equal(
-    evaluatePreciseScheduleActivation({
+    activationError({
       preciseBookingEnabled: false,
       intervals: [{ dayOfWeek: 1, startTime: "09:00", endTime: "11:30" }],
-    }).error,
+    }),
     "precise_schedule_disabled",
   );
 });

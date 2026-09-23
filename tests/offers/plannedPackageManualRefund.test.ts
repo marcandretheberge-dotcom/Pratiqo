@@ -34,7 +34,7 @@ function resetFlags() {
   delete process.env.ENABLE_PLANNED_PACKAGE_REFUND_ADMIN_REVIEW;
   delete process.env.ENABLE_PLANNED_PACKAGE_MANUAL_REFUNDS;
   delete process.env.PACKAGE_LEGAL_REVIEW_COMPLETED;
-  delete process.env.NODE_ENV;
+  Reflect.deleteProperty(process.env, "NODE_ENV");
   delete process.env.VERCEL_ENV;
 }
 
@@ -67,7 +67,7 @@ test("manual refunds require full refund quote chain", () => {
 test("production legal review missing blocks execution environment", () => {
   resetFlags();
   enableManualRefundChain();
-  process.env.NODE_ENV = "production";
+  Reflect.set(process.env, "NODE_ENV", "production");
   assert.equal(canExecutePlannedPackageRefundInCurrentEnvironment(), false);
   process.env.PACKAGE_LEGAL_REVIEW_COMPLETED = "true";
   assert.equal(canExecutePlannedPackageRefundInCurrentEnvironment(), true);

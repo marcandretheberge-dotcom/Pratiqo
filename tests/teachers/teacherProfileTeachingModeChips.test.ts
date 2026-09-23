@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import ts from "typescript";
 import {
   PUBLIC_TEACHER_PROFILE_DISCIPLINE_CHIP_CLASS,
   PUBLIC_TEACHER_PROFILE_TEACHING_MODE_CHIP_CLASS,
@@ -25,10 +26,30 @@ function test(name: string, fn: TestFn) {
 const PROFILE = read("components/TeacherProfile.tsx");
 const BOOKING = read("components/BookingModal.tsx");
 const PKG = JSON.parse(read("package.json")) as { scripts?: Record<string, string> };
-const OPTIONS = PROFILE.slice(
-  PROFILE.indexOf("teacher-profile-course-options"),
-  PROFILE.indexOf("Enterprise studio map"),
-);
+function courseOptions(source: string): string {
+  const file = ts.createSourceFile("profile.tsx", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const matches: ts.JsxElement[] = [];
+  function visit(node: ts.Node) {
+    if (ts.isJsxElement(node) && node.openingElement.attributes.properties.some((attribute) =>
+      ts.isJsxAttribute(attribute) && attribute.name.getText(file) === "data-testid" &&
+      attribute.initializer && ts.isStringLiteral(attribute.initializer) &&
+      attribute.initializer.text === "teacher-profile-course-options",
+    )) matches.push(node);
+    ts.forEachChild(node, visit);
+  }
+  visit(file);
+  assert.equal(matches.length, 1, "exactly one teaching-mode container must exist");
+  return matches[0].getText(file);
+}
+const OPTIONS = courseOptions(PROFILE);
+
+test("selector excludes sibling zones but catches forbidden content inside options", () => {
+  const source = '<><div data-testid="teacher-profile-course-options"><span>Modes</span></div><div className="bg-teal-50">Zones</div></>';
+  assert.doesNotMatch(courseOptions(source), /bg-teal-/);
+  assert.match(courseOptions(source.replace("<span>", '<span className="bg-teal-50">')), /bg-teal-/);
+  assert.match(courseOptions(source.replace("<span>Modes</span>", "<button>Modes</button>")), /<button/);
+  assert.throws(() => courseOptions("<div />"), /exactly one/);
+});
 
 test("profile still renders teaching-mode chips with existing labels", () => {
   assert.match(PROFILE, /teacher-profile-course-options/);

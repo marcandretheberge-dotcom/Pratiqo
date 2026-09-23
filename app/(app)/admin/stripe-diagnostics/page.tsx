@@ -285,8 +285,8 @@ export default function AdminStripeDiagnosticsPage() {
                 </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
                   Vue de diagnostic des champs Stripe Connect et Stripe Identity deja synchronises
-                  en base. Cette page ne cree aucun compte, aucun lien d'onboarding et n'appelle pas
-                  l'API Stripe.
+                  en base. Cette page ne cree aucun compte, aucun lien d&apos;onboarding et n&apos;appelle pas
+                  l&apos;API Stripe.
                 </p>
               </div>
             </div>

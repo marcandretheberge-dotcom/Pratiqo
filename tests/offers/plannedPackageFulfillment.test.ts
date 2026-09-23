@@ -149,10 +149,10 @@ test("simulation gate defaults off in production-like env", () => {
   process.env.ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS = "true";
   process.env.ENABLE_PLANNED_PACKAGE_FULFILLMENT_ENGINE = "true";
   const prev = process.env.NODE_ENV;
-  process.env.NODE_ENV = "production";
+  Reflect.set(process.env, "NODE_ENV", "production");
   assert.equal(canSimulatePlannedPackagePaymentConfirmed(), false);
   process.env.ENABLE_PLANNED_PACKAGE_PAYMENT_SIMULATION = "true";
   assert.equal(canSimulatePlannedPackagePaymentConfirmed(), true);
-  if (prev === undefined) delete process.env.NODE_ENV;
-  else process.env.NODE_ENV = prev;
+  if (prev === undefined) Reflect.deleteProperty(process.env, "NODE_ENV");
+  else Reflect.set(process.env, "NODE_ENV", prev);
 });

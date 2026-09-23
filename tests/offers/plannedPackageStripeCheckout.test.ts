@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import test from "node:test";
+import test, { afterEach, beforeEach } from "node:test";
 import {
   canCreatePlannedPackageCheckoutInCurrentEnvironment,
   canUsePlannedPackageStripeCheckout,
@@ -18,6 +18,12 @@ import {
 import { getPackageLaunchReadiness } from "@/lib/offers/packageLaunchReadiness";
 
 const root = process.cwd();
+let originalNodeEnv: string | undefined;
+beforeEach(() => { originalNodeEnv = process.env.NODE_ENV; });
+afterEach(() => {
+  if (originalNodeEnv === undefined) Reflect.deleteProperty(process.env, "NODE_ENV");
+  else Reflect.set(process.env, "NODE_ENV", originalNodeEnv);
+});
 function read(rel: string): string {
   return readFileSync(path.join(root, rel), "utf8");
 }
@@ -37,7 +43,7 @@ function resetFlags() {
   delete process.env.ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE;
   delete process.env.PACKAGE_LEGAL_REVIEW_COMPLETED;
   delete process.env.STRIPE_SECRET_KEY;
-  delete process.env.NODE_ENV;
+  Reflect.deleteProperty(process.env, "NODE_ENV");
   delete process.env.VERCEL_ENV;
 }
 
@@ -68,7 +74,7 @@ test("stripe checkout requires full dependency chain", () => {
 test("production checkout blocked without legal review", () => {
   resetFlags();
   enableFullChain();
-  process.env.NODE_ENV = "production";
+  Reflect.set(process.env, "NODE_ENV", "production");
   process.env.STRIPE_SECRET_KEY = "sk_live_x";
   assert.equal(canCreatePlannedPackageCheckoutInCurrentEnvironment(), false);
   assert.ok(getPlannedPackageCheckoutEnvironmentBlockers().includes("package_legal_review_required"));
@@ -79,7 +85,7 @@ test("production checkout blocked without legal review", () => {
 test("non-production test mode requires explicit flag and test key", () => {
   resetFlags();
   enableFullChain();
-  process.env.NODE_ENV = "development";
+  Reflect.set(process.env, "NODE_ENV", "development");
   process.env.STRIPE_SECRET_KEY = "sk_test_x";
   assert.equal(canCreatePlannedPackageCheckoutInCurrentEnvironment(), false);
   process.env.ENABLE_PLANNED_PACKAGE_CHECKOUT_TEST_MODE = "true";

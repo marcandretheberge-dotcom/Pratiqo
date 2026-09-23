@@ -20,6 +20,7 @@ const baseTeacher: Teacher = {
   imageUrl: "",
   rating: 0,
   reviews: 0,
+  distance: 0,
   pricePerLesson: 45,
   currency: "CAD",
   availability: ["Lun soir"],
@@ -35,10 +36,10 @@ const baseTeacher: Teacher = {
   introSessionEnabled: false,
   introSessionPriceCents: null,
   introSessionDurationMinutes: 45,
-  introSessionDiscountPercent: null,
+  introSessionDiscountPercent: undefined,
   homeLessonEnabled: false,
-  homeLessonRadiusKm: null,
-  homeLessonPrice: null,
+  homeLessonRadiusKm: undefined,
+  homeLessonPrice: undefined,
 };
 
 const zones: TeacherTeachingZone[] = [

@@ -265,7 +265,7 @@ test("japanese_standard accent profile is registered with safe, non-overpromisin
 });
 
 test("accent profile registry does not silently drop earlier profiles", () => {
-  const ids = YO_AUDIO_ACCENT_PROFILES.map((p) => p.id);
+  const ids: readonly string[] = YO_AUDIO_ACCENT_PROFILES.map((p) => p.id);
   for (const required of [
     "latin_american_neutral",
     "dominican_republic",

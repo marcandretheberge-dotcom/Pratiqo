@@ -34,7 +34,7 @@ function resetFlags() {
   delete process.env.ENABLE_PLANNED_PACKAGE_PAYOUT_ADMIN_VIEW;
   delete process.env.ENABLE_PLANNED_PACKAGE_MANUAL_TRANSFERS;
   delete process.env.PACKAGE_LEGAL_REVIEW_COMPLETED;
-  delete process.env.NODE_ENV;
+  Reflect.deleteProperty(process.env, "NODE_ENV");
   delete process.env.VERCEL_ENV;
 }
 
@@ -67,7 +67,7 @@ test("manual transfers require full payout eligibility chain", () => {
 test("production legal review missing blocks execution environment", () => {
   resetFlags();
   enableManualTransferChain();
-  process.env.NODE_ENV = "production";
+  Reflect.set(process.env, "NODE_ENV", "production");
   assert.equal(canExecutePlannedPackageTransferInCurrentEnvironment(), false);
   process.env.PACKAGE_LEGAL_REVIEW_COMPLETED = "true";
   assert.equal(canExecutePlannedPackageTransferInCurrentEnvironment(), true);
@@ -125,7 +125,7 @@ test("manual transfer flag OFF blocks execute helper", async () => {
 });
 
 test("reconciliation marks eligible_transfer_not_executed when manual transfers ON", () => {
-  const r = reconcilePlannedPackageOrder({
+  const input: Parameters<typeof reconcilePlannedPackageOrder>[0] = {
     orderId: "o1",
     status: "fulfilled",
     sessionCount: 1,
@@ -162,7 +162,7 @@ test("reconciliation marks eligible_transfer_not_executed when manual transfers 
           teacherNetCents: 4000,
           transferStatus: null,
           transferredCents: 0,
-          latestTransferExecutionStatus: null,
+          stripeTransferId: null,
         },
       ],
     },
@@ -176,8 +176,19 @@ test("reconciliation marks eligible_transfer_not_executed when manual transfers 
       refundApproved: false,
       entries: [],
     },
-  });
+  };
+  const r = reconcilePlannedPackageOrder(input);
   assert.ok(r.attentionReasons.includes("eligible_transfer_not_executed"));
+  for (const evidence of [
+    { refundStatus: "partial", refundedCents: 1000 },
+    { latestQuoteStatus: "approved_for_manual_refund" },
+    { latestExecutionStatus: "succeeded", refundStatus: "refunded", refundedCents: 5000 },
+  ]) {
+    const blocked = reconcilePlannedPackageOrder({ ...input, ...evidence });
+    assert.equal(blocked.needsAttention, true);
+    assert.ok(blocked.attentionReasons.includes("eligible_session_blocked_by_refund"));
+    assert.ok(!blocked.attentionReasons.includes("eligible_transfer_not_executed"));
+  }
 });
 
 test("reconciliation marks transfer_execution_failed", () => {
@@ -218,7 +229,7 @@ test("reconciliation marks transfer_execution_failed", () => {
           teacherNetCents: 4000,
           transferStatus: "failed",
           transferredCents: 0,
-          latestTransferExecutionStatus: "failed",
+          stripeTransferId: null,
         },
       ],
     },
@@ -280,7 +291,7 @@ test("execute helper calls Stripe with exact teacher_net_cents via mock", async 
   resetFlags();
   enableManualTransferChain();
   process.env.PACKAGE_LEGAL_REVIEW_COMPLETED = "true";
-  delete process.env.NODE_ENV;
+  Reflect.deleteProperty(process.env, "NODE_ENV");
 
   const entryId = "entry-1";
   const orderId = "order-1";

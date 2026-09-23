@@ -20,6 +20,9 @@ import {
 import { applyDateExceptionToBooking } from "../../lib/bookings/dateExceptionGuard";
 
 const ROOT = process.cwd();
+function chainableResult<T>(result: T) {
+  return Object.assign(Promise.resolve(result), { eq() { return this; } });
+}
 function read(rel: string): string {
   return readFileSync(join(ROOT, rel), "utf8").replace(/\r\n/g, "\n");
 }
@@ -153,7 +156,7 @@ test("booking guard blocks full-day and applies custom hours", async () => {
         eq: () => ({
           eq: () => ({
             eq: () =>
-              Promise.resolve({
+              chainableResult({
                 data: [
                   {
                     exception_date: "2099-09-07",
@@ -186,7 +189,7 @@ test("booking guard blocks full-day and applies custom hours", async () => {
         eq: () => ({
           eq: () => ({
             eq: () =>
-              Promise.resolve({
+              chainableResult({
                 data: [
                   {
                     exception_date: "2099-09-07",
@@ -332,7 +335,7 @@ test("booking guard ignores custom hours for legacy schedule_mode", async () => 
         eq: () => ({
           eq: () => ({
             eq: () =>
-              Promise.resolve({
+              chainableResult({
                 data: [
                   {
                     exception_date: "2099-09-07",
@@ -478,7 +481,7 @@ test("available_from_date wins over exception on create path", async () => {
       timeSlot: "10h00",
       studentLevel: null,
       teachingMode: "online",
-      lessonType: "standard",
+      lessonType: "regular",
       price: 50,
       durationMinutes: 60,
       studentAddress: null,

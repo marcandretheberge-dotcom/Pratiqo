@@ -255,7 +255,7 @@ async function run() {
   }
   for (const k of ENV_KEYS) {
     if (prev[k] === undefined) delete process.env[k];
-    else process.env[k] = prev[k];
+    else Reflect.set(process.env, k, prev[k]);
   }
   if (failed > 0) {
     console.error(`\n${failed} failed`);

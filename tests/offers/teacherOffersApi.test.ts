@@ -556,6 +556,7 @@ test("API allows incomplete draft create and update", () => {
 
 test("API rejects incomplete draft→published update with offer_not_publishable", () => {
   const current = dto({
+    id: "incomplete-draft",
     status: "draft",
     disciplineId: null,
     durationMinutes: null,

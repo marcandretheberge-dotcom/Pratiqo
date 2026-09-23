@@ -529,10 +529,10 @@ test("admin loader can search by full Stripe ID without exposing it", async () =
 });
 
 test("admin command center exposes diagnostics module", () => {
-  const module = ADMIN_COMMAND_CENTER_MODULES.find((candidate) => candidate.id === "stripe_diagnostics");
-  assert.ok(module);
-  assert.equal(module.href, "/admin/stripe-diagnostics");
-  assert.equal(module.status, "ready");
+  const diagnosticsModule = ADMIN_COMMAND_CENTER_MODULES.find((candidate) => candidate.id === "stripe_diagnostics");
+  assert.ok(diagnosticsModule);
+  assert.equal(diagnosticsModule.href, "/admin/stripe-diagnostics");
+  assert.equal(diagnosticsModule.status, "ready");
 });
 
 test("restricted systems are not imported or modified by diagnostics surfaces", () => {

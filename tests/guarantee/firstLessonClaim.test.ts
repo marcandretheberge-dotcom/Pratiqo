@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -92,8 +93,66 @@ class FakeAdmin {
   profileStampUpdates: Array<{ id: string; first_lesson_guarantee_used_at: string }> = [];
   bookingPaymentMutations: Array<Record<string, unknown>> = [];
 
+  readonly requests: URL[] = [];
+
+  private readonly transport: typeof fetch = async (input, init) => {
+    const request = new Request(input, init);
+    const url = new URL(request.url);
+    assert.equal(url.origin, "https://guarantee.test");
+    const table = url.pathname.replace("/rest/v1/", "");
+    assert.ok(["profiles", "bookings", "support_cases"].includes(table), table);
+    this.requests.push(url);
+    const query = new FakeQuery(this, table);
+    for (const [key, value] of url.searchParams) {
+      if (key === "select") {
+        const projections: Record<string, string[]> = {
+          profiles: ["first_lesson_guarantee_used_at"],
+          bookings: ["id,student_id,status,completed_at,completion_outcome", "id,completed_at"],
+          support_cases: ["id"],
+        };
+        assert.ok(projections[table].includes(value), `unexpected select: ${value}`);
+        query.select();
+      } else if (key === "or") {
+        assert.equal(value, "(status.eq.completed,completed_at.not.is.null)");
+        query.or(value.slice(1, -1));
+      } else if (key === "order") {
+        assert.equal(value, "completed_at.asc.nullslast");
+        query.order("completed_at", { ascending: true, nullsFirst: false });
+      } else if (key === "limit") {
+        assert.equal(value, "1");
+        query.limit(Number(value));
+      } else if (value.startsWith("eq.")) query.eq(key, value.slice(3));
+      else if (value.startsWith("ilike.")) query.ilike(key, value.slice(6));
+      else assert.fail(`unexpected filter: ${key}=${value}`);
+    }
+    if (request.method === "POST" || request.method === "PATCH") {
+      const body: unknown = await request.json();
+      assert.ok(body && typeof body === "object" && !Array.isArray(body));
+      if (request.method === "POST") {
+        assert.equal(table, "support_cases");
+        query.insert({ ...body });
+      } else {
+        assert.equal(table, "profiles");
+        query.update({ ...body });
+      }
+    } else assert.equal(request.method, "GET");
+    const { data } = await query;
+    const columns = url.searchParams.get("select")?.split(",");
+    const projected = columns ? data.map((row) => {
+      assert.ok(row && typeof row === "object");
+      return Object.fromEntries(Object.entries(row).filter(([key]) => columns.includes(key)));
+    }) : data;
+    const single = request.headers.get("accept") === "application/vnd.pgrst.object+json";
+    return Response.json(single ? projected[0] ?? null : projected);
+  };
+
+  readonly client = createClient("https://guarantee.test", "fixture-key", {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { fetch: this.transport },
+  });
+
   from(table: string) {
-    return new FakeQuery(this, table);
+    return this.client.from(table);
   }
 }
 
@@ -143,7 +202,8 @@ class FakeQuery {
     return this;
   }
 
-  order(column: string, opts?: { ascending?: boolean }) {
+  order(column: string, opts?: { ascending?: boolean; nullsFirst?: boolean }) {
+    assert.equal(opts?.nullsFirst, false);
     this.orderColumn = column;
     this.orderAsc = opts?.ascending !== false;
     return this;
@@ -371,6 +431,10 @@ test("creates a support_case with category=refund_request and payout_hold=true",
   assert.equal(admin.insertedSupportCase!.payout_hold, true);
   assert.equal(admin.insertedSupportCase!.role, "student");
   assert.equal(admin.insertedSupportCase!.requested_resolution, "refund");
+  assert.equal(admin.requests[4].pathname, "/rest/v1/support_cases");
+  assert.equal(admin.requests[4].searchParams.get("select"), "id");
+  assert.equal(admin.requests[5].pathname, "/rest/v1/profiles");
+  assert.deepEqual(Object.fromEntries(admin.requests[5].searchParams), { id: "eq.student-1" });
   assert.ok(
     admin.insertedSupportCase!.description.startsWith(FIRST_LESSON_GUARANTEE_MARKER),
     "description must start with the [FIRST_LESSON_GUARANTEE] marker",

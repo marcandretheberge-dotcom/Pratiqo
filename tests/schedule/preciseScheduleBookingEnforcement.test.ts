@@ -56,7 +56,7 @@ function baseRequest(overrides: Partial<ParsedCreateBookingRequest> = {}): Parse
     timeSlot: "10h00",
     studentLevel: null,
     teachingMode: "online",
-    lessonType: "standard",
+    lessonType: "regular",
     price: 50,
     durationMinutes: 60,
     studentAddress: null,

@@ -262,7 +262,7 @@ test("quizzes do not use cultural or near-identical words as simple translation 
 
 test("printables include real workbook-style exercise formats through Module 5", () => {
   const module5Sheets = dominicanRepublicA2Capstone.printableSheets;
-  const module5Kinds = new Set(module5Sheets.map((sheet) => sheet.kind));
+  const module5Kinds = new Set<string>(module5Sheets.map((sheet) => sheet.kind));
   for (const kind of [
     "connectors",
     "fill_blank",

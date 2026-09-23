@@ -66,7 +66,7 @@ const INTRO_PAGES = [
     path: "/yo/langues/italien/intro",
     file: "app/yo/langues/italien/intro/page.tsx",
   },
-] as const satisfies readonly Array<{
+] as const satisfies ReadonlyArray<{
   id: string;
   seoId: YoPratiqoSeoRouteId;
   path: string;
@@ -144,6 +144,7 @@ test("intro pages have unique metadata, canonical URLs, and intentional noindex 
       "string",
       `${page.file} description`,
     );
+    assert.ok(typeof metadata.title === "string" && typeof metadata.description === "string");
     assert.ok(!titles.has(metadata.title), `${page.file} title must be unique`);
     assert.ok(
       !descriptions.has(metadata.description),

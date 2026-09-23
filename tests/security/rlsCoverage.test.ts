@@ -15,10 +15,9 @@
  *      ends with the assertion that fails if any public ordinary table is
  *      still RLS-disabled.
  *
- *   3. The hardening migrations explicitly reference every table that
- *      `CREATE TABLE` appears for. This is what prevents drift from
- *      silently sneaking past the explicit-enable list, while still allowing
- *      forward-only hardening migrations for tables added after 074.
+ *   3. Every application table has an explicit ENABLE as its final RLS
+ *      statement across the ordered migration history. Later DISABLEs fail;
+ *      comments and string literals cannot satisfy this check.
  *
  * This file complements `tests/security/rlsPolicyShape.test.ts` (which
  * locks down the *policy shape* on sensitive tables) and
@@ -89,11 +88,31 @@ const allMigrationsText = migrationFiles
 // query embedded in a comment (e.g. inside 074) does not get mis-parsed as
 // a real CREATE TABLE / ALTER TABLE statement.
 function stripSqlComments(sql: string): string {
-  return sql
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .split("\n")
-    .map((line) => line.replace(/--.*$/, ""))
-    .join("\n");
+  let output = "";
+  let depth = 0;
+  let lineComment = false;
+  let quote = "";
+  for (let i = 0; i < sql.length; i += 1) {
+    const char = sql[i];
+    const pair = sql.slice(i, i + 2);
+    if (lineComment) {
+      if (char === "\n") lineComment = false;
+      output += char === "\n" ? "\n" : " ";
+    } else if (depth > 0) {
+      if (pair === "/*") { depth += 1; i += 1; output += "  "; }
+      else if (pair === "*/") { depth -= 1; i += 1; output += "  "; }
+      else output += char === "\n" ? "\n" : " ";
+    } else if (quote) {
+      output += char;
+      if (char === quote) {
+        if (sql[i + 1] === quote) { output += sql[++i]; }
+        else quote = "";
+      }
+    } else if (pair === "--") { lineComment = true; i += 1; output += "  "; }
+    else if (pair === "/*") { depth = 1; i += 1; output += "  "; }
+    else { output += char; if (char === "'" || char === '"') quote = char; }
+  }
+  return output;
 }
 
 const allMigrationsCode = stripSqlComments(allMigrationsText);
@@ -216,27 +235,41 @@ test("074 hardening migration exists with audit queries, drift loop, and final a
 // ENABLE list, so the explicit list never drifts behind reality.
 // ─────────────────────────────────────────────────────────────────────────
 
-test("hardening migrations explicitly enable RLS for every created table", () => {
-  const hardening = EXPLICIT_RLS_HARDENING_FILES.map((file) => {
-    assert.ok(migrationFiles.includes(file), `missing ${file}`);
-    return stripSqlComments(readMigration(file));
-  }).join("\n");
-
-  const missing: string[] = [];
-  for (const table of CREATED_TABLES) {
-    const pattern = new RegExp(
-      `alter\\s+table\\s+if\\s+exists\\s+public\\.${table}\\s+enable\\s+row\\s+level\\s+security`,
-      "i",
-    );
-    if (!pattern.test(hardening)) {
-      missing.push(table);
+function disabledOrMissingRls(tables: Iterable<string>, orderedSql: readonly string[]): string[] {
+  const state = new Map<string, boolean>();
+  for (const sql of orderedSql) {
+    const pattern = /^\s*alter\s+table\s+(?:if\s+exists\s+)?(?:only\s+)?(?:"?public"?\s*\.\s*)?"?([a-z_][a-z0-9_]*)"?\s+(enable|disable)\s+row\s+level\s+security\s*;/gim;
+    const code = stripSqlComments(sql).replace(/'(?:''|[^'])*'/g, " ");
+    for (const match of code.matchAll(pattern)) {
+      state.set(match[1].toLowerCase(), match[2].toLowerCase() === "enable");
     }
   }
+  return [...tables].filter((table) => state.get(table) !== true);
+}
+
+test("RLS scanner accepts valid SQL and rejects missing, commented or later disabled activation", () => {
+  for (const statement of [
+    "ALTER TABLE public.sample ENABLE ROW LEVEL SECURITY;",
+    "ALTER TABLE IF EXISTS public.sample ENABLE ROW LEVEL SECURITY;",
+    'ALTER TABLE "public"."sample" ENABLE ROW LEVEL SECURITY;',
+    "ALTER TABLE sample ENABLE ROW LEVEL SECURITY;",
+  ]) assert.deepEqual(disabledOrMissingRls(["sample"], [statement]), []);
+  const enable = "ALTER TABLE public.sample ENABLE ROW LEVEL SECURITY;";
+  const disable = "ALTER TABLE public.sample DISABLE ROW LEVEL SECURITY;";
+  for (const statements of [[], [`-- ${enable}`], [`/* ${enable} */`], [`/* outer /* inner */\n${enable}\n*/`], [`SELECT '\n${enable}\n';`], [enable, disable]]) {
+    assert.deepEqual(disabledOrMissingRls(["sample"], statements), ["sample"]);
+  }
+  assert.deepEqual(disabledOrMissingRls(["sample"], [disable, enable]), []);
+});
+
+test("ordered migrations explicitly leave RLS enabled for every created table", () => {
+  for (const file of EXPLICIT_RLS_HARDENING_FILES) assert.ok(migrationFiles.includes(file), `missing ${file}`);
+  const missing = disabledOrMissingRls(CREATED_TABLES, migrationFiles.map(readMigration));
 
   assert.deepEqual(
     missing,
     [],
-    `RLS hardening migrations are missing explicit ENABLE ROW LEVEL SECURITY for: ${missing.join(", ")}`,
+    `RLS is missing or later disabled for: ${missing.join(", ")}`,
   );
 });
 
@@ -284,7 +317,7 @@ test("PostGIS spatial_ref_sys is the only documented RLS advisor exception", () 
 });
 
 test("no new migration direct-ALTERs extension-owned spatial_ref_sys", () => {
-  const historical = new Set(POSTGIS_SPATIAL_REF_SYS_EXCEPTION.historicalBestEffortMigrations);
+  const historical = new Set<string>(POSTGIS_SPATIAL_REF_SYS_EXCEPTION.historicalBestEffortMigrations);
   for (const file of migrationFiles) {
     if (historical.has(file)) continue;
     const sql = stripSqlComments(readMigration(file));

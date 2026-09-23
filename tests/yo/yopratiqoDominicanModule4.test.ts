@@ -226,6 +226,7 @@ test("past-tense bridge note exists in FR / EN / ES", () => {
   const note = dominicanRepublicExplore.pastTenseBridgeNote;
   assert.match(note.fr, /passé/i);
   assert.match(note.en, /past/i);
+  assert.ok(typeof note.es === "string");
   assert.match(note.es, /pasado/i);
 });
 
@@ -422,7 +423,7 @@ test("hero ships FR / EN / ES strings", () => {
   ]) {
     assert.ok(value.fr.length > 0);
     assert.ok(value.en.length > 0);
-    assert.ok(value.es.length > 0);
+    assert.ok(typeof value.es === "string" && value.es.length > 0);
   }
 });
 

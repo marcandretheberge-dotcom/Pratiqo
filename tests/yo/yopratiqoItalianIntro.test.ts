@@ -98,7 +98,7 @@ test("Italian intro data file exposes the nine documented sections", () => {
       key in italianIntro,
       `italianIntro must expose ${key}`,
     );
-    const value = (italianIntro as Record<string, unknown>)[key];
+    const value = italianIntro[key];
     assert.ok(
       value !== undefined && value !== null,
       `italianIntro.${key} must not be null/undefined`,

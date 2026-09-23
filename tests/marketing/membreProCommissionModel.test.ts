@@ -222,9 +222,9 @@ for (const locale of ["fr", "en", "es"] as const) {
   test(`/upgrade copy (${locale}) pro plan secondary body mentions tiers / volume`, () => {
     const copy = UPGRADE_PAGE_COPY[locale];
     const tierVolumeWording: RegExp = ({
-      fr: /paliers?.*(volume|admissible|conditions)/is,
-      en: /tiers?.*(volume|eligible|conditions)/is,
-      es: /niveles?.*(volumen|admisible|condiciones)/is,
+      fr: /paliers?[\s\S]*(volume|admissible|conditions)/i,
+      en: /tiers?[\s\S]*(volume|eligible|conditions)/i,
+      es: /niveles?[\s\S]*(volumen|admisible|condiciones)/i,
     }[locale])!;
     assert.ok(
       tierVolumeWording.test(copy.proPlanCommissionBody),

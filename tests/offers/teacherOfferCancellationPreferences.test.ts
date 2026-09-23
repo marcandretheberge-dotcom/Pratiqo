@@ -50,7 +50,7 @@ test("migration 105 adds offer prefs and booking snapshot columns", () => {
   const sql = read(MIGRATION);
   assert.match(sql, /cancellation_preference/);
   assert.match(sql, /reschedule_preference/);
-  assert.match(sql, /flexible.*standard.*strict.*manual_review/s);
+  assert.match(sql, /flexible[\s\S]*standard[\s\S]*strict[\s\S]*manual_review/);
   assert.match(sql, /teacher_offer_cancellation_preference_snapshot/);
   assert.match(sql, /teacher_offer_reschedule_preference_snapshot/);
   assert.match(sql, /bookings_preserve_offer_snapshot_fields/);

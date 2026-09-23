@@ -18,6 +18,9 @@ import {
 import { rejectIfOutsideWeeklyIntervals } from "../../lib/bookings/weeklyIntervalGuard";
 
 const ROOT = process.cwd();
+function chainableResult<T>(result: T) {
+  return Object.assign(Promise.resolve(result), { eq() { return this; } });
+}
 function read(rel: string): string {
   return readFileSync(join(ROOT, rel), "utf8").replace(/\r\n/g, "\n");
 }
@@ -134,7 +137,7 @@ test("booking guard rejects slot ending after interval when flag ON", async () =
       select: () => ({
         eq: () => ({
           eq: () =>
-            Promise.resolve({
+            chainableResult({
               data: [
                 {
                   day_of_week: 1,
@@ -175,7 +178,7 @@ test("booking guard rejects when flag ON and no intervals configured", async () 
     from: () => ({
       select: () => ({
         eq: () => ({
-          eq: () => Promise.resolve({ data: [], error: null }),
+          eq: () => chainableResult({ data: [], error: null }),
         }),
       }),
     }),
