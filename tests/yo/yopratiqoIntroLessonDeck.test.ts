@@ -39,7 +39,7 @@
  */
 
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
+import { assertYoTaskScope } from "./yoTaskScope";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -295,12 +295,12 @@ ok("8) Course Home primary CTA points to /intro (not #yo-intro-experience)");
 
 assert.match(
   countrySrc,
-  /id:\s*["']intro["'][^}]*href:\s*["']\/yo\/langues\/espagnol\/pays\/republique-dominicaine\/intro["']/s,
+  /id:\s*["']intro["'][^}]*href:\s*["']\/yo\/langues\/espagnol\/pays\/republique-dominicaine\/intro["']/,
   "Course Home roadmap step 01 (intro) must link to the real Intro deck route",
 );
 assert.doesNotMatch(
   countrySrc,
-  /id:\s*["']intro["'][^}]*href:\s*["']#yo-intro-experience["']/s,
+  /id:\s*["']intro["'][^}]*href:\s*["']#yo-intro-experience["']/,
   "Course Home roadmap step 01 must NOT link to the legacy `#yo-intro-experience` anchor anymore",
 );
 ok("9) Roadmap step 01 (Intro) points to the real Intro deck route");
@@ -414,51 +414,11 @@ ok("13) paid YoPratiqo checkout remains disabled");
 //     / migrations / legal / Membre Pro / audio / SEO)
 // ─────────────────────────────────────────────────────────────────────────
 
-const restrictedPathPatterns: RegExp[] = [
-  /^app\/api\/stripe\//,
-  /^app\/api\/.*checkout/i,
-  /^app\/api\/.*payment/i,
-  /^lib\/payments\//,
-  /^lib\/pricing\//,
-  /^lib\/config\/membrePro\.ts$/,
-  /^lib\/commissions\//,
-  /^supabase\//,
-  /^content\/legal\//,
-  /^app\/\(app\)\/legal\//,
-  /^public\/.*\.(?:mp3|wav|m4a)$/i,
-  /^public\/audio\//,
-  /^scripts\/(?:generate-yopratiqo-audio|.*openai)/i,
-  /^app\/sitemap\.ts$/,
-  /^app\/robots\.ts$/,
-  /^lib\/seo\//,
-];
-const status = execSync("git status --porcelain -uall", {
-  cwd: root,
-  encoding: "utf8",
-});
-const changedFiles = status
-  .split(/\r?\n/)
-  .map((line) => line.trim())
-  .filter(Boolean)
-  .map((line) =>
-    line
-      .replace(/^[ MADRCU?!]{1,2}\s+/, "")
-      .replace(/^"|"$/g, "")
-      .replace(/\\/g, "/"),
-  );
-const ignoredUntracked = new Set([
-  "Untitled",
-  "docs/LAUNCH_READINESS_ANALYSIS.md",
-  "pratiqo-legal-export-20260528-2221.zip",
-]);
-for (const file of changedFiles) {
-  if (ignoredUntracked.has(file)) continue;
-  for (const re of restrictedPathPatterns) {
-    if (re.test(file)) {
-      assert.fail(`restricted system touched by Intro deck PR: ${file}`);
-    }
-  }
+// Real changed-file validation is explicit: check:yo-task-scope --task intro-deck --base ... --head ...
+assert.doesNotThrow(() => assertYoTaskScope("intro-deck", ["components/yo/DominicanRepublicIntroContent.tsx"]));
+for (const file of ["app/sitemap.ts", "lib/payments/refunds.ts", "supabase/migrations/example.sql"]) {
+  assert.throws(() => assertYoTaskScope("intro-deck", [file]), /Outside/);
 }
-ok("14) no restricted system touched (Stripe / payments / tax / RLS / migrations / legal / Membre Pro / audio / SEO)");
+ok("14) intro task scope policy rejects restricted changes");
 
 console.log(`\n${pass} Intro lesson-deck assertions passed`);
