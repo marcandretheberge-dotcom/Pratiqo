@@ -52,7 +52,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { SITE_URL } from "../../lib/seo/site";
-import sitemap from "../../app/sitemap";
+import { emptySupplySitemap as sitemap } from "./emptySupplySitemap";
 import robots from "../../app/robots";
 import { isGroupSessionsMarketplaceIndexable } from "../../lib/groupSessionsLaunch";
 
@@ -257,12 +257,18 @@ const PUBLIC_NOINDEX_FORBIDDEN = [
   { label: "/become-teacher layout", src: becomeTeacherLayoutSrc },
   { label: "/trouver-un-prof", src: trouverUnProfSrc },
   { label: "/francisation", src: francisationSrc },
-  { label: "/cours", src: coursPageSrc },
-  { label: "/tuteurs", src: tuteursPageSrc },
   { label: "/legal/cgu", src: cguSrc },
   { label: "/legal/confidentialite", src: confidentialiteSrc },
   { label: "/legal/membre-pro", src: membreProSrc },
 ];
+
+for (const { label, src } of [{ label: "/cours", src: coursPageSrc }, { label: "/tuteurs", src: tuteursPageSrc }]) {
+  test(`${label} indexes only supported supply and keeps empty pages crawlable`, () => {
+    assert.match(src, /robots:\s*\{ index: bundle\.indexable, follow: true \}/);
+    assert.match(src, /if \(!bundle\) notFound\(\)/);
+    assert.doesNotMatch(src, /if \(!bundle\.indexable\) notFound\(\)/);
+  });
+}
 
 for (const { label, src } of PUBLIC_NOINDEX_FORBIDDEN) {
   test(`${label} does not ship robots: index:false / noindex`, () => {

@@ -82,7 +82,7 @@ const pageCopySrc = stripComments(pageSrc);
 test("page imports YoLanguageBadge and its YoLanguageBadgeId type", () => {
   assert.match(
     pageSrc,
-    /import\s+\{[^}]*YoLanguageBadge[^}]*\}\s+from\s+["']@\/components\/yo\/YoLanguageBadge["']/s,
+    /import\s+\{[^}]*YoLanguageBadge[^}]*\}\s+from\s+["']@\/components\/yo\/YoLanguageBadge["']/,
   );
   assert.match(pageSrc, /YoLanguageBadgeId/);
 });

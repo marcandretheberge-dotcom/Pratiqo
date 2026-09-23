@@ -122,9 +122,9 @@ test("draft paused and archived offers are never selectable", () => {
     const offer = publishedOffer({
       id: `${status}-offer-id000000000001`,
       status,
-      publishedAt: status === "published" ? "2026-08-19T12:00:00.000Z" : null,
+      publishedAt: null,
     });
-    assert.equal(canSelectOfferForBooking(offer, teacherId), status === "published");
+    assert.equal(canSelectOfferForBooking(offer, teacherId), false);
   }
   assert.equal(canSelectOfferForBooking(publishedOffer({ teacherId: "other" }), teacherId), false);
 });

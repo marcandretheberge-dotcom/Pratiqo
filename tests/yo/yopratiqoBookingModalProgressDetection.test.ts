@@ -7,6 +7,7 @@ import {
   learnerHasYoPratiqoProgressForBridge,
 } from "@/lib/yopratiqo/fetchAuthenticatedProgressSnapshots";
 import { DOMINICAN_RD_COURSE_ID } from "@/lib/yo/dominicanRepublicProgressPayloads";
+import type { ProgressSnapshotRow } from "@/lib/yopratiqo/progressSnapshotPersistence";
 
 function ok(name: string): void {
   console.log(`ok - ${name}`);
@@ -23,8 +24,10 @@ assert.ok(existsSync(path.join(root, bookingModalPath)));
 
 const bookingModal = read(bookingModalPath);
 
-function snapshot(moduleId: string, courseId = DOMINICAN_RD_COURSE_ID) {
+function snapshot(moduleId: string, courseId = DOMINICAN_RD_COURSE_ID): ProgressSnapshotRow {
   return {
+    id: `fixture-${moduleId}`,
+    user_id: "fixture-user",
     course_id: courseId,
     module_id: moduleId,
     module_title: "Module",
@@ -32,6 +35,14 @@ function snapshot(moduleId: string, courseId = DOMINICAN_RD_COURSE_ID) {
     level_label: "A1",
     progress_state: "completed" as const,
     last_activity_at: "2026-01-01T00:00:00.000Z",
+    completed_at: "2026-01-01T00:00:00.000Z",
+    skill_tags: [],
+    difficulty_tags: [],
+    score_band: null,
+    companion_stage: null,
+    summary_version: "1",
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
   };
 }
 

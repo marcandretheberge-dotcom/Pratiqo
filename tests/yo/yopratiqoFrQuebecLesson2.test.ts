@@ -44,7 +44,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import sitemap from "@/app/sitemap";
+import { emptySupplySitemap as sitemap } from "../seo/emptySupplySitemap";
 import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
 import { shouldPublishYoCourseSchema } from "@/lib/yo/yopratiqoProductConfig";
 import { frQuebecWorkplaceSurvivalModule } from "@/lib/yo/frQuebecWorkplaceSurvivalModule";
@@ -414,7 +414,7 @@ test("Lesson 2 quiz has 5 questions × 4 options, each option using the { target
         `quiz ${question.id} option ${opt.id} must declare a Quebec French target`,
       );
       // The migrated option shape forbids labelFr / labelEn / labelEs.
-      const record = opt as Record<string, unknown>;
+      const record: Record<string, unknown> = { ...opt };
       assert.equal(
         record["labelFr"],
         undefined,

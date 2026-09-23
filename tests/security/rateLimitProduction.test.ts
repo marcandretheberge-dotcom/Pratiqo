@@ -30,6 +30,11 @@ function test(name: string, fn: TestFn): void {
 
 const rateLimitSrc = read("lib/rateLimit.ts");
 
+function setTestNodeEnv(value: NodeJS.ProcessEnv["NODE_ENV"]): void {
+  if (value === undefined) Reflect.deleteProperty(process.env, "NODE_ENV");
+  else Object.defineProperty(process.env, "NODE_ENV", { value, configurable: true, enumerable: true, writable: true });
+}
+
 test("rateLimit.ts documents production fail-closed behavior", () => {
   assert.match(rateLimitSrc, /fail closed/i);
   assert.match(rateLimitSrc, /infrastructureUnavailable/);
@@ -61,7 +66,7 @@ test("production + missing Redis env does not fail open", async () => {
   const savedUrl = process.env.UPSTASH_REDIS_REST_URL;
   const savedToken = process.env.UPSTASH_REDIS_REST_TOKEN;
   try {
-    process.env.NODE_ENV = "production";
+    setTestNodeEnv("production");
     process.env.VERCEL_ENV = "production";
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -84,8 +89,7 @@ test("production + missing Redis env does not fail open", async () => {
     assert.doesNotMatch(serialized, /REDIS/i);
     assert.doesNotMatch(serialized, /token/i);
   } finally {
-    if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = savedNodeEnv;
+    setTestNodeEnv(savedNodeEnv);
     if (savedVercelEnv === undefined) delete process.env.VERCEL_ENV;
     else process.env.VERCEL_ENV = savedVercelEnv;
     if (savedUrl === undefined) delete process.env.UPSTASH_REDIS_REST_URL;
@@ -102,7 +106,7 @@ test("production + Redis backend error does not fail open", async () => {
   const savedToken = process.env.UPSTASH_REDIS_REST_TOKEN;
   const savedFetch = globalThis.fetch;
   try {
-    process.env.NODE_ENV = "production";
+    setTestNodeEnv("production");
     process.env.VERCEL_ENV = "production";
     process.env.UPSTASH_REDIS_REST_URL = "https://example.upstash.io";
     process.env.UPSTASH_REDIS_REST_TOKEN = "test-token";
@@ -119,8 +123,7 @@ test("production + Redis backend error does not fail open", async () => {
     assert.equal(blocked.status, 503);
   } finally {
     globalThis.fetch = savedFetch;
-    if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = savedNodeEnv;
+    setTestNodeEnv(savedNodeEnv);
     if (savedVercelEnv === undefined) delete process.env.VERCEL_ENV;
     else process.env.VERCEL_ENV = savedVercelEnv;
     if (savedUrl === undefined) delete process.env.UPSTASH_REDIS_REST_URL;
@@ -136,7 +139,7 @@ test("non-production remains developer-friendly when Redis is missing", async ()
   const savedUrl = process.env.UPSTASH_REDIS_REST_URL;
   const savedToken = process.env.UPSTASH_REDIS_REST_TOKEN;
   try {
-    process.env.NODE_ENV = "development";
+    setTestNodeEnv("development");
     delete process.env.VERCEL_ENV;
     delete process.env.UPSTASH_REDIS_REST_URL;
     delete process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -148,8 +151,7 @@ test("non-production remains developer-friendly when Redis is missing", async ()
     assert.equal(rl.allowed, true);
     assert.notEqual(rl.infrastructureUnavailable, true);
   } finally {
-    if (savedNodeEnv === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = savedNodeEnv;
+    setTestNodeEnv(savedNodeEnv);
     if (savedVercelEnv === undefined) delete process.env.VERCEL_ENV;
     else process.env.VERCEL_ENV = savedVercelEnv;
     if (savedUrl === undefined) delete process.env.UPSTASH_REDIS_REST_URL;

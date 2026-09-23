@@ -185,7 +185,7 @@ test("legacy friend referral credit system remains separate", () => {
   assert.match(authCallbackSrc, /referred_by/);
   assert.match(creditsRouteSrc, /referral_code/);
   assert.match(creditsLibSrc, /REFERRAL_YEARLY_CAP/);
-  assert.doesNotMatch(migration090, /ALTER TABLE public\.profiles.*referral_code/is);
+  assert.doesNotMatch(migration090, /ALTER TABLE public\.profiles[\s\S]*referral_code/i);
   assert.doesNotMatch(migration090, /credit_transactions/);
 });
 

@@ -38,7 +38,7 @@ function resetFlags() {
   delete process.env.ENABLE_PLANNED_PACKAGE_MANUAL_TRANSFERS;
   delete process.env.ENABLE_PLANNED_PACKAGE_MANUAL_TRANSFER_REVERSALS;
   delete process.env.PACKAGE_LEGAL_REVIEW_COMPLETED;
-  delete process.env.NODE_ENV;
+  Reflect.deleteProperty(process.env, "NODE_ENV");
 }
 
 function enableReversalChain() {
@@ -196,7 +196,7 @@ test("execute helper calls Stripe createReversal via mock", async () => {
   resetFlags();
   enableReversalChain();
   process.env.PACKAGE_LEGAL_REVIEW_COMPLETED = "true";
-  delete process.env.NODE_ENV;
+  Reflect.deleteProperty(process.env, "NODE_ENV");
 
   const transferExecutionId = "tx-1";
   const orderId = "order-1";

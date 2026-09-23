@@ -226,7 +226,7 @@ test("snapshot uses DB offer title/type/format/price not client values", () => {
 test("draft paused and archived offers cannot be snapshotted", () => {
   for (const status of ["draft", "paused", "archived"] as const) {
     const mapped = mapTeacherOfferRowToBookingSnapshot(
-      { ...publishedRow, status, published_at: status === "published" ? publishedRow.published_at : null },
+      { ...publishedRow, status, published_at: null },
       TEACHER_ID,
     );
     assert.equal(mapped.ok, false);

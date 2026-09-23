@@ -10,12 +10,16 @@ export function shouldIncludeInSitemap(url: string): boolean {
   try {
     const parsed = new URL(url);
     if (parsed.hostname.toLowerCase() !== SITE_HOSTNAME) return false;
+    if (parsed.protocol !== "https:" || parsed.port || parsed.search || parsed.hash) return false;
+    if (parsed.pathname !== getCanonicalPath(parsed.pathname)) return false;
     path = getCanonicalPath(parsed.pathname);
   } catch {
-    path = getCanonicalPath(url);
+    return false;
   }
 
   if (isPrivateSeoRoute(path)) return false;
+  if (/^\/(?:fr|en|es)\/(?:cours|tuteurs|tuteurs-prive)(?:\/|$)/.test(path)) return false;
+  if (path.startsWith("/tuteurs-prive/")) return false;
   return isKnownPublicSeoRoute(path);
 }
 

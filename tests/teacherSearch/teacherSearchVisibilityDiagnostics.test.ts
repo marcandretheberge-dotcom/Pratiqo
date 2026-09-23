@@ -136,7 +136,8 @@ test("teacher missing public location is allowed when online format exists", () 
   const result = diagnose({
     teacher: { ...teacher, teaching_mode: "online", city: null, region: null, location: {} },
   });
-  assert.equal(result.blockingReasonCodes.includes("BLOCKER_MISSING_PUBLIC_LOCATION_OR_ONLINE"), false);
+  assert.deepEqual(result.blockingReasonCodes, []);
+  assert.equal(result.warningReasonCodes.includes("WARNING_MISSING_PUBLIC_LOCATION_OR_ONLINE"), false);
 });
 
 test("teacher missing public location is warning-only for in-person-only format", () => {

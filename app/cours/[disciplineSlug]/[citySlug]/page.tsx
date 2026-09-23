@@ -20,13 +20,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { disciplineSlug, citySlug } = await params;
   const bundle = await resolveSubjectCityDiscoveryPage(disciplineSlug, citySlug);
-  if (!bundle || !bundle.indexable) {
-    return { title: "Cours particuliers | Pratiqo" };
+  if (!bundle) {
+    return { title: "Cours particuliers | Pratiqo", robots: { index: false, follow: true } };
   }
 
   return {
-    title: bundle.title,
+    title: { absolute: bundle.title },
     description: bundle.description,
+    robots: { index: bundle.indexable, follow: true },
     keywords: [
       `cours ${bundle.discipline!.name.toLowerCase()} ${bundle.city.name}`,
       `professeur ${bundle.discipline!.name.toLowerCase()} ${bundle.city.name}`,
@@ -59,7 +60,6 @@ export default async function DisciplineCityPage({
   const { disciplineSlug, citySlug } = await params;
   const bundle = await resolveSubjectCityDiscoveryPage(disciplineSlug, citySlug);
   if (!bundle) notFound();
-  if (!bundle.indexable) notFound();
 
   const locale = await getLocale();
   const jsonLd = buildLocalDiscoveryCollectionJsonLd(bundle);

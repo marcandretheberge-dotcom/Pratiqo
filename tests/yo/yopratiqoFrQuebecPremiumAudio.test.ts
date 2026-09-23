@@ -106,6 +106,7 @@ assert.ok(
   "Lesson 1 must carry a populated content body — required for audio coverage",
 );
 
+assert.ok(lessonOneContent.kind === "lesson1", "Audio coverage targets Lesson 1 content");
 const corePhraseTargets: readonly string[] = lessonOneContent.corePhrases.map(
   (phrase) => phrase.frQuebec,
 );

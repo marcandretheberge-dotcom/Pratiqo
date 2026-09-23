@@ -162,7 +162,6 @@ test("server publish response includes 422 missingFields", () => {
   const gate = evaluateTeacherOfferPublishReadiness(teacherOfferDtoToPublishCandidate(draftOffer()));
   assert.equal(gate.ready, false);
   const body = offerNotPublishableResponseBody({
-    ok: false,
     error: "offer_not_publishable",
     issues: gate.issues,
   });

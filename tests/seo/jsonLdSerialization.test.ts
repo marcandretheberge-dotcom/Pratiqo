@@ -54,7 +54,7 @@ test("teacher public JSON-LD serialization cannot break out with teacher-control
     id: "teacher-xss",
     name: MALICIOUS,
     discipline: MALICIOUS,
-    category: MALICIOUS,
+    category: "Langues",
     rating: 0,
     reviews: 0,
     distance: 0,
@@ -72,6 +72,8 @@ test("teacher public JSON-LD serialization cannot break out with teacher-control
     levels: ["beginner"],
   };
 
+  // Deliberately inject an untrusted runtime value, outside the typed category enum.
+  Reflect.set(teacher, "category", MALICIOUS);
   const jsonLd = buildTeacherPublicProfileJsonLd({
     teacher,
     canonicalUrl: buildTeacherPublicProfileCanonicalUrl("teacher-xss"),

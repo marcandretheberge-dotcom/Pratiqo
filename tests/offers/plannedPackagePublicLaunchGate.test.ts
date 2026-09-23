@@ -92,7 +92,7 @@ function enableFullChain() {
   process.env.PACKAGE_LEGAL_REVIEW_COMPLETED = "true";
   process.env.ENABLE_PLANNED_PACKAGE_PUBLIC_PURCHASE = "true";
   process.env.VERCEL_ENV = "preview";
-  process.env.NODE_ENV = "development";
+  Reflect.set(process.env, "NODE_ENV", "development");
 }
 
 test("public purchase flag defaults OFF", () => {
@@ -323,7 +323,7 @@ async function main() {
   }
   for (const k of ENV_KEYS) {
     if (prev[k] === undefined) delete process.env[k];
-    else process.env[k] = prev[k];
+    else Reflect.set(process.env, k, prev[k]);
   }
   if (failed > 0) {
     console.error(`\n${failed} failed`);

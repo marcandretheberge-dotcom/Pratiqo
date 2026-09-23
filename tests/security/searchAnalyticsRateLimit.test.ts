@@ -43,7 +43,7 @@ async function responseJson(response: Response): Promise<unknown> {
 }
 
 test("valid search analytics payload succeeds and inserts sanitized row", async () => {
-  let inserted: SearchEventBody & { user_id: string | null } | null = null;
+  const captured: { row?: SearchEventBody & { user_id: string | null } } = {};
   const response = await handleSearchEventPost(
     jsonRequest({
       anonymous_session_id: " anon-123 ",
@@ -63,13 +63,14 @@ test("valid search analytics payload succeeds and inserts sanitized row", async 
       rateLimit: allowedRateLimit,
       getUserId: async () => "user-1",
       insert: (row) => {
-        inserted = row;
+        captured.row = row;
       },
     },
   );
 
   assert.equal(response.status, 200);
   assert.deepEqual(await responseJson(response), { ok: true });
+  const inserted = captured.row;
   assert.equal(inserted?.user_id, "user-1");
   assert.equal(inserted?.source, "landing");
   assert.equal(inserted?.anonymous_session_id, "anon-123");

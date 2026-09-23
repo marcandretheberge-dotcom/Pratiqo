@@ -153,9 +153,11 @@ test("metadata helper emits canonical, OpenGraph, Twitter, and route-aware robot
     assert.equal(metadata.alternates?.canonical, canonical);
     assert.equal(metadata.openGraph?.url, canonical);
     assert.equal(metadata.openGraph?.siteName, "Pratiqo");
-    assert.equal(metadata.openGraph?.type, "website");
+    assert.ok(metadata.openGraph && "type" in metadata.openGraph);
+    assert.equal(metadata.openGraph.type, "website");
     assert.ok(metadata.openGraph?.images, `${route.id} must include an OG image`);
-    assert.equal(metadata.twitter?.card, "summary_large_image");
+    assert.ok(metadata.twitter && "card" in metadata.twitter);
+    assert.equal(metadata.twitter.card, "summary_large_image");
     assert.ok(metadata.twitter?.title, `${route.id} must include Twitter title`);
     assert.ok(
       metadata.twitter?.description,

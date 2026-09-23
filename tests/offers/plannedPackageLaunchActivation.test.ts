@@ -86,7 +86,7 @@ test("all flags ON and legal review true => public launch gate can pass with ter
   resetEnv();
   applyPlannedPackagePublicLaunchActivationEnv({ legalReviewCompleted: true });
   process.env.VERCEL_ENV = "preview";
-  process.env.NODE_ENV = "development";
+  Reflect.set(process.env, "NODE_ENV", "development");
   assert.equal(canPubliclyPurchasePlannedPackage(), true);
   const gate = evaluatePlannedPackagePublicLaunchGate({
     requireLearnerTerms: true,
@@ -222,7 +222,7 @@ async function main() {
   }
   for (const k of ENV_KEYS) {
     if (prev[k] === undefined) delete process.env[k];
-    else process.env[k] = prev[k];
+    else Reflect.set(process.env, k, prev[k]);
   }
   if (failed > 0) {
     console.error(`\n${failed} failed`);

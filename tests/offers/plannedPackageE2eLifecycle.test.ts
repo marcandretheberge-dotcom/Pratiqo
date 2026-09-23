@@ -32,7 +32,7 @@ function resetEnv() {
   delete process.env.PACKAGE_LEGAL_REVIEW_COMPLETED;
   delete process.env.STRIPE_SECRET_KEY;
   delete process.env.STRIPE_WEBHOOK_SECRET;
-  delete process.env.NODE_ENV;
+  Reflect.deleteProperty(process.env, "NODE_ENV");
   delete process.env.VERCEL_ENV;
   for (const name of [
     "ENABLE_PLANNED_PACKAGES",
@@ -63,7 +63,7 @@ test("E2E QA tools flag defaults OFF", () => {
 test("E2E QA tools rejected in production even when flag ON", () => {
   resetEnv();
   process.env.ENABLE_PLANNED_PACKAGE_E2E_QA_TOOLS = "true";
-  process.env.NODE_ENV = "production";
+  Reflect.set(process.env, "NODE_ENV", "production");
   assert.equal(isPlannedPackageE2eQaToolsEnabled(), true);
   assert.equal(canUsePlannedPackageE2eQaTools(), false);
 });
@@ -91,7 +91,7 @@ test("diagnostics does not expose secrets", () => {
   process.env.ENABLE_PLANNED_PACKAGE_E2E_QA_TOOLS = "true";
   process.env.STRIPE_SECRET_KEY = "sk_test_SECRET_VALUE_SHOULD_NOT_LEAK";
   process.env.STRIPE_WEBHOOK_SECRET = "whsec_SECRET_VALUE_SHOULD_NOT_LEAK";
-  delete process.env.NODE_ENV;
+  Reflect.deleteProperty(process.env, "NODE_ENV");
 
   const d = getPlannedPackageE2eQaDiagnostics();
   const safe = toSafePlannedPackageE2eQaDto(d);
@@ -118,7 +118,7 @@ test("diagnostics detects Stripe test mode requirement", () => {
   process.env.ENABLE_PLANNED_PACKAGE_E2E_QA_TOOLS = "true";
   process.env.STRIPE_SECRET_KEY = "sk_live_abc";
   process.env.STRIPE_WEBHOOK_SECRET = "whsec_x";
-  delete process.env.NODE_ENV;
+  Reflect.deleteProperty(process.env, "NODE_ENV");
   const d = getPlannedPackageE2eQaDiagnostics();
   assert.equal(d.stripeConfig.mode, "live");
   assert.equal(d.stripeConfig.testModeOk, false);

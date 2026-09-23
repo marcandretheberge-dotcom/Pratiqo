@@ -31,7 +31,7 @@ const test = (name: string, fn: TestFn) => tests.push({ name, fn });
 
 const READ = (rel: string) => readFileSync(join(process.cwd(), rel), "utf8");
 
-type StorageMock = {
+type StorageMock = Storage & {
   store: Record<string, string>;
   getItem: (key: string) => string | null;
   setItem: (key: string, value: string) => void;
@@ -41,6 +41,9 @@ type StorageMock = {
 function installBrowserMocks() {
   const storage: StorageMock = {
     store: {},
+    get length() { return Object.keys(this.store).length; },
+    clear() { this.store = {}; },
+    key(index) { return Object.keys(this.store)[index] ?? null; },
     getItem(key) {
       return Object.prototype.hasOwnProperty.call(this.store, key) ? this.store[key] : null;
     },
@@ -52,29 +55,52 @@ function installBrowserMocks() {
     },
   };
 
-  const g = globalThis as typeof globalThis & {
-    window?: Window & typeof globalThis;
-    localStorage?: StorageMock;
-    fetch?: typeof fetch;
-  };
-
-  g.localStorage = storage;
-  g.window = {
+  originalBrowserProperties = ["window", "localStorage", "fetch"].map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
+  originalMonitoringEnvironment = monitoringEnvironmentKeys.map((key) => [key, process.env[key]]);
+  Object.defineProperty(globalThis, "localStorage", { value: storage, configurable: true, writable: true });
+  Object.defineProperty(globalThis, "window", { value: {
     localStorage: storage,
     location: { pathname: "/", href: "https://www.pratiqo.ca/", host: "www.pratiqo.ca" },
     dispatchEvent: () => true,
     addEventListener: () => {},
     removeEventListener: () => {},
-  } as unknown as Window & typeof globalThis;
+  }, configurable: true, writable: true });
 
   return storage;
 }
 
+let originalBrowserProperties: Array<[string, PropertyDescriptor | undefined]> = [];
+const monitoringEnvironmentKeys = ["NEXT_PUBLIC_POSTHOG_KEY", "NEXT_PUBLIC_SENTRY_DSN"] as const;
+let originalMonitoringEnvironment: Array<[string, string | undefined]> = [];
 function clearBrowserMocks() {
-  const g = globalThis as typeof globalThis & { window?: unknown; localStorage?: unknown };
-  delete g.window;
-  delete g.localStorage;
+  for (const [key, descriptor] of originalBrowserProperties) {
+    if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+    else Reflect.deleteProperty(globalThis, key);
+  }
+  originalBrowserProperties = [];
+  for (const [key, value] of originalMonitoringEnvironment) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+  originalMonitoringEnvironment = [];
 }
+
+test("browser harness restores globals and monitoring environment after failure", () => {
+  const properties = ["window", "localStorage", "fetch"].map((key) => Object.getOwnPropertyDescriptor(globalThis, key));
+  const environment = monitoringEnvironmentKeys.map((key) => process.env[key]);
+  assert.throws(() => {
+    installBrowserMocks();
+    try {
+      globalThis.fetch = async () => new Response("fixture");
+      for (const key of monitoringEnvironmentKeys) process.env[key] = "fixture";
+      throw new Error("simulated assertion failure");
+    } finally {
+      clearBrowserMocks();
+    }
+  }, /simulated assertion failure/);
+  assert.deepEqual(["window", "localStorage", "fetch"].map((key) => Object.getOwnPropertyDescriptor(globalThis, key)), properties);
+  assert.deepEqual(monitoringEnvironmentKeys.map((key) => process.env[key]), environment);
+});
 
 // ── Consent model ───────────────────────────────────────────────────────────
 
@@ -286,8 +312,14 @@ test("posthog.ts gates on consent and sensitive routes", () => {
 });
 
 test("readPostHogConfig unchanged when key missing", () => {
-  delete process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  assert.equal(readPostHogConfig(), null);
+  const original = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  try {
+    delete process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    assert.equal(readPostHogConfig(), null);
+  } finally {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    else process.env.NEXT_PUBLIC_POSTHOG_KEY = original;
+  }
 });
 
 // ── Runner ──────────────────────────────────────────────────────────────────

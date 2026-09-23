@@ -22,6 +22,7 @@ const baseTeacher: Teacher = {
   imageUrl: "",
   rating: 4.9,
   reviews: 12,
+  distance: 0,
   pricePerLesson: 45,
   currency: "CAD",
   availability: ["Lun soir"],
@@ -37,10 +38,10 @@ const baseTeacher: Teacher = {
   introSessionEnabled: false,
   introSessionPriceCents: null,
   introSessionDurationMinutes: 45,
-  introSessionDiscountPercent: null,
+  introSessionDiscountPercent: undefined,
   homeLessonEnabled: false,
-  homeLessonRadiusKm: null,
-  homeLessonPrice: null,
+  homeLessonRadiusKm: undefined,
+  homeLessonPrice: undefined,
 };
 
 function makeSupabaseResponse(response: { data?: unknown[] | null; error?: { code?: string; message?: string } | null }) {
@@ -105,13 +106,13 @@ test("permission denied on public zones returns base teachers without throwing",
       message: "permission denied for relation teacher_teaching_zones_public",
     },
   });
-  let attached: Teacher[] | null = null;
+  const result: { attached?: Teacher[] } = {};
   await withWarnMuted(async () => {
-    attached = await attachPublicTeachingZones(supabase as never, [baseTeacher]);
+    result.attached = await attachPublicTeachingZones(supabase as never, [baseTeacher]);
   });
 
-  assert.equal(attached?.[0], baseTeacher);
-  assert.equal(attached?.[0]?.teachingZones, undefined);
+  assert.equal(result.attached?.[0], baseTeacher);
+  assert.equal(result.attached?.[0]?.teachingZones, undefined);
 });
 
 test("schema-cache miss on public zones returns base teachers without throwing", async () => {

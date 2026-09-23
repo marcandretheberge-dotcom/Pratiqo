@@ -11,7 +11,9 @@ import {
 } from "@/lib/seo/teacherPublicProfile";
 import { SITE_URL } from "@/lib/seo/site";
 import { cacheSeoData, SEO_SITEMAP_REVALIDATE_SECONDS } from "@/lib/seo/cache";
-import { fetchTeacherSubjectCountsByIds } from "@/lib/seo/teacherSubjectCounts";
+import { resolveDisciplineId } from "@/lib/taxonomy/disciplines";
+import { getTeachingZoneCoords, mapTeacherTeachingZoneRow, type TeacherTeachingZonePublicRow } from "@/lib/teacherTeachingZones";
+import type { TeacherTeachingZone } from "@/types";
 export const LOCAL_CITY_HUB_PATH_PREFIX = "/tuteurs";
 export const LEGACY_CITY_HUB_PATH_PREFIX = "/tuteurs-prive";
 
@@ -24,7 +26,14 @@ export type LocalDiscoveryPageType = "city_hub" | "subject_city";
 export type LocalDiscoveryNoindexReason =
   | "invalid_city"
   | "invalid_discipline"
-  | "no_eligible_teachers";
+  | "no_eligible_teachers"
+  | "no_local_teachers";
+
+export type LocalDiscoveryDiscipline = {
+  slug: string;
+  name: string;
+  faq: Array<{ question: string; answer: string }>;
+};
 
 export type LocalTeacherDiscoveryCard = {
   id: string;
@@ -55,7 +64,8 @@ export type LocalTeacherDiscoveryPageBundle = {
   indexable: boolean;
   noindexReasons: LocalDiscoveryNoindexReason[];
   city: QcCity;
-  discipline: DisciplineConfig | null;
+  // This bundle crosses the RSC boundary. Never include registry functions.
+  discipline: LocalDiscoveryDiscipline | null;
   canonicalPath: string;
   canonicalUrl: string;
   title: string;
@@ -72,6 +82,8 @@ export type LocalTeacherDiscoveryPageBundle = {
 };
 
 export type RawDiscoveryTeacher = TeacherPublicSeoFields & {
+  disciplineIds?: string[];
+  teachingZones?: TeacherTeachingZone[];
   category: string | null;
   rating: number | null;
   reviews: number | null;
@@ -94,6 +106,7 @@ type SeoRowRaw = {
   country_code: string | null;
   teaching_mode: string | null;
   is_public: boolean | null;
+  marketplace_discovery_opt_out: boolean | null;
   deactivated_at: string | null;
   deleted_at: string | null;
   is_demo: boolean | null;
@@ -126,7 +139,7 @@ type SeoRowRaw = {
 };
 
 const DISCOVERY_ROW_SELECT =
-  "id, user_id, name, bio, discipline, category, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, rating, reviews, price_per_lesson, image_url, location, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
+  "id, user_id, name, bio, discipline, category, city, region, country_code, teaching_mode, is_public, marketplace_discovery_opt_out, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, rating, reviews, price_per_lesson, image_url, location, profiles!inner(teacher_onboarding_complete, is_active, deactivated_at, deleted_at, anonymized_at)";
 
 function normalizeLabel(value: string | null | undefined): string {
   if (!value?.trim()) return "";
@@ -158,6 +171,7 @@ function flattenDiscoveryRow(raw: SeoRowRaw, subjectCount = 0): RawDiscoveryTeac
     country_code: raw.country_code,
     teaching_mode: raw.teaching_mode,
     is_public: raw.is_public,
+    marketplace_discovery_opt_out: raw.marketplace_discovery_opt_out,
     deactivated_at: raw.deactivated_at,
     deleted_at: raw.deleted_at,
     is_demo: raw.is_demo,
@@ -187,30 +201,59 @@ function flattenDiscoveryRow(raw: SeoRowRaw, subjectCount = 0): RawDiscoveryTeac
 
 export const fetchIndexableDiscoveryTeachers = cacheSeoData(
   async (): Promise<RawDiscoveryTeacher[]> => {
-    try {
       const { data, error } = await getSupabaseAdmin()
         .from("teachers")
         .select(DISCOVERY_ROW_SELECT)
         .not("public_profile_last_indexable_at", "is", null);
 
-      if (error || !data) return [];
+      if (error) throw new Error("local_discovery_teachers_unavailable");
+      if (!data?.length) return [];
 
-      const subjectCounts = await fetchTeacherSubjectCountsByIds((data as SeoRowRaw[]).map((raw) => raw.id));
+      const { data: subjects, error: subjectError } = await getSupabaseAdmin()
+        .from("teacher_disciplines")
+        .select("teacher_id, discipline_id")
+        .in("teacher_id", (data as SeoRowRaw[]).map((raw) => raw.id));
+      if (subjectError) throw new Error("local_discovery_subjects_unavailable");
+      const disciplinesByTeacher = new Map<string, string[]>();
+      for (const subject of subjects ?? []) {
+        if (typeof subject.teacher_id !== "string" || typeof subject.discipline_id !== "string") continue;
+        const ids = disciplinesByTeacher.get(subject.teacher_id) ?? [];
+        ids.push(subject.discipline_id);
+        disciplinesByTeacher.set(subject.teacher_id, ids);
+      }
       const rows: RawDiscoveryTeacher[] = [];
       for (const raw of data as SeoRowRaw[]) {
-        const subjectCount = subjectCounts.get(raw.id) ?? 0;
-        const row = flattenDiscoveryRow(raw, subjectCount);
+        const disciplineIds = disciplinesByTeacher.get(raw.id) ?? [];
+        const row = { ...flattenDiscoveryRow(raw, disciplineIds.length), disciplineIds };
         if (!isTeacherPublicProfileIndexable(row)) continue;
         const slug = row.public_profile_slug?.trim();
         if (!slug) continue;
         rows.push(row);
       }
+      if (rows.length === 0) return rows;
+      const { data: zoneRows, error: zoneError } = await getSupabaseAdmin()
+        .from("teacher_teaching_zones_public")
+        .select("id, teacher_id, label_public, city, region, country_code, lat_public, lng_public, radius_km, zone_kind, is_primary, sort_order, availability_note_public, supports_at_teacher_place, supports_at_student_place, supports_public_place")
+        .in("teacher_id", rows.map((row) => row.id));
+      if (zoneError) {
+        // During migration 128 rollout, legacy city remains authoritative.
+        // Other service failures must still reach the page error boundary.
+        if (zoneError.code !== "42P01" && zoneError.code !== "PGRST205") {
+          throw new Error("local_discovery_zones_unavailable");
+        }
+        console.warn("[seo:local-discovery] optional zones view missing; using legacy cities");
+      }
+      const zonesByTeacher = new Map<string, TeacherTeachingZone[]>();
+      for (const raw of (zoneRows ?? []) as TeacherTeachingZonePublicRow[]) {
+        const zone = mapTeacherTeachingZoneRow(raw);
+        const zones = zonesByTeacher.get(zone.teacherId) ?? [];
+        zones.push(zone);
+        zonesByTeacher.set(zone.teacherId, zones);
+      }
+      for (const row of rows) row.teachingZones = zonesByTeacher.get(row.id) ?? [];
       return rows;
-    } catch {
-      return [];
-    }
   },
-  ["local-discovery-indexable-teachers-v1"],
+  ["local-discovery-indexable-teachers-v2"],
   { revalidate: SEO_SITEMAP_REVALIDATE_SECONDS },
 );
 
@@ -247,18 +290,20 @@ export function teacherCityLabelMatchesCity(teacher: Pick<RawDiscoveryTeacher, "
 }
 
 export function teacherMatchesDiscipline(
-  teacher: Pick<RawDiscoveryTeacher, "discipline" | "category">,
+  teacher: Pick<RawDiscoveryTeacher, "discipline" | "category" | "disciplineIds">,
   discipline: DisciplineConfig,
 ): boolean {
   const disciplineNorm = normalizeLabel(teacher.discipline);
   const categoryNorm = normalizeLabel(teacher.category);
   if (discipline.dbDiscipline) {
-    return (
-      disciplineNorm === normalizeLabel(discipline.dbDiscipline) ||
-      categoryNorm === normalizeLabel(discipline.dbCategory)
-    );
+    const targetId = resolveDisciplineId(discipline.dbDiscipline);
+    return disciplineNorm === normalizeLabel(discipline.dbDiscipline) ||
+      (targetId !== null && (resolveDisciplineId(teacher.discipline) === targetId ||
+        teacher.disciplineIds?.includes(targetId) === true));
   }
-  return categoryNorm === normalizeLabel(discipline.dbCategory);
+  const categoryId = resolveDisciplineId(discipline.dbCategory);
+  return categoryNorm === normalizeLabel(discipline.dbCategory) ||
+    (categoryId !== null && resolveDisciplineId(teacher.category) === categoryId);
 }
 
 type RankedTeacher = {
@@ -296,6 +341,12 @@ export function rankTeachersForCity(
     return { row, distanceKm, isOnlineFallback };
   });
 
+  // Declared teaching zones take precedence over proximity-only alternatives.
+  const localSupply = withDistance.filter(({ row }) => teacherHasLocalDiscoverySupply(row, city));
+  if (localSupply.length > 0) {
+    return { ranked: localSupply.slice(0, MAX_TEACHER_CARDS), isNearby: false };
+  }
+
   const localPrimary = withDistance
     .filter((x) => !x.isOnlineFallback && x.distanceKm !== null && x.distanceKm <= PRIMARY_RADIUS_KM)
     .sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
@@ -305,7 +356,7 @@ export function rankTeachersForCity(
       .filter((x) => !x.isOnlineFallback && x.distanceKm !== null && x.distanceKm <= EXPANDED_RADIUS_KM)
       .sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
     const isNearby = expanded.length > 0 && (expanded[0]?.distanceKm ?? 0) > PRIMARY_RADIUS_KM;
-    return { ranked: expanded.slice(0, MAX_TEACHER_CARDS), isNearby };
+    return { ranked: expanded.slice(0, MAX_TEACHER_CARDS), isNearby: isNearby || localSupply.length === 0 };
   }
 
   const online = withDistance.filter((x) => x.isOnlineFallback);
@@ -389,7 +440,7 @@ function buildSubjectCityLinks(
   const links: SubjectCityLink[] = [];
   for (const discipline of DISCIPLINES) {
     const { ranked } = rankTeachersForCity(teachers, city, { discipline });
-    if (ranked.length === 0) continue;
+    if (!hasLocalDiscoverySupply(ranked, city)) continue;
     links.push({
       disciplineSlug: discipline.slug,
       href: buildSubjectCityPath(discipline.slug, city.slug),
@@ -397,6 +448,27 @@ function buildSubjectCityLinks(
     });
   }
   return links;
+}
+
+export function teacherHasLocalDiscoverySupply(row: RawDiscoveryTeacher, city: QcCity): boolean {
+  const mode = normalizeLabel(row.teaching_mode);
+  if (!["person", "in_person", "in-person", "home", "both", "all"].includes(mode)) return false;
+  const zones = (row.teachingZones ?? []).filter((zone) => zone.isActive && zone.countryCode === "CA");
+  if (zones.length > 0) {
+    return zones.some((zone) => {
+      if (!zone.supportsAtTeacherPlace && !zone.supportsAtStudentPlace && !zone.supportsPublicPlace) return false;
+      if (normalizeLabel(zone.city) === normalizeLabel(city.name)) return true;
+      const coords = getTeachingZoneCoords(zone);
+      return zone.supportsAtStudentPlace && coords !== null &&
+        haversineDistance(city.lat, city.lng, coords.lat, coords.lng) <= zone.radiusKm;
+    });
+  }
+  // No declared service area: only the actual legacy city proves local supply.
+  return normalizeLabel(row.city) === normalizeLabel(city.name);
+}
+
+export function hasLocalDiscoverySupply(entries: RankedTeacher[], city: QcCity): boolean {
+  return entries.some(({ row }) => teacherHasLocalDiscoverySupply(row, city));
 }
 
 function assembleBundle(input: {
@@ -411,6 +483,7 @@ function assembleBundle(input: {
   const teachers = ranked.map(toDiscoveryCard);
   const noindexReasons: LocalDiscoveryNoindexReason[] = [];
   if (teachers.length === 0) noindexReasons.push("no_eligible_teachers");
+  if (pageType === "subject_city" && !hasLocalDiscoverySupply(ranked, city)) noindexReasons.push("no_local_teachers");
 
   const canonicalPath =
     pageType === "city_hub"
@@ -440,7 +513,7 @@ function assembleBundle(input: {
     indexable: noindexReasons.length === 0,
     noindexReasons,
     city,
-    discipline,
+    discipline: discipline ? { slug: discipline.slug, name: discipline.name, faq: discipline.faq } : null,
     canonicalPath,
     canonicalUrl: `${SITE_URL}${canonicalPath}`,
     title,
@@ -457,11 +530,14 @@ function assembleBundle(input: {
   };
 }
 
-export async function resolveCityHubDiscoveryPage(citySlug: string): Promise<LocalTeacherDiscoveryPageBundle | null> {
+export async function resolveCityHubDiscoveryPage(
+  citySlug: string,
+  loadTeachers = loadDiscoveryTeachers,
+): Promise<LocalTeacherDiscoveryPageBundle | null> {
   const city = findCityBySlug(citySlug);
   if (!city) return null;
 
-  const allTeachers = await fetchIndexableDiscoveryTeachers();
+  const allTeachers = (await loadTeachers()).filter(isTeacherPublicProfileIndexable);
   const { ranked, isNearby } = rankTeachersForCity(allTeachers, city);
   return assembleBundle({
     pageType: "city_hub",
@@ -476,12 +552,13 @@ export async function resolveCityHubDiscoveryPage(citySlug: string): Promise<Loc
 export async function resolveSubjectCityDiscoveryPage(
   disciplineSlug: string,
   citySlug: string,
+  loadTeachers = loadDiscoveryTeachers,
 ): Promise<LocalTeacherDiscoveryPageBundle | null> {
   const city = findCityBySlug(citySlug);
   const discipline = findDisciplineBySlug(disciplineSlug);
   if (!city || !discipline) return null;
 
-  const allTeachers = await fetchIndexableDiscoveryTeachers();
+  const allTeachers = (await loadTeachers()).filter(isTeacherPublicProfileIndexable);
   const { ranked, isNearby } = rankTeachersForCity(allTeachers, city, { discipline });
   return assembleBundle({
     pageType: "subject_city",
@@ -491,6 +568,15 @@ export async function resolveSubjectCityDiscoveryPage(
     isNearby,
     allTeachers,
   });
+}
+
+async function loadDiscoveryTeachers() {
+  try {
+    return await fetchIndexableDiscoveryTeachers();
+  } catch (error) {
+    console.error("[seo:local-discovery] failed to load public supply");
+    throw error;
+  }
 }
 
 export type LocalDiscoverySitemapEntry = {
@@ -511,6 +597,11 @@ function latestTeacherLastModified(entries: RankedTeacher[]): Date | undefined {
 
 export async function fetchLocalDiscoverySitemapEntries(): Promise<LocalDiscoverySitemapEntry[]> {
   const teachers = await fetchIndexableDiscoveryTeachers();
+  return buildLocalDiscoverySitemapEntries(teachers);
+}
+
+export function buildLocalDiscoverySitemapEntries(teachers: RawDiscoveryTeacher[]): LocalDiscoverySitemapEntry[] {
+  teachers = teachers.filter(isTeacherPublicProfileIndexable);
   const entries: LocalDiscoverySitemapEntry[] = [];
 
   for (const city of QC_CITIES) {
@@ -521,7 +612,7 @@ export async function fetchLocalDiscoverySitemapEntries(): Promise<LocalDiscover
     }
     for (const discipline of DISCIPLINES) {
       const subjectRank = rankTeachersForCity(teachers, city, { discipline });
-      if (subjectRank.ranked.length > 0) {
+      if (hasLocalDiscoverySupply(subjectRank.ranked, city)) {
         const lastModified = latestTeacherLastModified(subjectRank.ranked);
         entries.push({
           path: buildSubjectCityPath(discipline.slug, city.slug),

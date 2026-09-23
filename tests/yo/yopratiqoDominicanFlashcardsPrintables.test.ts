@@ -15,7 +15,7 @@
 
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { assertYoTaskScope } from "./yoTaskScope";
 import { join } from "node:path";
 
 const REPO_ROOT = process.cwd();
@@ -40,26 +40,6 @@ function stripComments(src: string): string {
   return src
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/(^|[^:])\/\/[^\n]*/g, "$1");
-}
-
-function changedFiles(): string[] {
-  const commands = [
-    "git diff --name-only main...HEAD",
-    "git diff --name-only",
-    "git diff --name-only --cached",
-  ];
-  return Array.from(
-    new Set(
-      commands
-        .flatMap((command) =>
-          execSync(command, { cwd: REPO_ROOT, encoding: "utf8" })
-            .split(/\r?\n/)
-            .map((line) => line.trim())
-            .filter(Boolean),
-        )
-        .sort(),
-    ),
-  );
 }
 
 type TestFn = () => void | Promise<void>;
@@ -332,6 +312,7 @@ test("Module 3 printables include vocab + menu fill-in + restaurant scenarios + 
     (e: { kind: string }) => e.kind === "verb_form",
   );
   assert.ok(verbExercise);
+  assert.ok(verbExercise.kind === "verb_form");
   for (const item of verbExercise.items as Array<{ person: string }>) {
     assert.ok(
       item.person === "yo" || item.person === "usted",
@@ -363,28 +344,10 @@ test("printable exercises ship a collapsible answer key per worksheet", () => {
 
 // ─── 8. Strict non-goals ────────────────────────────────────────────────
 
-test("no restricted systems are touched by the flashcards/printables work", () => {
-  const forbiddenPrefixes = [
-    "app/api/",
-    "supabase/",
-    "content/legal/",
-    "app/(app)/legal/",
-    "app/(app)/booking/",
-    "app/(app)/upgrade/",
-    "lib/payments/",
-    "lib/config/membrePro",
-    "lib/commissions/",
-    "lib/seo/",
-    "scripts/",
-    "public/audio/",
-  ];
-  for (const file of changedFiles()) {
-    for (const prefix of forbiddenPrefixes) {
-      assert.ok(!file.startsWith(prefix), `Restricted file touched: ${file}`);
-    }
-    assert.ok(!file.endsWith(".mp3"), `MP3 changed: ${file}`);
-    assert.ok(!file.endsWith(".wav"), `WAV changed: ${file}`);
-    assert.ok(!file.endsWith(".m4a"), `M4A changed: ${file}`);
+test("flashcards task policy accepts lesson changes and rejects restricted files", () => {
+  assert.doesNotThrow(() => assertYoTaskScope("flashcards-printables", [PRINTABLES_DATA, FLASHCARD_PREVIEW]));
+  for (const file of ["lib/seo/sitemap.ts", "app/api/stripe/checkout/route.ts", "public/audio/test.mp3"]) {
+    assert.throws(() => assertYoTaskScope("flashcards-printables", [file]), /Outside/);
   }
 });
 

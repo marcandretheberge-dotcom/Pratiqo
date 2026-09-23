@@ -28,7 +28,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import sitemap from "@/app/sitemap";
+import { emptySupplySitemap as sitemap } from "../seo/emptySupplySitemap";
 import {
   getYoFuturePremiumModuleById,
   getYoFuturePremiumModuleByRoute,
@@ -600,7 +600,8 @@ const LESSON_ONE_ID = "arriver-saluer";
 function getLessonOne() {
   const lesson = frQuebecWorkplaceSurvivalModule.lessons[0];
   assert.equal(lesson.id, LESSON_ONE_ID, "Lesson 1 must be the first entry");
-  return lesson;
+  assert.ok(lesson.content && lesson.content.kind === "lesson1", "Lesson 1 content must have its expected discriminator");
+  return { ...lesson, content: lesson.content };
 }
 
 test("Lesson 1 has the documented metadata (id, title, minutes, status, accessStatus)", () => {
@@ -1811,7 +1812,7 @@ test("Quiz option targetFr is the SAME string regardless of UI locale (data-leve
   const content = getLessonOne().content!;
   for (const question of content.quizQuestions) {
     for (const opt of question.options) {
-      const optionRecord = opt as Record<string, unknown>;
+      const optionRecord: Record<string, unknown> = { ...opt };
       // Only `targetFr` is allowed as the target field; no localized
       // targetEn / targetEs sibling that would silently overwrite it.
       assert.equal(

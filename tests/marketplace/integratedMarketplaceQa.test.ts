@@ -378,7 +378,7 @@ test("[P0.2] message email helper sends to recipient only and never includes pri
     //   a private-content prop. If TS ever stops erroring here
     //   because the type was widened, the helper API regressed.
     content: sentinelBody,
-  } as unknown as Parameters<typeof buildNewPratiqoMessageEmail>[0]);
+  });
   assert.doesNotMatch(
     polluted.html,
     new RegExp(sentinelBody.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),

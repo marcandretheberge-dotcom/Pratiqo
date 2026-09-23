@@ -20,13 +20,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { citySlug } = await params;
   const bundle = await resolveCityHubDiscoveryPage(citySlug);
-  if (!bundle || !bundle.indexable) {
-    return { title: "Tuteurs | Pratiqo" };
+  if (!bundle) {
+    return { title: "Tuteurs | Pratiqo", robots: { index: false, follow: true } };
   }
 
   return {
-    title: bundle.title,
+    title: { absolute: bundle.title },
     description: bundle.description,
+    robots: { index: bundle.indexable, follow: true },
     openGraph: {
       title: bundle.title,
       description: bundle.description,
@@ -54,7 +55,6 @@ export default async function CityHubTutorsPage({
   const { citySlug } = await params;
   const bundle = await resolveCityHubDiscoveryPage(citySlug);
   if (!bundle) notFound();
-  if (!bundle.indexable) notFound();
 
   const locale = await getLocale();
   const jsonLd = buildLocalDiscoveryCollectionJsonLd(bundle);

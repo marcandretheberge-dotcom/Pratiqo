@@ -104,7 +104,7 @@ test("Japanese intro data file exposes the documented sections", () => {
   ] as const;
   for (const key of requiredKeys) {
     assert.ok(key in japaneseIntro, `japaneseIntro must expose ${key}`);
-    const value = (japaneseIntro as Record<string, unknown>)[key];
+    const value = japaneseIntro[key];
     assert.ok(
       value !== undefined && value !== null,
       `japaneseIntro.${key} must not be null/undefined`,

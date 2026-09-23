@@ -30,6 +30,7 @@ test("Hero ships FR/EN/ES title, subtitle, and product label", () => {
   }
   assert.match(data.heroTitle.fr, /Imprévus/);
   assert.match(data.heroTitle.en, /Unexpected situations/);
+  assert.ok(typeof data.heroTitle.es === "string");
   assert.match(data.heroTitle.es, /Imprevistos/);
 });
 
@@ -348,12 +349,14 @@ test("Printables ship at least 7 worksheets covering all required kinds", () => 
 test("Print button label ships FR/EN/ES with the A2 workbook wording", () => {
   assert.match(data.printButtonLabel.fr, /Imprimer le cahier A2/);
   assert.match(data.printButtonLabel.en, /Print A2 workbook/);
+  assert.ok(typeof data.printButtonLabel.es === "string");
   assert.match(data.printButtonLabel.es, /Imprimir cuaderno A2/);
 });
 
 test("Final game name includes the A2 mission wording in FR/EN/ES", () => {
   assert.match(data.finalGame.title.fr, /Mission finale A2/);
   assert.match(data.finalGame.title.en, /Final A2 mission/);
+  assert.ok(typeof data.finalGame.title.es === "string");
   assert.match(data.finalGame.title.es, /Misión final A2/);
 });
 
@@ -375,7 +378,7 @@ test("All learner-facing FR/EN/ES strings are non-empty", () => {
     assert.ok(
       value.fr.trim().length > 0 &&
         value.en.trim().length > 0 &&
-        value.es.trim().length > 0,
+        typeof value.es === "string" && value.es.trim().length > 0,
       "Empty locale string detected",
     );
   }

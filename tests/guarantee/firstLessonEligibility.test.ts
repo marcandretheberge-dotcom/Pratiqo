@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createClient } from "@supabase/supabase-js";
 
 import {
   FIRST_LESSON_CLAIM_WINDOW_MS,
@@ -13,11 +14,8 @@ function test(name: string, fn: TestFn) {
 }
 
 // ---------------------------------------------------------------------------
-// Minimal Supabase admin fake. We only implement the surface area used by
-// firstLessonGuaranteeEligibility: `.from(t).select(...).eq().maybeSingle()`,
-// `.from("bookings").select().eq().or().order().limit().maybeSingle()`, and
-// `.from("support_cases").select().eq().ilike().limit()` resolved as a
-// thenable. Mirrors the FakeAdmin pattern used elsewhere in the codebase.
+// Real SDK query construction with an in-memory HTTP transport. The row store
+// never opens a socket; requests and projections are checked below.
 // ---------------------------------------------------------------------------
 
 type ProfileRow = { id: string; first_lesson_guarantee_used_at: string | null };
@@ -35,8 +33,56 @@ class FakeAdmin {
   bookings: BookingRow[] = [];
   supportCases: SupportCaseRow[] = [];
 
+  readonly requests: URL[] = [];
+
+  private readonly transport: typeof fetch = async (input, init) => {
+    const request = new Request(input, init);
+    const url = new URL(request.url);
+    assert.equal(url.origin, "https://guarantee.test");
+    const table = url.pathname.replace("/rest/v1/", "");
+    assert.ok(["profiles", "bookings", "support_cases"].includes(table), table);
+    this.requests.push(url);
+    const query = new FakeQuery(this, table);
+    for (const [key, value] of url.searchParams) {
+      if (key === "select") {
+        const projections: Record<string, string[]> = {
+          profiles: ["first_lesson_guarantee_used_at"],
+          bookings: ["id,student_id,status,completed_at,completion_outcome", "id,completed_at"],
+          support_cases: ["id"],
+        };
+        assert.ok(projections[table].includes(value), `unexpected select: ${value}`);
+        query.select();
+      } else if (key === "or") {
+        assert.equal(value, "(status.eq.completed,completed_at.not.is.null)");
+        query.or(value.slice(1, -1));
+      } else if (key === "order") {
+        assert.equal(value, "completed_at.asc.nullslast");
+        query.order("completed_at", { ascending: true, nullsFirst: false });
+      } else if (key === "limit") {
+        assert.equal(value, "1");
+        query.limit(Number(value));
+      } else if (value.startsWith("eq.")) query.eq(key, value.slice(3));
+      else if (value.startsWith("ilike.")) query.ilike(key, value.slice(6));
+      else assert.fail(`unexpected filter: ${key}=${value}`);
+    }
+    assert.equal(request.method, "GET");
+    const { data } = await query;
+    const columns = url.searchParams.get("select")?.split(",");
+    const projected = columns ? data.map((row) => {
+      assert.ok(row && typeof row === "object");
+      return Object.fromEntries(Object.entries(row).filter(([key]) => columns.includes(key)));
+    }) : data;
+    const single = request.headers.get("accept") === "application/vnd.pgrst.object+json";
+    return Response.json(single ? projected[0] ?? null : projected);
+  };
+
+  readonly client = createClient("https://guarantee.test", "fixture-key", {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { fetch: this.transport },
+  });
+
   from(table: string) {
-    return new FakeQuery(this, table);
+    return this.client.from(table);
   }
 }
 
@@ -155,7 +201,14 @@ function freshAdmin(): FakeAdmin {
 
 test("eligible: current booking is student's first completed booking and within 24h", async () => {
   const admin = freshAdmin();
+  admin.profiles.set("other-student", { id: "other-student", first_lesson_guarantee_used_at: new Date(NOW).toISOString() });
+  admin.supportCases = [
+    { id: "other-case", student_id: "other-student", description: FIRST_LESSON_GUARANTEE_MARKER },
+    { id: "unrelated-case", student_id: STUDENT, description: "Ordinary support request" },
+  ];
   admin.bookings = [
+    { id: "other-booking", student_id: "other-student", status: "completed",
+      completed_at: new Date(NOW - 2 * 60 * 60 * 1000).toISOString(), completion_outcome: "held" },
     {
       id: BOOKING,
       student_id: STUDENT,
@@ -170,6 +223,15 @@ test("eligible: current booking is student's first completed booking and within 
     now: NOW,
   });
   assert.equal(out.eligible, true);
+  assert.deepEqual(admin.requests.map((url) => ({
+    table: url.pathname,
+    query: Object.fromEntries(url.searchParams),
+  })), [
+    { table: "/rest/v1/profiles", query: { select: "first_lesson_guarantee_used_at", id: "eq.student-1" } },
+    { table: "/rest/v1/bookings", query: { select: "id,student_id,status,completed_at,completion_outcome", id: "eq.booking-1" } },
+    { table: "/rest/v1/bookings", query: { select: "id,completed_at", student_id: "eq.student-1", or: "(status.eq.completed,completed_at.not.is.null)", order: "completed_at.asc.nullslast", limit: "1" } },
+    { table: "/rest/v1/support_cases", query: { select: "id", student_id: "eq.student-1", description: `ilike.${FIRST_LESSON_GUARANTEE_MARKER}%`, limit: "1" } },
+  ]);
 });
 
 test("not_completed: booking is still confirmed (not completed) and has no completed_at", async () => {
