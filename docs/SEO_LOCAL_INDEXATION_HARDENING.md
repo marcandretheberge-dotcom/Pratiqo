@@ -1549,3 +1549,59 @@ Remote verified: marcandretheberge-dotcom/Pratiqo, default base main. Fetch conf
 origin/main remains 872c7d82aed276eff6fcf4e4ac2b9d4b5835d828, identical to reviewed
 baseline. No rebase or history rewrite is needed. Publication and exact-HEAD CI /
 preview evidence will be recorded after pushing; no remote result is assumed.
+
+### Published PR and preview evidence
+
+PR: https://github.com/marcandretheberge-dotcom/Pratiqo/pull/399 (base main).
+Publication commits: 6935cf0b (SEO), 28af0925 (fixtures), 8b862c1f (scope),
+b98f274c68ddee5907d19967a2906a97a60a2ac8 (review/rollout documentation).
+No force-push. Index inspected before each commit; only the reviewed 81 paths
+were committed. Two existing sentinel files remain untracked and unchanged.
+
+GitHub checks on b98f274c68ddee5907d19967a2906a97a60a2ac8: Vercel SUCCESS,
+Vercel Preview Comments SUCCESS, Cursor Approval Agent SUCCESS. GitHub reported
+mergeable=true. Required branch-check configuration could not be inspected:
+branch protection/ruleset API returned HTTP 403. Therefore these are observed
+checks, not a claim to have enumerated required protection rules. No PR test
+workflow exists in the checked-in workflows; local suites are not GitHub CI runs.
+
+Preview host (all requests below, redirect=manual):
+pratiqo-git-fix-seo-l-ee7e2c-marcandretheberge-dotcoms-projects.vercel.app
+Vercel deployment associated by the exact commit status:
+https://vercel.com/marcandretheberge-dotcoms-projects/pratiqo/3hDZX2tGrt8vzx6qgcuzv6reYMNb
+
+`SEO_TEST_BASE_URL=<preview> npx tsx tests/seo/localDiscoveryRuntime.test.ts`
+PASS, exit 0. Runtime results:
+
+| Paths | HTTP / HTML robots |
+|---|---|
+| /cours/francais/saint-georges; /cours/espagnol/saint-georges; /cours/mathematiques/varennes | 200, index/follow, present in sitemap |
+| /cours/espagnol/la-pocatiere; /cours/francisation/riviere-du-loup; /cours/francais/beauceville; /cours/anglais/trois-rivieres; /cours/francais/beloeil | 200, noindex/follow, absent from sitemap |
+| /tuteurs/saint-georges | 200, index/follow |
+| /cours/unknown/saint-georges; /cours/francais/unknown; /tuteurs/unknown; /tuteurs-prive/unknown | 404 with Googlebot and browser user agents |
+| /fr/cours/francais/saint-georges?utm_source=regression | 308 to https://www.pratiqo.ca/cours/francais/saint-georges?utm_source=regression |
+| /tuteurs-prive/saint-georges?utm_source=regression | 308 to https://www.pratiqo.ca/tuteurs/saint-georges?utm_source=regression |
+| /sitemap.xml; /robots.txt | 200, application/xml and text/plain respectively |
+
+Every tested page had one correct production canonical, title, description and H1;
+the runtime test found no RSC error template. Sitemap observed 112 total / three
+course-city URLs on this preview snapshot, not a permanent expected total. Private
+and legacy URLs were excluded. robots.txt referenced the canonical sitemap.
+Independent manual-redirect GET checks confirmed X-Robots-Tag: noindex on both
+supported/empty sample pages and sitemap/robots: preview-wide protection remains
+intact despite route-level HTML index/follow where applicable. Redirect destinations
+were inspected only, never followed into production. An initial 200 Vercel
+'Deployment is building' HTML placeholder was NOT counted as a passing sitemap;
+checks ran again after Vercel success and verified actual XML.
+
+Post-commit `npm run test:launch-critical` PASS, exit 0. Logs are local TEMP
+seo-publication-launch.log and seo-publication-preview.log. `git diff origin/main
+--check` PASS. Production code fingerprint still matches the reviewed tree;
+publication only added documentation. This evidence-recording commit is a subsequent
+docs-only HEAD; its exact CI/preview status must be checked separately and recorded
+in the PR description/final response rather than falsely reusing a prior status.
+
+Remaining: separate database correction/preflight/rollout authorization, inability
+to inspect required-check configuration, and live production verification after an
+authorized merge/deployment. No merge/auto-merge, production deployment/promotion,
+migration, history repair, or remote database/data/permission change was performed.
