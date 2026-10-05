@@ -3,8 +3,8 @@
  * Never points students/teachers at admin ops or financial execution.
  */
 
-export const PLANNED_PACKAGE_SUPPORT_EMAIL = "support@pratiqo.ca";
-export const PLANNED_PACKAGE_SUPPORT_MAILTO = "mailto:support@pratiqo.ca";
+export const PLANNED_PACKAGE_SUPPORT_EMAIL = "info@pratiqo.ca";
+export const PLANNED_PACKAGE_SUPPORT_MAILTO = "mailto:info@pratiqo.ca";
 export const PLANNED_PACKAGE_RESOLUTION_HREF = "/resolution";
 export const PLANNED_PACKAGE_OWNER_BOOKING_HREF = "/dashboard";
 export const PLANNED_PACKAGE_TEACHER_PAYMENT_SETUP_HREF = "/teacher/settings#payouts";

@@ -112,7 +112,7 @@ Les professeurs doivent faire preuve d'une vigilance accrue lorsque l'élève es
 - Les cours à domicile avec des mineurs exigent des mesures de protection supplémentaires. La décision fondatrice à valider par l'avocat est d'exiger une vérification des antécédents ou dossiers criminels pour les professeurs qui souhaitent offrir des cours à domicile avec des mineurs, selon les modalités déployées par la plateforme.
 - Si cette vérification n'est pas opérationnelle, l'offre de cours à domicile avec des mineurs devrait ne pas être offerte ou être limitée jusqu'à ce que le processus applicable soit déployé.
 - Le professeur peut refuser un lieu ou une situation qu'il juge dangereux, inapproprié ou non conforme.
-- Tout incident ou préoccupation concernant la sécurité d'un élève doit être signalé rapidement à [`support@pratiqo.ca`](mailto:support@pratiqo.ca). En cas d'urgence, contactez d'abord les services d'urgence.
+- Tout incident ou préoccupation concernant la sécurité d'un élève doit être signalé rapidement à [`info@pratiqo.ca`](mailto:info@pratiqo.ca). En cas d'urgence, contactez d'abord les services d'urgence.
 
 ---
 
@@ -223,7 +223,7 @@ Pratiqo peut enquêter sur les signalements et demander la coopération du profe
 
 **Membre Pro**, s'il est offert, est une **adhésion payante optionnelle** distincte qui peut être soumise à des conditions d'abonnement ou à des modalités additionnelles. Le statut Membre Pro peut donner accès à des avantages économiques tels qu'une **commission réduite** ou un **rabais commercial rétroactif conditionnel sur volume**, lorsque Pratiqo les offre. Ce rabais est calculé selon le volume annuel admissible généré par le professeur sur la marketplace Pratiqo; il ne constitue pas une participation aux profits de Cours Pratiqo Inc., un rendement financier, un placement, ni un revenu garanti. YoPratiqo et les autres produits autonomes distincts sont exclus.
 
-Au lancement, l'adhésion Membre Pro est affichée à **29,99 $CA / mois + taxes applicables**, facturée mensuellement à l'avance, renouvelée automatiquement et annulable en tout temps depuis le tableau de bord ou en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca). Sauf exigence contraire de la loi applicable, l'annulation prend effet à la fin de la période payée en cours.
+Au lancement, l'adhésion Membre Pro est affichée à **29,99 $CA / mois + taxes applicables**, facturée mensuellement à l'avance, renouvelée automatiquement et annulable en tout temps depuis le tableau de bord ou en écrivant à [`info@pratiqo.ca`](mailto:info@pratiqo.ca). Sauf exigence contraire de la loi applicable, l'annulation prend effet à la fin de la période payée en cours.
 
 Pratiqo peut modifier les commissions, prix d'abonnement ou conditions de forfait **prospectivement**, avec un préavis conforme à la loi applicable. Lorsque la loi l'exige, les utilisateurs touchés peuvent annuler avant l'entrée en vigueur du changement.
 
@@ -233,7 +233,7 @@ Membre Pro ne garantit pas un revenu, des élèves, des réservations, un classe
 
 ## 18. Contact
 
-Pour le soutien courant : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+Pour le soutien courant : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
 Pour les questions générales : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 

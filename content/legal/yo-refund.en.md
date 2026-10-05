@@ -63,7 +63,7 @@ Pratiqo may need to adapt, correct, temporarily interrupt, or remove certain fea
 ### 3.2 How to request a refund
 
 - From the platform: **My account → My payments and receipts → Request a refund**.
-- Or by email to [`support@pratiqo.ca`](mailto:support@pratiqo.ca) with your `order number` and the reason.
+- Or by email to [`info@pratiqo.ca`](mailto:info@pratiqo.ca) with your `order number` and the reason.
 
 ### 3.3 Decision and timing
 
@@ -96,7 +96,7 @@ In accordance with **Directive 2011/83/EU (art. 16(m))** and **Directive (EU) 20
 
 ### 4.2 How to exercise the right of withdrawal (without ticked checkbox)
 
-An EU buyer who has not ticked the waiver checkbox may exercise their right of withdrawal by writing to [`support@pratiqo.ca`](mailto:support@pratiqo.ca) **within 14 days of the purchase** with the heading "Exercise of the right of withdrawal — order no. [number]". No justification is required within that window.
+An EU buyer who has not ticked the waiver checkbox may exercise their right of withdrawal by writing to [`info@pratiqo.ca`](mailto:info@pratiqo.ca) **within 14 days of the purchase** with the heading "Exercise of the right of withdrawal — order no. [number]". No justification is required within that window.
 
 ### 4.3 Cumulation with the 30-day commercial guarantee
 
@@ -153,7 +153,7 @@ If any provision of this policy conflicts with a mandatory statutory warranty ap
 ## 9. Contact
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
-email: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+email: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 website: [pratiqo.ca](https://pratiqo.ca)
 
 ---

@@ -58,7 +58,7 @@ Pratiqo aplica una **vigilancia reforzada** a las situaciones que involucran a p
 - Las clases con personas menores deben realizarse en **entornos apropiados, observables y seguros**: un espacio abierto o de fácil acceso (sala, estudio, biblioteca, estudio profesional), nunca en una habitación cerrada ni en un espacio aislado sin posibilidad de supervisión.
 - No se permiten **comunicaciones secretas** con una persona menor (canales privados ocultos al padre o madre, aplicaciones cifradas no relacionadas con la clase, pedidos de ocultar conversaciones).
 - No se permite ninguna **relación privada** con una persona menor fuera del objetivo educativo.
-- Cualquier preocupación sobre la seguridad, la salud, la integridad o el bienestar de una persona menor debe reportarse **rápidamente** a [`support@pratiqo.ca`](mailto:support@pratiqo.ca). En caso de emergencia, comunicarse primero con los servicios de emergencia (**911 en Canadá**).
+- Cualquier preocupación sobre la seguridad, la salud, la integridad o el bienestar de una persona menor debe reportarse **rápidamente** a [`info@pratiqo.ca`](mailto:info@pratiqo.ca). En caso de emergencia, comunicarse primero con los servicios de emergencia (**911 en Canadá**).
 - Pratiqo puede, en la medida permitida por la ley, retirar una cuenta que represente un riesgo para personas menores, incluso sin denuncia formal.
 
 ### 4.2 Clases a domicilio con personas menores — exigencias adicionales
@@ -138,7 +138,7 @@ Los perfiles, reseñas y contenidos publicados en Pratiqo deben ser **honestos y
 
 Cualquier incumplimiento de este Código puede reportarse a Pratiqo.
 
-- **Cómo reportar**: mediante el botón **«Reportar»** del perfil o de la conversación correspondiente, o por correo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **Cómo reportar**: mediante el botón **«Reportar»** del perfil o de la conversación correspondiente, o por correo a [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - **Información útil**: fecha de la clase o del incidente, perfil de la persona implicada, capturas de pantalla o mensajes pertinentes y un **resumen factual** de la situación.
 - **Confidencialidad**: la identidad de quien reporta se maneja con confidencialidad, salvo obligación legal de divulgación.
 - **Revisión interna**: Pratiqo puede, en la medida permitida por la ley, revisar los mensajes intercambiados en la plataforma, el historial de reservas, el historial de la cuenta y otros datos pertinentes para evaluar un reporte.
@@ -167,7 +167,7 @@ Estas medidas se adoptan sujeto a la ley aplicable y a los demás documentos con
 
 ## 12. Apelaciones y revisión
 
-Una persona afectada por una decisión de aplicación puede solicitar una **revisión** escribiendo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca) y aportando:
+Una persona afectada por una decisión de aplicación puede solicitar una **revisión** escribiendo a [`info@pratiqo.ca`](mailto:info@pratiqo.ca) y aportando:
 
 - su identificador de cuenta o el correo de registro;
 - una descripción factual de las circunstancias;
@@ -192,7 +192,7 @@ En caso de conflicto entre este Código y alguno de esos documentos sobre una cu
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canadá
 
-soporte: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+soporte: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 general: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 dirección: [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
 

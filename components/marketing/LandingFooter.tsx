@@ -27,8 +27,8 @@ export function LandingFooter() {
         <span className="text-[#D3D1C7]">·</span>
         <span>
           <span className="text-neutral-700">{t("footerHelpLabel")}&nbsp;: </span>
-          <a href="mailto:support@pratiqo.ca" className="text-teal-700 hover:underline">
-            support@pratiqo.ca
+          <a href="mailto:info@pratiqo.ca" className="text-teal-700 hover:underline">
+            info@pratiqo.ca
           </a>
         </span>
       </div>

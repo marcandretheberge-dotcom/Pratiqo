@@ -66,7 +66,7 @@ Au lancement, Membre Pro est affiché à **29,99 $CA / mois + taxes applicables*
 - La **date du prochain renouvellement** et le **montant à facturer** sont affichés dans votre page d'abonnement.
 - Pratiqo peut envoyer un **avis de renouvellement** par courriel au moins **7 jours avant** la date de facturation lorsque la loi ou les paramètres de la plateforme le prévoient.
 - Le professeur est responsable d'**annuler avant la date de renouvellement** s'il ne souhaite pas poursuivre l'adhésion.
-- **Effet de l'annulation et remboursement :** sauf disposition contraire de la loi applicable (notamment la **Loi sur la protection du consommateur** du Québec pour les professeurs qui auraient la qualité de consommateur au sens de cette loi), l'annulation prend effet à la **fin de la période payée en cours**. Si la loi applicable exige un remboursement au prorata de la période non utilisée, Pratiqo le traite **conformément à la loi**. En cas de doute sur vos droits, écrivez à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **Effet de l'annulation et remboursement :** sauf disposition contraire de la loi applicable (notamment la **Loi sur la protection du consommateur** du Québec pour les professeurs qui auraient la qualité de consommateur au sens de cette loi), l'annulation prend effet à la **fin de la période payée en cours**. Si la loi applicable exige un remboursement au prorata de la période non utilisée, Pratiqo le traite **conformément à la loi**. En cas de doute sur vos droits, écrivez à [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - Aucune disposition des présentes ne limite les droits impératifs prévus par la loi applicable, notamment au Québec en matière de protection du consommateur.
 
 ---
@@ -76,7 +76,7 @@ Au lancement, Membre Pro est affiché à **29,99 $CA / mois + taxes applicables*
 Le professeur peut annuler Membre Pro :
 
 - depuis les paramètres d'abonnement du compte lorsque cette fonctionnalité est offerte; ou
-- en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- en écrivant à [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 
 Sauf mention contraire affichée lors de l'annulation ou exigence d'une loi d'ordre public, **l'annulation prend effet à la fin de la période payée en cours**. Les avantages Membre Pro peuvent demeurer accessibles jusqu'à cette date, puis cesser. Le professeur peut annuler en tout temps depuis son tableau de bord lorsque cette fonctionnalité est disponible, ou en écrivant à l'adresse de soutien ci-dessus.
 
@@ -93,7 +93,7 @@ L'annulation de Membre Pro :
 Sauf disposition d'une loi d'ordre public, dans la mesure où une promotion l'indique expressément, ou dans le cas d'une erreur technique ou de facturation, **les paiements Membre Pro ne sont généralement pas remboursables une fois la période de facturation entamée**.
 
 - Aucun remboursement au prorata n'est offert, sauf si la loi l'exige ou si Pratiqo l'offre expressément.
-- En cas d'erreur technique ou de facturation, le professeur doit écrire à [`support@pratiqo.ca`](mailto:support@pratiqo.ca) avec les détails utiles (identifiant de transaction, date, motif).
+- En cas d'erreur technique ou de facturation, le professeur doit écrire à [`info@pratiqo.ca`](mailto:info@pratiqo.ca) avec les détails utiles (identifiant de transaction, date, motif).
 - Les présentes ne limitent pas les droits impératifs du professeur, notamment ceux issus de la **Loi sur la protection du consommateur** du Québec ou de toute autre législation d'ordre public.
 
 ---
@@ -215,7 +215,7 @@ La **ristourne annuelle Membre Pro**, lorsqu'elle est offerte, est un **rabais c
 
 ## 16. Litiges de paiement et rétrofacturations
 
-Avant d'ouvrir une contestation auprès de l'émetteur de carte, le professeur **devrait contacter** [`support@pratiqo.ca`](mailto:support@pratiqo.ca) lorsque cela est possible, afin de tenter une résolution rapide.
+Avant d'ouvrir une contestation auprès de l'émetteur de carte, le professeur **devrait contacter** [`info@pratiqo.ca`](mailto:info@pratiqo.ca) lorsque cela est possible, afin de tenter une résolution rapide.
 
 - Les contestations abusives ou injustifiées peuvent affecter l'état du compte et l'admissibilité à Membre Pro.
 - Pratiqo peut enquêter sur tout litige de facturation et demander de la documentation.
@@ -255,7 +255,7 @@ Le traitement des renseignements personnels est décrit dans la **[Politique de 
 
 ## 19. Soutien et avis formels
 
-Pour le soutien courant : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+Pour le soutien courant : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
 Pour les questions générales : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 

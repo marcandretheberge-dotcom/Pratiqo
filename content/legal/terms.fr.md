@@ -232,8 +232,8 @@ Pratiqo se réserve le droit de modifier les présentes CGU à tout moment. Les 
 ## 14. Contact
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada  
-soutien : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)  
-général : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)  
+soutien : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)\
+général : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)\
 avis formels : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)  
 site web : [pratiqo.ca](https://pratiqo.ca)
 

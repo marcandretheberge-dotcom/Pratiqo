@@ -36,7 +36,7 @@ You may contact this person to, **as applicable and subject to applicable law**:
 - **withdraw consent** where permitted;
 - file a **complaint** or request an internal review.
 
-For general inquiries you may also write to [`info@pratiqo.ca`](mailto:info@pratiqo.ca). For support: [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+For general inquiries you may also write to [`info@pratiqo.ca`](mailto:info@pratiqo.ca). For support: [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 
 ---
 
@@ -142,7 +142,7 @@ As a technical reliability measure, we may send **technical error reports** to *
 
 Use the **“Privacy preferences”** footer link to reopen your preferences. You can also configure your **browser** to block or delete certain cookies; this may limit some features.
 
-Questions: **support@pratiqo.ca**.
+Questions: **info@pratiqo.ca**.
 
 ---
 
@@ -241,7 +241,7 @@ We implement **reasonable administrative, technical, and organizational safeguar
 
 - protecting your **login credentials** and passwords;
 - using **two-factor authentication** when offered;
-- **reporting** suspicious activity promptly to [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **reporting** suspicious activity promptly to [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 
 ---
 
@@ -335,7 +335,7 @@ The use of AI tools available on the platform **must not** be used to submit **f
 
 - You may receive **transactional and service messages** related to your account and your lessons (confirmations, reminders, security updates, invoices, legal notices); these messages **do not require** a separate marketing consent.
 - **Promotional messages** (newsletter, offers, launches) may **require your consent** where required by **Canada's Anti-Spam Legislation (CASL)** or by any other applicable law.
-- You may **unsubscribe** from promotional messages by following the link provided in the message or by writing to [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- You may **unsubscribe** from promotional messages by following the link provided in the message or by writing to [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - **Marketing unsubscription** **does not stop** transactional messages necessary for the provision of the service.
 
 ---
@@ -372,7 +372,7 @@ Earlier versions may be retained as an internal archive.
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
 
 - Person responsible for the protection of personal information: **Marc-André Théberge** — [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
-- Support: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+- Support: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 - General: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
 **Relationship with other policies.** This Policy must be read together with:

@@ -94,7 +94,7 @@ Empty allowlist ⇒ canary purchase disabled.
 - Watch `/admin/planned-package-launch-monitor` (first 72h checklist)
 - Watch `/admin/planned-package-orders` for payment_confirmed / fulfillment_failed
 - Watch refund quote queue and payout eligibility admin review
-- Support contact remains `support@pratiqo.ca` (public copy)
+- Support contact remains `info@pratiqo.ca` (public copy)
 - Manual refund / transfer / reversal only via admin after confirmation
 
 See [`planned-package-launch-monitoring.md`](./planned-package-launch-monitoring.md).

@@ -100,13 +100,13 @@ A payment may **fail** for many reasons (declined card, insufficient funds, expi
 - A **failed payment** may **prevent confirmation** of a booking and lead to its automatic cancellation.
 - Pratiqo may, subject to applicable law, **suspend, restrict, or remove access** to certain features when a payment fails or remains unpaid.
 - Users must provide **accurate and up-to-date payment information**.
-- Any **duplicate charge, amount error, currency error**, or obvious payment error should be reported promptly to [`support@pratiqo.ca`](mailto:support@pratiqo.ca) with useful supporting evidence (transaction id, date, amount, screenshots).
+- Any **duplicate charge, amount error, currency error**, or obvious payment error should be reported promptly to [`info@pratiqo.ca`](mailto:info@pratiqo.ca) with useful supporting evidence (transaction id, date, amount, screenshots).
 
 ---
 
 ## 9. Disputes and chargebacks
 
-Before opening a dispute with the card issuer, the user **should first contact** [`support@pratiqo.ca`](mailto:support@pratiqo.ca) to attempt an internal resolution.
+Before opening a dispute with the card issuer, the user **should first contact** [`info@pratiqo.ca`](mailto:info@pratiqo.ca) to attempt an internal resolution.
 
 Following a **chargeback** or **payment dispute**, Pratiqo may, to the extent permitted by law:
 
@@ -191,7 +191,7 @@ Purchases of **YoPratiqo self-paced courses** are governed by the **[YoPratiqo R
 
 Any payment, refund, payout, or billing issue may be reported to Pratiqo.
 
-- **How to report**: by email to [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **How to report**: by email to [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - **Useful information**: booking id, payment date, **amount**, currency, last payment method used, screenshots or receipts, and a **factual summary** of the situation.
 - **Review**: Pratiqo may, to the extent permitted by law, review transactions, on-platform messages, and account history when assessing the report.
 - **Safety**: any **safety** or **conduct** issue must be handled under the **[Code of Conduct](/legal/code-de-conduite)**. In an emergency, contact **emergency services first** (911 in Canada) — Pratiqo is not an emergency service and cannot intervene physically.
@@ -218,7 +218,7 @@ If there is a conflict between this Policy and another Pratiqo document on an ad
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
 
-support: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+support: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 general: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 management: [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
 

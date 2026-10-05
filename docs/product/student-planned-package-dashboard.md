@@ -25,7 +25,7 @@ Authenticated students can view **their own** planned package orders:
 - next upcoming session;
 - session list with dates;
 - high-level cancellation/refund review status;
-- support CTA (`support@pratiqo.ca` + `/resolution`).
+- support CTA (`info@pratiqo.ca` + `/resolution`).
 - shared status badge / session timeline / empty-loading-error polish.
 
 ## Explicit non-goals

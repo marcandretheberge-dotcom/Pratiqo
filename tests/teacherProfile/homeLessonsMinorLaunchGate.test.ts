@@ -98,7 +98,7 @@ test("teachers cannot self-enable minor-at-home approval through an autonomous t
 });
 
 test("teacher request path is support/manual-review only and does not create fake storage", () => {
-  assert.match(verificationSrc, /mailto:support@pratiqo\.ca/);
+  assert.match(verificationSrc, /mailto:info@pratiqo\.ca/);
   assert.match(verificationSrc, /data-testid="teacher-profile-mgmt-home-minor-request-cta"/);
   assert.doesNotMatch(verificationSrc, /\.from\("support_cases"\)|fetch\("\/api\/support\/cases"/);
   assert.match(supportCasesMigrationSrc, /category IN \([\s\S]*'other'/);

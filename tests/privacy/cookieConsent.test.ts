@@ -290,7 +290,7 @@ test("privacy policy mentions PostHog, Sentry, and support contact", () => {
     const md = READ(`content/legal/confidentialite.${lang}.md`);
     assert.match(md, /PostHog/i);
     assert.match(md, /Sentry/i);
-    assert.match(md, /support@pratiqo\.ca/);
+    assert.match(md, /info@pratiqo\.ca/);
     assert.match(md, /session replay|relectura de sesión|sin relectura/i);
   }
 });

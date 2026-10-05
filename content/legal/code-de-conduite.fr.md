@@ -58,7 +58,7 @@ Pratiqo accorde une **vigilance accrue** aux situations impliquant des personnes
 - Les cours impliquant des mineurs doivent se dérouler dans des **lieux appropriés, observables et sécuritaires** : espace ouvert ou facilement accessible (salon, salle d'étude, bibliothèque, studio professionnel), jamais une chambre fermée ou un espace isolé sans supervision possible.
 - Aucune **communication secrète** avec un mineur (canal privé non visible par le parent, application chiffrée non liée au cours, demande de cacher un échange).
 - Aucune **relation privée** avec un mineur en dehors de l'objectif pédagogique.
-- Toute préoccupation concernant la sécurité, la santé, l'intégrité ou le bien-être d'un mineur doit être signalée **rapidement** à [`support@pratiqo.ca`](mailto:support@pratiqo.ca). En situation d'urgence, communiquer d'abord avec les services d'urgence (**911 au Canada**).
+- Toute préoccupation concernant la sécurité, la santé, l'intégrité ou le bien-être d'un mineur doit être signalée **rapidement** à [`info@pratiqo.ca`](mailto:info@pratiqo.ca). En situation d'urgence, communiquer d'abord avec les services d'urgence (**911 au Canada**).
 - Pratiqo peut, dans la mesure permise par la loi, retirer un compte qui présente un risque pour des personnes mineures, même en l'absence de plainte formelle.
 
 ### 4.2 Cours à domicile avec des mineurs — exigences supplémentaires
@@ -138,7 +138,7 @@ Les profils, avis et contenus publiés sur Pratiqo doivent être **honnêtes et 
 
 Tout manquement au présent code peut être signalé à Pratiqo.
 
-- **Comment signaler** : par le bouton **« Signaler »** sur le profil ou la conversation concernée, ou par courriel à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **Comment signaler** : par le bouton **« Signaler »** sur le profil ou la conversation concernée, ou par courriel à [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - **Renseignements utiles** : date du cours ou de l'incident, profil de la personne concernée, captures d'écran ou messages pertinents, et un **résumé factuel** de la situation.
 - **Confidentialité** : l'identité de la personne qui signale est traitée de manière confidentielle, sauf obligation légale de divulgation.
 - **Examen interne** : Pratiqo peut, dans la mesure permise par la loi, examiner les messages échangés sur la plateforme, l'historique des réservations, l'historique du compte et les autres renseignements pertinents pour évaluer un signalement.
@@ -167,7 +167,7 @@ Ces mesures sont prises sous réserve du droit applicable et des autres document
 
 ## 12. Demande de révision
 
-Une personne visée par une décision d'application peut demander un **réexamen** en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca) et en fournissant :
+Une personne visée par une décision d'application peut demander un **réexamen** en écrivant à [`info@pratiqo.ca`](mailto:info@pratiqo.ca) et en fournissant :
 
 - son identifiant de compte ou son courriel d'inscription;
 - une description factuelle des circonstances;
@@ -191,7 +191,7 @@ En cas de divergence entre le présent code et l'un de ces documents pour une qu
 ---
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
-support : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+support : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 général : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 direction : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
 

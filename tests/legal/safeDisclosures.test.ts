@@ -1437,7 +1437,7 @@ test("Membre Pro subscription disclosure exists in FR, EN, and ES", () => {
     assert.match(combined, /advance|avance|adelantad/i);
     assert.match(combined, /automatic|automatique|autom.tica/i);
     assert.match(combined, /dashboard|tableau de bord|panel/i);
-    assert.match(combined, /support@pratiqo\.ca/i);
+    assert.match(combined, /info@pratiqo\.ca/i);
     assert.match(combined, /end of the current paid billing period|fin de la p.riode pay.e en cours|final del per.odo pagado en curso/i);
   }
 });
@@ -1508,7 +1508,7 @@ test("accessibility legal page exists with cautious wording and support contact"
 
   for (const locale of locales) {
     const content = read(`content/legal/accessibilite.${locale}.md`);
-    assert.match(content, /support@pratiqo\.ca/i);
+    assert.match(content, /info@pratiqo\.ca/i);
     assert.match(content, /souhaite rendre|aims to make|busca que/i);
     assert.match(content, /travaille progressivement|progressively working|trabaja progresivamente/i);
     assert.doesNotMatch(content, /perfect WCAG|full WCAG compliance|conformit. WCAG compl.te garantie|cumplimiento WCAG completo garantizado/i);

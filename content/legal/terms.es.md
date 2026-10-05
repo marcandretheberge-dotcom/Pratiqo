@@ -215,7 +215,7 @@ Pratiqo se reserva el derecho de modificar estos Términos en cualquier momento.
 ## 14. Contacto
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canadá  
-soporte: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)  
-general: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)  
+soporte: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)\
+general: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)\
 avisos formales: [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)  
 sitio web: [pratiqo.ca](https://pratiqo.ca)

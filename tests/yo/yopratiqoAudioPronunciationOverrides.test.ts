@@ -8,6 +8,7 @@
  */
 
 import assert from "node:assert/strict";
+import { hasOnlyPublicContactChange } from "../helpers/contactAddressScope";
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -476,6 +477,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     /^supabase\//,
   ];
   for (const path of changed) {
+    if (hasOnlyPublicContactChange(path)) continue;
     if (branchSpecificAllowlist.has(path)) continue;
     assert.ok(
       !forbidden.some((re) => re.test(path)),

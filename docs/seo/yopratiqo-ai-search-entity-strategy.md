@@ -242,7 +242,7 @@ All pages, metadata, schema, and marketing copy must use consistent naming and c
 | Self-paced product name | YoPratiqo |
 | Legal company name | Cours Pratiqo Inc. |
 | Canonical domain | https://www.pratiqo.ca |
-| Support email | support@pratiqo.ca |
+| Support email | info@pratiqo.ca |
 | General info email | info@pratiqo.ca |
 | Founder contact | marc-andre.theberge@pratiqo.ca |
 

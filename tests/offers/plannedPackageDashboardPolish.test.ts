@@ -307,6 +307,6 @@ test("docs and i18n include polish copy; marketplace-safe", () => {
 });
 
 test("support CTA uses canonical support email", () => {
-  assert.equal(PLANNED_PACKAGE_SUPPORT_EMAIL, "support@pratiqo.ca");
-  assert.equal(PLANNED_PACKAGE_SUPPORT_MAILTO, "mailto:support@pratiqo.ca");
+  assert.equal(PLANNED_PACKAGE_SUPPORT_EMAIL, "info@pratiqo.ca");
+  assert.equal(PLANNED_PACKAGE_SUPPORT_MAILTO, "mailto:info@pratiqo.ca");
 });

@@ -17,7 +17,7 @@ export async function send(opts: { to: string; subject: string; html: string }):
   try {
     const result = await resend.emails.send({
       from: "Pratiqo <onboarding@pratiqo.ca>",
-      replyTo: "support@pratiqo.ca",
+      replyTo: "info@pratiqo.ca",
       to: opts.to,
       subject: opts.subject,
       html: opts.html,

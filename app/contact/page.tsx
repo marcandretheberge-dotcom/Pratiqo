@@ -25,10 +25,10 @@ export default function ContactPage() {
             Question sur ton compte, problème technique, ou aide pour réserver un cours ?
           </p>
           <a
-            href="mailto:support@pratiqo.ca"
+            href="mailto:info@pratiqo.ca"
             className="inline-flex items-center text-teal-700 font-semibold hover:underline"
           >
-            support@pratiqo.ca →
+            info@pratiqo.ca →
           </a>
         </div>
 
