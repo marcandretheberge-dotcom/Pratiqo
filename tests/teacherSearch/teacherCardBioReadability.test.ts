@@ -63,8 +63,8 @@ test("search card footer uses mt-auto for aligned layout", () => {
 test("search card does not show loud uppercase availability copy", () => {
   assert.doesNotMatch(TEACHER_CARD, /uppercase tracking-wide text-teal-800/);
   assert.doesNotMatch(TEACHER_CARD, /font-bold uppercase tracking-wide/);
-  assert.match(TEACHER_CARD, /availableThisWeekMatch/);
-  assert.match(TEACHER_CARD, /rounded-full bg-emerald-600/);
+  assert.match(TEACHER_CARD, /<TeacherBookingReadiness teacher=\{teacher\}/);
+  assert.doesNotMatch(TEACHER_CARD, /availableThisWeekMatch/);
 });
 
 test("search card shows distance when distanceKm is available and hides private address", () => {

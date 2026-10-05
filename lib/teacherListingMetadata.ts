@@ -2,6 +2,7 @@ import type { Teacher } from "@/types";
 import { normalizeTeacherImageUrl, resolveTeacherPublicPhoto } from "@/lib/teacherPhoto";
 
 export type TeacherPlansApiPayload = {
+  bookingReadiness?: Record<string, boolean | null>;
   plans?: Record<string, string>;
   photos?: Record<string, string | null>;
   /**
@@ -33,6 +34,7 @@ export function applyTeacherListingMetadata(
 
       return {
         ...teacher,
+        bookingReady: body.bookingReadiness?.[teacher.id] ?? null,
         imageUrl: resolveTeacherPublicPhoto(photos[teacher.id], baseImageUrl),
         profilePlan: plans[teacher.id] ?? teacher.profilePlan ?? "free",
       };

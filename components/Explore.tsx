@@ -40,7 +40,9 @@ import { useLocale } from "@/lib/locale-context";
 import { applyTeacherListingMetadata } from "@/lib/teacherListingMetadata";
 import { TEACHERS_LIST_SELECT, TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
-import { teacherPrefCompareStudents, type StudentLocationPrefs } from "@/lib/studentLocationSearch";
+import { type StudentLocationPrefs } from "@/lib/studentLocationSearch";
+import { sortRows } from "@/lib/teacherSearchEngine";
+import { TeacherBookingReadiness } from "@/components/teachers/TeacherBookingReadiness";
 import { PriceDisplay } from "@/components/PriceDisplay";
 
 function verificationSortKey(t: Teacher) {
@@ -51,25 +53,6 @@ function verificationSortKey(t: Teacher) {
     is_verified: t.isVerified,
     verification_level: t.verificationLevel ?? null,
   });
-}
-
-function compareExploreTeachers(
-  a: { teacher: Teacher; distanceKm: number | null },
-  b: { teacher: Teacher; distanceKm: number | null },
-  opts: { geo: boolean; sortMode: "default" | "reliable"; studentPrefs: StudentLocationPrefs | null },
-) {
-  const la = verificationSortKey(a.teacher);
-  const lb = verificationSortKey(b.teacher);
-  if (opts.sortMode === "reliable" && lb !== la) return lb - la;
-  if (opts.geo && a.distanceKm != null && b.distanceKm != null) {
-    const da = a.distanceKm;
-    const db = b.distanceKm;
-    if (da !== db) return da - db;
-  }
-  if (opts.sortMode === "default" && lb !== la) return lb - la;
-  const prefDelta = teacherPrefCompareStudents(a.teacher, b.teacher, opts.studentPrefs);
-  if (prefDelta !== 0) return prefDelta;
-  return (b.teacher.rating ?? 0) - (a.teacher.rating ?? 0);
 }
 
 type ExploreGroupSession = GroupSessionRow & {
@@ -269,7 +252,14 @@ export function Explore({
   };
 
   const filteredTeachers = useMemo(() => {
-    const sortOpts = (geo: boolean) => ({ geo, sortMode, studentPrefs } as const);
+    const rank = (rows: Array<{ teacher: Teacher; distanceKm: number | null }>) => sortRows(rows, {
+      sortMode: sortMode === "reliable" ? "trusted" : "relevance",
+      searchQuery,
+      format: radiusFilter === "online" || teachingMode === "online" ? "online" :
+        teachingMode === "all" ? "no_preference" : "in_person",
+      hasLocationContext: Boolean(geo),
+      studentPrefs,
+    });
     const base = teachers
       .filter((t) => {
         const matchesCategory = teacherMatchesExploreCategory(t, selectedCategory);
@@ -295,29 +285,19 @@ export function Explore({
       const onlineOnly = base.filter(
         (x) => x.teacher.teachingMode === "online" || x.teacher.teachingMode === "both",
       );
-      onlineOnly.sort((a, b) => compareExploreTeachers(a, b, sortOpts(false)));
-      return onlineOnly;
+      return rank(onlineOnly);
     }
 
     // "Tous" radius filter: ignore radius constraints.
     if (radiusFilter === "all") {
-      const allTeachers = [...base];
-      if (geo) {
-        allTeachers.sort((a, b) => compareExploreTeachers(a, b, sortOpts(true)));
-      } else {
-        allTeachers.sort((a, b) => compareExploreTeachers(a, b, sortOpts(false)));
-      }
-      return allTeachers;
+      return rank(base);
     }
 
     const withinRadius = geo
       ? base.filter((x) => x.distanceKm !== null && x.distanceKm <= radiusFilter)
       : base;
 
-    // If geo is active, sort by closest first; otherwise (or if user denied GPS) sort by rating.
-    withinRadius.sort((a, b) => compareExploreTeachers(a, b, sortOpts(Boolean(geo))));
-
-    return withinRadius;
+    return rank(withinRadius);
   }, [teachers, selectedCategory, searchQuery, teachingMode, onlyVerified, geo, radiusFilter, sortMode, studentPrefs]);
 
   const filteredGroupSessions = useMemo(() => {
@@ -849,7 +829,7 @@ function TeacherCard({
 
         <div className="flex items-end justify-between mt-4 pt-4 border-t border-[var(--p-light-teal-bg)]">
           <div className="space-y-1">
-            <p className="ds-label text-[var(--p-text-subtle)]">{t("nextAvailableLesson")}</p>
+            <TeacherBookingReadiness teacher={teacher} />
             <div className="flex items-center gap-2">
               <VerifiedBadge
               verified={teacher.isVerified || Boolean(teacher.identityVerified)}

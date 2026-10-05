@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { TeacherAvatar } from "@/components/TeacherAvatar";
+import { TeacherBookingReadiness } from "@/components/teachers/TeacherBookingReadiness";
 import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
 import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { formatTeacherCardDisciplines } from "@/lib/teacherMapper";
@@ -47,9 +48,6 @@ export function LandingTeacherListingCard({
     reviewCount: teacher.reviews,
   });
   const distKm = geo ? Math.round(getTeacherPublicDistanceKm(teacher, geo.lat, geo.lng) ?? 0) || null : null;
-  const hasAvailability =
-    Array.isArray(teacher.availability) &&
-    teacher.availability.some((slot) => String(slot ?? "").trim().length > 0);
   const formatLabel = getTeacherCompactFormatLabel(teacher, {
     online: t("filterOnline"),
     inPerson: t("filterInPerson"),
@@ -121,12 +119,7 @@ export function LandingTeacherListingCard({
               {formatLabel}
             </span>
           ) : null}
-          {hasAvailability ? (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-600" aria-hidden />
-              {t("availableThisWeekMatch")}
-            </span>
-          ) : null}
+          <TeacherBookingReadiness teacher={teacher} />
         </span>
         {Number(teacher.pricePerLesson) > 0 ? (
           <span className="font-bold text-[#0F766E] min-[420px]:text-right">

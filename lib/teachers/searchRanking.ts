@@ -320,10 +320,12 @@ export function computeTeacherSearchScore(
   };
 }
 
-/**
- * Deterministic quality ordering for public search (relevance mode).
- * Higher weighted score first; UUID is final tie-breaker only.
- */
+/** Unknown readiness stays in discovery, never in the confirmed-bookable group. */
+export function compareTeacherBookability(a: Teacher, b: Teacher): number {
+  return Number(b.bookingReady === true) - Number(a.bookingReady === true);
+}
+
+/** Bookable first, then cumulative quality; UUID breaks exact ties only. */
 export function compareTeachersBySearchQuality(
   a: Teacher,
   b: Teacher,
@@ -332,6 +334,8 @@ export function compareTeachersBySearchQuality(
     distanceKmB?: number | null;
   },
 ): number {
+  const bookability = compareTeacherBookability(a, b);
+  if (bookability !== 0) return bookability;
   const scoreA = computeTeacherSearchScore(a, {
     searchQuery: opts?.searchQuery,
     distanceKm: opts?.distanceKmA ?? opts?.distanceKm,
