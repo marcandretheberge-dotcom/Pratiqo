@@ -1,4 +1,7 @@
 {
+  "teacherBookingReady": "Réservation possible dans les 4 prochaines semaines",
+  "teacherBookingUnavailable": "Pas de réservation disponible pour le moment",
+  "teacherBookingUnknown": "Réservabilité à vérifier",
   "aboutSection": "À propos",
   "teacherBioContactHiddenNotice": "Les coordonnées personnelles sont masquées avant la première leçon.",
   "teacherBadgeIdentityVerified": "Identité vérifiée",

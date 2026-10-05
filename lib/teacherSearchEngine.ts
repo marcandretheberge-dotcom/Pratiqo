@@ -5,7 +5,7 @@ import { teacherMatchesExploreCategory, teacherMatchesExploreSearch } from "@/li
 import type { TeacherSearchCriteria, TeacherSearchFormat } from "@/lib/teacherSearchCriteria";
 import { teacherStudentPrefScore } from "@/lib/studentLocationSearch";
 import { teacherMatchesAvailabilityWindow } from "@/lib/slots";
-import { compareTeachersBySearchQuality, computeTeacherSearchScore } from "@/lib/teachers/searchRanking";
+import { compareTeacherBookability, compareTeachersBySearchQuality, computeTeacherSearchScore } from "@/lib/teachers/searchRanking";
 
 function foldAscii(s: string): string {
   return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
@@ -151,6 +151,7 @@ function isOnlineSearchFormat(
   prefs?: { preferred_learning_format: string | null } | null,
 ): boolean {
   if (format === "online") return true;
+  if (format && format !== "no_preference") return false;
   const pref = String(prefs?.preferred_learning_format ?? "")
     .trim()
     .toLowerCase();
@@ -196,8 +197,10 @@ export function sortRows(
     });
 
   const cmp = (a: TeacherSearchRow, b: TeacherSearchRow) => {
+    const bookability = compareTeacherBookability(a.teacher, b.teacher);
+    if (bookability !== 0) return bookability;
     if (mode === "nearest") {
-      if (a.distanceKm != null && b.distanceKm != null && a.distanceKm !== b.distanceKm) {
+      if (!onlineSearch && a.distanceKm != null && b.distanceKm != null && a.distanceKm !== b.distanceKm) {
         return a.distanceKm - b.distanceKm;
       }
       // Distance ties (or missing): fall through to weighted trust/quality.

@@ -43,6 +43,9 @@ export type TeacherTeachingZone = {
 
 export interface Teacher {
   id: string;
+  /** Server-verified regular-lesson availability in the booking calendar (4 weeks).
+   * Unknown/missing never means bookable; the booking API remains authoritative. */
+  bookingReady?: boolean | null;
   /** Compte Supabase (auth) lié à la fiche professeur — messagerie, etc. */
   userId?: string | null;
   name: string;

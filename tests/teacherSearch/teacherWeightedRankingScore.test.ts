@@ -15,7 +15,7 @@ import {
 } from "@/lib/teachers/searchRanking";
 import { getTeacherPhotoQualityKind } from "@/lib/teacherPhoto";
 import { isTeacherMarketplaceVisibleRow } from "@/lib/teachers/marketplaceVisibility";
-import { sortRows, buildTeacherSearchRows } from "@/lib/teacherSearchEngine";
+import { sortRows, buildTeacherSearchRows, filterTeacherPool, applyRadiusFilter } from "@/lib/teacherSearchEngine";
 
 type TestFn = () => void;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -277,6 +277,48 @@ test("no-photo/no-bio/unverified teachers remain marketplace-visible", () => {
     }),
     true,
   );
+});
+
+test("bookability outranks a higher score in every sort mode, including unknown readiness", () => {
+  const ready = baseTeacher({ id: "ready", bookingReady: true, imageUrl: "", bio: "", verificationLevel: 0 });
+  const unavailable = baseTeacher({ id: "unavailable", bookingReady: false, identityVerified: true, diplomaVerified: true, verifiedExperience: true });
+  const unknown = { ...unavailable, id: "unknown", bookingReady: null };
+  assert.ok(computeTeacherSearchScore(unavailable).total > computeTeacherSearchScore(ready).total);
+  assert.ok(compareTeachersBySearchQuality(ready, unavailable) < 0);
+  for (const sortMode of ["relevance", "nearest", "trusted"] as const) {
+    const sorted = sortRows([{ teacher: unavailable, distanceKm: 1 }, { teacher: unknown, distanceKm: 1 }, { teacher: ready, distanceKm: 90 }], { sortMode });
+    assert.equal(sorted[0].teacher.id, "ready");
+    assert.equal(sorted.length, 3);
+  }
+});
+
+test("no-filter bookable ranking remains cumulative, deterministic and does not require reviews", () => {
+  const newcomer = baseTeacher({ id: "new", bookingReady: true, reviews: 0, identityVerified: true, diplomaVerified: true });
+  const reviewed = baseTeacher({ id: "old", bookingReady: true, rating: 5, reviews: 100, imageUrl: "", bio: "" });
+  const twin = { ...newcomer, id: "aaa" };
+  const order = (teachers: Teacher[]) => sortRows(buildTeacherSearchRows(teachers, { geo: null }), { sortMode: "relevance" }).map((row) => row.teacher.id);
+  assert.ok(computeTeacherSearchScore(newcomer).total > computeTeacherSearchScore(reviewed).total);
+  assert.deepEqual(order([reviewed, newcomer, twin]), ["aaa", "new", "old"]);
+  assert.deepEqual(order([twin, newcomer, reviewed]), ["aaa", "new", "old"]);
+});
+
+test("booking priority cannot bypass discipline, format or radius filters", () => {
+  const match = baseTeacher({ id: "match", discipline: "Piano", teachingMode: "person", bookingReady: false });
+  const wrongDiscipline = { ...match, id: "guitar", discipline: "Guitare", bookingReady: true };
+  const wrongFormat = { ...match, id: "online", teachingMode: "online" as const, bookingReady: true };
+  const far = { ...match, id: "far", bookingReady: true };
+  const filtered = filterTeacherPool([match, wrongDiscipline, wrongFormat, far], { searchQuery: "piano", format: "in_person" });
+  const rows = applyRadiusFilter(filtered.map((teacher) => ({ teacher, distanceKm: teacher.id === "far" ? 100 : 2 })), 5);
+  assert.deepEqual(sortRows(rows, { sortMode: "relevance" }).map((row) => row.teacher.id), ["match"]);
+});
+
+test("online ignores distance even in nearest mode; explicit local format overrides saved online preference", () => {
+  const strong = baseTeacher({ id: "far", bookingReady: true, identityVerified: true });
+  const weak = baseTeacher({ id: "near", bookingReady: true });
+  const rows = [{ teacher: weak, distanceKm: 1 }, { teacher: strong, distanceKm: 500 }];
+  assert.equal(sortRows(rows, { sortMode: "nearest", format: "online" })[0].teacher.id, "far");
+  const prefs = { country_code: null, timezone: null, currency: null, city: null, region: null, preferred_learning_format: "online" };
+  assert.equal(sortRows(rows, { sortMode: "nearest", format: "in_person", studentPrefs: prefs })[0].teacher.id, "near");
 });
 
 async function run() {

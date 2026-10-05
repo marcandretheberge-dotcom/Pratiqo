@@ -15,6 +15,7 @@ import { useLocale } from "../lib/locale-context";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { TeacherAvatar } from "./TeacherAvatar";
 import { TeacherCardIdentityCheck } from "@/components/teachers/TeacherCardIdentityCheck";
+import { TeacherBookingReadiness } from "@/components/teachers/TeacherBookingReadiness";
 import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { formatApproxDistanceKm } from "@/lib/studentLocation";
 import { getTeacherMapCoords } from "@/lib/teacherTeachingZones";
@@ -581,6 +582,7 @@ function SearchMapTeacherPopup({
                   />
                 </div>
               ) : null}
+              <TeacherBookingReadiness teacher={teacher} />
             </div>
           </div>
 

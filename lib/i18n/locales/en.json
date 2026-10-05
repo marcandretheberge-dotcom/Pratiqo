@@ -1,4 +1,7 @@
 {
+  "teacherBookingReady": "Booking available in the next 4 weeks",
+  "teacherBookingUnavailable": "No booking available at the moment",
+  "teacherBookingUnknown": "Booking availability not verified",
   "aboutSection": "About",
   "teacherBioContactHiddenNotice": "Personal contact details are hidden before the first lesson.",
   "teacherBadgeIdentityVerified": "Identity verified",

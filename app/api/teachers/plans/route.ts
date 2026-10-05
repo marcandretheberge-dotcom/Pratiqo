@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { isTeacherMarketplaceVisibleRow } from "@/lib/teachers/marketplaceVisibility";
 import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
+import { getTeacherListingBookability } from "@/lib/teachers/listingBookability";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,8 @@ function normalizePlan(p: string | null | undefined): string {
 type TeacherMetadataRow = {
   id: string;
   user_id?: string | null;
+  discipline?: string | null;
+  category?: string | null;
   is_public?: boolean | null;
   is_demo?: boolean | null;
   deactivated_at?: string | null;
@@ -46,7 +49,9 @@ export async function GET(req: Request) {
   const admin = getSupabaseAdmin();
   const { data: teachers, error } = await admin
     .from(TEACHERS_PUBLIC_TABLE)
-    .select("id, user_id, is_public, is_demo, deactivated_at, deleted_at")
+    // The public view already excludes demos/inactive teachers. Private lifecycle
+    // columns (notably is_public) are intentionally not part of its projection.
+    .select("id, user_id, discipline, category")
     .in("id", ids);
   if (error) {
     return NextResponse.json(
@@ -117,6 +122,8 @@ export async function GET(req: Request) {
       isTeacherMarketplaceVisibleRow({
         id: row.id,
         user_id: uid,
+        discipline: row.discipline,
+        category: row.category,
         is_public: row.is_public,
         is_demo: row.is_demo,
         deactivated_at: row.deactivated_at,
@@ -131,5 +138,8 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json({ plans, photos, eligibleTeacherIds });
+  const bookingReadiness = await getTeacherListingBookability(admin, eligibleTeacherIds);
+  return NextResponse.json({ plans, photos, eligibleTeacherIds, bookingReadiness }, {
+    headers: { "Cache-Control": "no-store" },
+  });
 }
