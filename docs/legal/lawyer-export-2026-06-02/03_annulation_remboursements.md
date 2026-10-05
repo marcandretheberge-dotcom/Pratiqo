@@ -21,7 +21,7 @@ Cette politique s'applique sous réserve des lois applicables en matière de pro
 ### 1.1 Comment annuler
 
 - Via l'application Pratiqo : Mon compte → Mes réservations → Annuler.
-- Par courriel : support@pratiqo.ca, avec le numéro de réservation.
+- Par courriel : info@pratiqo.ca, avec le numéro de réservation.
 
 ### 1.2 Circonstances exceptionnelles
 
@@ -48,13 +48,13 @@ Reprogrammer un cours est différent de l'annuler. L'élève et le professeur s'
 
 ### 3.2 Moins de 24 h avant le cours
 
-Reprogrammer reste possible uniquement si les deux parties sont d'accord. La procédure affichée demande d'écrire dans la messagerie Pratiqo, puis de contacter support@pratiqo.ca avec le numéro de réservation et la nouvelle date convenue. L'équipe mettra la réservation à jour sous 24 h.
+Reprogrammer reste possible uniquement si les deux parties sont d'accord. La procédure affichée demande d'écrire dans la messagerie Pratiqo, puis de contacter info@pratiqo.ca avec le numéro de réservation et la nouvelle date convenue. L'équipe mettra la réservation à jour sous 24 h.
 
 Si aucun accord mutuel n'est trouvé, la politique d'annulation s'applique.
 
 ### 3.3 Cas particuliers
 
-Pour les urgences ou cas de force majeure, contacter support@pratiqo.ca, peu importe le délai.
+Pour les urgences ou cas de force majeure, contacter info@pratiqo.ca, peu importe le délai.
 
 ## 4. Cours à domicile
 
@@ -71,7 +71,7 @@ Pratiqo offre une garantie satisfaction sur le tout premier cours terminé d'un 
 
 - Garantie applicable uniquement au premier cours terminé sur le compte de l'élève.
 - Demande à déposer dans les 24 heures suivant la fin du cours.
-- Demande depuis Mes paiements et reçus, ou par courriel à support@pratiqo.ca.
+- Demande depuis Mes paiements et reçus, ou par courriel à info@pratiqo.ca.
 - Une seule demande de garantie premier cours possible par compte.
 
 ### 5.2 Examen de la demande
@@ -92,7 +92,7 @@ La demande ouvre un dossier de résolution traité manuellement par l'équipe Pr
 
 ## 7. Litiges
 
-Tout litige concernant un remboursement doit être signalé dans les 7 jours suivant le cours via support@pratiqo.ca ou https://www.pratiqo.ca/contact.
+Tout litige concernant un remboursement doit être signalé dans les 7 jours suivant le cours via info@pratiqo.ca ou https://www.pratiqo.ca/contact.
 
 La page actuelle indique : « Pratiqo agit comme arbitre de bonne foi et sa décision est finale. »
 
@@ -100,5 +100,5 @@ La page actuelle indique : « Pratiqo agit comme arbitre de bonne foi et sa déc
 
 ## 8. Contact
 
-- support@pratiqo.ca
+- info@pratiqo.ca
 - https://www.pratiqo.ca/contact

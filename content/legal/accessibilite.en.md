@@ -26,7 +26,7 @@ When new features are added, Pratiqo aims to consider accessibility during desig
 
 If you experience an accessibility barrier on Pratiqo, you can contact us at:
 
-[`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+[`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
 If possible, please include:
 
@@ -44,7 +44,7 @@ Pratiqo will review received messages and seek a reasonable solution where possi
 
 ## 5. Contact
 
-For support: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+For support: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
 For general inquiries: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 

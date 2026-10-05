@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { hasOnlyBookingContactChange, isBookingContactOnlyChange } from "../helpers/contactAddressScope";
 
 type TestFn = () => void;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -693,6 +694,16 @@ test("PR #387 teacher discovery migration remains additive and RLS-scoped", () =
   assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY/i);
 });
 
+test("booking contact exception permits only the exact address replacement", () => {
+  const file = "app/(app)/booking/success/page.tsx";
+  const before = 'const paid = true; const contact = "support@pratiqo.ca";';
+  const after = before.replaceAll("support@pratiqo.ca", "info@pratiqo.ca");
+  assert.equal(isBookingContactOnlyChange(file, before, after), true);
+  assert.equal(isBookingContactOnlyChange(file, before, after.replace("true", "false")), false);
+  assert.equal(isBookingContactOnlyChange("app/api/stripe/checkout/route.ts", before, after), false);
+  assert.equal(isBookingContactOnlyChange(file, before, after + "\n// unrelated"), false);
+});
+
 test("branch did not touch restricted systems", () => {
   const changed = changedFilesAgainstMain();
   if (!changed) return;
@@ -714,6 +725,7 @@ test("branch did not touch restricted systems", () => {
 
   const violations: string[] = [];
   for (const file of changed) {
+    if (hasOnlyBookingContactChange(file)) continue;
     if (allowedYoDisclosureFiles.has(file)) continue;
     if (allowedConsentGateFiles.has(file)) continue;
     if (allowedSecurityHardeningFiles.has(file)) continue;

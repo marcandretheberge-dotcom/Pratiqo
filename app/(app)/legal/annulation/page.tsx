@@ -72,8 +72,8 @@ export default function AnnulationPage() {
           <li>Via l&apos;application Pratiqo : Mon compte → Mes réservations → Annuler</li>
           <li>
             Par courriel :{" "}
-            <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
-              support@pratiqo.ca
+            <a href="mailto:info@pratiqo.ca" className="text-teal-700 underline font-medium">
+              info@pratiqo.ca
             </a>{" "}
             (inclure le numéro de réservation)
           </li>
@@ -180,8 +180,8 @@ export default function AnnulationPage() {
           <li>Envoyez un message via la messagerie Pratiqo pour proposer un nouveau créneau.</li>
           <li>
             Si votre professeur (ou votre élève) accepte, contactez{" "}
-            <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
-              support@pratiqo.ca
+            <a href="mailto:info@pratiqo.ca" className="text-teal-700 underline font-medium">
+              info@pratiqo.ca
             </a>{" "}
             avec :
             <ul className="list-disc pl-5 mt-2 space-y-1">
@@ -199,8 +199,8 @@ export default function AnnulationPage() {
         <h3 className="text-base font-semibold text-[var(--p-text)] mt-6 mb-2">3.3 Cas particuliers</h3>
         <p>
           Pour les urgences ou cas de force majeure (voir section 1.2), contactez directement{" "}
-          <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
-            support@pratiqo.ca
+          <a href="mailto:info@pratiqo.ca" className="text-teal-700 underline font-medium">
+            info@pratiqo.ca
           </a>
           , peu importe le délai.
         </p>
@@ -238,8 +238,8 @@ export default function AnnulationPage() {
           <li>
             La demande se fait depuis <strong>Mes paiements et reçus</strong>, ou par courriel à
             {" "}
-            <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
-              support@pratiqo.ca
+            <a href="mailto:info@pratiqo.ca" className="text-teal-700 underline font-medium">
+              info@pratiqo.ca
             </a>.
           </li>
           <li>
@@ -295,8 +295,8 @@ export default function AnnulationPage() {
         <ul className="list-disc pl-5 space-y-2 mt-2">
           <li>
             Email&nbsp;:{" "}
-            <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
-              support@pratiqo.ca
+            <a href="mailto:info@pratiqo.ca" className="text-teal-700 underline font-medium">
+              info@pratiqo.ca
             </a>
           </li>
           <li>
@@ -327,8 +327,8 @@ export default function AnnulationPage() {
         <p>
           Si vous n&apos;êtes pas satisfait de la décision administrative de Pratiqo, vous pouvez{" "}
           <strong>demander une révision</strong> en écrivant à{" "}
-          <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
-            support@pratiqo.ca
+          <a href="mailto:info@pratiqo.ca" className="text-teal-700 underline font-medium">
+            info@pratiqo.ca
           </a>{" "}
           en fournissant&nbsp;:
         </p>
@@ -366,8 +366,8 @@ export default function AnnulationPage() {
 
       <LegalSection id="contact" title="8. Contact">
         <p>
-          <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
-            support@pratiqo.ca
+          <a href="mailto:info@pratiqo.ca" className="text-teal-700 underline font-medium">
+            info@pratiqo.ca
           </a>
         </p>
         <p>

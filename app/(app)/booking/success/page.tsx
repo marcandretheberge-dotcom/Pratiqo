@@ -682,10 +682,10 @@ export default async function BookingSuccessPage({
         <p className="text-center text-xs text-[var(--p-text-muted)] px-4">
           {dict.bookingSuccessFooterProblem}{" "}
           <a
-            href="mailto:support@pratiqo.ca"
+            href="mailto:info@pratiqo.ca"
             className="underline hover:text-teal-700 transition-colors"
           >
-            support@pratiqo.ca
+            info@pratiqo.ca
           </a>
         </p>
       </div>
@@ -733,7 +733,7 @@ function ErrorCard({
           {cta}
         </Link>
         <a
-          href="mailto:support@pratiqo.ca"
+          href="mailto:info@pratiqo.ca"
           className="inline-flex items-center justify-center rounded-2xl px-6 py-3.5 text-sm font-semibold border border-[var(--p-border-light)] text-[var(--p-text)] hover:bg-[var(--p-light-teal-bg)]/60 transition"
         >
           {dictionary.bookingSuccessContactSupport}

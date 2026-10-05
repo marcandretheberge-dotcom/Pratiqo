@@ -44,7 +44,7 @@ checkout, broad Membre Pro public campaign, international expansion.
 | Teachers         | 2-3   | Real teachers who agreed to a beta; profiles must already meet launch eligibility.    |
 | Students         | 2-3   | Real students paired with the beta teachers; ideally one per teacher minimum.         |
 | Founder/admin    | 1     | Monitors logs, support email, payments, and bug capture during the entire cohort.     |
-| Support contact  | —     | `support@pratiqo.ca` — monitored daily during the beta window.                         |
+| Support contact  | —     | `info@pratiqo.ca` — monitored daily during the beta window.                         |
 
 Each participant must agree (informally) that:
 
@@ -53,7 +53,7 @@ Each participant must agree (informally) that:
   paid lesson booking. The beta does **not** cover payment-flow changes —
   the same Stripe checkout / refund / webhook path the public launch will
   use is exercised.
-- Bugs are reported via `support@pratiqo.ca` or directly to the founder.
+- Bugs are reported via `info@pratiqo.ca` or directly to the founder.
 - Participants do not publicly post screenshots / promotional content
   about Pratiqo until the public launch is announced.
 
@@ -83,7 +83,7 @@ git diff --check                     # no whitespace / conflict markers
 | `git diff --check`                                          | clean                                                                         |
 | Production env in Vercel                                    | All variables in [`PRODUCTION_LAUNCH_RUNBOOK.md` §3](./PRODUCTION_LAUNCH_RUNBOOK.md#3-vercel-environment-checklist) set for **Production**, not just Preview. |
 | Sentry / PostHog DSNs                                       | `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST` set in Vercel **if** the SDKs are wired. If the SDK is NOT yet wired, skip — do not block beta on monitoring. |
-| `support@pratiqo.ca`                                        | A teammate has confirmed (within 24 h before beta) that emails sent to the address are received and read.                       |
+| `info@pratiqo.ca`                                        | A teammate has confirmed (within 24 h before beta) that emails sent to the address are received and read.                       |
 | Transactional emails                                        | Resend domain verified (`pratiqo.ca`); send a test "new booking" + "new message" email to a beta tester before invites.        |
 | Restricted systems untouched                                | No PR landed since PR #182 that modified Stripe / webhooks / commissions / Membre Pro / YoPratiqo learning routes.              |
 | No fake PDF / fake resource links                           | Confirm any "downloadable resource" link on the public site routes to a real asset (relevant only for YoPratiqo printables; out of marketplace beta scope but quick to spot-check). |
@@ -176,7 +176,7 @@ During the **entire beta window** (typically 3-7 days):
   booking row in Supabase.**
 - [ ] Watch Sentry / PostHog dashboards if the SDKs are wired. If not
   wired, log raw Vercel errors via the Vercel logs UI.
-- [ ] Monitor `support@pratiqo.ca` at least twice per day. Acknowledge
+- [ ] Monitor `info@pratiqo.ca` at least twice per day. Acknowledge
   receipt of every message within ~24 h.
 - [ ] For each issue surfaced, **record before triaging**:
   - User role (student / teacher / admin).
@@ -267,7 +267,7 @@ The closed beta deliberately does **not** cover:
 
 ## 9. Bug report template
 
-Reporters can paste this template into `support@pratiqo.ca` or a shared
+Reporters can paste this template into `info@pratiqo.ca` or a shared
 sheet during the beta:
 
 ```

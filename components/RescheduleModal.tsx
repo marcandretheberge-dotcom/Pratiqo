@@ -292,8 +292,8 @@ export function RescheduleModal({
               <p className="text-[13px] font-semibold leading-relaxed text-slate-900">
                 Solution recommandée : envoyez un message à {booking.otherPartyName}. Si vous vous entendez sur un
                 nouveau créneau, contactez ensuite{" "}
-                <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
-                  support@pratiqo.ca
+                <a href="mailto:info@pratiqo.ca" className="text-teal-700 underline font-medium">
+                  info@pratiqo.ca
                 </a>{" "}
                 avec la date confirmée pour qu&apos;on mette votre réservation à jour.
               </p>

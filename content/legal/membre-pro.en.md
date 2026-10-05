@@ -66,7 +66,7 @@ At launch, Pro Member is displayed at **$29.99 CAD / month + applicable taxes**,
 - The **next renewal date** and the **amount to be billed** are displayed in your subscription page.
 - Pratiqo may send a **renewal notice** by email at least **7 days before** the billing date when required by law or where the platform is configured to do so.
 - The teacher is responsible for **cancelling before the renewal date** if they do not wish to continue the membership.
-- **Effect of cancellation and refund:** unless mandatory law provides otherwise (in particular the Quebec **Consumer Protection Act** for teachers who would qualify as consumers within the meaning of that law), cancellation takes effect at the **end of the current paid billing period**. If applicable law requires a pro rata refund of the unused portion, Pratiqo handles it **in accordance with the law**. If you have any doubt about your rights, write to [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **Effect of cancellation and refund:** unless mandatory law provides otherwise (in particular the Quebec **Consumer Protection Act** for teachers who would qualify as consumers within the meaning of that law), cancellation takes effect at the **end of the current paid billing period**. If applicable law requires a pro rata refund of the unused portion, Pratiqo handles it **in accordance with the law**. If you have any doubt about your rights, write to [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - Nothing in this document limits any mandatory rights under applicable law, in particular Quebec consumer-protection rights.
 
 ---
@@ -76,7 +76,7 @@ At launch, Pro Member is displayed at **$29.99 CAD / month + applicable taxes**,
 The teacher may cancel Pro Member:
 
 - from the account subscription settings where this feature is offered; or
-- by writing to [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- by writing to [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 
 Unless otherwise stated at cancellation time or required by mandatory law, **cancellation takes effect at the end of the current paid period**. Pro Member advantages may remain available until that date and then cease.
 
@@ -95,7 +95,7 @@ Cancelling Pro Member:
 Subject to mandatory law, to promotional terms expressly stating otherwise, and to technical or billing errors, **Pro Member payments are generally non-refundable once a billing period has started**.
 
 - No prorated refund is offered, unless required by law or expressly offered by Pratiqo.
-- In case of a technical or billing error, the teacher should write to [`support@pratiqo.ca`](mailto:support@pratiqo.ca) with useful details (transaction id, date, reason).
+- In case of a technical or billing error, the teacher should write to [`info@pratiqo.ca`](mailto:info@pratiqo.ca) with useful details (transaction id, date, reason).
 - This document does not limit the teacher's mandatory rights, including those under Quebec's **Consumer Protection Act** or any other applicable mandatory law.
 
 ---
@@ -217,7 +217,7 @@ The **annual Pro Member rebate**, where offered, is a **conditional retroactive 
 
 ## 16. Payment disputes and chargebacks
 
-Before opening a dispute with the card issuer, the teacher **should contact** [`support@pratiqo.ca`](mailto:support@pratiqo.ca) where possible to attempt a quick resolution.
+Before opening a dispute with the card issuer, the teacher **should contact** [`info@pratiqo.ca`](mailto:info@pratiqo.ca) where possible to attempt a quick resolution.
 
 - Abusive or unjustified disputes may affect account standing and Pro Member eligibility.
 - Pratiqo may investigate any billing dispute and request documentation.
@@ -257,7 +257,7 @@ The processing of personal information is described in the **[Privacy Policy](/l
 
 ## 19. Support and formal notices
 
-For day-to-day support: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+For day-to-day support: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
 For general inquiries: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 

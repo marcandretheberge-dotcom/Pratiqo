@@ -63,7 +63,7 @@ Pratiqo puede tener que adaptar, corregir, interrumpir temporalmente o retirar c
 ### 3.2 Cómo solicitar un reembolso
 
 - Desde la plataforma: **Mi cuenta → Mis pagos y recibos → Solicitar un reembolso**.
-- O por correo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca) con tu `número de pedido` y el motivo.
+- O por correo a [`info@pratiqo.ca`](mailto:info@pratiqo.ca) con tu `número de pedido` y el motivo.
 
 ### 3.3 Decisión y plazos
 
@@ -96,7 +96,7 @@ Conforme a la **Directiva 2011/83/UE (art. 16, m)** y a la **Directiva (UE) 2019
 
 ### 4.2 Cómo ejercer el derecho de desistimiento (sin casilla marcada)
 
-Un comprador UE que no haya marcado la casilla de renuncia puede ejercer su derecho de desistimiento escribiendo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca) **dentro de los 14 días posteriores a la compra** con el encabezado «Ejercicio del derecho de desistimiento — pedido n.° [número]». No se requiere justificación dentro de esa ventana.
+Un comprador UE que no haya marcado la casilla de renuncia puede ejercer su derecho de desistimiento escribiendo a [`info@pratiqo.ca`](mailto:info@pratiqo.ca) **dentro de los 14 días posteriores a la compra** con el encabezado «Ejercicio del derecho de desistimiento — pedido n.° [número]». No se requiere justificación dentro de esa ventana.
 
 ### 4.3 Acumulación con la garantía comercial de 30 días
 
@@ -153,7 +153,7 @@ Si alguna disposición de esta política entra en conflicto con una garantía le
 ## 9. Contacto
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canadá
-correo: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+correo: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 sitio web: [pratiqo.ca](https://pratiqo.ca)
 
 ---

@@ -100,13 +100,13 @@ Un pago puede **fallar** por múltiples razones (tarjeta rechazada, fondos insuf
 - Una **falla de pago** puede **impedir la confirmación** de una reserva y provocar su cancelación automática.
 - Pratiqo puede, sujeto a la ley aplicable, **suspender, restringir o retirar el acceso** a determinadas funcionalidades cuando un pago falla o queda impago.
 - Los usuarios deben proporcionar **información de pago exacta y actualizada**.
-- Todo **doble cargo, error de monto, error de moneda** o error de pago manifiesto debe reportarse rápidamente a [`support@pratiqo.ca`](mailto:support@pratiqo.ca) con las pruebas útiles (id de transacción, fecha, monto, capturas de pantalla).
+- Todo **doble cargo, error de monto, error de moneda** o error de pago manifiesto debe reportarse rápidamente a [`info@pratiqo.ca`](mailto:info@pratiqo.ca) con las pruebas útiles (id de transacción, fecha, monto, capturas de pantalla).
 
 ---
 
 ## 9. Disputas y contracargos
 
-Antes de abrir una disputa con el emisor de la tarjeta, el usuario **debería contactar primero** a [`support@pratiqo.ca`](mailto:support@pratiqo.ca) para intentar una resolución interna.
+Antes de abrir una disputa con el emisor de la tarjeta, el usuario **debería contactar primero** a [`info@pratiqo.ca`](mailto:info@pratiqo.ca) para intentar una resolución interna.
 
 Tras un **contracargo** o una **disputa de pago**, Pratiqo puede, en la medida permitida por la ley:
 
@@ -191,7 +191,7 @@ Las compras de **cursos autónomos YoPratiqo** se rigen por la **[Política de r
 
 Cualquier problema de pago, reembolso, transferencia o facturación puede reportarse a Pratiqo.
 
-- **Cómo reportar**: por correo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **Cómo reportar**: por correo a [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - **Información útil**: id de la reserva, fecha del pago, **monto**, moneda, último medio de pago utilizado, capturas de pantalla o recibos y un **resumen factual** de la situación.
 - **Revisión**: Pratiqo puede, en la medida permitida por la ley, revisar transacciones, mensajes en la plataforma e historial de la cuenta para evaluar el reporte.
 - **Seguridad**: cualquier problema de **seguridad** o de **conducta** debe gestionarse conforme al **[Código de conducta](/legal/code-de-conduite)**. En caso de emergencia, comunicate **primero** con los servicios de emergencia (911 en Canadá) — Pratiqo no es un servicio de emergencia y no puede intervenir físicamente.
@@ -218,7 +218,7 @@ En caso de conflicto entre esta política y otro documento de Pratiqo sobre una 
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canadá
 
-soporte: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+soporte: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 general: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 dirección: [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
 

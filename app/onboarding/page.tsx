@@ -910,8 +910,8 @@ function OnboardingInner() {
                   {t("footerTerms")}
                 </a>{" "}
                 ou contacte{" "}
-                <a href="mailto:support@pratiqo.ca" className="text-teal-700 underline font-medium">
-                  support@pratiqo.ca
+                <a href="mailto:info@pratiqo.ca" className="text-teal-700 underline font-medium">
+                  info@pratiqo.ca
                 </a>
               </p>
             </div>

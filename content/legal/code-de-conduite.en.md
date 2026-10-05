@@ -58,7 +58,7 @@ Pratiqo applies **heightened vigilance** to situations involving minors or vulne
 - Lessons involving minors must take place in **appropriate, observable, and safe environments**: an open or readily accessible area (living room, study room, library, professional studio), never a closed bedroom or an isolated space without possible supervision.
 - No **secret communications** with a minor (private channel hidden from the parent, encrypted application unrelated to the lesson, requests to hide messages).
 - No **private relationship** with a minor outside the educational purpose.
-- Any concern about the safety, health, integrity, or well-being of a minor must be reported **promptly** to [`support@pratiqo.ca`](mailto:support@pratiqo.ca). In an emergency, contact emergency services first (**911 in Canada**).
+- Any concern about the safety, health, integrity, or well-being of a minor must be reported **promptly** to [`info@pratiqo.ca`](mailto:info@pratiqo.ca). In an emergency, contact emergency services first (**911 in Canada**).
 - Pratiqo may, to the extent permitted by law, remove an account that presents a risk to minors, even in the absence of a formal complaint.
 
 ### 4.2 Home lessons with minors — additional requirements
@@ -138,7 +138,7 @@ Profiles, reviews, and content published on Pratiqo must be **honest and accurat
 
 Any breach of this Code may be reported to Pratiqo.
 
-- **How to report**: through the **"Report"** button on the relevant profile or conversation, or by email to [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **How to report**: through the **"Report"** button on the relevant profile or conversation, or by email to [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - **Useful information**: date of the lesson or incident, profile of the person concerned, relevant screenshots or messages, and a **factual summary** of the situation.
 - **Confidentiality**: the reporter's identity is handled confidentially unless legal disclosure is required.
 - **Internal review**: Pratiqo may, to the extent permitted by law, review platform messages, booking records, account history, and other relevant information when assessing a report.
@@ -167,7 +167,7 @@ These measures are taken subject to applicable law and to the other contractual 
 
 ## 12. Appeals and review
 
-A person affected by an enforcement decision may request a **review** by writing to [`support@pratiqo.ca`](mailto:support@pratiqo.ca) and providing:
+A person affected by an enforcement decision may request a **review** by writing to [`info@pratiqo.ca`](mailto:info@pratiqo.ca) and providing:
 
 - their account identifier or registration email;
 - a factual description of the circumstances;
@@ -192,7 +192,7 @@ If there is a conflict between this Code and one of those documents on an admini
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
 
-support: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+support: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 general: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 management: [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
 

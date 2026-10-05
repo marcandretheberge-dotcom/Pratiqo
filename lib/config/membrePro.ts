@@ -281,7 +281,7 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
       "Abonnement géré depuis votre compte ou le portail de facturation sécurisé Stripe.",
     disclosureRenewBold: "renouvelle automatiquement",
     disclosureRenewTail:
-      " jusqu’à l’annulation. Tu peux annuler en tout temps depuis ton tableau de bord ou en écrivant à support@pratiqo.ca; l’annulation prend effet à la fin de la période payée en cours. ",
+      " jusqu’à l’annulation. Tu peux annuler en tout temps depuis ton tableau de bord ou en écrivant à info@pratiqo.ca; l’annulation prend effet à la fin de la période payée en cours. ",
     disclosureLinksLead:
       "Les modalités complètes — facturation, renouvellement, annulation, remboursements et avantages — figurent dans les ",
     disclosureMembreProLinkLabel: "Conditions Membre Pro",
@@ -342,7 +342,7 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
       "Subscription managed from your account or the secure Stripe billing portal.",
     disclosureRenewBold: "renews automatically",
     disclosureRenewTail:
-      " until cancelled. You can cancel any time from your dashboard or by writing to support@pratiqo.ca; cancellation takes effect at the end of the current paid billing period. ",
+      " until cancelled. You can cancel any time from your dashboard or by writing to info@pratiqo.ca; cancellation takes effect at the end of the current paid billing period. ",
     disclosureLinksLead:
       "Full terms — billing, renewal, cancellation, refunds and benefits — are set out in the ",
     disclosureMembreProLinkLabel: "Pro Member Terms",
@@ -403,7 +403,7 @@ export const UPGRADE_PAGE_COPY: Record<Locale, UpgradePageCopy> = {
       "Suscripción gestionada desde tu cuenta o el portal de facturación seguro de Stripe.",
     disclosureRenewBold: "renueva automáticamente",
     disclosureRenewTail:
-      " hasta su cancelación. Puedes cancelarla en cualquier momento desde tu panel o escribiendo a support@pratiqo.ca; la cancelación entra en vigor al final del período pagado en curso. ",
+      " hasta su cancelación. Puedes cancelarla en cualquier momento desde tu panel o escribiendo a info@pratiqo.ca; la cancelación entra en vigor al final del período pagado en curso. ",
     disclosureLinksLead:
       "Los términos completos — facturación, renovación, cancelación, reembolsos y beneficios — figuran en las ",
     disclosureMembreProLinkLabel: "Condiciones de Miembro Pro",

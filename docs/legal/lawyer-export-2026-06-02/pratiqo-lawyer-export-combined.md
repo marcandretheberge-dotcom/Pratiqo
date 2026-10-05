@@ -16,7 +16,7 @@ Ce dossier regroupe les textes juridiques et les contenus adjacents à portée j
 
 ## Courriels officiels
 
-- support@pratiqo.ca
+- info@pratiqo.ca
 - info@pratiqo.ca
 - marc-andre.theberge@pratiqo.ca
 
@@ -358,8 +358,8 @@ Pratiqo se réserve le droit de modifier les présentes CGU à tout moment. Les 
 ## 14. Contact
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada  
-soutien : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)  
-général : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)  
+soutien : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)\
+général : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)\
 avis formels : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)  
 site web : [pratiqo.ca](https://pratiqo.ca)
 
@@ -414,7 +414,7 @@ Vous pouvez contacter cette personne pour, **selon le cas et la loi applicable**
 - **retirer un consentement** lorsque cela est permis;
 - déposer une **plainte** ou demander un examen interne.
 
-Pour les questions générales, vous pouvez aussi écrire à [`info@pratiqo.ca`](mailto:info@pratiqo.ca). Pour les questions de soutien : [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+Pour les questions générales, vous pouvez aussi écrire à [`info@pratiqo.ca`](mailto:info@pratiqo.ca). Pour les questions de soutien : [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 
 ---
 
@@ -580,7 +580,7 @@ Nous mettons en œuvre des **mesures administratives, techniques et organisation
 
 - protégeant vos **identifiants** et mots de passe;
 - utilisant l'**authentification à deux facteurs** lorsqu'elle est offerte;
-- **signalant** rapidement toute activité suspecte à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **signalant** rapidement toute activité suspecte à [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 
 ---
 
@@ -664,7 +664,7 @@ L'usage des outils d'IA disponibles sur la plateforme **ne doit pas** servir à 
 
 - Vous pouvez recevoir des **messages transactionnels et de service** liés à votre compte et à vos cours (confirmations, rappels, mises à jour de sécurité, factures, avis légaux); ces messages **ne nécessitent pas** de consentement marketing distinct.
 - Les **messages promotionnels** (infolettre, offres, lancements) peuvent **requérir votre consentement** lorsque cela est exigé par la **Loi canadienne anti-pourriel (LCAP)** ou par toute autre loi applicable.
-- Vous pouvez **vous désabonner** des messages promotionnels en suivant le lien fourni dans le message ou en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- Vous pouvez **vous désabonner** des messages promotionnels en suivant le lien fourni dans le message ou en écrivant à [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - Le **désabonnement marketing** **n'arrête pas** les messages transactionnels nécessaires à la prestation du service.
 
 ---
@@ -701,7 +701,7 @@ Les versions antérieures peuvent être conservées à titre d'archive interne.
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
 
 - Personne responsable de la protection des renseignements personnels : **Marc-André Théberge** — [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
-- Soutien : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+- Soutien : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 - Général : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
 **Lien avec les autres politiques.** La présente Politique doit être lue conjointement avec :
@@ -747,7 +747,7 @@ Cette politique s'applique sous réserve des lois applicables en matière de pro
 ### 1.1 Comment annuler
 
 - Via l'application Pratiqo : Mon compte → Mes réservations → Annuler.
-- Par courriel : support@pratiqo.ca, avec le numéro de réservation.
+- Par courriel : info@pratiqo.ca, avec le numéro de réservation.
 
 ### 1.2 Circonstances exceptionnelles
 
@@ -774,13 +774,13 @@ Reprogrammer un cours est différent de l'annuler. L'élève et le professeur s'
 
 ### 3.2 Moins de 24 h avant le cours
 
-Reprogrammer reste possible uniquement si les deux parties sont d'accord. La procédure affichée demande d'écrire dans la messagerie Pratiqo, puis de contacter support@pratiqo.ca avec le numéro de réservation et la nouvelle date convenue. L'équipe mettra la réservation à jour sous 24 h.
+Reprogrammer reste possible uniquement si les deux parties sont d'accord. La procédure affichée demande d'écrire dans la messagerie Pratiqo, puis de contacter info@pratiqo.ca avec le numéro de réservation et la nouvelle date convenue. L'équipe mettra la réservation à jour sous 24 h.
 
 Si aucun accord mutuel n'est trouvé, la politique d'annulation s'applique.
 
 ### 3.3 Cas particuliers
 
-Pour les urgences ou cas de force majeure, contacter support@pratiqo.ca, peu importe le délai.
+Pour les urgences ou cas de force majeure, contacter info@pratiqo.ca, peu importe le délai.
 
 ## 4. Cours à domicile
 
@@ -797,7 +797,7 @@ Pratiqo offre une garantie satisfaction sur le tout premier cours terminé d'un 
 
 - Garantie applicable uniquement au premier cours terminé sur le compte de l'élève.
 - Demande à déposer dans les 24 heures suivant la fin du cours.
-- Demande depuis Mes paiements et reçus, ou par courriel à support@pratiqo.ca.
+- Demande depuis Mes paiements et reçus, ou par courriel à info@pratiqo.ca.
 - Une seule demande de garantie premier cours possible par compte.
 
 ### 5.2 Examen de la demande
@@ -818,7 +818,7 @@ La demande ouvre un dossier de résolution traité manuellement par l'équipe Pr
 
 ## 7. Litiges
 
-Tout litige concernant un remboursement doit être signalé dans les 7 jours suivant le cours via support@pratiqo.ca ou https://www.pratiqo.ca/contact.
+Tout litige concernant un remboursement doit être signalé dans les 7 jours suivant le cours via info@pratiqo.ca ou https://www.pratiqo.ca/contact.
 
 La page actuelle indique : « Pratiqo agit comme arbitre de bonne foi et sa décision est finale. »
 
@@ -826,7 +826,7 @@ La page actuelle indique : « Pratiqo agit comme arbitre de bonne foi et sa déc
 
 ## 8. Contact
 
-- support@pratiqo.ca
+- info@pratiqo.ca
 - https://www.pratiqo.ca/contact
 
 ---
@@ -947,7 +947,7 @@ Les professeurs doivent faire preuve d'une vigilance accrue lorsque l'élève es
 - Les cours à domicile avec des mineurs exigent des mesures de protection supplémentaires. La décision fondatrice à valider par l'avocat est d'exiger une vérification des antécédents ou dossiers criminels pour les professeurs qui souhaitent offrir des cours à domicile avec des mineurs, selon les modalités déployées par la plateforme.
 - Si cette vérification n'est pas opérationnelle, l'offre de cours à domicile avec des mineurs devrait ne pas être offerte ou être limitée jusqu'à ce que le processus applicable soit déployé.
 - Le professeur peut refuser un lieu ou une situation qu'il juge dangereux, inapproprié ou non conforme.
-- Tout incident ou préoccupation concernant la sécurité d'un élève doit être signalé rapidement à [`support@pratiqo.ca`](mailto:support@pratiqo.ca). En cas d'urgence, contactez d'abord les services d'urgence.
+- Tout incident ou préoccupation concernant la sécurité d'un élève doit être signalé rapidement à [`info@pratiqo.ca`](mailto:info@pratiqo.ca). En cas d'urgence, contactez d'abord les services d'urgence.
 
 ---
 
@@ -1058,7 +1058,7 @@ Pratiqo peut enquêter sur les signalements et demander la coopération du profe
 
 **Membre Pro**, s'il est offert, est une **adhésion payante optionnelle** distincte qui peut être soumise à des conditions d'abonnement ou à des modalités additionnelles. Le statut Membre Pro peut donner accès à des avantages économiques tels qu'une **commission réduite** ou un **rabais commercial rétroactif conditionnel sur volume**, lorsque Pratiqo les offre. Ce rabais est calculé selon le volume annuel admissible généré par le professeur sur la marketplace Pratiqo; il ne constitue pas une participation aux profits de Cours Pratiqo Inc., un rendement financier, un placement, ni un revenu garanti. YoPratiqo et les autres produits autonomes distincts sont exclus.
 
-Au lancement, l'adhésion Membre Pro est affichée à **29,99 $CA / mois + taxes applicables**, facturée mensuellement à l'avance, renouvelée automatiquement et annulable en tout temps depuis le tableau de bord ou en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca). Sauf exigence contraire de la loi applicable, l'annulation prend effet à la fin de la période payée en cours.
+Au lancement, l'adhésion Membre Pro est affichée à **29,99 $CA / mois + taxes applicables**, facturée mensuellement à l'avance, renouvelée automatiquement et annulable en tout temps depuis le tableau de bord ou en écrivant à [`info@pratiqo.ca`](mailto:info@pratiqo.ca). Sauf exigence contraire de la loi applicable, l'annulation prend effet à la fin de la période payée en cours.
 
 Pratiqo peut modifier les commissions, prix d'abonnement ou conditions de forfait **prospectivement**, avec un préavis conforme à la loi applicable. Lorsque la loi l'exige, les utilisateurs touchés peuvent annuler avant l'entrée en vigueur du changement.
 
@@ -1068,7 +1068,7 @@ Membre Pro ne garantit pas un revenu, des élèves, des réservations, un classe
 
 ## 18. Contact
 
-Pour le soutien courant : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+Pour le soutien courant : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
 Pour les questions générales : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
@@ -1202,7 +1202,7 @@ Sauf annulation, l'adhésion Membre Pro **se renouvelle automatiquement chaque m
 Le professeur peut annuler Membre Pro :
 
 - depuis les paramètres d'abonnement du compte lorsque cette fonctionnalité est offerte; ou
-- en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- en écrivant à [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 
 Sauf mention contraire affichée lors de l'annulation ou exigence d'une loi d'ordre public, **l'annulation prend effet à la fin de la période payée en cours**. Les avantages Membre Pro peuvent demeurer accessibles jusqu'à cette date, puis cesser. Le professeur peut annuler en tout temps depuis son tableau de bord lorsque cette fonctionnalité est disponible, ou en écrivant à l'adresse de soutien ci-dessus.
 
@@ -1219,7 +1219,7 @@ L'annulation de Membre Pro :
 Sauf disposition d'une loi d'ordre public, dans la mesure où une promotion l'indique expressément, ou dans le cas d'une erreur technique ou de facturation, **les paiements Membre Pro ne sont généralement pas remboursables une fois la période de facturation entamée**.
 
 - Aucun remboursement au prorata n'est offert, sauf si la loi l'exige ou si Pratiqo l'offre expressément.
-- En cas d'erreur technique ou de facturation, le professeur doit écrire à [`support@pratiqo.ca`](mailto:support@pratiqo.ca) avec les détails utiles (identifiant de transaction, date, motif).
+- En cas d'erreur technique ou de facturation, le professeur doit écrire à [`info@pratiqo.ca`](mailto:info@pratiqo.ca) avec les détails utiles (identifiant de transaction, date, motif).
 - Les présentes ne limitent pas les droits impératifs du professeur, notamment ceux issus de la **Loi sur la protection du consommateur** du Québec ou de toute autre législation d'ordre public.
 
 ---
@@ -1341,7 +1341,7 @@ La **ristourne annuelle Membre Pro**, lorsqu'elle est offerte, est un **rabais c
 
 ## 16. Litiges de paiement et rétrofacturations
 
-Avant d'ouvrir une contestation auprès de l'émetteur de carte, le professeur **devrait contacter** [`support@pratiqo.ca`](mailto:support@pratiqo.ca) lorsque cela est possible, afin de tenter une résolution rapide.
+Avant d'ouvrir une contestation auprès de l'émetteur de carte, le professeur **devrait contacter** [`info@pratiqo.ca`](mailto:info@pratiqo.ca) lorsque cela est possible, afin de tenter une résolution rapide.
 
 - Les contestations abusives ou injustifiées peuvent affecter l'état du compte et l'admissibilité à Membre Pro.
 - Pratiqo peut enquêter sur tout litige de facturation et demander de la documentation.
@@ -1381,7 +1381,7 @@ Le traitement des renseignements personnels est décrit dans la **[Politique de 
 
 ## 19. Soutien et avis formels
 
-Pour le soutien courant : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+Pour le soutien courant : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
 Pour les questions générales : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
@@ -1471,7 +1471,7 @@ Pratiqo accorde une **vigilance accrue** aux situations impliquant des personnes
 - Les cours impliquant des mineurs doivent se dérouler dans des **lieux appropriés, observables et sécuritaires** : espace ouvert ou facilement accessible (salon, salle d'étude, bibliothèque, studio professionnel), jamais une chambre fermée ou un espace isolé sans supervision possible.
 - Aucune **communication secrète** avec un mineur (canal privé non visible par le parent, application chiffrée non liée au cours, demande de cacher un échange).
 - Aucune **relation privée** avec un mineur en dehors de l'objectif pédagogique.
-- Toute préoccupation concernant la sécurité, la santé, l'intégrité ou le bien-être d'un mineur doit être signalée **rapidement** à [`support@pratiqo.ca`](mailto:support@pratiqo.ca). En situation d'urgence, communiquer d'abord avec les services d'urgence (911 au Canada).
+- Toute préoccupation concernant la sécurité, la santé, l'intégrité ou le bien-être d'un mineur doit être signalée **rapidement** à [`info@pratiqo.ca`](mailto:info@pratiqo.ca). En situation d'urgence, communiquer d'abord avec les services d'urgence (911 au Canada).
 - Pratiqo peut, dans la mesure permise par la loi, retirer un compte qui présente un risque pour des personnes mineures, même en l'absence de plainte formelle.
 
 ---
@@ -1540,7 +1540,7 @@ Les profils, avis et contenus publiés sur Pratiqo doivent être **honnêtes et 
 
 Tout manquement au présent code peut être signalé à Pratiqo.
 
-- **Comment signaler** : par le bouton **« Signaler »** sur le profil ou la conversation concernée, ou par courriel à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **Comment signaler** : par le bouton **« Signaler »** sur le profil ou la conversation concernée, ou par courriel à [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - **Renseignements utiles** : date du cours ou de l'incident, profil de la personne concernée, captures d'écran ou messages pertinents, et un **résumé factuel** de la situation.
 - **Confidentialité** : l'identité de la personne qui signale est traitée de manière confidentielle, sauf obligation légale de divulgation.
 - **Examen interne** : Pratiqo peut, dans la mesure permise par la loi, examiner les messages échangés sur la plateforme, l'historique des réservations, l'historique du compte et les autres renseignements pertinents pour évaluer un signalement.
@@ -1569,7 +1569,7 @@ Ces mesures sont prises sous réserve du droit applicable et des autres document
 
 ## 12. Demande de révision
 
-Une personne visée par une décision d'application peut demander un **réexamen** en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca) et en fournissant :
+Une personne visée par une décision d'application peut demander un **réexamen** en écrivant à [`info@pratiqo.ca`](mailto:info@pratiqo.ca) et en fournissant :
 
 - son identifiant de compte ou son courriel d'inscription;
 - une description factuelle des circonstances;
@@ -1593,7 +1593,7 @@ En cas de divergence entre le présent code et l'un de ces documents pour une qu
 ---
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
-support : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+support : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 général : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 direction : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
 
@@ -1713,13 +1713,13 @@ Un paiement peut **échouer** pour de multiples raisons (carte refusée, fonds i
 - Un **échec de paiement** peut **empêcher la confirmation** d'une réservation et entraîner son annulation automatique.
 - Pratiqo peut, sous réserve du droit applicable, **suspendre, restreindre ou retirer l'accès** à certaines fonctionnalités lorsque le paiement échoue ou demeure impayé.
 - Les utilisateurs doivent fournir des **renseignements de paiement exacts et à jour**.
-- Tout **double paiement, erreur de montant, erreur de devise** ou erreur de paiement manifeste devrait être signalé rapidement à [`support@pratiqo.ca`](mailto:support@pratiqo.ca) avec les pièces justificatives utiles (identifiant de transaction, date, montant, captures d'écran).
+- Tout **double paiement, erreur de montant, erreur de devise** ou erreur de paiement manifeste devrait être signalé rapidement à [`info@pratiqo.ca`](mailto:info@pratiqo.ca) avec les pièces justificatives utiles (identifiant de transaction, date, montant, captures d'écran).
 
 ---
 
 ## 9. Litiges et rétrofacturations
 
-Avant d'ouvrir une contestation auprès de l'émetteur de carte, l'utilisateur **devrait communiquer d'abord** avec [`support@pratiqo.ca`](mailto:support@pratiqo.ca) pour tenter une résolution interne.
+Avant d'ouvrir une contestation auprès de l'émetteur de carte, l'utilisateur **devrait communiquer d'abord** avec [`info@pratiqo.ca`](mailto:info@pratiqo.ca) pour tenter une résolution interne.
 
 À la suite d'une **rétrofacturation** ou d'une **contestation de paiement**, Pratiqo peut, dans la mesure permise par la loi :
 
@@ -1804,7 +1804,7 @@ Les achats de **cours autonomes YoPratiqo** sont régis par les conditions et la
 
 Tout problème de paiement, de remboursement, de versement ou de facturation peut être signalé à Pratiqo.
 
-- **Comment signaler** : par courriel à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **Comment signaler** : par courriel à [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - **Renseignements utiles** : identifiant de réservation, date du paiement, **montant**, devise, dernier moyen de paiement utilisé, captures d'écran ou reçus, et un **résumé factuel** de la situation.
 - **Réponse** : Pratiqo peut, dans la mesure permise par la loi, examiner les transactions, les messages de la plateforme et l'historique du compte pour évaluer le signalement.
 - **Sécurité** : tout problème de **sécurité** ou de **conduite** doit être traité conformément au **[Code de conduite](/legal/code-de-conduite)**. En situation d'urgence, communiquez **d'abord** avec les services d'urgence (911 au Canada) — Pratiqo n'est pas un service d'urgence et ne peut pas intervenir physiquement.
@@ -1830,7 +1830,7 @@ En cas de divergence entre la présente politique et un autre document Pratiqo p
 ---
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
-support : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+support : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 général : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 direction : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
 
@@ -1909,7 +1909,7 @@ Pratiqo peut devoir adapter, corriger, interrompre temporairement ou retirer cer
 ### 3.2 Comment demander un remboursement
 
 - Depuis la plateforme : **Mon compte → Mes paiements et reçus → Demander un remboursement**.
-- Ou par courriel à [`support@pratiqo.ca`](mailto:support@pratiqo.ca) avec ton `numéro de commande` et le motif.
+- Ou par courriel à [`info@pratiqo.ca`](mailto:info@pratiqo.ca) avec ton `numéro de commande` et le motif.
 
 ### 3.3 Décision et délais
 
@@ -1970,7 +1970,7 @@ Si une disposition de la présente politique entrait en conflit avec une garanti
 ## 8. Contact
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada  
-courriel : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)  
+courriel : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)\
 site web : [pratiqo.ca](https://pratiqo.ca)
 
 ---

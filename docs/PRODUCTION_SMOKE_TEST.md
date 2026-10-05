@@ -50,7 +50,7 @@ Use **dedicated test accounts**, not real customer data.
 
 | Account            | Required                | Notes                                                                              |
 |--------------------|-------------------------|------------------------------------------------------------------------------------|
-| Student test acct  | Yes                     | Uses a mailbox the founder controls (e.g. `+test1@…` alias of `support@pratiqo.ca`). |
+| Student test acct  | Yes                     | Uses a mailbox the founder controls (e.g. `+test1@…` alias of `info@pratiqo.ca`). |
 | Teacher test acct  | Yes                     | A test teacher whose profile is **searchable** and has **availability** for today / this week. |
 | Founder / admin    | If applicable           | Used to monitor Vercel logs, Supabase rows, Stripe dashboard, support inbox.       |
 
@@ -76,7 +76,7 @@ Run before opening any browser. All boxes must be checked.
   git diff --check
   ```
 
-- [ ] `support@pratiqo.ca` is monitored — a teammate has confirmed
+- [ ] `info@pratiqo.ca` is monitored — a teammate has confirmed
   within the last 24 h that messages sent to this address are received
   and read.
 - [ ] Transactional email inbox is checked — Resend domain
@@ -280,7 +280,7 @@ checklist on the new release commit before the cohort is invited.
 
 ## 12. Bug report template
 
-Use this verbatim when filing a bug. Paste into `support@pratiqo.ca`,
+Use this verbatim when filing a bug. Paste into `info@pratiqo.ca`,
 the bug-tracking sheet, or directly into a Cursor / GitHub issue.
 
 ```

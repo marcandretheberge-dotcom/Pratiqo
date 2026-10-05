@@ -30,7 +30,7 @@ async function geocodeNominatim(query: string): Promise<{ lat: number; lng: numb
       new URLSearchParams({ q: query, format: "json", limit: "1", addressdetails: "0" });
     const res = await fetch(url, {
       headers: {
-        "User-Agent": "Pratiqo/1.0 (support@pratiqo.ca)",
+        "User-Agent": "Pratiqo/1.0 (info@pratiqo.ca)",
         "Accept-Language": "fr,en",
       },
       signal: AbortSignal.timeout(5000),

@@ -28,7 +28,7 @@ Related:
 | Student package | Teacher public profile | Existing public/profile href only (`/professeurs/…` or `/teacher/profile/…`) |
 | Student/teacher session | `/dashboard` | Existing owner booking surface. Dashboard already filters by the signed-in user. |
 | Teacher payment warning | `/teacher/settings#payouts` | Only when payment setup is incomplete |
-| Support | `support@pratiqo.ca` + `/resolution` | Canonical support address |
+| Support | `info@pratiqo.ca` + `/resolution` | Canonical support address |
 | Admin order | `/admin/bookings?q=` | Admin-only booking search |
 | Admin order | `/admin/users/{id}` | Student user record, admin-only |
 | Admin order | `/admin/package-launch-readiness` | Admin-only |

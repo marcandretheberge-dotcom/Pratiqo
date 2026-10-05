@@ -2200,7 +2200,7 @@ export default function TeacherProfileManagementPage() {
                       {t("homeLessonsMinorGateRequestBody")}
                     </p>
                     <a
-                      href={`mailto:support@pratiqo.ca?subject=${encodeURIComponent(t("homeLessonsMinorRequestEmailSubject"))}&body=${encodeURIComponent(t("homeLessonsMinorRequestEmailBody"))}`}
+                      href={`mailto:info@pratiqo.ca?subject=${encodeURIComponent(t("homeLessonsMinorRequestEmailSubject"))}&body=${encodeURIComponent(t("homeLessonsMinorRequestEmailBody"))}`}
                       className="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl bg-teal-700 px-4 text-xs font-bold text-white transition hover:bg-teal-800"
                       data-testid="teacher-profile-mgmt-home-minor-request-cta"
                     >

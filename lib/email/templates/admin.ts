@@ -26,7 +26,7 @@ export async function sendTeacherVerificationRequestToAdmin(opts: {
   try {
     await resend.emails.send({
       from: "Pratiqo <onboarding@pratiqo.ca>",
-      replyTo: "support@pratiqo.ca",
+      replyTo: "info@pratiqo.ca",
       to,
       subject: `[Pratiqo] Demande de vérification — ${kindFr} — ${opts.teacherName}`,
       html: buildEmail({
@@ -73,7 +73,7 @@ export async function sendReviewFlaggedAdminAlert(opts: {
   try {
     await resend.emails.send({
       from: "Pratiqo <onboarding@pratiqo.ca>",
-      replyTo: "support@pratiqo.ca",
+      replyTo: "info@pratiqo.ca",
       to,
       subject: `[Pratiqo] Avis signale - ${opts.reason}`,
       html: buildEmail({
@@ -121,7 +121,7 @@ export async function sendSupportCaseAdminAlert(opts: {
   try {
     await resend.emails.send({
       from: "Pratiqo <onboarding@pratiqo.ca>",
-      replyTo: "support@pratiqo.ca",
+      replyTo: "info@pratiqo.ca",
       to,
       subject: `[Pratiqo] Nouveau dossier de resolution - ${opts.category}`,
       html: buildEmail({

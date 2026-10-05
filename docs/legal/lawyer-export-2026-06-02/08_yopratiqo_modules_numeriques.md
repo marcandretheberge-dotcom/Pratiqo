@@ -65,7 +65,7 @@ Pratiqo peut devoir adapter, corriger, interrompre temporairement ou retirer cer
 ### 3.2 Comment demander un remboursement
 
 - Depuis la plateforme : **Mon compte → Mes paiements et reçus → Demander un remboursement**.
-- Ou par courriel à [`support@pratiqo.ca`](mailto:support@pratiqo.ca) avec ton `numéro de commande` et le motif.
+- Ou par courriel à [`info@pratiqo.ca`](mailto:info@pratiqo.ca) avec ton `numéro de commande` et le motif.
 
 ### 3.3 Décision et délais
 
@@ -126,7 +126,7 @@ Si une disposition de la présente politique entrait en conflit avec une garanti
 ## 8. Contact
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada  
-courriel : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)  
+courriel : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)\
 site web : [pratiqo.ca](https://pratiqo.ca)
 
 ---

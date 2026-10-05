@@ -36,7 +36,7 @@ Vous pouvez contacter cette personne pour, **selon le cas et la loi applicable**
 - **retirer un consentement** lorsque cela est permis;
 - déposer une **plainte** ou demander un examen interne.
 
-Pour les questions générales, vous pouvez aussi écrire à [`info@pratiqo.ca`](mailto:info@pratiqo.ca). Pour les questions de soutien : [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+Pour les questions générales, vous pouvez aussi écrire à [`info@pratiqo.ca`](mailto:info@pratiqo.ca). Pour les questions de soutien : [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 
 ---
 
@@ -142,7 +142,7 @@ Comme mesure technique de fiabilité, nous pouvons envoyer des **rapports d’er
 
 Utilisez le lien **« Préférences de confidentialité »** dans le pied de page pour rouvrir vos préférences. Vous pouvez aussi configurer votre **navigateur** pour bloquer ou supprimer certains témoins; cela peut limiter certaines fonctionnalités.
 
-Pour toute question : **support@pratiqo.ca**.
+Pour toute question : **info@pratiqo.ca**.
 
 ---
 
@@ -241,7 +241,7 @@ Nous mettons en œuvre des **mesures administratives, techniques et organisation
 
 - protégeant vos **identifiants** et mots de passe;
 - utilisant l'**authentification à deux facteurs** lorsqu'elle est offerte;
-- **signalant** rapidement toute activité suspecte à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **signalant** rapidement toute activité suspecte à [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 
 ---
 
@@ -335,7 +335,7 @@ L'usage des outils d'IA disponibles sur la plateforme **ne doit pas** servir à 
 
 - Vous pouvez recevoir des **messages transactionnels et de service** liés à votre compte et à vos cours (confirmations, rappels, mises à jour de sécurité, factures, avis légaux); ces messages **ne nécessitent pas** de consentement marketing distinct.
 - Les **messages promotionnels** (infolettre, offres, lancements) peuvent **requérir votre consentement** lorsque cela est exigé par la **Loi canadienne anti-pourriel (LCAP)** ou par toute autre loi applicable.
-- Vous pouvez **vous désabonner** des messages promotionnels en suivant le lien fourni dans le message ou en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- Vous pouvez **vous désabonner** des messages promotionnels en suivant le lien fourni dans le message ou en écrivant à [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - Le **désabonnement marketing** **n'arrête pas** les messages transactionnels nécessaires à la prestation du service.
 
 ---
@@ -372,7 +372,7 @@ Les versions antérieures peuvent être conservées à titre d'archive interne.
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
 
 - Personne responsable de la protection des renseignements personnels : **Marc-André Théberge** — [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
-- Soutien : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+- Soutien : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 - Général : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
 **Lien avec les autres politiques.** La présente Politique doit être lue conjointement avec :

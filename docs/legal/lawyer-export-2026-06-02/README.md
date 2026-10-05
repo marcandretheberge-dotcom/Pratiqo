@@ -14,7 +14,7 @@ Ce dossier regroupe les textes juridiques et les contenus adjacents à portée j
 
 ## Courriels officiels
 
-- support@pratiqo.ca
+- info@pratiqo.ca
 - info@pratiqo.ca
 - marc-andre.theberge@pratiqo.ca
 

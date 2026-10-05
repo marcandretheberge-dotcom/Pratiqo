@@ -106,13 +106,13 @@ Un paiement peut **échouer** pour de multiples raisons (carte refusée, fonds i
 - Un **échec de paiement** peut **empêcher la confirmation** d'une réservation et entraîner son annulation automatique.
 - Pratiqo peut, sous réserve du droit applicable, **suspendre, restreindre ou retirer l'accès** à certaines fonctionnalités lorsque le paiement échoue ou demeure impayé.
 - Les utilisateurs doivent fournir des **renseignements de paiement exacts et à jour**.
-- Tout **double paiement, erreur de montant, erreur de devise** ou erreur de paiement manifeste devrait être signalé rapidement à [`support@pratiqo.ca`](mailto:support@pratiqo.ca) avec les pièces justificatives utiles (identifiant de transaction, date, montant, captures d'écran).
+- Tout **double paiement, erreur de montant, erreur de devise** ou erreur de paiement manifeste devrait être signalé rapidement à [`info@pratiqo.ca`](mailto:info@pratiqo.ca) avec les pièces justificatives utiles (identifiant de transaction, date, montant, captures d'écran).
 
 ---
 
 ## 9. Litiges et rétrofacturations
 
-Avant d'ouvrir une contestation auprès de l'émetteur de carte, l'utilisateur **devrait communiquer d'abord** avec [`support@pratiqo.ca`](mailto:support@pratiqo.ca) pour tenter une résolution interne.
+Avant d'ouvrir une contestation auprès de l'émetteur de carte, l'utilisateur **devrait communiquer d'abord** avec [`info@pratiqo.ca`](mailto:info@pratiqo.ca) pour tenter une résolution interne.
 
 À la suite d'une **rétrofacturation** ou d'une **contestation de paiement**, Pratiqo peut, dans la mesure permise par la loi :
 
@@ -197,7 +197,7 @@ Les achats de **cours autonomes YoPratiqo** sont régis par les conditions et la
 
 Tout problème de paiement, de remboursement, de versement ou de facturation peut être signalé à Pratiqo.
 
-- **Comment signaler** : par courriel à [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **Comment signaler** : par courriel à [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - **Renseignements utiles** : identifiant de réservation, date du paiement, **montant**, devise, dernier moyen de paiement utilisé, captures d'écran ou reçus, et un **résumé factuel** de la situation.
 - **Réponse** : Pratiqo peut, dans la mesure permise par la loi, examiner les transactions, les messages de la plateforme et l'historique du compte pour évaluer le signalement.
 - **Sécurité** : tout problème de **sécurité** ou de **conduite** doit être traité conformément au **[Code de conduite](/legal/code-de-conduite)**. En situation d'urgence, communiquez **d'abord** avec les services d'urgence (911 au Canada) — Pratiqo n'est pas un service d'urgence et ne peut pas intervenir physiquement.
@@ -223,7 +223,7 @@ En cas de divergence entre la présente politique et un autre document Pratiqo p
 ---
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada
-support : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+support : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 général : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 direction : [`marc-andre.theberge@pratiqo.ca`](mailto:marc-andre.theberge@pratiqo.ca)
 

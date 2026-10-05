@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { hasOnlyBookingContactChange } from "../helpers/contactAddressScope";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -174,6 +175,7 @@ test("live legal sync branch did not touch restricted systems", () => {
 
   const violations: string[] = [];
   for (const file of changed) {
+    if (hasOnlyBookingContactChange(file)) continue;
     if (allowedMainMergeBranchFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {

@@ -66,7 +66,7 @@ En el lanzamiento, Miembro Pro se muestra a **29,99 $CA / mes + impuestos aplica
 - La **fecha de la próxima renovación** y el **monto a facturar** se muestran en tu página de suscripción.
 - Pratiqo puede enviar un **aviso de renovación** por correo electrónico al menos **7 días antes** de la fecha de facturación cuando la ley o la configuración de la plataforma lo prevean.
 - El profesor es responsable de **cancelar antes de la fecha de renovación** si no desea continuar la membresía.
-- **Efecto de la cancelación y reembolso:** salvo disposición en contrario de la ley aplicable (en particular la **Ley sobre la Protección del Consumidor** de Quebec para los profesores que tendrían la calidad de consumidor en virtud de esa ley), la cancelación surte efecto al **final del período pagado en curso**. Si la ley aplicable exige un reembolso prorrateado del período no utilizado, Pratiqo lo procesa **conforme a la ley**. En caso de duda sobre tus derechos, escribe a [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- **Efecto de la cancelación y reembolso:** salvo disposición en contrario de la ley aplicable (en particular la **Ley sobre la Protección del Consumidor** de Quebec para los profesores que tendrían la calidad de consumidor en virtud de esa ley), la cancelación surte efecto al **final del período pagado en curso**. Si la ley aplicable exige un reembolso prorrateado del período no utilizado, Pratiqo lo procesa **conforme a la ley**. En caso de duda sobre tus derechos, escribe a [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 - Nada en este documento limita los derechos imperativos previstos por la ley aplicable, en particular en materia de protección al consumidor en Quebec.
 
 ---
@@ -76,7 +76,7 @@ En el lanzamiento, Miembro Pro se muestra a **29,99 $CA / mes + impuestos aplica
 El profesor puede cancelar Miembro Pro:
 
 - desde la configuración de suscripción de la cuenta cuando esta funcionalidad esté disponible; o
-- escribiendo a [`support@pratiqo.ca`](mailto:support@pratiqo.ca).
+- escribiendo a [`info@pratiqo.ca`](mailto:info@pratiqo.ca).
 
 Salvo indicación en contrario al momento de la cancelación o exigencia de la ley imperativa, **la cancelación entra en vigor al final del período pagado en curso**. Las ventajas de Miembro Pro pueden permanecer accesibles hasta esa fecha y luego cesar.
 
@@ -95,7 +95,7 @@ Cancelar Miembro Pro:
 Sujeto a la ley imperativa, a los términos promocionales que lo indiquen expresamente y a los errores técnicos o de facturación, **los pagos de Miembro Pro generalmente no son reembolsables una vez iniciado el período de facturación**.
 
 - No se ofrece reembolso prorrateado, salvo que la ley lo exija o Pratiqo lo ofrezca expresamente.
-- En caso de error técnico o de facturación, el profesor debe escribir a [`support@pratiqo.ca`](mailto:support@pratiqo.ca) con los detalles útiles (id de transacción, fecha, motivo).
+- En caso de error técnico o de facturación, el profesor debe escribir a [`info@pratiqo.ca`](mailto:info@pratiqo.ca) con los detalles útiles (id de transacción, fecha, motivo).
 - Este documento no limita los derechos imperativos del profesor, incluidos los derivados de la **Ley de Protección al Consumidor** de Quebec o de cualquier otra legislación imperativa aplicable.
 
 ---
@@ -217,7 +217,7 @@ El **reembolso anual de Miembro Pro**, cuando se ofrece, es un **reembolso comer
 
 ## 16. Disputas de pago y contracargos
 
-Antes de abrir una disputa con el emisor de la tarjeta, el profesor **debería contactar** a [`support@pratiqo.ca`](mailto:support@pratiqo.ca) cuando sea posible para intentar una resolución rápida.
+Antes de abrir una disputa con el emisor de la tarjeta, el profesor **debería contactar** a [`info@pratiqo.ca`](mailto:info@pratiqo.ca) cuando sea posible para intentar una resolución rápida.
 
 - Las disputas indebidas o abusivas pueden afectar el estado de la cuenta y la elegibilidad para Miembro Pro.
 - Pratiqo puede investigar cualquier disputa de facturación y solicitar documentación.
@@ -257,7 +257,7 @@ El tratamiento de la información personal se describe en la **[Política de pri
 
 ## 19. Soporte y avisos formales
 
-Para soporte cotidiano: [`support@pratiqo.ca`](mailto:support@pratiqo.ca)
+Para soporte cotidiano: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 
 Para consultas generales: [`info@pratiqo.ca`](mailto:info@pratiqo.ca)
 

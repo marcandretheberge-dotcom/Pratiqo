@@ -63,7 +63,7 @@ Pratiqo peut devoir adapter, corriger, interrompre temporairement ou retirer cer
 ### 3.2 Comment demander un remboursement
 
 - Depuis la plateforme : **Mon compte → Mes paiements et reçus → Demander un remboursement**.
-- Ou par courriel à [`support@pratiqo.ca`](mailto:support@pratiqo.ca) avec ton `numéro de commande` et le motif.
+- Ou par courriel à [`info@pratiqo.ca`](mailto:info@pratiqo.ca) avec ton `numéro de commande` et le motif.
 
 ### 3.3 Décision et délais
 
@@ -96,7 +96,7 @@ Conformément à la **Directive 2011/83/UE (art. 16, m)** et à la **Directive (
 
 ### 4.2 Comment exercer le droit de rétractation (sans case cochée)
 
-L'acheteur UE qui n'a pas coché la case de renonciation peut exercer son droit de rétractation en écrivant à [`support@pratiqo.ca`](mailto:support@pratiqo.ca) **dans les 14 jours suivant l'achat** avec la mention « Exercice du droit de rétractation — commande n° [numéro] ». Aucune justification n'est requise dans ce délai.
+L'acheteur UE qui n'a pas coché la case de renonciation peut exercer son droit de rétractation en écrivant à [`info@pratiqo.ca`](mailto:info@pratiqo.ca) **dans les 14 jours suivant l'achat** avec la mention « Exercice du droit de rétractation — commande n° [numéro] ». Aucune justification n'est requise dans ce délai.
 
 ### 4.3 Cumul avec la garantie commerciale 30 jours
 
@@ -153,7 +153,7 @@ Si une disposition de la présente politique entrait en conflit avec une garanti
 ## 9. Contact
 
 **Cours Pratiqo Inc.** — Saint-Georges, Québec, Canada  
-courriel : [`support@pratiqo.ca`](mailto:support@pratiqo.ca)  
+courriel : [`info@pratiqo.ca`](mailto:info@pratiqo.ca)\
 site web : [pratiqo.ca](https://pratiqo.ca)
 
 ---
