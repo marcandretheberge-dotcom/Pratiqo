@@ -11,8 +11,9 @@ import {
 } from "@/lib/seo/teacherPublicProfile";
 import { SITE_URL } from "@/lib/seo/site";
 import { cacheSeoData, SEO_SITEMAP_REVALIDATE_SECONDS } from "@/lib/seo/cache";
+import { hasDeclaredLocalSupply } from "@/lib/teachers/localSupply";
 import { getDisciplineLabel, resolveDisciplineId } from "@/lib/taxonomy/disciplines";
-import { getTeachingZoneCoords, mapTeacherTeachingZoneRow, type TeacherTeachingZonePublicRow } from "@/lib/teacherTeachingZones";
+import { mapTeacherTeachingZoneRow, type TeacherTeachingZonePublicRow } from "@/lib/teacherTeachingZones";
 import type { TeacherTeachingZone } from "@/types";
 import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { getSubjectLandingPageBySlug } from "@/lib/seo/subjectLandingPages";
@@ -473,20 +474,7 @@ function buildSubjectCityLinks(
 }
 
 export function teacherHasLocalDiscoverySupply(row: RawDiscoveryTeacher, city: QcCity): boolean {
-  const mode = normalizeLabel(row.teaching_mode);
-  if (!["person", "in_person", "in-person", "home", "both", "all"].includes(mode)) return false;
-  const zones = (row.teachingZones ?? []).filter((zone) => zone.isActive && zone.countryCode === "CA");
-  if (zones.length > 0) {
-    return zones.some((zone) => {
-      if (!zone.supportsAtTeacherPlace && !zone.supportsAtStudentPlace && !zone.supportsPublicPlace) return false;
-      if (normalizeLabel(zone.city) === normalizeLabel(city.name)) return true;
-      const coords = getTeachingZoneCoords(zone);
-      return zone.supportsAtStudentPlace && coords !== null &&
-        haversineDistance(city.lat, city.lng, coords.lat, coords.lng) <= zone.radiusKm;
-    });
-  }
-  // No declared service area: only the actual legacy city proves local supply.
-  return normalizeLabel(row.city) === normalizeLabel(city.name);
+  return hasDeclaredLocalSupply(row, city);
 }
 
 export function hasLocalDiscoverySupply(entries: RankedTeacher[], city: QcCity): boolean {

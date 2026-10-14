@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { computeAvailableDaysForTeacher } from "@/lib/teacherSlotQueries";
+import { parseLearnerAvailability } from "@/lib/learnerAvailability";
 
 export const runtime = "nodejs";
 
@@ -24,6 +25,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       teacherId,
       weeks,
       durationOverride,
+      parseLearnerAvailability(url.searchParams.get("availability")),
     );
     return NextResponse.json({ days, durationMinutes, weeks });
   } catch (e) {

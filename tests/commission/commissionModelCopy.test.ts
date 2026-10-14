@@ -302,6 +302,15 @@ test("commission model branch may update canonical commission files but not rest
     "supabase/migrations/084_student_onboarding_consents.sql",
   ]);
 
+  // Learner P0: exact approved files, guarded by safeDisclosures and real PG tests.
+  const approvedLearnerFunnelMigrationExceptions = new Set<string>([
+    "supabase/migrations/129_learner_demand_consent.sql",
+    "supabase/migrations/130_booking_interval_exclusion.sql",
+    "supabase/migrations/131_learner_funnel_measurement.sql",
+    "supabase/migrations/132_shared_teacher_slot_claims.sql",
+    "supabase/migrations/133_package_fulfillment_slot_date_cast.sql",
+  ]);
+
   const approvedAmbassadorMigrationExceptions = new Set<string>([
     // Migration-number cleanup before PR #303: learner demand moved from 088 to 089.
     "supabase/migrations/088_learner_demand_funnel.sql",
@@ -352,6 +361,7 @@ test("commission model branch may update canonical commission files but not rest
     if (approvedStripeRouteExceptions.has(file)) continue;
     if (approvedPaymentHelperExceptions.has(file)) continue;
     if (approvedStudentConsentMigrationExceptions.has(file)) continue;
+    if (approvedLearnerFunnelMigrationExceptions.has(file)) continue;
     if (approvedAmbassadorMigrationExceptions.has(file)) continue;
     if (approvedPlannedPackageMigrationExceptions.has(file)) continue;
     if (approvedTeacherDiscoveryFirstMigrationExceptions.has(file)) continue;

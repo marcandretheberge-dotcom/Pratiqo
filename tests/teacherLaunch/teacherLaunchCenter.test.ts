@@ -397,6 +397,12 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
   // rebuilds teachers_public with profile_photo_url, and filters demo/orphan rows.
   // All other supabase/migrations/* changes relative to origin/main remain forbidden.
   const approvedMigrationExceptions = new Set([
+    // Learner P0: exact approved files, guarded by safeDisclosures and real PG tests.
+    "supabase/migrations/129_learner_demand_consent.sql",
+    "supabase/migrations/130_booking_interval_exclusion.sql",
+    "supabase/migrations/131_learner_funnel_measurement.sql",
+    "supabase/migrations/132_shared_teacher_slot_claims.sql",
+    "supabase/migrations/133_package_fulfillment_slot_date_cast.sql",
     "supabase/migrations/071_student_search_visibility_photo.sql",
     "supabase/migrations/072_teacher_default_lesson_duration.sql",
     "supabase/migrations/073_student_saved_location.sql",

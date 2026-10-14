@@ -6,6 +6,8 @@ import { sendTeacherBookingRequestEmail } from "@/lib/email";
 import { resolveEmailLocaleForTeacher } from "@/lib/email/locale";
 import { validateMinimumLessonPriceDollars } from "@/lib/pricing/validateMinimumLessonPrice";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { validateBookingSubmission } from "@/lib/bookings/validateBookingSubmission";
+import { reconcileLearnerWaitlistBooking } from "@/lib/learnerWaitlistConversion";
 import {
   teacherPaymentReadinessFailureReasons,
   teacherPayoutReadinessContractFailureReasons,
@@ -90,6 +92,13 @@ export async function POST(req: Request): Promise<Response> {
     admin = getSupabaseAdmin();
   } catch {
     return NextResponse.json({ error: "server_error" }, { status: 500 });
+  }
+
+  try {
+    const checked = await validateBookingSubmission(admin, user.id, parsed.data);
+    if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: checked.status });
+  } catch {
+    return NextResponse.json({ error: "server_error" }, { status: 503 });
   }
 
   const { data: teacherGate, error: teacherGateErr } = await admin
@@ -226,5 +235,7 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
+  try { await reconcileLearnerWaitlistBooking(admin, created.bookingId); }
+  catch { console.error("[bookings] waitlist conversion reconciliation required", { bookingId: created.bookingId }); }
   return NextResponse.json({ id: created.bookingId });
 }

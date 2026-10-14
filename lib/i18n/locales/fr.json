@@ -1,4 +1,6 @@
 {
+  "learnerFunnelOnlineAlternatives": "D’autres options en ligne",
+  "learnerFunnelSearch": "Voir les cours correspondants",
   "teacherActionBook": "Réserver un cours",
   "teacherActionRequest": "Demander un cours",
   "teacherActionContact": "Contacter ce professeur",
@@ -3508,5 +3510,21 @@
   "weeklyIntervalsDbDeleteFailed": "Impossible de mettre à jour les disponibilités (suppression). Réessaie.",
   "weeklyIntervalsDbInsertFailed": "Impossible d’enregistrer les plages horaires. Réessaie.",
   "weeklyIntervalsAvailabilitySyncFailed": "Les plages ont été enregistrées, mais la synchronisation a échoué. Réessaie.",
-  "weeklyIntervalsServerError": "Erreur serveur lors de l’enregistrement des disponibilités. Réessaie."
+  "weeklyIntervalsServerError": "Erreur serveur lors de l’enregistrement des disponibilités. Réessaie.",
+  "learnerFunnelOnlineMatched": "Des profils correspondent à votre demande de cours en ligne. Consultez leurs disponibilités avant de réserver.",
+  "learnerFunnelFormat": "Format demandé",
+  "learnerFunnelInPerson": "En personne",
+  "learnerFunnelOnline": "En ligne",
+  "learnerFunnelWaitlistCta": "Me prévenir lorsqu’un cours correspond",
+  "learnerFunnelAlertConsent": "Me prévenir lorsqu’un cours correspond à cette demande. Ce consentement ne comprend pas de communications marketing.",
+  "learnerFunnelAdultContact": "Ce courriel est celui d’un adulte. Pour un mineur, il s’agit du parent ou du responsable légal.",
+  "learnerFunnelAvailability": "Disponibilités souhaitées",
+  "learnerFunnelAny": "Flexibles",
+  "learnerFunnelWeekdayDay": "En semaine, en journée",
+  "learnerFunnelWeekdayEvening": "En semaine, en soirée",
+  "learnerFunnelWeekend": "La fin de semaine",
+  "learnerFunnelEmpty": "Aucun cours réservable ne correspond à votre recherche pour le moment.",
+  "learnerFunnelSaved": "Votre demande est enregistrée. Nous vous écrirons si un cours correspondant devient disponible.",
+  "learnerFunnelWithdraw": "Pour retirer votre demande, écrivez à info@pratiqo.ca depuis l’adresse utilisée.",
+  "bookingOfferChangedRefresh": "Le tarif ou la durée du cours a changé. Actualisez le profil avant de choisir un nouveau créneau."
 }

@@ -45,6 +45,7 @@ export async function sendLearnerDemandMatchEmail(input: {
   outcome: "local_match" | "online_match";
   searchUrl: string;
   locale?: EmailLocale | string | null;
+  idempotencyKey?: string;
 }) {
   const locale = normalizeEmailLocale(input.locale) ?? "fr";
   const copy = COPY[locale];
@@ -52,7 +53,8 @@ export async function sendLearnerDemandMatchEmail(input: {
   const ctaUrl = new URL(input.searchUrl, base).toString();
   const online = input.outcome === "online_match";
 
-  await send({
+  const sent = await send({
+    idempotencyKey: input.idempotencyKey,
     to: input.email,
     subject: copy.subject(input.subject),
     html: buildEmail({
@@ -72,4 +74,5 @@ export async function sendLearnerDemandMatchEmail(input: {
       ctaUrl,
     }),
   });
+  if (!sent) throw new Error("learner_demand_email_not_sent");
 }

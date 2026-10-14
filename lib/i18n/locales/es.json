@@ -1,4 +1,6 @@
 {
+  "learnerFunnelOnlineAlternatives": "Otras opciones en línea",
+  "learnerFunnelSearch": "Ver clases correspondientes",
   "teacherActionBook": "Reservar una clase",
   "teacherActionRequest": "Solicitar una clase",
   "teacherActionContact": "Contactar con este profesor",
@@ -3508,5 +3510,21 @@
   "weeklyIntervalsDbDeleteFailed": "No se pudo actualizar la disponibilidad (paso de eliminación). Inténtalo de nuevo.",
   "weeklyIntervalsDbInsertFailed": "No se pudieron guardar los rangos de disponibilidad. Inténtalo de nuevo.",
   "weeklyIntervalsAvailabilitySyncFailed": "Los rangos se guardaron, pero la sincronización falló. Inténtalo de nuevo.",
-  "weeklyIntervalsServerError": "Error del servidor al guardar la disponibilidad. Inténtalo de nuevo."
+  "weeklyIntervalsServerError": "Error del servidor al guardar la disponibilidad. Inténtalo de nuevo.",
+  "learnerFunnelOnlineMatched": "Hay perfiles que corresponden a tu solicitud de clases en línea. Consulta su disponibilidad antes de reservar.",
+  "learnerFunnelFormat": "Formato solicitado",
+  "learnerFunnelInPerson": "Presencial",
+  "learnerFunnelOnline": "En línea",
+  "learnerFunnelWaitlistCta": "Avisarme cuando haya una clase correspondiente",
+  "learnerFunnelAlertConsent": "Avisarme cuando una clase corresponda a esta solicitud. Este consentimiento no incluye comunicaciones de marketing.",
+  "learnerFunnelAdultContact": "Este correo pertenece a un adulto. Para un menor, pertenece a su padre, madre o tutor legal.",
+  "learnerFunnelAvailability": "Disponibilidad preferida",
+  "learnerFunnelAny": "Flexible",
+  "learnerFunnelWeekdayDay": "Entre semana, de día",
+  "learnerFunnelWeekdayEvening": "Entre semana, por la tarde",
+  "learnerFunnelWeekend": "Fines de semana",
+  "learnerFunnelEmpty": "Ninguna clase disponible para reservar corresponde a tu búsqueda por el momento.",
+  "learnerFunnelSaved": "Tu solicitud está guardada. Te escribiremos si una clase correspondiente está disponible.",
+  "learnerFunnelWithdraw": "Para retirar tu solicitud, escribe a info@pratiqo.ca desde la dirección utilizada.",
+  "bookingOfferChangedRefresh": "El precio o la duración de la clase ha cambiado. Actualiza el perfil antes de elegir otro horario."
 }

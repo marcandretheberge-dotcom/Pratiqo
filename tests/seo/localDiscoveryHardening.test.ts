@@ -126,10 +126,13 @@ test("a database failure cannot publish a successful empty local sitemap", async
   const originalFetch = globalThis.fetch;
   const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const originalKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  await assert.rejects(emptySupplySitemap(async () => new Response(
-    JSON.stringify({ code: "XX000", message: "simulated outage" }),
-    { status: 400, headers: { "content-type": "application/json" } },
-  )), /local_discovery_teachers_unavailable/);
+  await assert.rejects(emptySupplySitemap(async (input) => {
+    const url = new URL(String(input));
+    const isLocalSupply = url.pathname.endsWith("/teachers") &&
+      (url.searchParams.get("select") ?? "").split(",").includes("category");
+    return new Response(JSON.stringify(isLocalSupply ? { code: "XX000", message: "simulated outage" } : []),
+      { status: isLocalSupply ? 400 : 200, headers: { "content-type": "application/json" } });
+  }), /local_discovery_teachers_unavailable/);
   assert.equal(globalThis.fetch, originalFetch);
   assert.equal(process.env.NEXT_PUBLIC_SUPABASE_URL, originalUrl);
   assert.equal(process.env.SUPABASE_SERVICE_ROLE_KEY, originalKey);

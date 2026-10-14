@@ -471,13 +471,16 @@ test("Env var names match across .env.example, code, and docs", () => {
 
 // ── Source-scan: call-site wiring ───────────────────────────────────────────
 
-test("LandingPageClient wires trackSearchStarted / trackTeacherProfileViewed / trackBookingStarted", () => {
+test("LandingPageClient wires discovery analytics without duplicating shared booking entry", () => {
   const src = READ("app/LandingPageClient.tsx");
   assert.match(src, /from\s+["']@\/lib\/analytics\/events["']/);
   assert.match(src, /trackSearchStarted\(/);
   assert.match(src, /trackTeacherCardClicked\(/);
   assert.match(src, /trackTeacherProfileViewed\(/);
-  assert.match(src, /trackBookingStarted\(/);
+  assert.doesNotMatch(src, /trackBookingStarted\(/);
+  const modal = READ("components/BookingModal.tsx");
+  assert.equal((modal.match(/trackBookingStarted\(/g) ?? []).length, 1);
+  assert.match(modal, /trackedEntry.current === teacher.id/);
 });
 
 test("BookingModal wires trackBookingSlotSelected + trackBookingCheckoutStarted (intent only, before Stripe)", () => {

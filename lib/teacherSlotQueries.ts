@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { mapDbRowsToNormalized } from "@/lib/schedule/weeklyIntervals";
 import { isTeacherScheduleExceptionsEnabled, mapDbRowsToExceptions } from "@/lib/schedule/dateExceptions";
 import { slotStartMinutes, type BlockedSlotDayRow, type BookedSlotInterval } from "@/lib/slots";
+import { matchesLearnerAvailability } from "./learnerAvailability";
 import { normalizeLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 import { addCalendarDays, dateInTeacherTimeZone } from "@/lib/timezones";
 import { generateBookableSlotsForTeacherDay } from "@/lib/bookings/bookableSlotsForDay";
@@ -131,6 +132,7 @@ export async function computeAvailableDaysForTeacher(
   teacherId: string,
   weeks: number,
   durationOverride?: number | null,
+  availability: import("./learnerAvailability").LearnerAvailability = "any",
 ): Promise<{ days: Record<string, number>; durationMinutes: number }> {
   const { data: teacher, error } = await admin.from("teachers")
     .select("timezone, availability, default_lesson_duration_minutes, available_from_date, booking_buffer_before_minutes, booking_buffer_after_minutes, schedule_mode")
@@ -164,7 +166,8 @@ export async function computeAvailableDaysForTeacher(
       bookedIntervals: [...(booked.intervalsByDate[date] ?? []), ...holdRowsToBookedIntervals(holds, teacher.timezone)],
       blockedDayRows: blocked[date] ?? [],
     });
-    if (result.slots.length) days[date] = result.slots.length;
+    const count = result.slots.filter(slot => matchesLearnerAvailability(availability, date, slotStartMinutes(slot), durationMinutes)).length;
+    if (count) days[date] = count;
   }
   return { days, durationMinutes };
 }

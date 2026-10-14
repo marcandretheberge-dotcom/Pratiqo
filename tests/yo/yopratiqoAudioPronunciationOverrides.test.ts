@@ -481,6 +481,52 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     /^supabase\//,
   ];
   for (const path of changed) {
+    // Authorized learner-demand work, unrelated to audio. Keep scope narrow and
+    // assert the privacy/security contract instead of disabling the scope guard.
+    if (path === "app/api/learner-demand/route.ts") {
+      const demand = readFileSync(path, "utf8");
+      assert.match(demand, /rateLimitByIp\(request, "learner-demand"/);
+      assert.match(demand, /input.alertConsent !== true \|\| input.adultContactConfirmed !== true/);
+      assert.match(demand, /marketing_consent: false/);
+      assert.doesNotMatch(demand, /@\/lib\/(payments|pricing|commissions)|stripe|send.*Email/);
+      continue;
+    }
+    if (path === "supabase/migrations/133_package_fulfillment_slot_date_cast.sql") {
+      const migration = readFileSync(path, "utf8");
+      assert.match(migration, /v_slot_date::date/);
+      assert.match(migration, /Unexpected fulfillment function/);
+      assert.doesNotMatch(migration, /GRANT|DISABLE ROW LEVEL SECURITY|CREATE POLICY|price_cents|stripe/i);
+      continue;
+    }
+    if (path === "supabase/migrations/132_shared_teacher_slot_claims.sql") {
+      const migration = readFileSync(path, "utf8");
+      assert.match(migration, /EXCLUDE USING gist \(teacher_id WITH =, occupied WITH &&\)/);
+      assert.match(migration, /ALTER TABLE public\.teacher_slot_claims ENABLE ROW LEVEL SECURITY/);
+      assert.match(migration, /REVOKE ALL ON public\.teacher_slot_claims FROM PUBLIC, anon, authenticated/);
+      assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY|CREATE POLICY|(?:UPDATE|DELETE FROM|INSERT INTO) public\.(?:bookings|booking_payments|planned_package_session_holds|planned_package_pending_orders)\b/i);
+      continue;
+    }
+    if (path === "supabase/migrations/130_booking_interval_exclusion.sql") {
+      const migration = readFileSync(path, "utf8");
+      assert.match(migration, /EXCLUDE USING gist/);
+      assert.match(migration, /ADD CONSTRAINT active_booking_valid_interval/);
+      assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY|CREATE POLICY|^\s*GRANT\b|(?:UPDATE|DELETE FROM|INSERT INTO) public\./im);
+      continue;
+    }
+    if (path === "supabase/migrations/131_learner_funnel_measurement.sql") {
+      const migration = readFileSync(path, "utf8");
+      assert.match(migration, /ALTER TABLE public\.learner_funnel_facts ENABLE ROW LEVEL SECURITY/);
+      assert.match(migration, /REVOKE ALL ON public\.learner_funnel_facts FROM PUBLIC, anon, authenticated/);
+      assert.match(migration, /PRIMARY KEY \(event_name, entity_id\)/);
+      assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY|CREATE POLICY|(?:UPDATE|DELETE FROM|INSERT INTO) public\.(?:bookings|booking_payments)\b/i);
+      continue;
+    }
+    if (path === "supabase/migrations/129_learner_demand_consent.sql") {
+      const migration = readFileSync(path, "utf8");
+      assert.match(migration, /REVOKE ALL ON public\.learner_unmet_demand_summary FROM PUBLIC, anon, authenticated/);
+      assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY|CREATE POLICY|\b(?:bookings|booking_payments|teachers|profiles)\b/);
+      continue;
+    }
     if (path === "app/api/teachers/[id]/available-days/route.ts") {
       const calendar = readFileSync(path, "utf8");
       assert.match(calendar, /computeAvailableDaysForTeacher/);

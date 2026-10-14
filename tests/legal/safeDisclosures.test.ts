@@ -1593,6 +1593,44 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     if (allowedTeacherScheduleProfileLookupFiles.has(file)) continue;
     if (allowedTeacherAvailabilityPreviewFiles.has(file)) continue;
     if (allowedTeacherDiscoveryFirstFiles.has(file)) continue;
+    if (file === "supabase/migrations/133_package_fulfillment_slot_date_cast.sql") {
+      const migration = read(file);
+      assert.match(migration, /v_slot_date::date/);
+      assert.match(migration, /Unexpected fulfillment function/);
+      assert.doesNotMatch(migration, /GRANT|DISABLE ROW LEVEL SECURITY|CREATE POLICY|price_cents|stripe/i);
+      continue;
+    }
+    if (file === "supabase/migrations/132_shared_teacher_slot_claims.sql") {
+      const migration = read(file);
+      assert.match(migration, /EXCLUDE USING gist \(teacher_id WITH =, occupied WITH &&\)/);
+      assert.match(migration, /ALTER TABLE public\.teacher_slot_claims ENABLE ROW LEVEL SECURITY/);
+      assert.match(migration, /REVOKE ALL ON public\.teacher_slot_claims FROM PUBLIC, anon, authenticated/);
+      assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY|CREATE POLICY|(?:UPDATE|DELETE FROM|INSERT INTO) public\.(?:bookings|booking_payments|planned_package_session_holds|planned_package_pending_orders)\b/i);
+      continue;
+    }
+    if (file === "supabase/migrations/130_booking_interval_exclusion.sql") {
+      const migration = read(file);
+      assert.match(migration, /EXCLUDE USING gist/);
+      assert.match(migration, /ADD CONSTRAINT active_booking_valid_interval/);
+      assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY|CREATE POLICY|^\s*GRANT\b|(?:UPDATE|DELETE FROM|INSERT INTO) public\./im);
+      continue;
+    }
+    if (file === "supabase/migrations/131_learner_funnel_measurement.sql") {
+      const migration = read(file);
+      assert.match(migration, /ALTER TABLE public\.learner_funnel_facts ENABLE ROW LEVEL SECURITY/);
+      assert.match(migration, /REVOKE ALL ON public\.learner_funnel_facts FROM PUBLIC, anon, authenticated/);
+      assert.match(migration, /PRIMARY KEY \(event_name, entity_id\)/);
+      assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY|CREATE POLICY|(?:UPDATE|DELETE FROM|INSERT INTO) public\.(?:bookings|booking_payments)\b/i);
+      continue;
+    }
+    if (file === "supabase/migrations/129_learner_demand_consent.sql") {
+      const migration = read(file);
+      assert.match(migration, /alert_consent_at timestamptz/);
+      assert.match(migration, /marketing_consent boolean NOT NULL DEFAULT false/);
+      assert.match(migration, /REVOKE ALL ON public\.learner_unmet_demand_summary FROM PUBLIC, anon, authenticated/);
+      assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY|CREATE POLICY|\b(?:bookings|booking_payments|teachers|profiles)\b/);
+      continue;
+    }
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { matchesLearnerAvailability, type LearnerAvailability } from "@/lib/learnerAvailability";
 import { teacherPaymentReadinessFailureReasons, teacherPayoutReadinessContractFailureReasons, type TeacherStripeReadinessInput } from "./readinessContracts";
 import { validateMinimumLessonPriceDollars } from "@/lib/pricing/validateMinimumLessonPrice";
 import { bookedIntervalsFromRows, generateBookableSlotsForTeacherDay, mapDbRowsToExceptions, mapDbRowsToNormalized, type BookableSlotsForDayInput } from "@/lib/bookings/bookableSlotsForDay";
@@ -34,12 +35,13 @@ export async function getTeacherListingBookability(
   admin: SupabaseClient,
   publicTeacherIds: string[],
   now = new Date(),
+  availabilityPreference: LearnerAvailability = "any",
 ): Promise<Record<string, boolean | null>> {
-  const capabilities = await getTeacherListingCapabilities(admin, publicTeacherIds, now);
+  const capabilities = await getTeacherListingCapabilities(admin, publicTeacherIds, now, availabilityPreference);
   return Object.fromEntries(Object.entries(capabilities).map(([id, state]) => [id, state ? state.action === "book" : null]));
 }
 
-export async function getTeacherListingCapabilities(admin: SupabaseClient, publicTeacherIds: string[], now = new Date()): Promise<Record<string, TeacherBookingCapability | null>> {
+export async function getTeacherListingCapabilities(admin: SupabaseClient, publicTeacherIds: string[], now = new Date(), availabilityPreference: LearnerAvailability = "any"): Promise<Record<string, TeacherBookingCapability | null>> {
   const result: Record<string, TeacherBookingCapability | null> = Object.fromEntries(publicTeacherIds.map((id) => [id, null]));
   if (!publicTeacherIds.length) return result;
   try {
@@ -104,7 +106,7 @@ export async function getTeacherListingCapabilities(admin: SupabaseClient, publi
         });
         // Legacy zero-buffer generation checks labels only. A partial overlap or
         // active hold must not turn into a positive public readiness signal.
-        return day.slots.some((slot) => !occupied.some((interval) => intervalsOverlap(
+        return day.slots.some((slot) => matchesLearnerAvailability(availabilityPreference, date, slotStartMinutes(slot), durationMinutes) && !occupied.some((interval) => intervalsOverlap(
           expandBookingInterval(slotStartMinutes(slot), durationMinutes, 0, 0),
           expandBookingInterval(interval.startMin, interval.durationMin, 0, 0),
         )));
