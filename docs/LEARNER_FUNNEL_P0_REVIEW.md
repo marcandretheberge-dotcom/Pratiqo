@@ -668,3 +668,17 @@ exécutés passent. Cela ne constitue pas une validation du déploiement en prod
 
 Le travail existant demeure non committé. Aucun système de production ni aucune
 donnée réelle n'a été modifié; aucun email ou paiement réel n'a été envoyé.
+
+### Contrôle pré-fusion PR #403
+
+Après création du commit, `test:launch-critical` a détecté une exception manquante
+dans `founderDecisionsAlignment.test.ts`, puis dans les garde-fous
+`teacherLaunchCenter.test.ts`, `teacherProfileManagement.test.ts` et
+`commissionModelCopy.test.ts`. Ces contrôles ne voyaient pas les migrations
+non suivies lors des exécutions antérieures. Les cinq fichiers 129 à 133 sont
+désormais autorisés explicitement avec les mêmes assertions de confidentialité,
+d'exclusion transactionnelle et d'absence de modification financière que le
+garde-fou safeDisclosures. Aucun wildcard ni contrôle désactivé. La suite critique
+relancée après correction est PASS, ainsi que le lint ciblé et diff --check.
+Aucune migration distante
+n'est exécutée par cette préparation de PR.
