@@ -97,7 +97,7 @@ test("when flag OFF offer cards do not show live purchase CTAs", () => {
 
 test("when flag OFF existing Réserver maintenant behavior remains unchanged", () => {
   assert.match(read(PROFILE), /openBooking\("standard"\)/);
-  assert.match(read(PROFILE), /t\("bookNow"\)/);
+  assert.match(read(PROFILE), /t\(teacherBookingActionKey\(teacher\.bookingAction\)\)/);
   assert.match(read(PROFILE), /teacher\.pricePerLesson/);
   assert.match(read(BOOKING), /teacher\.pricePerLesson/);
 });

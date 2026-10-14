@@ -1,0 +1,16 @@
+{"path":"/professeurs/eloise-d-cours-saint-georges","locale":"fr","status":200,"title":"Éloïse — professeur de Français à Saint-Georges | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/eloise-d-cours-saint-georges","locale":"en","status":200,"title":"Éloïse — French teacher in Saint-Georges | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/eloise-d-cours-saint-georges","locale":"es","status":200,"title":"Éloïse — profesor de francés en Saint-Georges | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/el-p-espagnol-saint-georges","locale":"fr","status":200,"title":"El — professeur d'Espagnol à Saint-Georges | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/el-p-espagnol-saint-georges","locale":"en","status":200,"title":"El — Spanish teacher in Saint-Georges | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/el-p-espagnol-saint-georges","locale":"es","status":200,"title":"El — profesor de español en Saint-Georges | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/francis-a-guitare-saint-georges","locale":"fr","status":200,"title":"Francis — professeur de Guitare à Saint-Georges | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/francis-a-guitare-saint-georges","locale":"en","status":200,"title":"Francis — guitar teacher in Saint-Georges | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/francis-a-guitare-saint-georges","locale":"es","status":200,"title":"Francis — profesor de guitarra en Saint-Georges | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/camila-h-chant-populaire-saint-henri","locale":"fr","status":200,"title":"Camila — professeur de chant populaire à Saint-Henri | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/camila-h-chant-populaire-saint-henri","locale":"en","status":200,"title":"Camila — chant populaire teacher in Saint-Henri | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/camila-h-chant-populaire-saint-henri","locale":"es","status":200,"title":"Camila — profesor de chant populaire en Saint-Henri | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/maeva-d-francais-varennes","locale":"fr","status":200,"title":"Maéva — professeur de tutorat académique à Varennes | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/maeva-d-francais-varennes","locale":"en","status":200,"title":"Maéva — Academic tutoring teacher in Varennes | Pratiqo","biographyInHtml":true}
+{"path":"/professeurs/maeva-d-francais-varennes","locale":"es","status":200,"title":"Maéva — profesor de Tutoría académica en Varennes | Pratiqo","biographyInHtml":true}
+{"result":"PASS","checks":"server-rendered profile content, locale metadata, canonical, structured data and priority-city policy"}

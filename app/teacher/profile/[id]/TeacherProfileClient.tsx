@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Teacher } from "@/types";
+import type { Locale } from "@/lib/i18n/types";
 import { getSupabaseClient } from "@/lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "@/lib/teacherDisciplines";
 import { teacherRowToTeacher, type TeacherRow } from "@/lib/teacherMapper";
@@ -16,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { hasConfirmedBooking } from "@/lib/maps";
 import { useAuth } from "@/components/AuthProvider";
 import { attachPublicTeachingZones, getTeacherMapCoords } from "@/lib/teacherTeachingZones";
+import { applyTeacherListingMetadata, type TeacherPlansApiPayload } from "@/lib/teacherListingMetadata";
 
 function isColumnMismatchError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
@@ -49,10 +51,12 @@ export default function TeacherProfileClient({
   id,
   initialTeacher = null,
   pageHeadline,
+  initialLocale,
 }: {
   id: string;
   initialTeacher?: Teacher | null;
   pageHeadline?: string;
+  initialLocale?: Locale;
 }) {
   const router = useRouter();
   const { user } = useAuth();
@@ -114,8 +118,11 @@ export default function TeacherProfileClient({
       const discMap = await fetchTeacherDisciplinesMap(supabase, [id]).catch(() => new Map());
       const mergedBase = mergeTeachersWithDisciplines([base], discMap);
       const merged = (await attachPublicTeachingZones(supabase, mergedBase))[0] ?? mergedBase[0] ?? base;
+      const response = await fetch(`/api/teachers/plans?ids=${encodeURIComponent(id)}`);
+      const metadata: TeacherPlansApiPayload = response.ok ? await response.json() : {};
+      const hydrated = applyTeacherListingMetadata([merged], metadata)[0] ?? merged;
       setTeacher((current) => ({
-        ...merged,
+        ...hydrated,
         imageUrl: merged.imageUrl || current?.imageUrl || serverTeacherRef.current?.imageUrl || "",
       }));
     };
@@ -211,6 +218,7 @@ export default function TeacherProfileClient({
           showGoogleStudioMap
           studioMapHasConfirmedBooking={studioMapHasConfirmedBooking}
           pageHeadline={pageHeadline}
+          initialLocale={initialLocale}
           onClose={() => router.push("/teacher/profile")}
           onBook={(kind, context) => {
             setBookingInitialKind(kind);

@@ -1,4 +1,5 @@
 import type { Locale } from "@/lib/i18n/types";
+import { getDisciplineLabel } from "@/lib/taxonomy/disciplines";
 
 function normalizeDisciplineKey(discipline: string): string {
   return discipline
@@ -50,13 +51,16 @@ const ES_SUBJECT_LABELS: Record<string, string> = {
 export function localizeTeacherSeoSubject(discipline: string, locale: Locale): string {
   const trimmed = discipline.trim();
   if (!trimmed) return "";
-  if (locale === "fr") return trimmed;
+  if (locale === "fr") {
+    // The legacy group label names people, not a subject taught by this person.
+    return normalizeDisciplineKey(trimmed) === "tuteurs academiques" ? "tutorat académique" : trimmed;
+  }
 
   const key = normalizeDisciplineKey(trimmed);
   if (locale === "en") {
-    return EN_SUBJECT_LABELS[key] ?? trimmed;
+    return EN_SUBJECT_LABELS[key] ?? (getDisciplineLabel(trimmed, locale) || trimmed);
   }
-  return ES_SUBJECT_LABELS[key] ?? trimmed;
+  return ES_SUBJECT_LABELS[key] ?? (getDisciplineLabel(trimmed, locale) || trimmed);
 }
 
 export function formatTeacherSeoJobTitle(locale: Locale, discipline: string): string {
@@ -119,7 +123,13 @@ export function formatTeacherSeoTeachingFormatLabel(
     return "Online";
   }
 
-  if (mode === "both" || mode === "in_person" || mode === "in-person") {
+  if (mode === "person" || mode === "in_person" || mode === "in-person") {
+    return locale === "fr" ? "En personne" : locale === "es" ? "Presencial" : "In person";
+  }
+  if (mode === "home") {
+    return locale === "fr" ? "À domicile" : locale === "es" ? "A domicilio" : "At home";
+  }
+  if (mode === "both") {
     if (locale === "fr") return "En ligne et en personne";
     if (locale === "es") return "En línea y en persona";
     return "Online and in person";
@@ -140,21 +150,21 @@ export function formatTeacherSeoDescription(input: {
 
   if (locale === "en") {
     if (online) {
-      return `View ${firstName}'s ${subject} teacher profile on Pratiqo. Online lessons, flexible scheduling, and secure booking when available.`;
+      return `View ${firstName}'s ${subject} teacher profile online on Pratiqo. Explore their approach, lesson formats and displayed rate.`;
     }
-    return `View ${firstName}'s ${subject} teacher profile in ${cityLabel} on Pratiqo. Online or in-person lessons, flexible scheduling, and secure booking when available.`;
+    return `View ${firstName}'s ${subject} teacher profile in ${cityLabel} on Pratiqo. Explore their approach, lesson formats and displayed rate.`;
   }
   if (locale === "es") {
     if (online) {
-      return `Perfil de ${firstName}, profesor de ${subject} en línea en Pratiqo. Clases en línea, horarios flexibles y reserva segura cuando esté disponible.`;
+      return `Perfil de ${firstName}, profesor de ${subject} en línea en Pratiqo. Consulta su enfoque, los formatos y la tarifa publicada.`;
     }
-    return `Perfil de ${firstName}, profesor de ${subject} en ${cityLabel} en Pratiqo. Clases en línea o presenciales, horarios flexibles y reserva segura cuando esté disponible.`;
+    return `Perfil de ${firstName}, profesor de ${subject} en ${cityLabel} en Pratiqo. Consulta su enfoque, los formatos y la tarifa publicada.`;
   }
   const deDiscipline = formatFrenchTeacherDeDiscipline(subject);
   if (online) {
-    return `Profil de ${firstName}, professeur ${deDiscipline} en ligne sur Pratiqo. Cours en ligne, horaires flexibles et réservation sécurisée selon disponibilité.`;
+    return `Profil de ${firstName}, professeur ${deDiscipline} en ligne. Consultez son approche, ses formats de cours et son tarif sur Pratiqo.`;
   }
-  return `Profil de ${firstName}, professeur ${deDiscipline} à ${cityLabel} sur Pratiqo. Cours en ligne ou en personne, horaires flexibles et réservation sécurisée selon disponibilité.`;
+  return `Profil de ${firstName}, professeur ${deDiscipline} à ${cityLabel}. Consultez son approche, ses formats de cours et son tarif sur Pratiqo.`;
 }
 
 export function formatTeacherSeoH1(input: {

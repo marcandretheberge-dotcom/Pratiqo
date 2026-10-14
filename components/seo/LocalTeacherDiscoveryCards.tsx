@@ -12,10 +12,12 @@ import {
   PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,
 } from "@/lib/teachers/display";
 import { cn } from "@/lib/utils";
+import { teacherBookingActionKey } from "@/lib/teachers/bookingCapability";
+import { t } from "@/lib/translations";
 
 function teachingModeLabel(mode: string): string {
   if (mode === "online") return "En ligne";
-  if (mode === "person") return "En présentiel";
+  if (["person", "in_person", "in-person"].includes(mode)) return "En présentiel";
   if (mode === "home") return "À domicile";
   if (mode === "all") return "Plusieurs formats";
   if (mode === "both") return "En ligne & présentiel";
@@ -119,7 +121,7 @@ export function LocalTeacherDiscoveryCards({ bundle }: Props) {
 
               {teacher.isOnlineFallback ? (
                 <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[#92600A]">
-                  Disponible en ligne
+                  Option en ligne · Créneaux à vérifier
                 </p>
               ) : null}
 
@@ -127,11 +129,12 @@ export function LocalTeacherDiscoveryCards({ bundle }: Props) {
                 <span>{teachingModeLabel(teacher.teachingMode)}</span>
                 {teacher.pricePerLesson != null ? (
                   <span className="font-bold text-teal-700">
-                    {Math.round(teacher.pricePerLesson)} CAD{" "}
+                    {teacher.pricePerLesson.toLocaleString("fr-CA", { maximumFractionDigits: 2 })} CAD{" "}
                     <span className="text-sm font-normal text-slate-400">/h</span>
                   </span>
                 ) : null}
               </div>
+              <span className="mt-3 text-sm font-semibold text-teal-700">{t(teacherBookingActionKey(teacher.bookingAction), "fr")}</span>
             </Link>
           );
         })}

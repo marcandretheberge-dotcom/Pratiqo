@@ -1,4 +1,4 @@
-import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
+import { teacherSlotMeetsNotice } from "@/lib/timezones";
 import { isBookingOfferSelectionEnabled } from "@/lib/offers/bookingOfferSelection";
 import {
   loadPublishedTeacherOfferSnapshotForBooking,
@@ -54,6 +54,7 @@ type BookingCreateFilter = {
       id?: string;
       archived_at?: string | null;
       available_from_date?: string | null;
+      timezone?: string | null;
     } | null;
     error: { message?: string } | null;
   }>;
@@ -120,13 +121,9 @@ export async function createPendingPaymentBooking(args: {
   studentId: string;
   request: ParsedCreateBookingRequest;
 }): Promise<CreateBookingSuccess | CreateBookingFailure> {
-  if (!isBookingAtLeast24hAhead({ slot_date: args.request.slotDate, time_slot: args.request.timeSlot })) {
-    return { ok: false, status: 400, error: "booking_minimum_notice" };
-  }
-
   const { data: teacher, error: teacherErr } = await args.admin
     .from("teachers")
-    .select("id, available_from_date, schedule_mode")
+    .select("id, available_from_date, schedule_mode, timezone")
     .eq("id", args.request.teacherId)
     .maybeSingle();
   if (teacherErr) {
@@ -134,6 +131,10 @@ export async function createPendingPaymentBooking(args: {
   }
   if (!teacher?.id) {
     return { ok: false, status: 400, error: "invalid_teacher" };
+  }
+
+  if (!teacherSlotMeetsNotice(args.request.slotDate, args.request.timeSlot, new Date(), teacher.timezone)) {
+    return { ok: false, status: 400, error: "booking_minimum_notice" };
   }
 
   const availableFromDate = normalizeAvailableFromDate(teacher.available_from_date);
@@ -173,6 +174,7 @@ export async function createPendingPaymentBooking(args: {
   }
 
   const holdConflict = await hasActiveHoldConflictForBookingSlot({
+    timeZone: teacher.timezone,
     admin: args.admin as never,
     teacherId: args.request.teacherId,
     slotDate: args.request.slotDate,

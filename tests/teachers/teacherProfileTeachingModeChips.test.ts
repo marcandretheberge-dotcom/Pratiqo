@@ -77,9 +77,10 @@ test("teaching-mode chips are static metadata, not buttons", () => {
 });
 
 test("primary booking CTA stays the action and booking math is unchanged", () => {
-  assert.match(PROFILE, /onClick=\{\(\) => openBooking\("standard"\)\}/);
+  assert.match(PROFILE, /onClick=\{handlePrimaryAction\}/);
+  assert.match(PROFILE, /const handlePrimaryAction[\s\S]*openBooking\("standard"\)/);
   assert.match(PROFILE, /palette-teal-700/);
-  assert.match(PROFILE, /t\("bookNow"\)/);
+  assert.match(PROFILE, /t\(teacherBookingActionKey\(teacher\.bookingAction\)\)/);
   assert.match(BOOKING, /payableAmountCents/);
   assert.match(BOOKING, /handleConfirmAndPay/);
   assert.doesNotMatch(PROFILE, /from ["']stripe["']/);

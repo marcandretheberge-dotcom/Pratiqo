@@ -46,6 +46,7 @@ export interface Teacher {
   /** Server-verified regular-lesson availability in the booking calendar (4 weeks).
    * Unknown/missing never means bookable; the booking API remains authoritative. */
   bookingReady?: boolean | null;
+  bookingAction?: import("./lib/teachers/bookingCapability").TeacherBookingAction | null;
   /** Compte Supabase (auth) lié à la fiche professeur — messagerie, etc. */
   userId?: string | null;
   name: string;

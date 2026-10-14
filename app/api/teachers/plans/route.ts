@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { isTeacherMarketplaceVisibleRow } from "@/lib/teachers/marketplaceVisibility";
 import { TEACHERS_PUBLIC_TABLE } from "@/lib/supabase/queries";
-import { getTeacherListingBookability } from "@/lib/teachers/listingBookability";
+import { getTeacherListingCapabilities } from "@/lib/teachers/listingBookability";
 
 export const runtime = "nodejs";
 
@@ -138,8 +138,10 @@ export async function GET(req: Request) {
     }
   }
 
-  const bookingReadiness = await getTeacherListingBookability(admin, eligibleTeacherIds);
-  return NextResponse.json({ plans, photos, eligibleTeacherIds, bookingReadiness }, {
+  const capabilities = await getTeacherListingCapabilities(admin, eligibleTeacherIds);
+  const bookingReadiness = Object.fromEntries(Object.entries(capabilities).map(([id, state]) => [id, state ? state.action === "book" : null]));
+  const bookingActions = Object.fromEntries(Object.entries(capabilities).map(([id, state]) => [id, state?.action ?? null]));
+  return NextResponse.json({ plans, photos, eligibleTeacherIds, bookingReadiness, bookingActions }, {
     headers: { "Cache-Control": "no-store" },
   });
 }

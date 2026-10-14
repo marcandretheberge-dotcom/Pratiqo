@@ -215,8 +215,8 @@ test("offer fetch failure does not crash the profile", () => {
   assert.match(read(PROFILE), /from "@\/lib\/offers\/bookingOfferSelection"/);
 });
 
-test("legacy Réserver maintenant still uses profile booking widget", () => {
-  assert.match(read(PROFILE), /t\("bookNow"\)/);
+test("capability CTA keeps the existing profile booking widget", () => {
+  assert.match(read(PROFILE), /teacherBookingActionKey\(teacher\.bookingAction\)/);
   assert.match(read(PROFILE), /openBooking\("standard"\)/);
   assert.doesNotMatch(read("components/teacher/BookingOfferSelectionSummary.tsx"), /onBook/);
 });

@@ -2,6 +2,7 @@ import { QC_CITIES } from "@/lib/constants/cities";
 import { DISCIPLINES } from "@/lib/seo/disciplines";
 import { buildSubjectCityPath } from "@/lib/seo/localTeacherDiscoveryPages";
 import { SUBJECT_LANDING_PAGES } from "@/lib/seo/subjectLandingPages";
+import { resolveTeacherSubjectId } from "@/lib/taxonomy/teacherSubjectNormalization";
 
 function normalizeLabel(value: string | null | undefined): string {
   if (!value?.trim()) return "";
@@ -37,7 +38,7 @@ export function resolveTeacherDisciplineHubHref(input: {
     (d) =>
       normalizeLabel(d.dbDiscipline) === norm ||
       normalizeLabel(d.name) === norm ||
-      normalizeLabel(d.dbCategory) === norm,
+      (resolveTeacherSubjectId(d.dbDiscipline) != null && resolveTeacherSubjectId(d.dbDiscipline) === resolveTeacherSubjectId(discipline)),
   );
   if (disciplineConfig) {
     if (citySlug) return buildSubjectCityPath(disciplineConfig.slug, citySlug);

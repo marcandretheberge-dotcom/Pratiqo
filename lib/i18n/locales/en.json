@@ -1,4 +1,9 @@
 {
+  "teacherActionBook": "Book a lesson",
+  "teacherActionRequest": "Request a lesson",
+  "teacherActionContact": "Contact this teacher",
+  "teacherActionWaitlist": "Notify me of availability",
+  "teacherActionAvailability": "View availability",
   "teacherBookingReady": "Booking available in the next 4 weeks",
   "teacherBookingUnavailable": "No booking available at the moment",
   "teacherBookingUnknown": "Booking availability not verified",

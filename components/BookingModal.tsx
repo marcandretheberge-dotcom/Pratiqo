@@ -24,7 +24,7 @@ import { useAuth } from "./AuthProvider";
 import { getSupabaseClient } from "../lib/supabase";
 import { LEGAL_ROUTES } from "@/lib/config/membrePro";
 import { haversineDistance } from "../lib/geo";
-import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
+import { teacherSlotMeetsNotice, dateInTeacherTimeZone, addCalendarDays } from "@/lib/timezones";
 import { calculateIntroSessionPriceCents } from "@/lib/introSession";
 import {
   isLessonSessionBookable,
@@ -32,7 +32,7 @@ import {
   payableAmountCents,
 } from "@/lib/pricing/credits";
 import { validateMinimumLessonPriceDollars } from "@/lib/pricing/validateMinimumLessonPrice";
-import { formatLocalISODate, periodForSlot } from "../lib/slots";
+import { periodForSlot } from "../lib/slots";
 import {
   canBookTeacherOnDate,
   formatAvailableFromDisplayDate,
@@ -300,7 +300,7 @@ export function BookingModal({
     setDeferredRequestSent(false);
   }, [lessonType, selectedDate, selectedLearnerId, selectedSlot, teachingMode]);
 
-  const todayIso = useMemo(() => formatLocalISODate(new Date()), []);
+  const todayIso = useMemo(() => dateInTeacherTimeZone(new Date(), teacher.timezone), [teacher.timezone]);
 
   const distanceKm = useMemo(() => {
     if (!geo) return null;
@@ -764,18 +764,15 @@ export function BookingModal({
   }, [user?.id]);
 
   const calendarCells = useMemo(() => {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
     const availableFrom = normalizeAvailableFromDate(teacher.availableFromDate);
     const cells: { iso: string; label: string; count: number; disabled: boolean }[] = [];
     for (let i = 0; i < 28; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      const iso = formatLocalISODate(d);
+      const iso = addCalendarDays(todayIso, i);
+      const d = new Date(`${iso}T12:00:00Z`);
       const count = availableDays[iso] ?? 0;
       const beforeStart = !canBookTeacherOnDate(availableFrom, iso);
       const disabled = iso <= todayIso || count === 0 || beforeStart;
-      const label = d.toLocaleDateString(dateLocale, { weekday: "short", day: "numeric", month: "short" });
+      const label = d.toLocaleDateString(dateLocale, { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
       cells.push({ iso, label, count, disabled });
     }
     return cells;
@@ -883,7 +880,7 @@ export function BookingModal({
     setDeferredRequestSent(false);
     let redirecting = false;
     try {
-      if (!isBookingAtLeast24hAhead({ slot_date: selectedDate, time_slot: selectedSlot })) {
+      if (!teacherSlotMeetsNotice(selectedDate, selectedSlot, new Date(), teacher.timezone)) {
         setCheckoutError(t("bookingMinimumNoticeError"));
         return;
       }
@@ -2277,7 +2274,7 @@ export function BookingModal({
                       <CheckCircle2 size={18} />
                       {t("bookingClose")}
                     </>
-                  ) : !sessionBookable ? (
+                  ) : !sessionBookable || teacher.bookingAction === "request" ? (
                     <>
                       <CheckCircle2 size={18} />
                       {t("bookingSendRequest")}

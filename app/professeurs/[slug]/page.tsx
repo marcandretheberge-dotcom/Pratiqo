@@ -27,6 +27,7 @@ import {
 import { serializeJsonLd } from "@/lib/seo/jsonLd";
 import { fetchTeacherPublicSeoRowBySlug } from "@/lib/seo/teacherPublicProfileData";
 import { cacheSeoData, SEO_TEACHER_PROFILE_REVALIDATE_SECONDS } from "@/lib/seo/cache";
+import { getTeacherListingCapabilities } from "@/lib/teachers/listingBookability";
 
 function isColumnMismatchError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
@@ -45,7 +46,7 @@ async function selectPublicTeacherRowById(teacherId: string): Promise<TeacherRow
     .eq("id", teacherId)
     .maybeSingle();
   if (!full.error) return parse(full.data);
-  if (!isColumnMismatchError(full.error)) return null;
+  if (!isColumnMismatchError(full.error)) throw new Error("public_teacher_profile_unavailable");
 
   const legacy = await supabase
     .from(TEACHERS_PUBLIC_TABLE)
@@ -53,20 +54,21 @@ async function selectPublicTeacherRowById(teacherId: string): Promise<TeacherRow
     .eq("id", teacherId)
     .maybeSingle();
   if (!legacy.error) return parse(legacy.data);
-  if (!isColumnMismatchError(legacy.error)) return null;
+  if (!isColumnMismatchError(legacy.error)) throw new Error("public_teacher_profile_unavailable");
 
   const wide = await supabase.from(TEACHERS_PUBLIC_TABLE).select("*").eq("id", teacherId).maybeSingle();
   if (!wide.error) return parse(wide.data);
-  return null;
+  throw new Error("public_teacher_profile_unavailable");
 }
 
 async function withSafeProfilePhoto(row: TeacherRow): Promise<TeacherRow | null> {
   if (!row.user_id) return null;
-  const { data } = await getSupabaseAdmin()
+  const { data, error } = await getSupabaseAdmin()
     .from("profiles")
     .select("photo_url, is_active, deactivated_at, deleted_at, anonymized_at")
     .eq("id", row.user_id)
     .maybeSingle();
+  if (error) throw new Error("public_teacher_owner_unavailable");
   const profile = data as {
     photo_url?: string | null;
     is_active?: boolean | null;
@@ -161,7 +163,7 @@ export async function generateMetadata({
     "Profil professeur sur Pratiqo.";
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical },
     robots: teacherPublicProfileRobots(indexable),
@@ -195,6 +197,10 @@ export default async function ProfesseurPublicProfilePage({
   const bundle = await getTeacherPublicProfileBundle(slug);
   if (!bundle) notFound();
 
+  // Availability is request-time data, not part of the editorial cache.
+  const capability = (await getTeacherListingCapabilities(getSupabaseAdmin(), [bundle.teacher.id]))[bundle.teacher.id];
+  const initialTeacher = { ...bundle.teacher, bookingAction: capability?.action ?? null, bookingReady: capability ? capability.action === "book" : null };
+
   const subject = bundle.teacher.discipline?.trim() || bundle.subjects[0] || "";
   const firstName = publicTeacherFirstName(bundle.teacher.name);
   const cityLabel = resolveTeacherSeoCityLabel(locale, {
@@ -219,7 +225,7 @@ export default async function ProfesseurPublicProfilePage({
     : null;
 
   return (
-    <>
+    <div lang={locale}>
       {jsonLd ? (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
       ) : null}
@@ -228,12 +234,14 @@ export default async function ProfesseurPublicProfilePage({
         discipline={bundle.teacher.discipline}
         city={bundle.teacher.city}
         region={bundle.teacher.region}
+        additionalDisciplines={bundle.teacher.additionalDisciplines}
       />
       <TeacherProfileClient
         id={bundle.teacher.id}
-        initialTeacher={bundle.teacher}
+        initialTeacher={initialTeacher}
         pageHeadline={h1}
+        initialLocale={locale}
       />
-    </>
+    </div>
   );
 }

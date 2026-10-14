@@ -463,6 +463,10 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // tests/teacherSearch/teacherDiscoveryFirstDeferredStripe.test.ts.
     "app/api/bookings/route.ts",
     "supabase/migrations/125_teacher_discovery_first_visibility.sql",
+    // local-seo-p0: read-only calendar projection, covered by
+    // tests/bookings/publicCalendarReadSafety.test.ts (write-rejecting client).
+    "app/api/teachers/[id]/available-days/route.ts",
+    "app/api/teacher/schedule/availability-preview/route.ts",
   ]);
   const forbidden = [
     /^app\/api\//,
@@ -477,6 +481,17 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     /^supabase\//,
   ];
   for (const path of changed) {
+    if (path === "app/api/teachers/[id]/available-days/route.ts") {
+      const calendar = readFileSync(path, "utf8");
+      assert.match(calendar, /computeAvailableDaysForTeacher/);
+      assert.doesNotMatch(calendar, /\.update\(|\.insert\(|\.delete\(|\.rpc\(|expireStale/);
+    }
+    if (path === "app/api/teacher/schedule/availability-preview/route.ts") {
+      const preview = readFileSync(path, "utf8");
+      assert.match(preview, /computeTeacherAvailabilityPreview/);
+      assert.match(preview, /teacherDefaultDuration: defaultLessonDurationMinutes,\s*timeZone,/);
+      assert.doesNotMatch(preview, /\.update\(|\.insert\(|\.delete\(|\.rpc\(|expireStale/);
+    }
     if (hasOnlyPublicContactChange(path)) continue;
     if (branchSpecificAllowlist.has(path)) continue;
     assert.ok(

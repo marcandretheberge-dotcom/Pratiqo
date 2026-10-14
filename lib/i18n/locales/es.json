@@ -1,4 +1,9 @@
 {
+  "teacherActionBook": "Reservar una clase",
+  "teacherActionRequest": "Solicitar una clase",
+  "teacherActionContact": "Contactar con este profesor",
+  "teacherActionWaitlist": "Avisarme cuando haya disponibilidad",
+  "teacherActionAvailability": "Ver disponibilidad",
   "teacherBookingReady": "Reservas disponibles en las próximas 4 semanas",
   "teacherBookingUnavailable": "No hay reservas disponibles por el momento",
   "teacherBookingUnknown": "Disponibilidad para reservar sin verificar",

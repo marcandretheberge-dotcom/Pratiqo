@@ -1,4 +1,4 @@
-import { slotStartMinutes } from "@/lib/slots";
+import { slotStartMinutes, parseHHMMToMinutes } from "@/lib/slots";
 
 export type TimeZoneBookingLabels = {
   userLabel: string;
@@ -142,8 +142,8 @@ export function zonedWallTimeToUtc({
 }): Date | null {
   const date = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateIso.trim());
   if (!date) return null;
-  const minutes = slotStartMinutes(slot);
-  if (minutes < 0) return null;
+  const minutes = slot.includes(":") ? parseHHMMToMinutes(slot) ?? -1 : slotStartMinutes(slot);
+  if (minutes < 0 || minutes >= 1440) return null;
   const tz = safeTimeZone(timeZone) || "UTC";
   const year = Number(date[1]);
   const month = Number(date[2]);
@@ -153,7 +153,40 @@ export function zonedWallTimeToUtc({
   const utcGuess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0));
   const first = new Date(utcGuess.getTime() - getTimeZoneOffsetMs(utcGuess, tz));
   const second = new Date(utcGuess.getTime() - getTimeZoneOffsetMs(first, tz));
-  return Number.isNaN(second.getTime()) ? null : second;
+  if (Number.isNaN(second.getTime())) return null;
+  const actual = partsInTimeZone(second, tz);
+  // A spring-forward gap is not a real appointment; never silently shift it.
+  return actual.year === year && actual.month === month && actual.day === day &&
+    actual.hour === hour && actual.minute === minute ? second : null;
+}
+
+/** Legacy Quebec schedules have no stored booking zone; Toronto is their business default. */
+export function teacherBookingTimeZone(value?: string | null): string {
+  return safeTimeZone(value) || "America/Toronto";
+}
+
+export function dateInTeacherTimeZone(now: Date, zone?: string | null): string {
+  const p = partsInTimeZone(now, teacherBookingTimeZone(zone));
+  return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
+}
+
+export function addCalendarDays(date: string, offset: number): string {
+  const day = new Date(`${date}T12:00:00Z`);
+  day.setUTCDate(day.getUTCDate() + offset);
+  return day.toISOString().slice(0, 10);
+}
+
+export function teacherDayBounds(date: string, zone?: string | null) {
+  const timeZone = teacherBookingTimeZone(zone);
+  const start = zonedWallTimeToUtc({ dateIso: date, slot: "0h00", timeZone });
+  const end = zonedWallTimeToUtc({ dateIso: addCalendarDays(date, 1), slot: "0h00", timeZone });
+  if (!start || !end) throw new Error("invalid_teacher_calendar_day");
+  return { start, end };
+}
+
+export function teacherSlotMeetsNotice(date: string, slot: string, now: Date, zone?: string | null): boolean {
+  const start = zonedWallTimeToUtc({ dateIso: date, slot, timeZone: teacherBookingTimeZone(zone) });
+  return start !== null && start.getTime() - now.getTime() >= 24 * 60 * 60 * 1000;
 }
 
 export function bookingWallTimeRangeToUtc({
