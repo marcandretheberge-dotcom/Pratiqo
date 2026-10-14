@@ -1,14 +1,13 @@
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 import {
-  LOCAL_CITY_HUB_PATH_PREFIX,
   discoveryCardsToMapTeachers,
   type LocalTeacherDiscoveryPageBundle,
 } from "@/lib/seo/localTeacherDiscoveryPages";
 import { LocalTeacherDiscoveryCards } from "@/components/seo/LocalTeacherDiscoveryCards";
 import { LocalTeacherDiscoveryMap } from "@/components/seo/LocalTeacherDiscoveryMap";
 import { LegalFooterLinks } from "@/components/LegalFooterLinks";
-import { CityLinksFooter } from "@/components/CityLinksFooter";
+import { LocalSupplyCityLinks } from "@/components/seo/LocalSupplyCityLinks";
 import { FAQSchema } from "@/components/seo/FAQSchema";
 import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 import { MarketingResourceBlock } from "@/components/seo/MarketingResourceBlock";
@@ -18,6 +17,8 @@ import {
   getDisciplineCitySeoGuideLinks,
 } from "@/lib/seo/internalLinks";
 import type { Locale } from "@/lib/i18n/types";
+import { getTeacherListingCapabilities } from "@/lib/teachers/listingBookability";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 type Props = {
   bundle: LocalTeacherDiscoveryPageBundle;
@@ -28,11 +29,11 @@ function buildCityFaq(cityName: string) {
   return [
     {
       question: `Comment trouver un professeur à ${cityName}?`,
-      answer: `Recherchez sur Pratiqo en filtrant par matière, disponibilité et format de cours. Les profils listés sur cette page sont publics et correspondent à des professeurs réellement disponibles sur la plateforme.`,
+      answer: `Comparez les profils locaux et les alternatives indiquées séparément. Un profil public ne garantit pas un créneau disponible; consultez ses disponibilités avant de réserver.`,
     },
     {
       question: `Les cours particuliers sont-ils disponibles en ligne à ${cityName}?`,
-      answer: `Oui, selon le professeur. Plusieurs profils proposent des cours en ligne en plus des options en présentiel ou à domicile lorsque le professeur l'offre.`,
+      answer: `Le format est indiqué sur chaque profil. Une option en ligne n'est pas comptée comme une offre locale en présentiel à ${cityName}.`,
     },
     {
       question: `Comment contacter ou réserver un professeur?`,
@@ -51,38 +52,43 @@ function buildSubjectFaq(bundle: LocalTeacherDiscoveryPageBundle) {
   return [
     {
       question: `Comment trouver un professeur de ${subject} à ${cityName}?`,
-      answer: `Parcourez les profils listés sur cette page. Chaque professeur affiché enseigne ${subject} et a choisi d'apparaître publiquement sur Pratiqo.`,
+      answer: `Comparez les profils correspondant à cette matière. Les alternatives en ligne ou dans une autre ville sont indiquées séparément de l'offre locale.`,
     },
-    ...(bundle.discipline?.faq.map((item) => ({
-      question: item.question.replace("{city}", cityName),
-      answer: item.answer,
-    })) ?? []),
+    {
+      question: `Quel est le tarif des cours à ${cityName}?`,
+      answer: "Chaque professeur fixe son tarif. Consultez le prix et la durée affichés sur son profil, puis les détails de la réservation. Aucun tarif moyen local n'est présumé.",
+    },
+    {
+      question: "Comment vérifier les spécialités et les disponibilités?",
+      answer: "Consultez les matières et l'approche décrites par le professeur. Une préparation à un examen ou une spécialité n'est proposée que si le profil la mentionne. Les créneaux se vérifient dans le parcours de réservation.",
+    },
   ];
 }
 
-export function LocalTeacherDiscoveryView({ bundle, locale }: Props) {
-  const dict = getDictionary(locale);
+export async function LocalTeacherDiscoveryView({ bundle: cachedBundle }: Props) {
+  const capabilities = await getTeacherListingCapabilities(getSupabaseAdmin(), cachedBundle.teachers.map(teacher => teacher.id));
+  const bundle = { ...cachedBundle, teachers: cachedBundle.teachers.map(teacher => ({ ...teacher, bookingAction: capabilities[teacher.id]?.action ?? null })) };
+  // These canonical local routes currently have French editorial content, not locale URLs.
+  const dict = getDictionary("fr");
   const faqItems =
     bundle.pageType === "city_hub" ? buildCityFaq(bundle.city.name) : buildSubjectFaq(bundle);
 
   const guideLinks =
     bundle.pageType === "city_hub"
-      ? getCitySeoGuideLinks(bundle.city.slug, locale)
-      : getDisciplineCitySeoGuideLinks(bundle.discipline!.slug, bundle.city.slug, locale);
+      ? getCitySeoGuideLinks(bundle.city.slug, "fr")
+      : getDisciplineCitySeoGuideLinks(bundle.discipline!.slug, bundle.city.slug, "fr");
 
   const countLabel =
-    bundle.teachers.length === 0
-      ? "Aucun professeur disponible"
-      : bundle.teachers.length === 1
-        ? "1 professeur disponible"
-        : `${bundle.teachers.length} professeurs disponibles`;
+    bundle.localTeacherCount === 0
+      ? "Aucun profil local publié"
+      : `${bundle.localTeacherCount} profil${bundle.localTeacherCount > 1 ? "s" : ""} avec une offre locale`;
 
   return (
     <>
       <BreadcrumbSchema items={buildBreadcrumbItems(bundle)} />
       <FAQSchema items={faqItems} />
 
-      <div className="min-h-[100dvh] flex flex-col bg-[#FAFCFB]">
+      <div lang="fr" className="min-h-[100dvh] flex flex-col bg-[#FAFCFB]">
         <header className="sticky top-0 z-50 h-14 flex items-center justify-between bg-white border-b border-[#D3D1C7] px-4 sm:px-6">
           <Link href="/" className="text-lg font-black tracking-tight text-teal-700">
             Pratiqo
@@ -173,7 +179,21 @@ export function LocalTeacherDiscoveryView({ bundle, locale }: Props) {
               ) : null}
             </div>
 
-            <LocalTeacherDiscoveryCards bundle={bundle} />
+            {bundle.localTeacherCount === 0 ? (
+              <p className="mb-5 text-sm text-[#6B6760]">
+                Aucun cours local correspondant n&apos;est présenté pour le moment. <Link className="text-teal-700 underline" href={`/trouver-mon-prof?${new URLSearchParams({ city: bundle.city.name, subject: bundle.discipline?.name ?? "", online: "0" })}`}>Précisez votre recherche</Link>.
+              </p>
+            ) : null}
+            {[
+              { title: `Professeurs proposant des cours à ${bundle.city.name}`, teachers: bundle.teachers.filter((teacher) => teacher.isLocalSupply) },
+              { title: "D'autres options en ligne", teachers: bundle.teachers.filter((teacher) => !teacher.isLocalSupply && teacher.isOnlineFallback) },
+              { title: "Dans une autre ville", teachers: bundle.teachers.filter((teacher) => !teacher.isLocalSupply && !teacher.isOnlineFallback) },
+            ].filter((group) => group.teachers.length > 0).map((group) => (
+              <section key={group.title} className="mb-6">
+                <h2 className="mb-3 text-lg font-semibold">{group.title}</h2>
+                <LocalTeacherDiscoveryCards bundle={{ ...bundle, teachers: group.teachers }} />
+              </section>
+            ))}
 
             {bundle.pageType === "city_hub" && bundle.subjectCityLinks.length > 0 ? (
               <div className="mt-10 rounded-2xl border border-[#E8E6DF] bg-white p-5">
@@ -213,7 +233,7 @@ export function LocalTeacherDiscoveryView({ bundle, locale }: Props) {
                 {
                   n: "1",
                   title: "Explorez les profils",
-                  desc: `Parcourez les professeurs disponibles à ${bundle.city.name} et comparez matières, formats et tarifs affichés.`,
+                  desc: `Comparez les matières, formats et tarifs affichés. Distinguez l'offre locale à ${bundle.city.name} des autres options.`,
                 },
                 {
                   n: "2",
@@ -265,7 +285,7 @@ export function LocalTeacherDiscoveryView({ bundle, locale }: Props) {
           </div>
         </section>
 
-        <CityLinksFooter currentSlug={bundle.city.slug} cityHubPathPrefix={LOCAL_CITY_HUB_PATH_PREFIX} />
+        <LocalSupplyCityLinks />
 
         <footer className="bg-white border-t border-[#E8E6DF]">
           <div className="mx-auto max-w-6xl px-4 sm:px-6 py-5 flex flex-wrap items-center justify-center gap-4 text-xs text-[#6B6760]">
@@ -293,7 +313,7 @@ function buildBreadcrumbItems(bundle: LocalTeacherDiscoveryPageBundle) {
   }
   return [
     { name: "Accueil", href: "/" },
-    { name: bundle.discipline!.name, href: `/cours/${bundle.discipline!.slug}` },
+    { name: bundle.discipline!.name, href: bundle.broadSubjectPath! },
     { name: bundle.city.name, href: bundle.canonicalPath },
   ];
 }

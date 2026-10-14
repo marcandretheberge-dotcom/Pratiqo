@@ -9,7 +9,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   addLocalISODays,
   bookedIntervalsFromRows,
-  formatLocalISODate,
   generateBookableSlotsForTeacherDay,
   mapDbRowsToExceptions,
   mapDbRowsToNormalized,
@@ -26,6 +25,7 @@ import {
   type TeacherStripeReadinessInput,
 } from "@/lib/teachers/readinessContracts";
 import { defaultLessonDurationMinutes } from "@/lib/teacherSlotQueries";
+import { dateInTeacherTimeZone } from "@/lib/timezones";
 
 export const TEACHER_AVAILABILITY_PREVIEW_FLAG = "ENABLE_TEACHER_AVAILABILITY_PREVIEW";
 export const TEACHER_AVAILABILITY_PREVIEW_UI_FLAG =
@@ -102,10 +102,12 @@ export function parseAvailabilityPreviewQuery(args: {
   durationMinutes: string | null;
   teacherDefaultDuration: number | null | undefined;
   today?: string;
+  timeZone?: string | null;
+  now?: Date;
 }):
   | { ok: true; startDate: string; days: number; durationMinutes: number }
   | { ok: false; error: "invalid_start_date" | "invalid_days" | "invalid_duration" } {
-  const today = args.today ?? formatLocalISODate(new Date());
+  const today = args.today ?? dateInTeacherTimeZone(args.now ?? new Date(), args.timeZone);
   const startDate = args.startDate && /^\d{4}-\d{2}-\d{2}$/.test(args.startDate) ? args.startDate : today;
   if (startDate < today) {
     return { ok: false, error: "invalid_start_date" };
@@ -142,7 +144,7 @@ export async function computeTeacherAvailabilityPreview(
   const { data: teacherRow, error: teacherErr } = await admin
     .from("teachers")
     .select(
-      "id, availability, available_from_date, schedule_mode, default_lesson_duration_minutes, booking_buffer_before_minutes, booking_buffer_after_minutes, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason, is_listed",
+      "id, timezone, availability, available_from_date, schedule_mode, default_lesson_duration_minutes, booking_buffer_before_minutes, booking_buffer_after_minutes, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason, is_listed",
     )
     .eq("id", teacherId)
     .maybeSingle();

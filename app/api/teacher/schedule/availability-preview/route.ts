@@ -34,7 +34,7 @@ async function getAuthenticatedTeacher(req: Request) {
   const admin = getSupabaseAdmin();
   const { data: teacher, error: teacherErr } = await admin
     .from("teachers")
-    .select("id, default_lesson_duration_minutes")
+    .select("id, timezone, default_lesson_duration_minutes")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -44,6 +44,7 @@ async function getAuthenticatedTeacher(req: Request) {
 
   return {
     teacherId: teacher.id as string,
+    timeZone: teacher.timezone as string | null,
     defaultLessonDurationMinutes: (teacher as { default_lesson_duration_minutes?: number | null })
       .default_lesson_duration_minutes,
     admin,
@@ -62,8 +63,9 @@ export async function GET(req: Request) {
 
   const auth = await getAuthenticatedTeacher(req);
   if ("error" in auth && auth.error) return auth.error;
-  const { teacherId, defaultLessonDurationMinutes, admin } = auth as {
+  const { teacherId, timeZone, defaultLessonDurationMinutes, admin } = auth as {
     teacherId: string;
+    timeZone: string | null;
     defaultLessonDurationMinutes: number | null | undefined;
     admin: ReturnType<typeof getSupabaseAdmin>;
   };
@@ -74,6 +76,7 @@ export async function GET(req: Request) {
     days: url.searchParams.get("days"),
     durationMinutes: url.searchParams.get("durationMinutes") ?? url.searchParams.get("duration"),
     teacherDefaultDuration: defaultLessonDurationMinutes,
+    timeZone,
   });
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });

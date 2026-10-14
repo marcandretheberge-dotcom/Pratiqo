@@ -1,34 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import {
-  getAvailableDaysFromWeeklyIntervals,
-  mapDbRowsToNormalized,
-} from "@/lib/schedule/weeklyIntervals";
-import {
-  normalizeTeacherScheduleMode,
-  shouldUsePreciseIntervalsForBooking,
-} from "@/lib/schedule/preciseScheduleActivation";
-import {
-  findExceptionForDate,
-  generateSlotsFromDateException,
-  isTeacherScheduleExceptionsEnabled,
-  mapDbRowsToExceptions,
-  resolveExceptionOverride,
-} from "@/lib/schedule/dateExceptions";
-import {
-  blockedPeriodsFromRows,
-  blockedTimeRangesFromRows,
-  formatLocalISODate,
-  getAvailableDays,
-  slotStartMinutes,
-  weeklyAvailabilityFromTeacherRows,
-  type BlockedSlotDayRow,
-  type BookedSlotInterval,
-} from "@/lib/slots";
+import { mapDbRowsToNormalized } from "@/lib/schedule/weeklyIntervals";
+import { isTeacherScheduleExceptionsEnabled, mapDbRowsToExceptions } from "@/lib/schedule/dateExceptions";
+import { slotStartMinutes, type BlockedSlotDayRow, type BookedSlotInterval } from "@/lib/slots";
 import { normalizeLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
-import {
-  filterAvailableDaysByStartDate,
-  normalizeAvailableFromDate,
-} from "@/lib/teachers/availabilityStartDate";
+import { addCalendarDays, dateInTeacherTimeZone } from "@/lib/timezones";
+import { generateBookableSlotsForTeacherDay } from "@/lib/bookings/bookableSlotsForDay";
+import { holdRowsToBookedIntervals, listActiveHoldsForTeacherDay } from "@/lib/offers/plannedPackageHoldQueries";
 
 type Admin = SupabaseClient;
 
@@ -91,7 +68,8 @@ export async function fetchBookedSlotsByDate(
     .gte("slot_date", fromIso)
     .lte("slot_date", toIso);
 
-  if (error || !data) return { timeLabelsByDate: {}, intervalsByDate: {} };
+  if (error) throw new Error("booking_calendar_lookup_failed");
+  if (!data) return { timeLabelsByDate: {}, intervalsByDate: {} };
 
   const timeLabelsByDate: Record<string, string[]> = {};
   const intervalsByDate: Record<string, BookedSlotInterval[]> = {};
@@ -126,7 +104,8 @@ export async function fetchBlockedByDate(
     .gte("blocked_date", fromIso)
     .lte("blocked_date", toIso);
 
-  if (error || !data) return {};
+  if (error) throw new Error("blocked_calendar_lookup_failed");
+  if (!data) return {};
 
   const map: Record<string, BlockedSlotDayRow[]> = {};
   for (const row of data as {
@@ -153,142 +132,39 @@ export async function computeAvailableDaysForTeacher(
   weeks: number,
   durationOverride?: number | null,
 ): Promise<{ days: Record<string, number>; durationMinutes: number }> {
-  const { data: teacher, error } = await admin
-    .from("teachers")
-    .select(
-      "availability, default_lesson_duration_minutes, available_from_date, booking_buffer_before_minutes, booking_buffer_after_minutes, schedule_mode",
-    )
-    .eq("id", teacherId)
-    .maybeSingle();
-
-  if (error || !teacher) {
-    return { days: {}, durationMinutes: 60 };
-  }
-
-  const base = defaultLessonDurationMinutes(
-    (teacher as { default_lesson_duration_minutes?: number | null }).default_lesson_duration_minutes,
-  );
-  const durationMinutes =
-    typeof durationOverride === "number" &&
-    Number.isFinite(durationOverride) &&
-    durationOverride >= 30 &&
-    durationOverride <= 180 &&
-    durationOverride % 15 === 0
-      ? Math.round(durationOverride)
-      : base;
-  const weekly = weeklyAvailabilityFromTeacherRows((teacher as { availability?: unknown }).availability);
-  const buffers = normalizeTeacherBufferSettings(teacher as Parameters<typeof normalizeTeacherBufferSettings>[0]);
-  const availableFromDate = normalizeAvailableFromDate(
-    (teacher as { available_from_date?: string | null }).available_from_date,
-  );
-  const scheduleMode = normalizeTeacherScheduleMode(
-    (teacher as { schedule_mode?: string | null }).schedule_mode,
-  );
-  const usePrecise = shouldUsePreciseIntervalsForBooking({ scheduleMode });
-
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setDate(end.getDate() + Math.max(1, weeks) * 7 - 1);
-  const fromIso = formatLocalISODate(start);
-  const toIso = formatLocalISODate(end);
-
-  const { timeLabelsByDate, intervalsByDate } = await fetchBookedSlotsByDate(admin, teacherId, fromIso, toIso);
-  const blockedRows = await admin
-    .from("blocked_slots")
-    .select("blocked_date, period, start_time, end_time")
-    .eq("teacher_id", teacherId)
-    .gte("blocked_date", fromIso)
-    .lte("blocked_date", toIso);
-  const blockedRaw = (blockedRows.data || []) as {
-    blocked_date?: string;
-    period?: string | null;
-    start_time?: string | null;
-    end_time?: string | null;
-  }[];
-  const blockedByDate: Record<string, BlockedSlotDayRow[]> = {};
-  for (const row of blockedRaw) {
-    const ds = row.blocked_date as string;
-    if (!ds) continue;
-    if (!blockedByDate[ds]) blockedByDate[ds] = [];
-    blockedByDate[ds].push({
-      period: row.period ?? null,
-      start_time: row.start_time ?? null,
-      end_time: row.end_time ?? null,
+  const { data: teacher, error } = await admin.from("teachers")
+    .select("timezone, availability, default_lesson_duration_minutes, available_from_date, booking_buffer_before_minutes, booking_buffer_after_minutes, schedule_mode")
+    .eq("id", teacherId).maybeSingle();
+  if (error) throw new Error("teacher_calendar_lookup_failed");
+  if (!teacher) return { days: {}, durationMinutes: 60 };
+  const durationMinutes = typeof durationOverride === "number" && Number.isFinite(durationOverride) &&
+    durationOverride >= 30 && durationOverride <= 180 && durationOverride % 15 === 0
+    ? durationOverride : defaultLessonDurationMinutes(teacher.default_lesson_duration_minutes);
+  const now = new Date();
+  const from = dateInTeacherTimeZone(now, teacher.timezone);
+  const to = addCalendarDays(from, Math.max(1, weeks) * 7 - 1);
+  const booked = await fetchBookedSlotsByDate(admin, teacherId, from, to);
+  const blocked = await fetchBlockedByDate(admin, teacherId, from, to);
+  const intervals = await admin.from("teacher_weekly_availability_intervals")
+    .select("day_of_week, start_time, end_time, is_active").eq("teacher_id", teacherId).eq("is_active", true);
+  const exceptions = isTeacherScheduleExceptionsEnabled()
+    ? await admin.from("teacher_schedule_exceptions").select("exception_date, exception_type, start_time, end_time, is_active")
+      .eq("teacher_id", teacherId).eq("is_active", true).gte("exception_date", from).lte("exception_date", to)
+    : { data: [], error: null };
+  if (intervals.error || exceptions.error) throw new Error("teacher_schedule_lookup_failed");
+  const days: Record<string, number> = {};
+  for (let i = 0; i < Math.max(1, weeks) * 7; i++) {
+    const date = addCalendarDays(from, i);
+    const holds = await listActiveHoldsForTeacherDay({ admin, teacherId, slotDate: date, now, timeZone: teacher.timezone });
+    const result = generateBookableSlotsForTeacherDay({
+      teacher, date, now, durationMinutes,
+      weeklyIntervals: mapDbRowsToNormalized(intervals.data ?? []),
+      exceptions: mapDbRowsToExceptions(exceptions.data ?? []),
+      bookedSlots: booked.timeLabelsByDate[date] ?? [],
+      bookedIntervals: [...(booked.intervalsByDate[date] ?? []), ...holdRowsToBookedIntervals(holds, teacher.timezone)],
+      blockedDayRows: blocked[date] ?? [],
     });
+    if (result.slots.length) days[date] = result.slots.length;
   }
-
-  const dayOptions = {
-    bookedIntervalsByDate: intervalsByDate,
-    bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
-    bufferAfterMin: buffers.bookingBufferAfterMinutes,
-  };
-
-  let rawDays: Record<string, number>;
-  if (usePrecise) {
-    const { data: intervalRows } = await admin
-      .from("teacher_weekly_availability_intervals")
-      .select("day_of_week, start_time, end_time, is_active")
-      .eq("teacher_id", teacherId)
-      .eq("is_active", true);
-    const intervals = mapDbRowsToNormalized(intervalRows ?? []);
-    // Precise mode: intervals are the sole source of truth (empty → no bookable days).
-    rawDays = getAvailableDaysFromWeeklyIntervals(
-      intervals,
-      durationMinutes,
-      timeLabelsByDate,
-      blockedByDate,
-      weeks,
-      dayOptions,
-    );
-  } else {
-    rawDays = getAvailableDays(weekly, durationMinutes, timeLabelsByDate, blockedByDate, weeks, dayOptions);
-  }
-
-  if (isTeacherScheduleExceptionsEnabled()) {
-    const { data: exceptionRows } = await admin
-      .from("teacher_schedule_exceptions")
-      .select("exception_date, exception_type, start_time, end_time, is_active")
-      .eq("teacher_id", teacherId)
-      .eq("is_active", true)
-      .gte("exception_date", fromIso)
-      .lte("exception_date", toIso);
-    const exceptions = mapDbRowsToExceptions(exceptionRows ?? []);
-    const daysTotal = Math.max(1, weeks) * 7;
-    const startDay = new Date();
-    startDay.setHours(0, 0, 0, 0);
-
-    for (let i = 0; i < daysTotal; i++) {
-      const date = new Date(startDay);
-      date.setDate(startDay.getDate() + i);
-      const dateStr = formatLocalISODate(date);
-      const ex = findExceptionForDate(exceptions, dateStr);
-      if (!ex) continue;
-
-      if (ex.exceptionType === "unavailable_full_day") {
-        delete rawDays[dateStr];
-        continue;
-      }
-
-      const override = resolveExceptionOverride({ exception: ex, scheduleMode });
-      if (override.kind !== "available_custom_hours") {
-        continue;
-      }
-
-      const booked = timeLabelsByDate[dateStr] || [];
-      const blockedRowsForDay = blockedByDate[dateStr] || [];
-      const blocked = blockedPeriodsFromRows(blockedRowsForDay);
-      const ranges = blockedTimeRangesFromRows(blockedRowsForDay);
-      const slots = generateSlotsFromDateException(override.exception, durationMinutes, booked, blocked, ranges, {
-        bookedIntervals: intervalsByDate[dateStr] ?? [],
-        bufferBeforeMin: buffers.bookingBufferBeforeMinutes,
-        bufferAfterMin: buffers.bookingBufferAfterMinutes,
-      });
-      if (slots.length > 0) rawDays[dateStr] = slots.length;
-      else delete rawDays[dateStr];
-    }
-  }
-
-  const days = filterAvailableDaysByStartDate(rawDays, availableFromDate);
   return { days, durationMinutes };
 }

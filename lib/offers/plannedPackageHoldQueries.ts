@@ -4,7 +4,8 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { formatLocalISODate, formatSlotLabel, slotStartMinutes } from "@/lib/slots";
+import { formatLocalISODate, formatSlotLabel } from "@/lib/slots";
+import { teacherDayBounds, teacherBookingTimeZone, zonedWallTimeToUtc } from "@/lib/timezones";
 import {
   isActiveHold,
   isPlannedPackageTemporaryHoldsEnabled,
@@ -57,6 +58,7 @@ export async function expireStalePlannedPackageHolds(
     .from("planned_package_session_holds")
     .update({ status: "expired" })
     .eq("status", "active")
+    .lte("expires_at", nowIso)
     .in("pending_order_id", ids);
 }
 
@@ -65,15 +67,16 @@ export async function listActiveHoldsForTeacherDay(args: {
   teacherId: string;
   slotDate: string;
   now?: Date;
+  timeZone?: string | null;
 }): Promise<HoldIntervalRow[]> {
   if (!isPlannedPackageTemporaryHoldsEnabled()) return [];
   const admin = args.admin ?? adminClient();
   const now = args.now ?? new Date();
-  await expireStalePlannedPackageHolds(admin, now);
+  // Public GET callers must never expire orders. Explicit order/checkout commands
+  // retain that lifecycle operation; reads exclude expired holds by timestamp.
 
-  const dayStart = new Date(`${args.slotDate}T00:00:00`);
-  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-  const { data } = await admin
+  const { start: dayStart, end: dayEnd } = teacherDayBounds(args.slotDate, args.timeZone);
+  const { data, error } = await admin
     .from("planned_package_session_holds")
     .select("id, teacher_id, student_id, starts_at, ends_at, status, expires_at, pending_order_id")
     .eq("teacher_id", args.teacherId)
@@ -81,6 +84,8 @@ export async function listActiveHoldsForTeacherDay(args: {
     .gt("expires_at", now.toISOString())
     .lt("starts_at", dayEnd.toISOString())
     .gt("ends_at", dayStart.toISOString());
+
+  if (error) throw new Error("planned_package_holds_lookup_failed");
 
   return ((data ?? []) as HoldIntervalRow[]).filter((h) =>
     isActiveHold({ status: h.status, expires_at: h.expires_at }, now),
@@ -90,13 +95,15 @@ export async function listActiveHoldsForTeacherDay(args: {
 /** BookableSlots bookedIntervals shape from active holds for a day. */
 export function holdRowsToBookedIntervals(
   holds: HoldIntervalRow[],
+  timeZone?: string | null,
 ): Array<{ startMin: number; durationMin: number }> {
   const out: Array<{ startMin: number; durationMin: number }> = [];
   for (const hold of holds) {
     const start = new Date(hold.starts_at);
     if (Number.isNaN(start.getTime())) continue;
     const end = new Date(hold.ends_at);
-    const startMin = start.getHours() * 60 + start.getMinutes();
+    const parts = new Intl.DateTimeFormat("en", { timeZone: teacherBookingTimeZone(timeZone), hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(start);
+    const startMin = Number(parts.find(p => p.type === "hour")?.value) * 60 + Number(parts.find(p => p.type === "minute")?.value);
     const durationMin = Math.max(1, Math.round((end.getTime() - start.getTime()) / 60_000));
     out.push({ startMin, durationMin });
   }
@@ -117,9 +124,7 @@ export async function hasActivePlannedPackageHoldConflict(args: {
   if (!isPlannedPackageTemporaryHoldsEnabled()) return false;
   const admin = args.admin ?? adminClient();
   const now = args.now ?? new Date();
-  await expireStalePlannedPackageHolds(admin, now);
-
-  const { data } = await admin
+  const { data, error } = await admin
     .from("planned_package_session_holds")
     .select("id, teacher_id, student_id, starts_at, ends_at, status, expires_at, pending_order_id")
     .eq("teacher_id", args.teacherId)
@@ -127,6 +132,8 @@ export async function hasActivePlannedPackageHoldConflict(args: {
     .gt("expires_at", now.toISOString())
     .lt("starts_at", args.endsAt)
     .gt("ends_at", args.startsAt);
+
+  if (error) throw new Error("planned_package_holds_lookup_failed");
 
   for (const row of (data ?? []) as HoldIntervalRow[]) {
     if (args.excludePendingOrderId && row.pending_order_id === args.excludePendingOrderId) {
@@ -151,12 +158,12 @@ export async function hasActiveHoldConflictForBookingSlot(args: {
   durationMinutes: number;
   excludeStudentId?: string | null;
   now?: Date;
+  timeZone?: string | null;
 }): Promise<boolean> {
-  const startMin = slotStartMinutes(args.timeSlot);
-  if (startMin < 0) return false;
   const [y, m, d] = args.slotDate.split("-").map(Number);
   if (!y || !m || !d) return false;
-  const start = new Date(y, m - 1, d, Math.floor(startMin / 60), startMin % 60, 0, 0);
+  const start = zonedWallTimeToUtc({ dateIso: args.slotDate, slot: args.timeSlot, timeZone: teacherBookingTimeZone(args.timeZone) });
+  if (!start) return true;
   const end = new Date(start.getTime() + args.durationMinutes * 60_000);
   return hasActivePlannedPackageHoldConflict({
     admin: args.admin,

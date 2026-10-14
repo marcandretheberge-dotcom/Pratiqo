@@ -160,14 +160,17 @@ test("Root layout does NOT set alternates (avoids canonical/hreflang inheritance
 test("Homepage app/page.tsx exports its own metadata with alternates.canonical", () => {
   assert.match(
     homepageSrc,
-    /export\s+const\s+metadata\s*:\s*Metadata\s*=/,
-    "Homepage must export its own metadata",
+    /export\s+async\s+function\s+generateMetadata\(\):\s*Promise<Metadata>/,
+    "Homepage must generate its own localized metadata",
   );
   assert.match(
     homepageSrc,
     /alternates\s*:\s*\{[\s\S]*?canonical\s*:\s*SITE_URL/,
     "Homepage metadata.alternates.canonical must equal SITE_URL",
   );
+  assert.match(homepageSrc, /const locale = await getLocale\(\)/);
+  assert.match(homepageSrc, /t\(locale, "landingNeighborhoodHeadline"\)/);
+  assert.match(homepageSrc, /title:\s*\{\s*absolute:\s*title\s*\}/);
 });
 
 test("Homepage metadata mentions the brand and the geographic positioning", () => {

@@ -14,7 +14,8 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 
     const admin = getSupabaseAdmin();
     const { data: teacher, error: tErr } = await admin.from("teachers").select("id").eq("id", teacherId).maybeSingle();
-    if (tErr || !teacher) {
+    if (tErr) throw new Error("teacher_calendar_lookup_failed");
+    if (!teacher) {
       return NextResponse.json({ error: "Professeur introuvable." }, { status: 404 });
     }
 

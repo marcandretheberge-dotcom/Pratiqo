@@ -210,7 +210,9 @@ test("metadata and teaching format label render safely for teaching_mode all", (
     firstName: "Francis",
     cityLabel,
   });
-  assert.match(description ?? "", /en ligne ou en personne/i);
+  assert.match(description ?? "", /ses formats de cours et son tarif/);
+  assert.doesNotMatch(description ?? "", /horaires flexibles|en ligne ou en personne/i,
+    "metadata without a teaching-mode input must not invent formats or flexible availability");
 });
 
 test("teaching_mode all without admin marker still requires admin SEO publication", () => {

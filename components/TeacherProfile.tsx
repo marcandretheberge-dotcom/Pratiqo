@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { motion } from "motion/react";
 import {
   ChevronRight,
@@ -43,6 +43,9 @@ import {
   PUBLIC_TEACHER_PROFILE_TEACHING_MODE_CHIP_CLASS,
 } from "@/lib/teachers/display";
 import { useLocale } from "../lib/locale-context";
+import { t as translate, type TranslationKey } from "@/lib/translations";
+import type { Locale } from "@/lib/i18n/types";
+import { teacherBookingActionKey } from "@/lib/teachers/bookingCapability";
 import { formatLocalISODate } from "@/lib/slots";
 import { getAvailableFromBadge } from "@/lib/teachers/availabilityStartDate";
 import type { TeacherCredential } from "../lib/teacherTrust";
@@ -100,6 +103,10 @@ function formatReviewerName(fullName: string): string {
   return `${parts[0]} ${parts[parts.length - 1][0]}.`;
 }
 
+const subscribeToHydration = () => () => {};
+const clientHydrationSnapshot = () => true;
+const serverHydrationSnapshot = () => false;
+
 interface TeacherProfileProps {
   teacher: Teacher;
   onClose: () => void;
@@ -115,6 +122,7 @@ interface TeacherProfileProps {
   studioMapHasConfirmedBooking?: boolean;
   /** SEO public profile page headline (/professeurs/[slug]). */
   pageHeadline?: string;
+  initialLocale?: Locale;
 }
 
 export function TeacherProfile({
@@ -127,9 +135,15 @@ export function TeacherProfile({
   showGoogleStudioMap,
   studioMapHasConfirmedBooking,
   pageHeadline,
+  initialLocale,
 }: TeacherProfileProps) {
   const { user } = useAuth();
-  const { t, formatDisplayPrice, locale } = useLocale();
+  const { t: contextTranslate, formatDisplayPrice, locale: contextLocale } = useLocale();
+  const hydrated = useSyncExternalStore(subscribeToHydration, clientHydrationSnapshot, serverHydrationSnapshot);
+  // Public SSR uses the request locale; interactive language changes remain context-owned.
+  const locale = !hydrated && initialLocale ? initialLocale : contextLocale;
+  const t = useCallback((key: TranslationKey) => !hydrated && initialLocale
+    ? translate(key, initialLocale) : contextTranslate(key), [hydrated, initialLocale, contextTranslate]);
   const router = useRouter();
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
   const [plan, setPlan] = useState<"free" | "pro" | "enterprise">("free");
@@ -429,6 +443,12 @@ export function TeacherProfile({
     },
     [onBook, publicOffers],
   );
+
+  const handlePrimaryAction = () => {
+    if (teacher.bookingAction === "contact") return handleMessage();
+    if (teacher.bookingAction === "waitlist") return router.push(`/trouver-mon-prof?${new URLSearchParams({ subject: teacher.discipline, city: teacher.city ?? "" })}`);
+    openBooking("standard");
+  };
 
   const handlePrepareOfferBooking = useCallback(
     (offerId: string) => {
@@ -1039,11 +1059,12 @@ export function TeacherProfile({
 
                     <button
                       type="button"
-                      onClick={() => openBooking("standard")}
+                      onClick={handlePrimaryAction}
+                      data-booking-action={teacher.bookingAction ?? "unknown"}
                       className="w-full h-11 rounded-2xl text-white text-sm font-semibold shadow-sm hover:opacity-95 transition-opacity flex items-center justify-center gap-2"
                       style={{ backgroundColor: "var(--palette-teal-700)" }}
                     >
-                      {t("bookNow")}
+                      {t(teacherBookingActionKey(teacher.bookingAction))}
                       <ChevronRight size={15} />
                     </button>
 
@@ -1233,11 +1254,12 @@ export function TeacherProfile({
         <div className="flex-shrink-0 border-t border-slate-100 bg-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
           <button
             type="button"
-            onClick={() => openBooking("standard")}
+            onClick={handlePrimaryAction}
+            data-booking-action={teacher.bookingAction ?? "unknown"}
             className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-95"
             style={{ backgroundColor: "var(--palette-teal-700)" }}
           >
-            Réserver —{" "}
+            {t(teacherBookingActionKey(teacher.bookingAction))}{" · "}
             <PriceDisplay
               amount={Number(teacher.pricePerLesson)}
               sourceCurrency={teacher.currency ?? "CAD"}

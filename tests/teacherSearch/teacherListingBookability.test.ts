@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getTeacherListingBookability, hasListingBookingPrerequisites } from "@/lib/teachers/listingBookability";
+import { getTeacherListingBookability, getTeacherListingCapabilities, hasListingBookingPrerequisites } from "@/lib/teachers/listingBookability";
 import { applyTeacherListingMetadata } from "@/lib/teacherListingMetadata";
 import type { Teacher } from "@/types";
 
@@ -12,7 +12,7 @@ const teacher = {
   stripe_connect_requirements_due: [], stripe_connect_disabled_reason: null,
   availability: ["Lun Matin"], schedule_mode: "legacy_blocks", default_lesson_duration_minutes: 60,
 };
-const now = new Date("2026-10-05T12:00:00");
+const now = new Date("2026-10-05T16:00:00Z");
 type Row = Record<string, unknown>;
 function db(tables: Record<string, Row[]>, fail?: string, truncate?: string) {
   const reads: string[] = [];
@@ -52,6 +52,8 @@ async function run() {
     return result.teacher;
   };
   assert.equal(await check(teacher), true);
+  assert.equal(await check({ ...teacher, availability: ["Dim Matin"], available_from_date: "2026-11-01" }), true, "last day of 28-day window is included");
+  assert.equal(await check({ ...teacher, availability: ["Lun Matin"], available_from_date: "2026-11-02" }), false, "next day is outside the window");
   assert.equal(await check({ ...teacher, availability: [] }), false);
   assert.equal(await check({ ...teacher, available_from_date: "2027-01-01" }), false);
   assert.equal(await check({ ...teacher, stripe_connect_payouts_enabled: false }), false);
@@ -66,7 +68,7 @@ async function run() {
 
   process.env.ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS = "true";
   assert.equal(await check(teacher, { planned_package_session_holds: dates.map((date) => ({
-    teacher_id: "teacher", starts_at: `${date}T08:00:00`, ends_at: `${date}T12:00:00`,
+    teacher_id: "teacher", starts_at: `${date}T12:00:00Z`, ends_at: `${date}T16:00:00Z`,
   })) }), false);
   process.env.ENABLE_PLANNED_PACKAGE_TEMPORARY_HOLDS = "false";
   process.env.ENABLE_TEACHER_SCHEDULE_EXCEPTIONS = "true";
@@ -95,7 +97,20 @@ async function run() {
   const api = readFileSync("app/api/teachers/plans/route.ts", "utf8");
   assert.match(api, /from\(TEACHERS_PUBLIC_TABLE\)[\s\S]*?\.select\("id, user_id, discipline, category"\)/);
   assert.match(api, /discipline: row\.discipline/);
-  assert.match(api, /getTeacherListingBookability\(admin, eligibleTeacherIds\)/);
+  assert.match(api, /getTeacherListingCapabilities\(admin, eligibleTeacherIds\)/);
+  assert.match(api, /state\.action === "book"/);
+  process.env.ENABLE_TEACHER_PRECISE_SCHEDULE_BOOKING = "false";
+  for (const [patch, action] of [
+    [{}, "book"],
+    [{ stripe_connect_payouts_enabled: false }, "request"],
+    [{ availability: [] }, "contact"],
+    [{ availability: [], user_id: null }, "waitlist"],
+  ] as const) {
+    const mock = db({ teachers: [{ ...teacher, user_id: "owner", ...patch }] });
+    const state = await getTeacherListingCapabilities(mock.client, ["teacher"], now);
+    assert.equal(state.teacher?.action, action);
+    assert.deepEqual(Object.keys(state.teacher!).sort(), ["action", "hasSlot"]);
+  }
   console.log("teacherListingBookability: prerequisites, calendar, errors, metadata and listing UI passed");
 }
 run().catch((error) => { console.error(error); process.exitCode = 1; });

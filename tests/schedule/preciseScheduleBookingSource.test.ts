@@ -241,7 +241,8 @@ test("slots + available-days use shouldUsePreciseIntervalsForBooking", () => {
   const days = read("lib/teacherSlotQueries.ts");
   assert.match(slots, /generateBookableSlotsForTeacherDay/);
   assert.match(bookable, /shouldUsePreciseIntervalsForBooking/);
-  assert.match(days, /shouldUsePreciseIntervalsForBooking/);
+  assert.match(days, /generateBookableSlotsForTeacherDay/);
+  assert.match(days, /weeklyIntervals: mapDbRowsToNormalized/);
 });
 
 test("Horaire wires TeacherScheduleStatus + activate CTA", () => {

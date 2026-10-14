@@ -11,6 +11,7 @@ import { FindTeacherSearch } from "@/components/marketing/FindTeacherSearch";
 import { FindTeacherTrustStrip } from "@/components/marketing/FindTeacherTrustStrip";
 import { SITE_URL } from "@/lib/seo/site";
 import { getLocale, t } from "@/lib/i18n/server";
+import { LocalSupplyCityLinks } from "@/components/seo/LocalSupplyCityLinks";
 
 const BASE_URL = SITE_URL;
 
@@ -55,7 +56,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Trouver un prof particulier au Québec | Pratiqo",
     description:
-      "Des centaines de professeurs vérifiés pour toutes les matières et tous les niveaux. Réservez votre premier cours en ligne.",
+      "Comparez les profils publics, les matières, les formats et les tarifs. Vérifiez les disponibilités sur le profil du professeur.",
     url: `${BASE_URL}/trouver-un-prof`,
     siteName: "Pratiqo",
     locale: "fr_CA",
@@ -83,12 +84,12 @@ const FAQ_ITEMS = [
   {
     question: "Les professeurs sont-ils vérifiés?",
     answer:
-      "Oui. Tous les professeurs sur Pratiqo vérifient leur identité. Certains ont aussi fait valider leurs diplômes. Vous pouvez filtrer par niveau de vérification dans la recherche.",
+      "Consultez les badges réellement affichés sur chaque profil. La vérification d'identité et celle des diplômes sont des informations distinctes.",
   },
   {
     question: "Quel est le coût d'un cours particulier?",
     answer:
-      "Les tarifs varient selon la matière et le professeur — généralement entre 25 $ et 75 $/heure. Chaque profil affiche clairement le prix. Aucune frais de plateforme pour les étudiants.",
+      "Chaque professeur choisit son tarif. Consultez le prix et la durée sur son profil, puis le détail de votre réservation avant de confirmer.",
   },
   {
     question: "Puis-je prendre des cours en ligne?",
@@ -98,13 +99,13 @@ const FAQ_ITEMS = [
 ];
 
 const DISCIPLINES = [
-  { label: "Mathématiques", href: "/cours/mathematiques/montreal" },
-  { label: "Français", href: "/cours/francais/montreal" },
-  { label: "Anglais", href: "/cours/anglais/montreal" },
-  { label: "Piano", href: "/cours/piano/montreal" },
-  { label: "Guitare", href: "/cours/guitare/montreal" },
-  { label: "Espagnol", href: "/cours/espagnol/montreal" },
-  { label: "Francisation", href: "/cours/francisation/montreal" },
+  { label: "Mathématiques", href: "/trouver-un-prof?q=mathematiques" },
+  { label: "Français", href: "/trouver-un-prof?q=francais" },
+  { label: "Anglais", href: "/trouver-un-prof?q=anglais" },
+  { label: "Piano", href: "/trouver-un-prof?q=piano" },
+  { label: "Guitare", href: "/trouver-un-prof?q=guitare" },
+  { label: "Espagnol", href: "/trouver-un-prof?q=espagnol" },
+  { label: "Francisation", href: "/trouver-un-prof?q=francisation" },
   { label: "Coach / entraîneur", href: "/cours/coach-entraineur" },
   { label: "Cuisine", href: "/cours/cuisine" },
   { label: "Arts martiaux", href: "/cours/arts-martiaux" },
@@ -302,14 +303,15 @@ export default async function TrouverUnProfPage() {
             </div>
           </section>
 
-          {/* ── CITIES (SEO chips) ─────────────────────────────────────── */}
+          <LocalSupplyCityLinks />
+          {/* The city search remains available without asserting inventory in every city. */}
           <section className="bg-[#F3FAF6] px-4 py-12 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-[1200px]">
               <h2 className="text-xl font-bold text-[#1a1f1d] sm:text-2xl">
-                Professeurs près de chez vous
+                Rechercher dans une ville
               </h2>
               <p className="mt-2 text-sm text-[#4A5560] sm:text-base">
-                Cours en présentiel ou à domicile dans les principales villes du Québec.
+                Consultez les profils locaux lorsqu&apos;ils existent et les alternatives clairement indiquées.
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {CITIES.map((c) => (

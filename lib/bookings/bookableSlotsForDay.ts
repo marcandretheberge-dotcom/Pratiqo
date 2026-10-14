@@ -4,10 +4,10 @@
  *
  * Timezone: uses local calendar date (YYYY-MM-DD) + wall-clock slot labels
  * ("9h00") — same convention as createPendingPaymentBooking / slots route.
- * Does not introduce a separate timezone system.
+ * Notice checks resolve that wall time in the teacher's IANA zone (Toronto fallback).
  */
 
-import { isBookingAtLeast24hAhead } from "@/lib/bookingCancellation";
+import { teacherSlotMeetsNotice, addCalendarDays } from "@/lib/timezones";
 import {
   normalizeTeacherScheduleMode,
   shouldUsePreciseIntervalsForBooking,
@@ -37,6 +37,8 @@ import {
   formatLocalISODate,
   generateSlots,
   slotStartMinutes,
+  intervalsOverlap,
+  expandBookingInterval,
   weeklyAvailabilityFromTeacherRows,
 } from "@/lib/slots";
 import { normalizeTeacherBufferSettings } from "@/lib/teacherSlotQueries";
@@ -60,6 +62,7 @@ export type BookableSlotsForDayInput = {
   date: string;
   durationMinutes: number;
   teacher: {
+    timezone?: string | null;
     availability?: unknown;
     available_from_date?: string | null;
     schedule_mode?: string | null;
@@ -231,7 +234,11 @@ export function generateBookableSlotsForTeacherDay(
 
   const slotCountBefore24hFilter = rawSlots.length;
   const slots = rawSlots.filter((slot) =>
-    isBookingAtLeast24hAhead({ slot_date: input.date, time_slot: slot }, now),
+    teacherSlotMeetsNotice(input.date, slot, now, input.teacher.timezone) &&
+    !input.bookedIntervals.some(interval => intervalsOverlap(
+      expandBookingInterval(slotStartMinutes(slot), durationMinutes, 0, 0),
+      expandBookingInterval(interval.startMin, interval.durationMin, 0, 0),
+    )),
   );
 
   const blockedReasons: BookableDayBlockedReason[] = [];
@@ -286,10 +293,7 @@ export function generateBookableSlotsForTeacherDay(
 
 /** Add N calendar days to a local YYYY-MM-DD (no UTC conversion). */
 export function addLocalISODays(isoDate: string, days: number): string {
-  const [y, m, d] = isoDate.split("-").map(Number);
-  const dt = new Date(y!, (m ?? 1) - 1, d ?? 1);
-  dt.setDate(dt.getDate() + days);
-  return formatLocalISODate(dt);
+  return addCalendarDays(isoDate, days);
 }
 
 export { mapDbRowsToNormalized, mapDbRowsToExceptions, formatLocalISODate };

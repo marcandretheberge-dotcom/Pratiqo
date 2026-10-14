@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getLocale } from "@/lib/i18n/server";
+import { getLocale, t } from "@/lib/i18n/server";
 import { SITE_URL } from "@/lib/seo/site";
 import { LandingOrgJsonLd } from "@/components/marketing/LandingOrgJsonLd";
 import { LandingHeader } from "@/components/marketing/LandingHeader";
@@ -13,7 +13,7 @@ import { LandingPageClient } from "./LandingPageClient";
 // not silently inherit `alternates.canonical: SITE_URL` and end up
 // canonicalising auth-only or public pages back to the homepage. See
 // app/layout.tsx for the rationale and the per-page canonical convention.
-export const metadata: Metadata = {
+const homepageMetadata: Metadata = {
   title: "Pratiqo — Trouve un professeur ou un tuteur près de chez toi",
   description:
     "Pratiqo est la marketplace québécoise et canadienne pour trouver un professeur de musique, de langues ou un tuteur scolaire local. Profs vérifiés, paiements sécurisés, cours en ligne ou en présentiel.",
@@ -39,11 +39,24 @@ export const metadata: Metadata = {
   },
 };
 
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  const title = `${t(locale, "landingNeighborhoodHeadline")} | Pratiqo`;
+  const description = t(locale, "teacherGridCornerLesson");
+  return {
+    ...homepageMetadata,
+    title: { absolute: title },
+    description,
+    openGraph: { ...homepageMetadata.openGraph, title, description, locale: locale === "fr" ? "fr_CA" : locale === "es" ? "es" : "en_CA" },
+    twitter: { ...homepageMetadata.twitter, title, description },
+  };
+}
+
 export default async function LandingPage() {
   const locale = await getLocale();
   return (
     <LandingAuthGate>
-      <div className="relative flex min-h-[100dvh] flex-col bg-[#FAFCFB]">
+      <div lang={locale} className="relative flex min-h-[100dvh] flex-col bg-[#FAFCFB]">
         <LandingOrgJsonLd />
         <LandingHeader />
         <LandingSkipLink locale={locale} />

@@ -163,6 +163,11 @@ export async function POST(req: Request): Promise<Response> {
         requestId = (requestInsert as { id?: string | null } | null)?.id ?? null;
       }
 
+      // A deferred CTA must never report success (or notify) without a saved request.
+      if (!requestId) {
+        return NextResponse.json({ error: "server_error" }, { status: 500 });
+      }
+
       if (teacher.user_id && !emailSent) {
         const { data: profiles } = await admin
           .from("profiles")

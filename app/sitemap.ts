@@ -147,7 +147,7 @@ async function fetchTeacherEntries(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
   } catch {
-    return [];
+    throw new Error("sitemap_teacher_data_unavailable");
   }
 }
 
@@ -165,7 +165,7 @@ const fetchBlogEntries = cacheSeoData(async (): Promise<MetadataRoute.Sitemap> =
       .lte("published_at", new Date().toISOString())
       .order("published_at", { ascending: false });
 
-    if (error || !data) return [];
+    if (error || !data) throw new Error("sitemap_blog_data_unavailable");
 
     return (data as { slug: string; published_at: string | null; updated_at: string | null }[]).map((row) => {
       const sourceDate = row.updated_at ?? row.published_at;
@@ -177,9 +177,10 @@ const fetchBlogEntries = cacheSeoData(async (): Promise<MetadataRoute.Sitemap> =
       };
     });
   } catch {
-    return [];
+    // Never cache a transport failure as a successfully empty sitemap section.
+    throw new Error("sitemap_blog_data_unavailable");
   }
-}, ["blog-sitemap-entries-v1"], { revalidate: SEO_SITEMAP_REVALIDATE_SECONDS });
+}, ["blog-sitemap-entries-v2-errors-propagate"], { revalidate: SEO_SITEMAP_REVALIDATE_SECONDS });
 
 // ── City hub + discipline × city discovery pages (supply-gated) ─────────────
 //

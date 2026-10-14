@@ -129,6 +129,9 @@ export function resolveTeacherSeoCityLabel(
     teachingMode?: string | null;
   },
 ): string | null {
+  if (normalizeTeachingMode(input.teachingMode) === "online") {
+    return locale === "fr" ? "en ligne" : locale === "es" ? "en línea" : "online";
+  }
   const locality =
     (typeof input.neighborhood === "string" && input.neighborhood.trim()) ||
     (typeof input.city === "string" && input.city.trim()) ||

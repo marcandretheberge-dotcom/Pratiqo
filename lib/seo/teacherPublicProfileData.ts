@@ -124,7 +124,8 @@ async function fetchProfileSeoRowsByIds(userIds: string[]): Promise<Map<string, 
     .select(PROFILE_SEO_SELECT)
     .in("id", unique);
 
-  if (error || !data) return new Map();
+  if (error) throw new Error("teacher_seo_owners_unavailable");
+  if (!data) return new Map();
   const out = new Map<string, ProfileSeoRaw>();
   for (const row of data as ProfileSeoRaw[]) {
     out.set(row.id, row);
@@ -180,7 +181,8 @@ async function fetchTeacherPublicSeoRowBySlugUncached(
     .eq("public_profile_slug", trimmed)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) throw new Error("teacher_seo_profile_unavailable");
+  if (!data) return null;
   const raw = data as SeoRowRaw;
   const [profile, subjectCount] = await Promise.all([
     fetchProfileSeoRowByUserId(raw.user_id),
@@ -219,14 +221,15 @@ async function fetchIndexableTeacherSitemapRowsUncached(): Promise<
   const { data, error } = await getSupabaseAdmin()
     .from("teachers")
     .select(
-      "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, updated_at",
+      "id, user_id, name, bio, discipline, city, region, country_code, teaching_mode, is_public, marketplace_discovery_opt_out, deactivated_at, deleted_at, is_demo, identity_verified, stripe_identity_failed_reason, public_profile_enabled, search_indexing_consent, public_profile_slug, public_profile_last_indexable_at, updated_at",
     )
     .eq("public_profile_enabled", true)
     .eq("search_indexing_consent", true)
     .not("public_profile_slug", "is", null)
     .not("public_profile_last_indexable_at", "is", null);
 
-  if (error || !data) return [];
+  if (error) throw new Error("teacher_seo_sitemap_unavailable");
+  if (!data) return [];
 
   const profileRows = await fetchProfileSeoRowsByIds(
     (data as unknown as SeoRowRaw[]).map((raw) => raw.user_id ?? ""),
