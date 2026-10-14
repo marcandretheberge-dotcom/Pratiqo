@@ -22,11 +22,13 @@ import {
 import { CITIES } from "@/lib/cities";
 import { useLocale } from "@/lib/locale-context";
 import { cn } from "@/lib/utils";
+import { trackSearchStarted } from "@/lib/analytics/events";
 
 type Step = 1 | 2 | 3;
 type FinderOutcome = "local_match" | "online_match" | "waitlist";
 
 type FinderResponse = {
+  saved?: boolean;
   ok: boolean;
   outcome?: FinderOutcome;
   matchCount?: number;
@@ -72,16 +74,16 @@ const COPY = {
     emailHint: "Ton courriel nous permet de te prévenir si le bon prof n'est pas encore disponible aujourd'hui.",
     email: "Courriel",
     emailPlaceholder: "toi@exemple.com",
-    privacyPrefix: "On utilisera ton courriel pour t'envoyer tes résultats et t'aviser lorsqu'un professeur correspondant à ta recherche devient disponible.",
+    privacyPrefix: "On utilisera ton courriel pour t'aviser lorsqu'un professeur correspondant à ta recherche devient disponible.",
     privacyLink: "Politique de confidentialité",
     submit: "Trouver mon prof",
     searching: "On cherche ton meilleur match…",
-    error: "On n'a pas pu enregistrer ta recherche pour le moment. Réessaie dans quelques instants.",
+    error: "Impossible de traiter ta demande pour le moment. Réessaie dans quelques instants.",
     localTitle: "Bonne nouvelle — on a trouvé des profs pour toi. 🎉",
     localBody: (n: number, subject: string, city: string) => `${n} profil${n > 1 ? "s" : ""} correspond${n > 1 ? "ent" : ""} à ta recherche « ${subject} » près de ${city}.`,
     localCta: "Voir mes profs",
     onlineTitle: "On a trouvé une option dès maintenant. 💻",
-    onlineBody: (n: number, subject: string, city: string) => `Pas encore le bon prof local pour « ${subject} » à ${city}, mais ${n} prof${n > 1 ? "s" : ""} peu${n > 1 ? "vent" : "t"} t'enseigner en ligne. Ta demande locale reste enregistrée.`,
+    onlineBody: (n: number, subject: string, city: string) => `Pas encore le bon prof local pour « ${subject} » à ${city}, mais ${n} prof${n > 1 ? "s" : ""} peu${n > 1 ? "vent" : "t"} recevoir ta demande en ligne.`,
     onlineCta: "Voir les profs en ligne",
     waitTitle: "On cherche le bon prof pour toi. 💚",
     waitBody: "Ta demande est enregistrée. Dès qu'un professeur correspondant devient disponible, on pourra t'aviser.",
@@ -118,16 +120,16 @@ const COPY = {
     emailHint: "Your email lets us tell you if the right teacher isn't available today but joins later.",
     email: "Email",
     emailPlaceholder: "you@example.com",
-    privacyPrefix: "We'll use your email to send your results and notify you when a teacher matching this request becomes available.",
+    privacyPrefix: "We'll use your email to notify you when a teacher matching this request becomes available.",
     privacyLink: "Privacy policy",
     submit: "Find my teacher",
     searching: "Finding your best match…",
-    error: "We couldn't save your search right now. Please try again in a moment.",
+    error: "We couldn't process your request right now. Please try again in a moment.",
     localTitle: "Good news — we found teachers for you. 🎉",
     localBody: (n: number, subject: string, city: string) => `${n} profile${n > 1 ? "s" : ""} match${n === 1 ? "es" : ""} “${subject}” near ${city}.`,
     localCta: "See my teachers",
     onlineTitle: "We found an option you can start with now. 💻",
-    onlineBody: (n: number, subject: string, city: string) => `No local “${subject}” match in ${city} yet, but ${n} teacher${n > 1 ? "s" : ""} can teach you online. Your local request stays saved.`,
+    onlineBody: (n: number, subject: string, city: string) => `No local “${subject}” match in ${city} yet, but ${n} teacher${n > 1 ? "s" : ""} can receive your request for online lessons.`,
     onlineCta: "See online teachers",
     waitTitle: "We're looking for the right teacher for you. 💚",
     waitBody: "Your request is saved. When a matching teacher becomes available, we can let you know.",
@@ -164,16 +166,16 @@ const COPY = {
     emailHint: "Tu correo nos permite avisarte si el profe ideal todavía no está disponible hoy.",
     email: "Correo electrónico",
     emailPlaceholder: "tu@ejemplo.com",
-    privacyPrefix: "Usaremos tu correo para enviarte los resultados y avisarte cuando haya un profesor que corresponda a tu búsqueda.",
+    privacyPrefix: "Usaremos tu correo para avisarte cuando haya un profesor que corresponda a tu búsqueda.",
     privacyLink: "Política de privacidad",
     submit: "Encontrar mi profe",
     searching: "Buscando tu mejor opción…",
-    error: "No pudimos guardar tu búsqueda por el momento. Inténtalo de nuevo en unos instantes.",
+    error: "No pudimos procesar tu solicitud por el momento. Inténtalo de nuevo en unos instantes.",
     localTitle: "Buenas noticias — encontramos profes para ti. 🎉",
     localBody: (n: number, subject: string, city: string) => `${n} perfil${n > 1 ? "es" : ""} corresponde${n > 1 ? "n" : ""} a “${subject}” cerca de ${city}.`,
     localCta: "Ver mis profes",
     onlineTitle: "Encontramos una opción para empezar ahora. 💻",
-    onlineBody: (n: number, subject: string, city: string) => `Todavía no hay un profe local para “${subject}” en ${city}, pero ${n} profe${n > 1 ? "s" : ""} puede${n > 1 ? "n" : ""} enseñarte en línea. Tu búsqueda local queda guardada.`,
+    onlineBody: (n: number, subject: string, city: string) => `Todavía no hay un profe local para “${subject}” en ${city}, pero ${n} profe${n > 1 ? "s" : ""} puede${n > 1 ? "n" : ""} recibir tu solicitud de clases en línea.`,
     onlineCta: "Ver profes en línea",
     waitTitle: "Estamos buscando el profe ideal para ti. 💚",
     waitBody: "Tu solicitud quedó guardada. Cuando aparezca un profesor que corresponda, podremos avisarte.",
@@ -193,14 +195,19 @@ function validEmail(value: string): boolean {
 }
 
 export function LearnerTeacherFinder() {
-  const { locale } = useLocale();
+  const { locale, t } = useLocale();
   const lang = locale === "en" || locale === "es" ? locale : "fr";
   const c = COPY[lang];
   const [step, setStep] = useState<Step>(1);
   const [subject, setSubject] = useState("");
   const [city, setCity] = useState("");
-  const [acceptsOnline, setAcceptsOnline] = useState(true);
+  const [acceptsOnline, setAcceptsOnline] = useState(false);
+  const [requestedFormat, setRequestedFormat] = useState<"in_person" | "online">("in_person");
+  const [alertConsent, setAlertConsent] = useState(false);
+  const [adultContactConfirmed, setAdultContactConfirmed] = useState(false);
+  const [availabilityPreference, setAvailabilityPreference] = useState("any");
   const [email, setEmail] = useState("");
+  const [saveRequest, setSaveRequest] = useState(false);
   const [source, setSource] = useState("teacher_finder");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -215,6 +222,8 @@ export function LearnerTeacherFinder() {
     if (subjectParam?.trim()) setSubject(subjectParam.trim());
     if (cityParam?.trim()) setCity(cityParam.trim());
     if (params.get("online") === "0") setAcceptsOnline(false);
+    if (params.get("online") === "1") setAcceptsOnline(true);
+    if (params.get("format") === "online") setRequestedFormat("online");
     if (campaign?.trim()) setSource(campaign.trim().slice(0, 100));
   }, []);
 
@@ -230,10 +239,12 @@ export function LearnerTeacherFinder() {
   const progress = Math.round((step / 3) * 100);
   const canContinueSubject = subject.trim().length > 0;
   const canContinueCity = city.trim().length > 0;
-  const canSubmit = validEmail(email) && canContinueSubject && canContinueCity;
+  const canSubmit = canContinueSubject && canContinueCity &&
+    (!saveRequest || (validEmail(email) && alertConsent && adultContactConfirmed));
 
   const submit = async () => {
     if (!canSubmit || submitting) return;
+    if (!saveRequest) trackSearchStarted({ source: "quiz" });
     setSubmitting(true);
     setError(null);
     try {
@@ -241,10 +252,15 @@ export function LearnerTeacherFinder() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          intent: saveRequest ? "waitlist" : "search",
           subject: subject.trim(),
           city: city.trim(),
           acceptsOnline,
-          email: email.trim(),
+          requestedFormat,
+          alertConsent,
+          adultContactConfirmed,
+          availabilityPreference,
+          email: saveRequest ? email.trim() : undefined,
           locale: lang,
           source,
         }),
@@ -263,8 +279,13 @@ export function LearnerTeacherFinder() {
     setStep(1);
     setSubject("");
     setCity("");
-    setAcceptsOnline(true);
+    setAcceptsOnline(false);
+    setRequestedFormat("in_person");
+    setAlertConsent(false);
+    setAdultContactConfirmed(false);
+    setAvailabilityPreference("any");
     setEmail("");
+    setSaveRequest(false);
     setResult(null);
     setError(null);
     setCopied(false);
@@ -304,14 +325,14 @@ export function LearnerTeacherFinder() {
             {result.outcome === "waitlist" ? <Sparkles size={28} /> : <CheckCircle2 size={30} />}
           </div>
           <h2 className="mt-5 max-w-2xl text-3xl font-extrabold tracking-tight text-[#142235] sm:text-4xl">
-            {isLocal ? c.localTitle : isOnline ? c.onlineTitle : c.waitTitle}
+            {isLocal ? c.localTitle : isOnline ? t("learnerFunnelOnlineAlternatives") : t("learnerFunnelEmpty")}
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#56616A] sm:text-lg">
             {isLocal
               ? c.localBody(count, subject, resolvedCity)
               : isOnline
-                ? c.onlineBody(count, subject, resolvedCity)
-                : c.waitBody}
+                ? requestedFormat === "online" ? t("learnerFunnelOnlineMatched") : c.onlineBody(count, subject, resolvedCity)
+                : result.saved ? t("learnerFunnelSaved") : t("learnerFunnelWaitlistCta")}
           </p>
 
           <div className="mt-7 grid gap-3 rounded-3xl border border-[#DCEAE3] bg-[#F7FBF9] p-5 sm:grid-cols-3">
@@ -325,7 +346,7 @@ export function LearnerTeacherFinder() {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#718079]">Format</p>
-              <p className="mt-1 font-bold text-[#21322C]">{acceptsOnline ? c.onlineYes : c.onlineNo}</p>
+              <p className="mt-1 font-bold text-[#21322C]">{requestedFormat === "online" ? t("learnerFunnelOnline") : acceptsOnline ? c.onlineYes : c.onlineNo}</p>
             </div>
           </div>
 
@@ -339,7 +360,12 @@ export function LearnerTeacherFinder() {
             </a>
           ) : null}
 
-          {result.outcome === "waitlist" ? (
+          {!result.saved ? (
+            <button type="button" onClick={() => { setSaveRequest(true); setResult(null); setStep(3); }} className="mt-6 block min-h-11 font-semibold text-[#0F6E56] underline">
+              {t("learnerFunnelWaitlistCta")}
+            </button>
+          ) : null}
+          {result.saved ? (
             <>
               <div className="mt-7 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950">
                 <Check className="mt-0.5 shrink-0" size={20} />
@@ -501,17 +527,23 @@ export function LearnerTeacherFinder() {
 
       {step === 3 ? (
         <div className="mt-8">
-          <h2 className="text-2xl font-extrabold tracking-tight text-[#142235] sm:text-3xl">{c.emailTitle}</h2>
-          <p className="mt-2 text-sm leading-relaxed text-[#66716B]">{c.emailHint}</p>
+          <h2 className="text-2xl font-extrabold tracking-tight text-[#142235] sm:text-3xl">{saveRequest ? c.emailTitle : t("learnerFunnelSearch")}</h2>
+          {saveRequest ? <p className="mt-2 text-sm leading-relaxed text-[#66716B]">{c.emailHint}</p> : null}
 
           <div className="mt-6 rounded-2xl border border-[#DCEAE3] bg-[#F7FBF9] p-4">
             <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#39463F]">
               <span className="font-bold">{subject}</span>
               <span className="inline-flex items-center gap-1.5"><MapPin size={15} />{city}</span>
-              <span className="inline-flex items-center gap-1.5"><Globe2 size={15} />{acceptsOnline ? c.onlineYes : c.onlineNo}</span>
+              <span className="inline-flex items-center gap-1.5"><Globe2 size={15} />{requestedFormat === "online" ? t("learnerFunnelOnline") : acceptsOnline ? c.onlineYes : c.onlineNo}</span>
             </div>
           </div>
 
+          <label className="mt-4 block text-sm" htmlFor="finder-format">{t("learnerFunnelFormat")}</label>
+          <select id="finder-format" value={requestedFormat} onChange={(event) => setRequestedFormat(event.target.value as "in_person" | "online")} className="mt-2 min-h-11 w-full rounded-lg border p-2">
+            <option value="in_person">{t("learnerFunnelInPerson")}</option>
+            <option value="online">{t("learnerFunnelOnline")}</option>
+          </select>
+          {saveRequest ? <>
           <label className="mt-5 block text-sm font-bold text-[#29342F]" htmlFor="finder-email">{c.email}</label>
           <div className="relative mt-2">
             <Mail className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#718079]" size={20} />
@@ -532,6 +564,25 @@ export function LearnerTeacherFinder() {
             {c.privacyPrefix} {" "}
             <Link href="/legal/confidentialite" className="font-semibold text-[#0F6E56] underline underline-offset-2">{c.privacyLink}</Link>.
           </p>
+          </> : null}
+          <label className="mt-4 block text-sm" htmlFor="finder-availability">{t("learnerFunnelAvailability")}</label>
+          <select id="finder-availability" value={availabilityPreference} onChange={(event) => setAvailabilityPreference(event.target.value)} className="mt-2 min-h-11 w-full rounded-lg border p-2">
+            <option value="any">{t("learnerFunnelAny")}</option>
+            <option value="weekday_day">{t("learnerFunnelWeekdayDay")}</option>
+            <option value="weekday_evening">{t("learnerFunnelWeekdayEvening")}</option>
+            <option value="weekend">{t("learnerFunnelWeekend")}</option>
+          </select>
+          {saveRequest ? <>
+          <label className="mt-4 flex min-h-11 items-start gap-3 text-sm">
+            <input type="checkbox" checked={adultContactConfirmed} onChange={(event) => setAdultContactConfirmed(event.target.checked)} className="mt-1" />
+            {t("learnerFunnelAdultContact")}
+          </label>
+          <label className="mt-3 flex min-h-11 items-start gap-3 text-sm">
+            <input type="checkbox" checked={alertConsent} onChange={(event) => setAlertConsent(event.target.checked)} className="mt-1" />
+            {t("learnerFunnelAlertConsent")}
+          </label>
+          <p className="mt-3 text-xs"><a href="mailto:info@pratiqo.ca">{t("learnerFunnelWithdraw")}</a></p>
+          </> : null}
           {error ? <p className="mt-3 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p> : null}
 
           <div className="mt-6 flex gap-2">
@@ -544,7 +595,7 @@ export function LearnerTeacherFinder() {
               onClick={() => void submit()}
               className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[#0F6E56] px-5 font-bold text-white shadow-[0_14px_35px_rgba(15,110,86,0.20)] hover:bg-[#0B5F4A] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {submitting ? c.searching : c.submit}
+              {submitting ? c.searching : saveRequest ? t("learnerFunnelWaitlistCta") : t("learnerFunnelSearch")}
               {!submitting ? <Sparkles size={18} /> : null}
             </button>
           </div>

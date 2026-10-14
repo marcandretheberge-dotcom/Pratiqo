@@ -40,6 +40,7 @@ import {
   normalizeAvailableFromDate,
 } from "@/lib/teachers/availabilityStartDate";
 import {
+  trackBookingStarted,
   trackBookingCheckoutStarted,
   trackBookingSlotSelected,
 } from "@/lib/analytics/events";
@@ -126,8 +127,9 @@ type BookingContextDraft = {
   notes_for_teacher: string;
 };
 
-function defaultTeachingMode(teacher: Teacher, initial: BookingInitialLessonKind): StoredTeachingMode {
+function defaultTeachingMode(teacher: Teacher, initial: BookingInitialLessonKind, requestedFormat?: "online" | "in_person"): StoredTeachingMode {
   if (initial === "home") return "domicile";
+  if (requestedFormat === "online" && ["online", "both", "all"].includes(teacher.teachingMode ?? "")) return "online";
   if (teacher.teachingMode === "online") return "online";
   if (teacher.teachingMode === "person") return "person";
   return "person";
@@ -179,6 +181,8 @@ function draftFromLearner(learner: BookingLearnerProfile | null, fallback: Learn
 }
 
 interface BookingModalProps {
+  initialRequestedFormat?: "online" | "in_person";
+  availabilityPreference?: import("@/lib/learnerAvailability").LearnerAvailability;
   teacher: Teacher;
   onClose: () => void;
   initialLessonKind?: BookingInitialLessonKind;
@@ -191,9 +195,18 @@ export function BookingModal({
   onClose,
   initialLessonKind = "standard",
   initialSelectedOfferId = null,
+  availabilityPreference: initialAvailabilityPreference = "any",
+  initialRequestedFormat,
   publicOffers,
 }: BookingModalProps) {
   const { user, profile } = useAuth();
+  const [availabilityPreference, setAvailabilityPreference] = useState(initialAvailabilityPreference);
+  const trackedEntry = useRef<string | null>(null);
+  useEffect(() => {
+    if (trackedEntry.current === teacher.id) return;
+    trackedEntry.current = teacher.id;
+    trackBookingStarted({ teacher_id: teacher.id, lesson_type: initialLessonKind });
+  }, [teacher.id, initialLessonKind]);
   const { locale, t, formatDisplayPrice } = useLocale();
   const dateLocale = localeToBcp47(locale);
   const browserTimeZone = useMemo(() => getBrowserTimeZone(), []);
@@ -207,7 +220,7 @@ export function BookingModal({
   const [selectedLevel, setSelectedLevel] = useState<string | null>(null);
   const [lessonType, setLessonType] = useState<LessonType>("regular");
   const [teachingMode, setTeachingMode] = useState<StoredTeachingMode>(() =>
-    defaultTeachingMode(teacher, initialLessonKind),
+    defaultTeachingMode(teacher, initialLessonKind, initialRequestedFormat),
   );
   const [studentAddress, setStudentAddress] = useState("");
   const [savedStudentLocation, setSavedStudentLocation] = useState<StudentSavedLocation | null>(null);
@@ -482,7 +495,7 @@ export function BookingModal({
     setLoadingDays(true);
     setDaysError(null);
     try {
-      const q = new URLSearchParams({ weeks: "4", duration: String(lessonMinutes) });
+      const q = new URLSearchParams({ weeks: "4", duration: String(lessonMinutes), availability: availabilityPreference });
       const res = await fetch(`/api/teachers/${encodeURIComponent(teacher.id)}/available-days?${q.toString()}`);
       const body = (await res.json().catch(() => ({}))) as {
         days?: Record<string, number>;
@@ -498,14 +511,14 @@ export function BookingModal({
     } finally {
       setLoadingDays(false);
     }
-  }, [teacher.id, lessonMinutes, t]);
+  }, [teacher.id, lessonMinutes, availabilityPreference, t]);
 
   const loadSlotsForDate = useCallback(
     async (dateIso: string) => {
       setLoadingSlots(true);
       setSlotsError(null);
       try {
-        const q = new URLSearchParams({ date: dateIso, duration: String(lessonMinutes) });
+        const q = new URLSearchParams({ date: dateIso, duration: String(lessonMinutes), availability: availabilityPreference });
         const res = await fetch(`/api/teachers/${encodeURIComponent(teacher.id)}/slots?${q.toString()}`);
         const body = (await res.json().catch(() => ({}))) as {
           slots?: string[];
@@ -531,12 +544,12 @@ export function BookingModal({
         setLoadingSlots(false);
       }
     },
-    [teacher.id, lessonMinutes, t],
+    [teacher.id, lessonMinutes, availabilityPreference, t],
   );
 
   useEffect(() => {
     setLessonType("regular");
-    setTeachingMode(defaultTeachingMode(teacher, initialLessonKind));
+    setTeachingMode(defaultTeachingMode(teacher, initialLessonKind, initialRequestedFormat));
     setStudentAddress("");
     setStep("info");
     setSelectedDate(null);
@@ -554,7 +567,7 @@ export function BookingModal({
     setContextDraft(draftFromLearner(null, suggestedContextType));
     setContextDirty(false);
     setSelectedOfferId(initialSelectedOfferId);
-  }, [teacher.id, initialLessonKind, initialSelectedOfferId, suggestedContextType]);
+  }, [teacher.id, initialLessonKind, initialRequestedFormat, initialSelectedOfferId, suggestedContextType]);
 
   useEffect(() => {
     setContextDraft(draftFromLearner(selectedLearner, suggestedContextType));
@@ -1067,6 +1080,10 @@ export function BookingModal({
         createPayload = createRaw ? (JSON.parse(createRaw) as typeof createPayload) : {};
       } catch {
         createPayload = {};
+      }
+      if (createPayload.error === "price_changed" || createPayload.error === "invalid_duration" || createPayload.error === "invalid_price") {
+        setCheckoutError(t("bookingOfferChangedRefresh"));
+        return;
       }
       if (createRes.status === 409 && createPayload.error === "intro_session_already_used") {
         setCheckoutError(t("introSessionAlreadyUsed"));
@@ -1790,6 +1807,16 @@ export function BookingModal({
                 <Calendar size={16} /> {t("bookingPickDateTitle")}
               </p>
               <p className="text-xs text-slate-500">{t("fourWeeksHint")}</p>
+              <label className="block text-sm">
+                {t("learnerFunnelAvailability")}
+                <select className="mt-1 w-full rounded-lg border p-2" value={availabilityPreference}
+                  onChange={(event) => { setAvailabilityPreference(event.target.value as typeof availabilityPreference); setSelectedDate(null); setSelectedSlot(null); }}>
+                  <option value="any">{t("learnerFunnelAny")}</option>
+                  <option value="weekday_day">{t("learnerFunnelWeekdayDay")}</option>
+                  <option value="weekday_evening">{t("learnerFunnelWeekdayEvening")}</option>
+                  <option value="weekend">{t("learnerFunnelWeekend")}</option>
+                </select>
+              </label>
               {(() => {
                 const badge = getAvailableFromBadge(teacher.availableFromDate, locale, todayIso);
                 if (!badge) return null;

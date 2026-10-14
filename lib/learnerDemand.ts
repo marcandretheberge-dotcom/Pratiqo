@@ -1,7 +1,10 @@
 import type { Teacher } from "@/types";
 import { CITIES, type City } from "@/lib/cities";
-import { haversineDistance } from "@/lib/geo";
-import { filterTeacherPool } from "@/lib/teacherSearchEngine";
+import { resolveDisciplineId } from "@/lib/taxonomy/disciplines";
+import { hasDeclaredLocalSupply } from "@/lib/teachers/localSupply";
+import { compareTeachersBySearchQuality } from "@/lib/teachers/searchRanking";
+import { normalizeTeacherSubjectIds } from "@/lib/taxonomy/teacherSubjectNormalization";
+import { parseLearnerAvailability, type LearnerAvailability } from "@/lib/learnerAvailability";
 
 export type LearnerDemandInput = {
   subject: string;
@@ -9,9 +12,11 @@ export type LearnerDemandInput = {
   region?: string | null;
   countryCode?: string | null;
   acceptsOnline: boolean;
+  requestedFormat?: "in_person" | "online";
   email: string;
   locale?: string | null;
   source?: string | null;
+  availabilityPreference?: LearnerAvailability;
 };
 
 export type LearnerDemandOutcome = "local_match" | "online_match" | "waitlist";
@@ -49,64 +54,58 @@ export function findLearnerDemandCity(city: string): City | null {
   );
 }
 
-function allowsLocalLessons(teacher: Teacher): boolean {
-  return (
-    teacher.teachingMode === "person" ||
-    teacher.teachingMode === "both" ||
-    teacher.teachingMode === "home" ||
-    teacher.teachingMode === "all" ||
-    Boolean(teacher.homeLessonEnabled)
-  );
-}
-
 function allowsOnlineLessons(teacher: Teacher): boolean {
   return teacher.teachingMode === "online" || teacher.teachingMode === "both" || teacher.teachingMode === "all";
 }
 
-function teacherIsNearCity(teacher: Teacher, city: string, resolvedCity: City | null): boolean {
-  const exactCityMatch = foldLearnerDemandText(teacher.city) === foldLearnerDemandText(city);
-  if (exactCityMatch) return true;
-  if (!resolvedCity) return false;
-
-  const lat = teacher.location?.lat;
-  const lng = teacher.location?.lng;
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) return false;
-  return haversineDistance(resolvedCity.lat, resolvedCity.lng, lat, lng) <= 25;
-}
-
-function teacherSearchUrl(subject: string, teacherId: string): string {
+function teacherSearchUrl(subject: string, teacherId: string, city: string, online: boolean, availability?: LearnerAvailability): string {
   const params = new URLSearchParams({ q: subject, openTeacher: teacherId, source: "learner_finder" });
+  params.set("city", city);
+  params.set("format", online ? "online" : "in_person");
+  params.set("availability", parseLearnerAvailability(availability));
   return `/student/search?${params.toString()}`;
 }
 
 export function matchLearnerDemand(
   teachers: Teacher[],
-  input: Pick<LearnerDemandInput, "subject" | "city" | "acceptsOnline">,
+  input: Pick<LearnerDemandInput, "subject" | "city" | "acceptsOnline" | "requestedFormat" | "availabilityPreference">,
 ): LearnerDemandMatch {
-  const subjectMatches = filterTeacherPool(teachers, { searchQuery: input.subject });
+  const wanted = resolveDisciplineId(input.subject);
+  // Unknown/free-text needs remain actionable waitlist requests, not guessed matches.
+  const uniqueTeachers = [...new Map(teachers.map(teacher => [teacher.id, teacher])).values()];
+  const subjectMatches = uniqueTeachers.filter((teacher) =>
+    (teacher.bookingAction === "book" || teacher.bookingAction === "request" ||
+      (teacher.bookingAction == null && teacher.bookingReady === true)) && wanted !== null &&
+    normalizeTeacherSubjectIds([
+      { discipline_id: teacher.discipline },
+      ...(teacher.disciplineDisplay ?? []).map(row => ({ discipline_id: row.disciplineId, specialite: row.specialite })),
+      ...(teacher.additionalDisciplines ?? []).map(row => ({ discipline_id: row.disciplineId, specialite: row.specialite })),
+    ]).includes(wanted));
   const resolvedCity = findLearnerDemandCity(input.city);
   const localMatches = subjectMatches.filter(
-    (teacher) => allowsLocalLessons(teacher) && teacherIsNearCity(teacher, input.city, resolvedCity),
-  );
+    (teacher) => hasDeclaredLocalSupply({ ...teacher, teaching_mode: teacher.teachingMode },
+      resolvedCity ?? { name: input.city, lat: Number.NaN, lng: Number.NaN }),
+  ).sort((a, b) => compareTeachersBySearchQuality(a, b));
 
-  if (localMatches.length > 0) {
+  if (input.requestedFormat !== "online" && localMatches.length > 0) {
     const primary = localMatches[0];
     return {
       outcome: "local_match",
       matchCount: localMatches.length,
-      searchUrl: teacherSearchUrl(input.subject, primary.id),
+      searchUrl: teacherSearchUrl(wanted!, primary.id, resolvedCity?.name ?? "", false, input.availabilityPreference),
       primaryTeacherId: primary.id,
     };
   }
 
-  if (input.acceptsOnline) {
-    const onlineMatches = subjectMatches.filter(allowsOnlineLessons);
+  if (input.requestedFormat === "online" || input.acceptsOnline) {
+    const onlineMatches = subjectMatches.filter(allowsOnlineLessons)
+      .sort((a, b) => compareTeachersBySearchQuality(a, b, { onlineSearch: true }));
     if (onlineMatches.length > 0) {
       const primary = onlineMatches[0];
       return {
         outcome: "online_match",
         matchCount: onlineMatches.length,
-        searchUrl: teacherSearchUrl(input.subject, primary.id),
+        searchUrl: teacherSearchUrl(wanted!, primary.id, resolvedCity?.name ?? "", true, input.availabilityPreference),
         primaryTeacherId: primary.id,
       };
     }
@@ -116,6 +115,7 @@ export function matchLearnerDemand(
 }
 
 export function buildTeacherRecruitShareUrl(subject: string, city: string): string {
-  const params = new URLSearchParams({ matiere: subject, ville: city, source: "learner_waitlist" });
+  // Share links must not echo unrestricted learner text into URLs or analytics referrers.
+  const params = new URLSearchParams({ matiere: resolveDisciplineId(subject) ?? "", ville: findLearnerDemandCity(city)?.name ?? "", source: "learner_waitlist" });
   return `/devenir-professeur?${params.toString()}`;
 }

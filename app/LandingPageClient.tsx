@@ -34,7 +34,6 @@ import { attachPublicTeachingZones, getTeacherMapCoords } from "@/lib/teacherTea
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../components/TeacherSearchAdvancedPanel";
 import { logSearchEvent } from "../lib/searchAnalytics";
 import {
-  trackBookingStarted,
   trackSearchAvailabilityFilterUsed,
   trackSearchFormatSelected,
   trackSearchStarted,
@@ -351,18 +350,6 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       source: "landing",
     });
   }, [selectedTeacherProfile?.id]);
-
-  // PostHog: `booking_started` fires when the BookingModal mounts, which
-  // is the canonical product-intent signal (user has chosen a teacher
-  // and reached the booking surface). The downstream slot/checkout
-  // events come from BookingModal itself.
-  useEffect(() => {
-    if (!bookingTeacher?.id) return;
-    trackBookingStarted({
-      teacher_id: bookingTeacher.id,
-      lesson_type: bookingInitialKind,
-    });
-  }, [bookingTeacher?.id, bookingInitialKind]);
 
   const scrollToTeacherResults = useCallback(() => {
     teacherResultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });

@@ -56,6 +56,40 @@ All four placeholders already exist in `.env.example` (§ "Analytics / Observabi
 
 ## 3. Event taxonomy
 
+### Learner funnel continuation (2026-10-14, not deployed)
+
+The finder reuses `search_started` with `source: quiz`; it does not create a
+second search event or export learner text. `booking_started` is emitted once
+per teacher per mounted BookingModal, rather than separately by LandingPageClient.
+These browser events retain the existing analytics-consent gate.
+
+Proposed migration 131 records private operational lifecycle facts in the same
+transaction as the authoritative booking/payment/waitlist change. Its unique
+`(event_name, entity_id)` key deduplicates confirmations, completed-and-paid
+lessons and persisted consented waitlist requests. Cancellation, refund and
+dispute are separate facts, not deleted conversions. The service-only aggregate
+keeps raw event and distinct-learner counts. No new external exporter is added.
+
+These facts start at migration deployment, not historical signup. The private
+`learner_first_paid_lessons` view separately computes first-ever held/paid lessons
+from the complete booking/payment ledger (real completion/payment timestamps;
+currently refunded/disputed lessons excluded). Its student identifiers are never
+public. Count rows by first_paid_lesson_at for the primary new-converted-learner
+metric; do not substitute account creation or profile views.
+
+`learner_waitlist_conversion_totals` retains both qualified_requests and
+requests_with_completed_paid_lesson. Links require the account's verified contact,
+the original exact discipline/city/format, chronological order and matching time
+preference. Closed/unconsented requests are excluded. A booking entry is not yet
+a conversion: the view joins its durable held-and-paid state. Repeat links are
+deduplicated. `reconcileLearnerWaitlistBatch` offers bounded operator recovery,
+including package-created bookings; it sends nothing and never edits bookings.
+
+Do not divide durable totals by browser searches and call it a cohort conversion
+rate. Search-to-booking-start remains the consented PostHog funnel; backend
+completion and waitlist denominators are separate operational measures. No email,
+free text, exact address or child data belongs in external analytics payloads.
+
 All event names live in `lib/analytics/events.ts#ANALYTICS_EVENTS` and each event has a typed `track<EventName>(props)` helper. Adding a new event requires:
 
 1. A snake_case entry in `ANALYTICS_EVENTS`.

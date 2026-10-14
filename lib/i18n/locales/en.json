@@ -1,4 +1,6 @@
 {
+  "learnerFunnelOnlineAlternatives": "Other online options",
+  "learnerFunnelSearch": "See matching lessons",
   "teacherActionBook": "Book a lesson",
   "teacherActionRequest": "Request a lesson",
   "teacherActionContact": "Contact this teacher",
@@ -3508,5 +3510,21 @@
   "weeklyIntervalsDbDeleteFailed": "Could not update availability (delete step). Try again.",
   "weeklyIntervalsDbInsertFailed": "Could not save availability ranges. Try again.",
   "weeklyIntervalsAvailabilitySyncFailed": "Ranges were saved, but sync failed. Try again.",
-  "weeklyIntervalsServerError": "Server error while saving availability. Try again."
+  "weeklyIntervalsServerError": "Server error while saving availability. Try again.",
+  "learnerFunnelOnlineMatched": "Profiles match your online lesson request. Check their availability before booking.",
+  "learnerFunnelFormat": "Requested format",
+  "learnerFunnelInPerson": "In person",
+  "learnerFunnelOnline": "Online",
+  "learnerFunnelWaitlistCta": "Notify me when a lesson matches",
+  "learnerFunnelAlertConsent": "Notify me when a lesson matches this request. This consent does not include marketing communications.",
+  "learnerFunnelAdultContact": "This email belongs to an adult. For a minor, it belongs to their parent or legal guardian.",
+  "learnerFunnelAvailability": "Preferred availability",
+  "learnerFunnelAny": "Flexible",
+  "learnerFunnelWeekdayDay": "Weekdays, daytime",
+  "learnerFunnelWeekdayEvening": "Weekdays, evenings",
+  "learnerFunnelWeekend": "Weekends",
+  "learnerFunnelEmpty": "No bookable lesson matches your search at the moment.",
+  "learnerFunnelSaved": "Your request is saved. We will email you if a matching lesson becomes available.",
+  "learnerFunnelWithdraw": "To withdraw your request, email info@pratiqo.ca from the address you used.",
+  "bookingOfferChangedRefresh": "The lesson price or duration has changed. Refresh the profile before choosing another time."
 }

@@ -7,6 +7,8 @@ import {
   mapDbRowsToNormalized,
 } from "@/lib/bookings/bookableSlotsForDay";
 import { defaultLessonDurationMinutes } from "@/lib/teacherSlotQueries";
+import { matchesLearnerAvailability, parseLearnerAvailability } from "@/lib/learnerAvailability";
+import { slotStartMinutes } from "@/lib/slots";
 import { isValidLessonDurationMinutes } from "@/lib/pricing/lessonDuration";
 import { dateInTeacherTimeZone } from "@/lib/timezones";
 import { isTeacherScheduleExceptionsEnabled } from "@/lib/schedule/dateExceptions";
@@ -125,6 +127,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       preciseBookingEnabled: isTeacherPreciseScheduleBookingEnabled(),
     });
 
+    day.slots = day.slots.filter(slot => matchesLearnerAvailability(
+      parseLearnerAvailability(url.searchParams.get("availability")), date, slotStartMinutes(slot), day.durationMinutes,
+    ));
     if (day.blockedReasons.includes("before_available_from")) {
       return NextResponse.json({
         slots: [],

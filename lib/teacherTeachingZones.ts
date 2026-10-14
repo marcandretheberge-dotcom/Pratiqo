@@ -122,6 +122,7 @@ function warnTeacherZonesUnavailable(context: string, error: unknown) {
 export async function fetchTeacherTeachingZonesForTeachers(
   supabase: SupabaseLike,
   teacherIds: string[],
+  options: { strict?: boolean } = {},
 ): Promise<TeacherTeachingZonePublicRow[]> {
   const ids = Array.from(new Set(teacherIds.map((id) => String(id).trim()).filter(Boolean)));
   if (ids.length === 0) return [];
@@ -135,6 +136,8 @@ export async function fetchTeacherTeachingZonesForTeachers(
     .order("sort_order", { ascending: true });
 
   if (error) {
+    // Match the existing SEO legacy-city fallback only for an absent optional view.
+    if (options.strict && error.code !== "42P01" && error.code !== "PGRST205") throw new Error("teacher_teaching_zones_unavailable");
     warnTeacherZonesUnavailable("fetch", error);
     return [];
   }

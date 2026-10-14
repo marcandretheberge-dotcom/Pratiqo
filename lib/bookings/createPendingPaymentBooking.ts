@@ -244,7 +244,7 @@ export async function createPendingPaymentBooking(args: {
     .select("id")
     .single();
   if (insertErr) {
-    if (isPostgresUniqueViolation(insertErr)) {
+    if (isPostgresUniqueViolation(insertErr) || insertErr.code === "23P01") {
       return { ok: false, status: 409, error: "slot_booked" };
     }
     return { ok: false, status: 500, error: "server_error" };

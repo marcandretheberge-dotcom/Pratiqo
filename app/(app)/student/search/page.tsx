@@ -1,10 +1,15 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { findLearnerDemandCity } from "@/lib/learnerDemand";
+import { resolveDisciplineId } from "@/lib/taxonomy/disciplines";
+import { hasDeclaredLocalSupply } from "@/lib/teachers/localSupply";
 import dynamic from "next/dynamic";
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import type { Teacher } from "../../../../types";
 import type { BookingInitialLessonKind } from "../../../../components/BookingModal";
+import { parseLearnerAvailability } from "@/lib/learnerAvailability";
 import type { TeacherBookContext } from "../../../../components/TeacherProfile";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, Star, Users, Video } from "lucide-react";
@@ -107,6 +112,7 @@ export default function StudentSearchPage() {
   const [bookingContext, setBookingContext] = useState<TeacherBookContext | undefined>();
   const [selectedTeacherProfile, setSelectedTeacherProfile] = useState<Teacher | null>(null);
   const [landingLocQuery, setLandingLocQuery] = useState("");
+  const [requestedCity, setRequestedCity] = useState<City | null>(null);
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const [studentPrefs, setStudentPrefs] = useState<StudentLocationPrefs | null>(null);
@@ -141,6 +147,16 @@ export default function StudentSearchPage() {
   useEffect(() => {
     const q = searchParams.get("q");
     if (q) setSearchQuery(q);
+    const city = findLearnerDemandCity(searchParams.get("city") ?? "");
+    if (city) {
+      setRequestedCity(city);
+      setLandingLocQuery(city.name);
+      setGeo({ lat: city.lat, lng: city.lng });
+    }
+    const format = searchParams.get("format");
+    if (format === "online" || format === "in_person") {
+      setAdv((current) => ({ ...current, formatExtra: format }));
+    }
   }, [searchParams]);
 
   // Load Google Places library once so autocomplete is available for the student address input.
@@ -439,7 +455,10 @@ export default function StudentSearchPage() {
       availabilityDay: adv.availabilityDay || undefined,
       availabilityPeriod: adv.availabilityPeriod || undefined,
     });
-    const base = buildTeacherSearchRows(pool, {
+    const localPool = requestedCity && searchFormat === "in_person"
+      ? pool.filter((teacher) => hasDeclaredLocalSupply({ ...teacher, teaching_mode: teacher.teachingMode }, requestedCity))
+      : pool;
+    const base = buildTeacherSearchRows(localPool, {
       geo,
       locationText: { city: studentPrefs?.city ?? null, region: studentPrefs?.region ?? null },
     });
@@ -475,6 +494,7 @@ export default function StudentSearchPage() {
     teachers,
     activeCat,
     searchQuery,
+    requestedCity,
     geo,
     radius,
     sortMode,
@@ -513,8 +533,12 @@ export default function StudentSearchPage() {
             setSearchQuery(label);
           }}
           locationQuery={landingLocQuery}
-          onLocationQueryChange={setLandingLocQuery}
+          onLocationQueryChange={(value) => {
+            setLandingLocQuery(value);
+            setRequestedCity(null);
+          }}
           onSelectCity={(city: City) => {
+            setRequestedCity(city);
             // Subject/place independence (search PR #63): never touch
             // the subject query here. We also no longer clear the Lieu
             // input — the LandingLocationSearch component echoes the
@@ -706,6 +730,16 @@ export default function StudentSearchPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-semibold text-[#2C2C2A]">
                 {results.length} {t("searchResults")}
+                {!loadingTeachers && !results.some(({ teacher }) => teacher.bookingReady === true || teacher.bookingAction === "request") ? (
+                  <Link className="mt-2 block text-[#0F6E56] underline underline-offset-2" href={`/trouver-mon-prof?${new URLSearchParams({
+                    subject: resolveDisciplineId(searchQuery) ?? "",
+                    city: requestedCity?.name ?? "",
+                    online: searchFormat === "online" ? "1" : "0",
+                    format: searchFormat === "online" ? "online" : "in_person",
+                  }).toString()}`}>
+                    {t("learnerFunnelWaitlistCta")}
+                  </Link>
+                ) : null}
               </p>
 
               <div className="flex flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center">
@@ -847,6 +881,8 @@ export default function StudentSearchPage() {
         <BookingModal
           key={`${bookingTeacher.id}-${bookingInitialKind}-${bookingContext?.selectedOfferId ?? "none"}`}
           teacher={bookingTeacher}
+          availabilityPreference={parseLearnerAvailability(searchParams.get("availability"))}
+          initialRequestedFormat={searchParams.get("format") === "online" ? "online" : "in_person"}
           initialLessonKind={bookingInitialKind}
           initialSelectedOfferId={bookingContext?.selectedOfferId ?? null}
           publicOffers={bookingContext?.publicOffers}

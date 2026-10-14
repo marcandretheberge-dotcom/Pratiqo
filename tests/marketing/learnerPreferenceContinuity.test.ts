@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { parseLearnerAvailability, matchesLearnerAvailability } from '@/lib/learnerAvailability';
+assert.equal(parseLearnerAvailability('weekend'),'weekend');
+assert.equal(parseLearnerAvailability('private text'),'any');
+assert.equal(matchesLearnerAvailability('weekend','2026-11-01',9*60,60),true);
+assert.equal(matchesLearnerAvailability('weekend','2026-11-02',9*60,60),false);
+assert.equal(matchesLearnerAvailability('weekday_day','2026-11-02',17*60+30,60),false);
+assert.equal(matchesLearnerAvailability('weekday_evening','2026-11-02',18*60,60),true);
+for(const file of ['lib/learnerDemand.ts','app/(app)/student/search/page.tsx','app/api/teachers/[id]/slots/route.ts','app/api/teachers/[id]/available-days/route.ts']) assert.match(readFileSync(file,'utf8'),/parseLearnerAvailability/);
+const modal=readFileSync('components/BookingModal.tsx','utf8');
+assert.equal((modal.match(/availability: availabilityPreference/g)??[]).length,2);
+assert.match(modal,/learnerFunnelWeekdayEvening/);
+assert.match(modal,/requestedFormat === "online"/);
+assert.match(modal,/setTeachingMode\(defaultTeachingMode\(teacher, initialLessonKind, initialRequestedFormat\)\)/);
+console.log('PASS safe preference continuity finder -> results -> both calendar GETs, visible reset, teacher-local boundaries');

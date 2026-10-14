@@ -52,6 +52,9 @@ async function run() {
     return result.teacher;
   };
   assert.equal(await check(teacher), true);
+  const availabilityDb = db({ teachers: [teacher] });
+  assert.equal((await getTeacherListingBookability(availabilityDb.client, ["teacher"], now, "weekday_evening")).teacher, false);
+  assert.equal((await getTeacherListingBookability(availabilityDb.client, ["teacher"], now, "weekday_day")).teacher, true);
   assert.equal(await check({ ...teacher, availability: ["Dim Matin"], available_from_date: "2026-11-01" }), true, "last day of 28-day window is included");
   assert.equal(await check({ ...teacher, availability: ["Lun Matin"], available_from_date: "2026-11-02" }), false, "next day is outside the window");
   assert.equal(await check({ ...teacher, availability: [] }), false);

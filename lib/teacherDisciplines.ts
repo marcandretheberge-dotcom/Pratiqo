@@ -16,6 +16,7 @@ type DisciplineDbRow = {
 export async function fetchTeacherDisciplinesMap(
   supabase: SupabaseClient,
   teacherIds: string[],
+  options: { strict?: boolean } = {},
 ): Promise<Map<string, TeacherDisciplineRow[]>> {
   const map = new Map<string, TeacherDisciplineRow[]>();
   if (!teacherIds.length) return map;
@@ -27,6 +28,7 @@ export async function fetchTeacherDisciplinesMap(
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: true });
 
+  if (error && options.strict) throw new Error("teacher_disciplines_unavailable");
   if (error || !data) return map;
 
   for (const raw of data as DisciplineDbRow[]) {
