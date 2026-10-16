@@ -13,6 +13,7 @@ import {
   MEMBRE_PRO_PLAN,
 } from "../../lib/config/membrePro";
 import { APPROVED_SECURITY_MIGRATION_EXCEPTIONS } from "../security/postgisRlsException";
+import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
 
 type TestFn = () => void;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -358,6 +359,7 @@ test("commission model branch may update canonical commission files but not rest
 
   const violations: string[] = [];
   for (const file of changed) {
+    if (hasOnlyGuidedStripeReturnChange(file)) continue;
     if (approvedStripeRouteExceptions.has(file)) continue;
     if (approvedPaymentHelperExceptions.has(file)) continue;
     if (approvedStudentConsentMigrationExceptions.has(file)) continue;

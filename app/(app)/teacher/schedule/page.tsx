@@ -486,7 +486,8 @@ function TeacherScheduleInner() {
       const { error } = await supabase
         .from("teachers")
         .update({
-          availability,
+          // The interval endpoint owns its coarse projection; this state may predate its save.
+          ...(!(setupMode && (isTeacherScheduleIntervalsUiEnabled() || isTeacherScheduleInteractiveCellsUiEnabled())) ? { availability } : {}),
           teaching_mode: teachingMode,
           booking_buffer_before_minutes: nextBefore,
           booking_buffer_after_minutes: nextAfter,

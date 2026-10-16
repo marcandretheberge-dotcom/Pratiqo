@@ -2,7 +2,16 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { isGuidedStripeReturnOnlyChange } from "../helpers/guidedStripeReturnScope";
-import { guidedBookingState, suggestTeacherRegion, teacherSetupStep, teacherSetupHref } from "../../lib/teachers/guidedSetup";
+import { guidedBookingState, suggestTeacherRegion, teacherSetupStep, teacherSetupHref, guidedSetupSectionHref, isGuidedSetupComplete } from "../../lib/teachers/guidedSetup";
+import { evaluateTeacherProfilePublishEligibility } from "../../lib/teachers/profilePublishEligibility";
+
+assert.equal(guidedSetupSectionHref("availability"), "/teacher/schedule?setup=1");
+assert.equal(guidedSetupSectionHref("pricing"), "/teacher/verification?setup=1&section=pricing");
+const publication = evaluateTeacherProfilePublishEligibility({ id: "11111111-1111-4111-8111-111111111111", user_id: "22222222-2222-4222-8222-222222222222", name: "Teacher", bio: "A sufficient synthetic biography.", disciplineCount: 1, price_per_lesson: 45, availability: ["Lun Matin"], city: "Saint-Georges", region: "QC", country_code: "CA", is_public: true });
+assert.equal(isGuidedSetupComplete("book", publication), true);
+for (const state of ["request", "contact", "waitlist", "unknown", "not_public"]) assert.equal(isGuidedSetupComplete(state, publication), false);
+assert.equal(isGuidedSetupComplete("book", { ...publication, status: "private_draft" }), false);
+assert.equal(isGuidedSetupComplete("book", null), false);
 
 assert.equal(teacherSetupStep("payments"), "payments");
 assert.equal(teacherSetupStep("https://untrusted.invalid"), "course");

@@ -23,6 +23,9 @@ The original learner-funnel worktree and its two untracked sentinels are untouch
    capability from an owner-only endpoint. Paid booking, deferred request, contact,
    unavailable, unpublished and unknown remain distinct. `stripe=success` never
    establishes readiness. Focus/manual refresh rechecks the real server state.
+   Explicit **Publier mon profil** now calls the existing owner-checked publication
+   PATCH. Its GET supplies the checklist and eligibility; nothing auto-publishes.
+   Missing availability links to step 2, other prerequisites to their course panels.
 
 The only Connect route change is a fixed internal return for `flow=teacher-setup`;
 ordinary callers retain `/onboarding`. No account creation, payment, commission,
@@ -41,7 +44,9 @@ refund, eligibility or authentication rule changed. Six legal acknowledgements r
   silently autosave a restored draft; ordinary management keeps its autosave.
 - Saved fields persist on the server; unsaved drafts and last step are browser-local.
   Accepted-consent users resume their step even with complete course fields. Explicit
-  dashboard completion clears the stage marker. Storage failures show a warning.
+  dashboard completion clears the stage marker only for a published, discoverable,
+  complete profile with an actual paid-booking capability. Request/contact/unknown
+  retain it. Storage failures show a warning.
 - Payment refresh is abortable and duplicate-click guarded. Failed reads show
   error/unknown, never false readiness. No hosted Stripe interaction was performed.
 
@@ -66,11 +71,23 @@ two named stages. Selected home format adds three existing controls; failed iden
 retains remediation. First precise interval has day/start/end plus duration.
 
 For one new discipline and one interval, excluding typing, consents and hosted
-Stripe: old explicit route has four panel saves (profile/formats/pricing/location),
-discipline save, interval save, two route transitions and Connect launch: 9 actions,
-10 if duration changes. Guided: discipline save, course Next, interval save,
-payments Next (also saves duration), Connect launch: 5 actions. These are structural
-control counts, not conversion measurements; known data can reduce both totals.
+Stripe: old route has four panel saves, discipline save, interval save, two route
+transitions, Connect launch and publication: **10 actions**, 11 if duration changes.
+If starting private and completing availability after the course panel, returning
+to that panel to publish adds a navigation: **11 / 12** for that reviewed scenario.
+Guided: discipline save, course Next, interval save, payments Next (also saves
+duration), Connect launch and explicit publication: **6 actions**. Add one explicit
+precise-schedule activation when that existing feature requires it; no activation
+is fabricated or bypassed. The earlier 5-action figure omitted publication.
+
+Field groups across the whole path: **20 before / 13 guided** (16/9 course groups
+above plus day/start/end/duration). Prefilled/defaulted values reduce actual typing;
+these are not claims that every field must be manually entered. Conditional home
+controls add three groups. Legal consent is separate: six acknowledgements plus
+their existing confirmation action. Hosted Stripe requirements/actions are variable
+and excluded from the six app actions, not counted as zero. A paid-bookable outcome
+requires Stripe's actual completion, successful resync, publication and a real slot.
+The fixture tests that final state, but does not measure a real hosted Stripe session.
 
 Name/discipline identify the offer; rate retains minimum-price validation;
 duration/timezone determine slots. Bio >=20 and coarse city/region remain required
@@ -96,7 +113,7 @@ canonical launch-city suggestions, with explicit correction available.
 - `app/api/stripe/connect/route.ts`: fixed internal guided return only.
 - FR/EN/ES dictionaries; package.json focused test command; tests and this report.
 
-## Validation evidence
+## Original validation evidence (before publication follow-up)
 
 - `npm run test:teacher-guided`: PASS; real bundled handlers, mocked auth/DB.
 - `npm run test:auth`: PASS.
@@ -147,6 +164,66 @@ Unsaved drafts cannot survive browser storage deletion or move between devices.
 Full lint is not green; resolve its existing configuration separately before
 claiming completely green global validation. Review the 19 targeted warnings.
 Mock Stripe QA does not establish successful hosted verification.
+
+## PR 405 publication follow-up
+
+Review found two defects: payments had no publication control; schedule Next could
+overwrite the interval endpoint's newly saved coarse availability with stale empty
+state when saving duration. The guided precise-editor path now leaves that projection
+to its existing endpoint; ordinary schedule management is unchanged.
+
+This follow-up changes the payments page, schedule page, identity-panel deep-link
+handling, guided setup helpers, existing FR/EN/ES unpublished-state copy, focused
+tests, browser QA, package test command and this report. No publication eligibility,
+identity, consent, payment or ownership rule changed. No migration is needed.
+
+QA no longer invents a `request` result independently of a private fixture.
+`guidedPublicationHarness.cjs` executes the actual visibility GET/PATCH and status
+GET with real eligibility and slot calculations, mocking only auth/database and
+the locale lookup. Synthetic IDs/data are isolated per request. The browser uses
+that harness; the interval fixture reproduces the endpoint's coarse projection.
+Tests cover missing availability, refused publication, write failure, network failure,
+private-to-public transition, request-to-paid state, contact, duplicate publication,
+ownership, interrupted drafts, retained incomplete progress and completed exit.
+
+Physical Safari still requires testing keyboard, storage eviction/private mode,
+background/resume and navigation on a staging account. Stripe sandbox still requires
+hosted onboarding cancellation, pending verification, successful return and resync.
+Neither was performed; no real payment, message or production mutation is permitted.
+
+### Follow-up validation (2026-10-16)
+
+- PASS: `npm run test:teacher-guided` (including real publication/status handlers).
+- PASS: `npm run test:schedule-intervals`, `npm run test:auth`,
+  `npm run test:security`, `npm run test:payments`.
+- PASS: `npx tsc --noEmit --incremental false`.
+- PASS: `node ../build-teaching-zones-readonly.cjs teacher-guided-first-course`
+  (unchanged `npm run build`, read-only guard, 329 pages, TypeScript enabled).
+- PASS: `npx tsx scripts/validate_i18n.ts`, 3544 keys per locale.
+- PASS: `node tests/teachers/guidedSetupMobile.cjs` using the installed Playwright
+  runtime, actual page components and final production CSS; 320/375/768/1280 px.
+  Publication is visible at 320 px. No horizontal overflow or browser exceptions.
+  Screenshots outside the repo: `../teacher-guided-publication-qa/`.
+- PASS: targeted ESLint on changed application/helper TypeScript and test sources,
+  zero errors / 11 warnings. Global `npm run lint -- --quiet` still exits 2 with the
+  previously documented missing react-hooks plugin configuration for CJS.
+- PASS: `git diff --check`.
+
+- PASS: final complete `npm run test:launch-critical` after the three exact-diff
+  scope-guard adaptations below. The earlier failed runs are not counted as passes.
+
+Full launch-critical reruns exposed three historical branch-scope guards that
+inspect committed changes (the original uncommitted run did not catch them).
+`teacherLaunchCenter`, `teacherProfileManagement` and `commissionModelCopy` now
+reuse `hasOnlyGuidedStripeReturnChange`: it compares the entire Connect source and
+accepts only the already-approved fixed internal return URLs. All other edits still
+fail; negative tampering tests remain in the focused suite. No financial assertion
+or rule was removed. Each affected suite passes individually.
+
+The local synthetic preview deliberately rejects Connect POST; it cannot start a
+hosted Stripe session. Simulated return/resync is covered, real sandbox return is not.
+PR #405 is suitable for code review, not a claim of fully green global lint or
+completed physical-device/Stripe acceptance. No merge or production deployment.
 
 Only after review/authorization: normal code deployment, no database action.
 Code rollback restores ordinary setup without deleting saved profiles/schedules;

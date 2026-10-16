@@ -1,5 +1,15 @@
 import { CANADIAN_PLACES, normalizePlaceQuery } from "@/lib/search/canadianPlaces";
 import type { TeacherBookingCapability } from "@/lib/teachers/bookingCapability";
+import type { TeacherSetupSectionId } from "@/lib/teachers/teacherSetupProgress";
+import type { TeacherProfilePublishEvaluation } from "@/lib/teachers/profilePublishEligibility";
+
+export function guidedSetupSectionHref(section: TeacherSetupSectionId): string {
+  return section === "availability" ? teacherSetupHref("availability") : `${teacherSetupHref("course")}&section=${section}`;
+}
+
+export function isGuidedSetupComplete(state: string, publication: TeacherProfilePublishEvaluation | null): boolean {
+  return state === "book" && publication?.status === "public" && publication.marketplaceVisible === true && publication.missingSectionIds.length === 0;
+}
 
 export const TEACHER_SETUP_STEPS = ["course", "availability", "payments"] as const;
 export type TeacherSetupStep = typeof TEACHER_SETUP_STEPS[number];

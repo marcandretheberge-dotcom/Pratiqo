@@ -3,7 +3,7 @@
   "teacherGuidedRequestable": "Votre profil peut recevoir une demande avec créneau. La configuration des paiements reste à terminer.",
   "teacherGuidedContactable": "Votre profil peut être contacté, mais aucun créneau réservable n’est actuellement détecté.",
   "teacherGuidedUnavailable": "Aucune demande de réservation n’est actuellement possible.",
-  "teacherGuidedNotPublic": "Votre profil n’est pas encore admissible à la découverte. Consultez les éléments manquants dans Mon cours.",
+  "teacherGuidedNotPublic": "Votre profil n’est pas encore publié. Complétez les éléments indiqués, puis choisissez Publier mon profil.",
   "teacherGuidedUnknown": "Le statut n’a pas encore pu être confirmé.",
   "teacherGuidedPaymentExplanation": "Stripe vérifie les informations nécessaires pour encaisser vos cours et vous verser vos revenus. Aucun abonnement n’est nécessaire. Le retour de Stripe ne signifie pas à lui seul que vos paiements sont activés.",
   "teacherGuidedRefresh": "Actualiser le statut",

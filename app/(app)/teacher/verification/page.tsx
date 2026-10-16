@@ -380,6 +380,10 @@ export default function TeacherProfileManagementPage() {
 
   useEffect(() => {
     if (teacherRowLoading || !teacherRow) return;
+    if (sectionParam === "trust" && isIdentityVerificationFailed(teacherRow)) {
+      setExpandedCard("trust");
+      return;
+    }
     const validSections: TeacherSetupSectionId[] = [
       "profile",
       "disciplines",

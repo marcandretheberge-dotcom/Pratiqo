@@ -9,12 +9,14 @@ const { build } = require('esbuild');
 async function main() {
   const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   const root = process.cwd();
+  const harness = await require('./guidedPublicationHarness.cjs').createHarness();
   const output = process.env.QA_OUTPUT_DIR || fs.mkdtempSync(path.join(os.tmpdir(), 'teacher-guided-qa-'));
   fs.mkdirSync(output, { recursive: true });
   const fixture = `
-    export const user = {id:'qa-user',email:'teacher@example.invalid',user_metadata:{}};
+    export const user = {id:'22222222-2222-4222-8222-222222222222',email:'teacher@example.invalid',user_metadata:{}};
     export const profile = {id:user.id,role:'teacher',name:'Prof QA',plan:'free',teacher_onboarding_complete:true};
     const initial = {id:'qa-teacher',user_id:user.id,name:'Prof QA',bio:'',discipline:'piano',teaching_mode:'online',price_per_lesson:45,default_lesson_duration_minutes:60,availability:[],city:'Saint-Georges',region:'QC',country_code:'CA',timezone:'America/Toronto',schedule_mode:'legacy_blocks',is_public:false,identity_status:'pending',location:{}};
+    initial.id='11111111-1111-4111-8111-111111111111';
     export const teacher = JSON.parse(localStorage.getItem('qa-teacher') || JSON.stringify(initial));
     export function getSupabaseClient(){return {auth:{getSession:async()=>({data:{session:{access_token:'synthetic-token'}}})},from(table){
       let single=false; let update=null;
@@ -24,16 +26,29 @@ async function main() {
       }});return q;
     }}};
     window.qaCalls=[];
+    const nativeFetch=window.fetch.bind(window);
     window.fetch=async(url,options={})=>{
       const p=new URL(String(url),location.origin);window.qaCalls.push({path:p.pathname,method:options.method||'GET'});
       let body={};let status=200;
       if(p.pathname==='/api/teacher/teaching-zones')body={zones:[]};
-      else if(p.pathname==='/api/stripe/connect')body=options.method==='POST'?{url:'https://connect.stripe.com/qa'}:{};
-      else if(p.pathname==='/api/teacher/setup-status'){status=localStorage.getItem('qa-status-failure')?503:200;body={state:localStorage.getItem('qa-booking-state')||'request'};}
+      else if(p.pathname==='/api/stripe/connect'){status=options.method==='POST'?503:200;body=options.method==='POST'?{error:'Hosted Stripe is unavailable in this synthetic preview'}:{};}
+      else if(p.pathname==='/api/teacher/setup-status'||p.pathname==='/api/teacher/profile/visibility'){
+        if(localStorage.getItem('qa-status-failure'))return new Response('{}',{status:503});
+        const kind=p.pathname.endsWith('setup-status')?'status':options.method==='PATCH'?'publish':'visibility';
+        if(kind==='publish'&&localStorage.getItem('qa-network-failure'))throw new TypeError('Synthetic network failure');
+        const result=await (await nativeFetch('/__qa/handler',{method:'POST',body:JSON.stringify({kind,teacher:JSON.parse(localStorage.getItem('qa-teacher')||JSON.stringify(teacher)),refuse:localStorage.getItem('qa-refuse')==='1'})})).json();
+        Object.assign(teacher,result.teacher);localStorage.setItem('qa-teacher',JSON.stringify(teacher));
+        return new Response(JSON.stringify(result.body),{status:result.status,headers:{'Content-Type':'application/json'}});
+      }
       else if(p.pathname==='/api/teacher/weekly-intervals'){
         if(options.method==='PUT'){
           if(localStorage.getItem('qa-save-failure'))status=503;
-          else localStorage.setItem('qa-intervals',JSON.stringify(JSON.parse(options.body).intervals));
+          else {
+            const intervals=JSON.parse(options.body).intervals;
+            localStorage.setItem('qa-intervals',JSON.stringify(intervals));
+            teacher.availability=await (await nativeFetch('/__qa/coarse',{method:'POST',body:JSON.stringify(intervals)})).json();
+            localStorage.setItem('qa-teacher',JSON.stringify(teacher));
+          }
         }
         body={intervals:JSON.parse(localStorage.getItem('qa-intervals')||'[]')};
       } else if(p.pathname==='/api/teacher/schedule/availability-preview')body={startDate:'2026-10-19',daysRequested:14,durationMinutes:60,days:[],paymentReadiness:{ready:false,reason:'not_ready'}};
@@ -70,8 +85,20 @@ async function main() {
   const cssDir=path.join(root,'.next/static/chunks');
   const css=fs.existsSync(cssDir)?fs.readdirSync(cssDir).filter(f=>f.endsWith('.css')).map(f=>fs.readFileSync(path.join(cssDir,f),'utf8')).join('\n'):'';
   assert.ok(css,'Build first: QA must use generated application CSS');
-  const server=http.createServer((req,res)=>{
-    if(req.url==='/fixture.js'){res.setHeader('Content-Type','text/javascript');res.end(bundled.outputFiles[0].text);}
+  const server=http.createServer(async(req,res)=>{
+    if(req.url.startsWith('/__qa/')){
+      try {
+        let raw='';for await(const chunk of req)raw+=chunk;
+        const input=JSON.parse(raw);res.setHeader('Content-Type','application/json');
+        if(req.url==='/__qa/coarse')res.end(JSON.stringify(harness.coarse(input)));
+        else {
+          // Simulates a prerequisite changing on the server between GET and PATCH.
+          if(input.kind==='publish'&&input.refuse)input.teacher.bio='';
+          res.end(JSON.stringify(await harness.run(input.kind,{teacher:input.teacher})));
+        }
+      }catch(error){res.statusCode=500;res.end(JSON.stringify({error:String(error)}));}
+    }
+    else if(req.url==='/fixture.js'){res.setHeader('Content-Type','text/javascript');res.end(bundled.outputFiles[0].text);}
     else if(req.url==='/fixture.css'){res.setHeader('Content-Type','text/css');res.end(css);}
     else {res.setHeader('Content-Type','text/html');res.end('<!doctype html><html lang="fr"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/fixture.css"><body><main id="root" style="padding:16px"></main><script src="/fixture.js"></script></body></html>');}
   });
@@ -114,17 +141,44 @@ async function main() {
     await page.waitForURL('**/teacher/setup-payments?setup=1');
     assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('qa-teacher')).default_lesson_duration_minutes),45);
     await page.goto(origin+'/teacher/setup-payments?setup=1&stripe=success');
-    await page.getByRole('status').filter({hasText:'demande'}).waitFor();
+    const publish=page.getByRole('button',{name:'Publier mon profil',exact:true});
+    await publish.waitFor();assert.equal(await publish.isEnabled(),true, await page.locator('main').innerText());
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('qa-teacher')).is_public),false);
     const calls=await page.evaluate(()=>window.qaCalls.map(c=>c.path));
     assert.deepEqual(calls.slice(0,2),['/api/stripe/connect','/api/teacher/setup-status']);
+    await page.screenshot({path:path.join(output,'publish-mobile.png'),fullPage:true});
+    await page.evaluate(()=>localStorage.setItem('qa-network-failure','1'));await publish.click();await page.getByRole('alert').waitFor();
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('qa-teacher')).is_public),false);
+    await page.evaluate(()=>localStorage.removeItem('qa-network-failure'));await page.reload();await publish.waitFor();
+    await page.evaluate(()=>localStorage.setItem('qa-refuse','1'));await publish.click();await page.getByRole('alert').waitFor();
+    await page.waitForFunction(()=>JSON.parse(localStorage.getItem('qa-teacher')).bio==='');
+    assert.equal(await publish.isDisabled(),true);
+    await page.evaluate(()=>{localStorage.removeItem('qa-refuse');const t=JSON.parse(localStorage.getItem('qa-teacher'));t.bio='Présentation synthétique pour tester la reprise sans perte.';localStorage.setItem('qa-teacher',JSON.stringify(t));});
+    await page.reload();await publish.waitFor();await publish.click();
+    await page.getByRole('status').filter({hasText:'demande'}).waitFor();
+    assert.equal(await publish.count(),0);
+    await page.reload();await page.getByRole('status').filter({hasText:'demande'}).waitFor();
+    assert.equal(await page.evaluate(()=>localStorage.getItem('pratiqo:teacher-setup:22222222-2222-4222-8222-222222222222')),'payments');
+    await page.getByRole('link',{name:'Retour au tableau de bord'}).click();
+    assert.equal(await page.evaluate(()=>localStorage.getItem('pratiqo:teacher-setup:22222222-2222-4222-8222-222222222222')),'payments');
+    await page.goto(origin+'/teacher/setup-payments?setup=1');await page.getByRole('status').filter({hasText:'demande'}).waitFor();
+    // Only a refreshed authoritative readiness result, never stripe=success, completes setup.
+    await page.evaluate(()=>{const t=JSON.parse(localStorage.getItem('qa-teacher'));Object.assign(t,{stripe_account_id:'acct_synthetic',stripe_connect_onboarding_complete:true,stripe_connect_charges_enabled:true,stripe_connect_payouts_enabled:true,stripe_connect_requirements_due:[]});localStorage.setItem('qa-teacher',JSON.stringify(t));});
+    await page.reload();await page.getByRole('status').filter({hasText:'paiement'}).waitFor();
     await page.screenshot({path:path.join(output,'payments-mobile.png'),fullPage:true});
+    await page.getByRole('link',{name:'Retour au tableau de bord'}).click();
+    assert.equal(await page.evaluate(()=>localStorage.getItem('pratiqo:teacher-setup:22222222-2222-4222-8222-222222222222')),null);
+    await page.goto(origin+'/teacher/setup-payments?setup=1');
     await page.evaluate(()=>localStorage.setItem('qa-status-failure','1'));await page.reload();await page.getByRole('alert').waitFor();
     assert.ok(!(await page.getByRole('status').innerText()).includes('demande'));
+    await page.evaluate(()=>{localStorage.removeItem('qa-status-failure');const t=JSON.parse(localStorage.getItem('qa-teacher'));t.is_public=false;localStorage.setItem('qa-teacher',JSON.stringify(t));});
     for(const width of [320,375,768,1280]){
       await page.setViewportSize({width,height:800});
       for(const route of ['/teacher/verification?setup=1','/teacher/schedule?setup=1','/teacher/setup-payments?setup=1']){
         await page.goto(origin+route);await page.getByTestId('teacher-guided-navigation').waitFor();
+        if(route.includes('setup-payments'))await publish.waitFor();
         assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`horizontal overflow: ${width} ${route}`);
+        if(width===320&&route.includes('setup-payments'))await page.screenshot({path:path.join(output,'publish-320.png'),fullPage:true});
       }
     }
     assert.deepEqual(errors,[]);

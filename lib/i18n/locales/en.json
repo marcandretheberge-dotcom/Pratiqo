@@ -3,7 +3,7 @@
   "teacherGuidedRequestable": "Your profile can receive a request with a time slot. Payment setup still needs to be completed.",
   "teacherGuidedContactable": "Learners can contact your profile, but no bookable time slot is currently detected.",
   "teacherGuidedUnavailable": "Booking requests are not currently available.",
-  "teacherGuidedNotPublic": "Your profile is not yet eligible for discovery. Check the missing items in My lesson.",
+  "teacherGuidedNotPublic": "Your profile is not published yet. Complete the listed items, then choose Publish my profile.",
   "teacherGuidedUnknown": "Your status has not yet been confirmed.",
   "teacherGuidedPaymentExplanation": "Stripe verifies the information needed to collect lesson payments and pay your earnings. No subscription is required. Returning from Stripe does not by itself mean payments are active.",
   "teacherGuidedRefresh": "Refresh status",
