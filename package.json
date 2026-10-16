@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:teaching-zones-deployment": "node scripts/check_teaching_zones_deployment.cjs",
+    "test:teaching-zones-integration": "node tests/teacherZones/teacherTeachingZonesRouteRuntime.cjs && node tests/teacherZones/teacherTeachingZonesDeployment.cjs && tsx tests/teacherZones/teacherTeachingZonesFallback.test.ts",
     "check:yo-task-scope": "tsx scripts/check_yo_task_scope.ts",
     "test:yo-task-scope": "tsx tests/yo/yoTaskScope.test.ts && tsx tests/yo/yopratiqoDominicanFlashcardsPrintables.test.ts && tsx tests/yo/yopratiqoIntroLessonDeck.test.ts",
     "dev": "next dev",

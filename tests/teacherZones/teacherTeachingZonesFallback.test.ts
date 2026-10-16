@@ -5,6 +5,7 @@ import {
   fetchTeacherTeachingZonesForTeachers,
 } from "@/lib/teacherTeachingZones";
 import { applyRadiusFilter, buildTeacherSearchRows } from "@/lib/teacherSearchEngine";
+import { hasDeclaredLocalSupply } from "@/lib/teachers/localSupply";
 
 type TestFn = () => void | Promise<void>;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -172,6 +173,20 @@ test("search falls back to legacy teacher location when no zones exist", () => {
   const nearbyRows = applyRadiusFilter(rows, 5);
   assert.equal(nearbyRows.length, 1);
   assert.equal(nearbyRows[0]?.teacher.id, baseTeacher.id);
+});
+
+test("existing but empty zones view preserves declared local supply without inventing coordinates", async () => {
+  const original: Teacher = { ...baseTeacher };
+  const client = makeSupabaseResponse({ data: [], error: null });
+  const attached = await attachPublicTeachingZones(client as never, [original]);
+  assert.equal(attached[0], original);
+  assert.equal(attached[0].location, original.location);
+  const city = { name: "Québec", lat: 46.8139, lng: -71.208 };
+  assert.equal(hasDeclaredLocalSupply({ city: original.city, teaching_mode: "person", teachingZones: [] }, city), true);
+  assert.equal(hasDeclaredLocalSupply({ city: original.city, teaching_mode: "both", teachingZones: [] }, city), true);
+  assert.equal(hasDeclaredLocalSupply({ city: original.city, teaching_mode: "online", teachingZones: [] }, city), false);
+  assert.equal(hasDeclaredLocalSupply({ city: "Lévis", teaching_mode: "person", teachingZones: [] }, city), false);
+  assert.equal(hasDeclaredLocalSupply({ teaching_mode: "person", teachingZones: [] }, city), false);
 });
 
 async function run() {
