@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
@@ -48,7 +48,8 @@ function nextStepKey(status: string): TranslationKey {
   return "supportNextStepNew";
 }
 
-export default function ResolutionCaseDetailPage({ params }: { params: { id: string } }) {
+export default function ResolutionCaseDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const { user } = useAuth();
   const { t } = useLocale();
   const [loading, setLoading] = useState(true);
@@ -56,7 +57,7 @@ export default function ResolutionCaseDetailPage({ params }: { params: { id: str
   const [booking, setBooking] = useState<BookingSummary | null>(null);
 
   useEffect(() => {
-    if (!user?.id || !params.id) return;
+    if (!user?.id || !id) return;
     let cancelled = false;
     const supabase = getSupabaseClient();
     void (async () => {
@@ -66,7 +67,7 @@ export default function ResolutionCaseDetailPage({ params }: { params: { id: str
         .select(
           "id, booking_id, category, status, role, requested_resolution, description, evidence_urls, payout_hold, created_at, resolved_at",
         )
-        .eq("id", params.id)
+        .eq("id", id)
         .maybeSingle();
       const row = data as SupportCaseDetail | null;
       let bookingSummary: BookingSummary | null = null;
@@ -127,7 +128,7 @@ export default function ResolutionCaseDetailPage({ params }: { params: { id: str
     return () => {
       cancelled = true;
     };
-  }, [params.id, user?.id]);
+  }, [id, user?.id]);
 
   if (!user) return null;
 

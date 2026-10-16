@@ -1,0 +1,23 @@
+const assert=require('node:assert/strict');
+const {readFileSync,readdirSync}=require('node:fs');
+const {build,plan,buildSchema}=require('../../scripts/prepare_teaching_zones_install.cjs');
+const before=[129,130,131,132,133].map(version=>({version:String(version)}));
+const fresh=plan(before);
+assert.equal(fresh.standardPushAllowed,false);
+assert.equal(fresh.mode,'controlled-bootstrap');
+assert.doesNotMatch(fresh.sql,/FROM public\.teachers t\s+WHERE NULLIF/);
+assert.ok(fresh.sql.includes('teacher_teaching_zones_schema_only_no_unverified_backfill'));
+assert.equal(build(),build());
+const hardening=readFileSync('supabase/migrations/134_harden_teacher_teaching_zones.sql','utf8').replace(/\r\n/g,'\n').replace(/^BEGIN;\s*$/gm,'').replace(/^COMMIT;\s*$/gm,'');
+const applied=[...before,{version:'128',name:'teacher_teaching_zones_schema_only_no_unverified_backfill',statements:[buildSchema()]},{version:'134',statements:[hardening]}];
+assert.equal(plan(applied).standardPushAllowed,true);
+assert.equal(plan(applied.map(row=>row.version==='128'?{...row,statements:[row.statements[0]+'\r']}:row)).standardPushAllowed,true);
+assert.equal(plan(applied.map(row=>row.statements?{...row,statements:row.statements.map(sql=>sql.replace(/\n/g,'\r\n'))}:row)).standardPushAllowed,true);
+assert.ok(!build().includes('\r'), 'generated SQL is portable across checkout line endings');
+// Standard migration deployment selects unapplied version IDs, not filenames or timestamps.
+const pending=readdirSync('supabase/migrations').filter(name=>/^(128|134)_/.test(name)).filter(name=>!applied.some(row=>row.version===name.split('_')[0]));
+assert.deepEqual(pending,[]);
+assert.throws(()=>plan([...before,{version:'128',name:'teacher_teaching_zones',statements:[readFileSync('supabase/migrations/128_teacher_teaching_zones.sql','utf8')]}]),/separate review/);
+assert.throws(()=>plan([...before,{version:'134'}]),/inconsistent/);
+assert.throws(()=>plan(applied.map(row=>row.version==='128'?{...row,statements:['invented history']}:row)),/separate review/);
+console.log('PASS reproducibility: controlled fresh bootstrap, truthful SQL history, standard future skip, historical/partial/tampered history refused');

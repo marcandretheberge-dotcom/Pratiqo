@@ -87,9 +87,9 @@ async function readConsentBody(
   }
 }
 
-export const RENEWAL_CONSENT_REQUIRED_ERROR_CODE =
+const RENEWAL_CONSENT_REQUIRED_ERROR_CODE =
   "renewal_consent_required" as const;
-export const LEGAL_ACCEPTANCE_REQUIRED_ERROR_CODE =
+const LEGAL_ACCEPTANCE_REQUIRED_ERROR_CODE =
   "legal_acceptance_required" as const;
 
 export async function POST(req: Request) {

@@ -7,7 +7,7 @@ import {
   handleSearchEventPost,
   parseSearchEventPayload,
   type SearchEventBody,
-} from "../../app/api/analytics/search-event/route";
+} from "../../lib/analytics/searchEventHandler";
 import type { RateLimitResult } from "../../lib/rateLimit";
 
 const REPO_ROOT = process.cwd();
@@ -163,7 +163,10 @@ test("payload parser enforces required source, type checks, and sane result boun
 });
 
 test("route source uses project rate-limit guard and safe body caps before service-role insert", () => {
-  const src = read("app/api/analytics/search-event/route.ts");
+  const route = read("app/api/analytics/search-event/route.ts");
+  assert.match(route, /import \{ handleSearchEventPost \} from "@\/lib\/analytics\/searchEventHandler"/);
+  assert.match(route, /return handleSearchEventPost\(request\)/);
+  const src = read("lib/analytics/searchEventHandler.ts");
   assert.match(src, /rateLimitByIp/);
   assert.match(src, /rateLimitGuardResponse/);
   assert.match(src, /"search-analytics"/);
