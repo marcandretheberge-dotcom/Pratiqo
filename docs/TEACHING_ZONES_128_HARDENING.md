@@ -67,6 +67,18 @@ Follow-up validation:
   --print-config scripts/check_teaching_zones_deployment.cjs`; no rule disabled or
   configuration modified. Syntax checks (`node --check`) and runtime tests pass.
   This is not a claim of a fully green repository-wide lint/launch suite.
+- Additional legacy `node node_modules/tsx/dist/cli.mjs
+  tests/payments/stripeProductionReadinessBlockers.test.ts`: FAIL at line 92 on
+  BOTH base and corrected tree. Its first six checks pass, then it expects the
+  literal GROUP_SESSIONS_CHECKOUT_ENABLED inside the group checkout route, which
+  now delegates to isGroupSessionsCheckoutEnabled. Neither that route nor that
+  test changed here. The standard `test:payments` suite and new runtime consent
+  regression pass. No assertion was removed/disabled to hide this legacy failure.
+
+The two scoped commits were rebased onto the identical main tree after validation;
+`git diff 8de1dd48 HEAD --stat` was empty, and the zone integration suite passed
+again after checkout line-ending conversion. The PR contains only this lot, not
+the historical learner-funnel commits.
 
 Review readiness: compilation and requested targeted validations PASS. Open for
 human review, not authorization to merge or apply SQL. Broader launch validation,
