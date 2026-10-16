@@ -241,4 +241,3 @@ export async function handleSearchEventPost(request: Request, deps: SearchEventH
 
   return NextResponse.json({ ok: true });
 }
-
