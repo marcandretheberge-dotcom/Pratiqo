@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { validTeacherSetupTimeZone } from "@/lib/teachers/guidedSetup";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { blurCoordinates } from "@/lib/maps";
@@ -48,6 +49,7 @@ async function geocodeNominatim(query: string): Promise<{ lat: number; lng: numb
 }
 
 type RequestBody = {
+  timezone?: string;
   address_line1?: string;
   address_line2?: string;
   city?: string;
@@ -91,6 +93,9 @@ export async function POST(req: Request) {
   }
 
   const city = body.city?.trim() ?? "";
+  if (body.timezone !== undefined && !validTeacherSetupTimeZone(body.timezone)) {
+    return NextResponse.json({ error: "invalid_timezone" }, { status: 400 });
+  }
   const region = body.region?.trim() ?? "";
   const countryCode = body.country_code?.trim().toUpperCase() ?? "";
   const addressLine1 = body.address_line1?.trim() ?? "";
@@ -233,6 +238,7 @@ export async function POST(req: Request) {
 
   // ── Persist ───────────────────────────────────────────────────────────────
   const updates: Record<string, unknown> = {
+    ...(body.timezone !== undefined ? { timezone: body.timezone } : {}),
     city,
     region,
     country_code: countryCode,

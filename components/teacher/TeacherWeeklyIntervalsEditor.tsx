@@ -19,6 +19,7 @@ import {
 import { scheduleSaveStatusFrom } from "@/lib/schedule/scheduleSaveState";
 import { useUnsavedChangesWarning } from "@/hooks/useUnsavedChangesWarning";
 import { TeacherScheduleSaveBar } from "@/components/teacher/TeacherScheduleSaveBar";
+import { readSetupDraft, restoreSetupField, writeSetupField } from "@/lib/teachers/setupDraft";
 
 /** Display order Mon→Sun; dayOfWeek still uses JS Sunday=0. */
 const DAY_ORDER: Array<{ dayOfWeek: number; labelKey: "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun" }> = [
@@ -50,6 +51,7 @@ function newLocalId(): string {
 }
 
 type Props = {
+  draftKey?: string;
   /** True when teacher still has legacy Matin/Après-midi/Soir cells and no intervals yet. */
   hasLegacyBlocks: boolean;
   /** Notifies parent when saved/loaded precise interval count changes (for migration banner). */
@@ -59,13 +61,14 @@ type Props = {
 };
 
 export function TeacherWeeklyIntervalsEditor({
+  draftKey,
   hasLegacyBlocks,
   onPreciseIntervalCountChange,
   onDirtyChange,
 }: Props) {
   const { t } = useLocale();
   const stickyEnabled = isTeacherScheduleStickySaveEnabled();
-  const autosaveEnabled = isTeacherScheduleAutosaveEnabled();
+  const autosaveEnabled = !draftKey && isTeacherScheduleAutosaveEnabled();
   const [byDay, setByDay] = useState<Record<number, LocalInterval[]>>(() => {
     const init: Record<number, LocalInterval[]> = {};
     for (const d of DAY_ORDER) init[d.dayOfWeek] = [];
@@ -91,14 +94,25 @@ export function TeacherWeeklyIntervalsEditor({
     return session?.access_token ?? null;
   }, []);
 
-  const applyLoaded = useCallback((intervals: WeeklyIntervalInput[]) => {
+  const applyLoaded = useCallback((intervals: WeeklyIntervalInput[], restore = false) => {
+    const payload = JSON.stringify(
+      intervals.map(iv => ({ dayOfWeek: iv.dayOfWeek, startTime: iv.startTime, endTime: iv.endTime }))
+        .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)),
+    );
+    let displayed = intervals;
+    if (restore && draftKey) {
+      try {
+        const draft: unknown = JSON.parse(restoreSetupField(readSetupDraft(draftKey), "intervals", payload));
+        if (Array.isArray(draft) && draft.every(iv => iv && Number.isInteger(iv.dayOfWeek) && iv.dayOfWeek >= 0 && iv.dayOfWeek <= 6 && typeof iv.startTime === "string" && typeof iv.endTime === "string")) displayed = draft;
+      } catch { /* Invalid local drafts never replace server intervals. */ }
+    }
     const nextByDay: Record<number, LocalInterval[]> = {};
     const nextEnabled: Record<number, boolean> = {};
     for (const d of DAY_ORDER) {
       nextByDay[d.dayOfWeek] = [];
       nextEnabled[d.dayOfWeek] = false;
     }
-    for (const iv of intervals) {
+    for (const iv of displayed) {
       nextByDay[iv.dayOfWeek] = nextByDay[iv.dayOfWeek] ?? [];
       nextByDay[iv.dayOfWeek]!.push({
         localId: newLocalId(),
@@ -109,15 +123,10 @@ export function TeacherWeeklyIntervalsEditor({
     }
     setByDay(nextByDay);
     setDayEnabled(nextEnabled);
-    const payload = JSON.stringify(
-      intervals
-        .map((iv) => ({ dayOfWeek: iv.dayOfWeek, startTime: iv.startTime, endTime: iv.endTime }))
-        .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime)),
-    );
     setBaseline(payload);
     setDirty(false);
     onPreciseIntervalCountChange?.(intervals.length);
-  }, [onPreciseIntervalCountChange]);
+  }, [onPreciseIntervalCountChange, draftKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,7 +140,8 @@ export function TeacherWeeklyIntervalsEditor({
         });
         const json = (await res.json().catch(() => ({}))) as { intervals?: WeeklyIntervalInput[] };
         if (cancelled) return;
-        applyLoaded(Array.isArray(json.intervals) ? json.intervals : []);
+        if (!res.ok) throw new Error("intervals_load_failed");
+        applyLoaded(Array.isArray(json.intervals) ? json.intervals : [], true);
       } catch {
         if (!cancelled) setErrorKey("weeklyIntervalsLoadError");
       } finally {
@@ -161,9 +171,10 @@ export function TeacherWeeklyIntervalsEditor({
       ),
     );
     const nextDirty = serialized !== baseline;
+    if (draftKey && !loading && baseline) writeSetupField(draftKey, "intervals", baseline, serialized);
     setDirty(nextDirty);
     onDirtyChange?.(nextDirty);
-  }, [currentPayload, baseline, onDirtyChange]);
+  }, [currentPayload, baseline, onDirtyChange, draftKey, loading]);
 
   useUnsavedChangesWarning(dirty, stickyEnabled);
 

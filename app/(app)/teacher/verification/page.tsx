@@ -31,6 +31,10 @@ import {
   User,
 } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
+import { TeacherSetupNavigation } from "@/components/teacher/TeacherSetupNavigation";
+import { clearSetupDraft, readSetupDraft, restoreSetupField, setupDraftKey, writeSetupField } from "@/lib/teachers/setupDraft";
+import { suggestTeacherRegion } from "@/lib/teachers/guidedSetup";
+import { teacherBookingTimeZone } from "@/lib/timezones";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { IdentityVerificationCard } from "../../../../components/IdentityVerificationCard";
 import { useLocale } from "../../../../lib/locale-context";
@@ -95,6 +99,7 @@ type TeacherVerifyRow = {
   city?: string | null;
   region?: string | null;
   country_code?: string | null;
+  timezone?: string | null;
   home_lesson_radius_km?: number | null;
   home_lesson_price?: number | string | null;
   location?: unknown;
@@ -189,6 +194,7 @@ export default function TeacherProfileManagementPage() {
   const searchParams = useSearchParams();
 
   const [busy, setBusy] = useState<string | null>(null);
+  const guidedSaveInFlight = useRef(false);
   const [message, setMessage] = useState<string | null>(null);
   const [messageKind, setMessageKind] = useState<"ok" | "error">("ok");
   const [teacherRow, setTeacherRow] = useState<TeacherVerifyRow | null>(null);
@@ -255,6 +261,7 @@ export default function TeacherProfileManagementPage() {
   const [zoneRegion, setZoneRegion] = useState("");
   const [zonePostalCode, setZonePostalCode] = useState("");
   const [zoneCountryCode, setZoneCountryCode] = useState("");
+  const [zoneTimezone, setZoneTimezone] = useState("");
   const [zoneRadiusKm, setZoneRadiusKm] = useState("");
   const [zoneSavedStatus, setZoneSavedStatus] = useState<string | null>(null);
   const [zoneFuzzRadiusKm, setZoneFuzzRadiusKm] = useState<number | null>(null);
@@ -310,7 +317,7 @@ export default function TeacherProfileManagementPage() {
       supabase
         .from("teachers")
         .select(
-          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, available_from_date, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, marketplace_discovery_opt_out, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+          "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, available_from_date, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, timezone, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, marketplace_discovery_opt_out, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
         )
         .eq("user_id", user.id)
         .maybeSingle(),
@@ -330,7 +337,7 @@ export default function TeacherProfileManagementPage() {
           const refetch = await supabase
             .from("teachers")
             .select(
-              "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, available_from_date, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, marketplace_discovery_opt_out, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
+              "id, name, discipline, bio, image_url, video_url, price_per_lesson, teaching_mode, intro_session_enabled, intro_session_price_cents, availability, default_lesson_duration_minutes, available_from_date, verification_level, identity_verified, identity_status, stripe_identity_status, stripe_identity_failed_reason, diploma_verified, diploma_url, phone_verified, is_verified, location_verification_status, cv_summary, cv_verification_status, city, region, country_code, timezone, home_lesson_radius_km, home_lesson_price, home_lesson_enabled, is_public, marketplace_discovery_opt_out, deactivated_at, deleted_at, location, stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled",
             )
             .eq("user_id", user.id)
             .maybeSingle();
@@ -364,6 +371,11 @@ export default function TeacherProfileManagementPage() {
   }, [load]);
 
   const setupMode = searchParams.get("setup") === "1";
+  const courseDraftKey = setupMode && user?.id && teacherRow?.id
+    ? setupDraftKey(user.id, teacherRow.id, "course") : null;
+  const rememberCourseField = (field: string, base: string, value: string) => {
+    writeSetupField(courseDraftKey, field, base, value);
+  };
   const sectionParam = searchParams.get("section");
 
   useEffect(() => {
@@ -408,38 +420,42 @@ export default function TeacherProfileManagementPage() {
       introEnabled: introEnabledDraft,
       introPrice: introPriceDraft,
     };
-    pricingDraftRef.current = pricingDraft;
+    const courseDraft = readSetupDraft(courseDraftKey);
+    const restoredPrice = restoreSetupField(courseDraft, "price", priceDraft);
+    pricingDraftRef.current = { ...pricingDraft, price: restoredPrice };
     lastSavedPricingRef.current = pricingDraft;
 
-    setEditName(teacherRow.name ?? "");
-    setEditBio(teacherRow.bio ?? "");
+    setEditName(restoreSetupField(courseDraft, "name", teacherRow.name ?? ""));
+    setEditBio(restoreSetupField(courseDraft, "bio", teacherRow.bio ?? ""));
     setEditVideoUrl(teacherRow.video_url ?? "");
-    setEditPrice(priceDraft);
+    setEditPrice(restoredPrice);
     setEditIntroEnabled(introEnabledDraft);
     setEditIntroPrice(introPriceDraft);
-    const chips = teachingModeToChips(teacherRow.teaching_mode);
+    const chips = teachingModeToChips(restoreSetupField(courseDraft, "format", teacherRow.teaching_mode ?? ""));
     setChipsPerson(chips.person);
     setChipsOnline(chips.online);
     setChipsHome(chips.home);
 
-    setZoneCity(teacherRow.city ?? "");
-    setZoneRegion(teacherRow.region ?? "");
-    setZoneCountryCode(teacherRow.country_code ?? "");
+    setZoneCity(restoreSetupField(courseDraft, "city", teacherRow.city ?? ""));
+    setZoneRegion(restoreSetupField(courseDraft, "region", teacherRow.region ?? ""));
+    setZoneCountryCode(restoreSetupField(courseDraft, "country", teacherRow.country_code ?? ""));
+    const suggestedZone = suggestTeacherRegion(teacherRow.city ?? "", { region: teacherRow.region ?? "", country: teacherRow.country_code ?? "", timezone: teacherRow.timezone ?? "" });
+    setZoneTimezone(restoreSetupField(courseDraft, "timezone", teacherRow.timezone ?? "") || suggestedZone.timezone || teacherBookingTimeZone(teacherRow.timezone));
     setZoneRadiusKm(
       teacherRow.home_lesson_radius_km != null ? String(teacherRow.home_lesson_radius_km) : "",
     );
-    setEditHomeEnabled(teacherRow.home_lesson_enabled === true);
+    setEditHomeEnabled(restoreSetupField(courseDraft, "homeEnabled", teacherRow.home_lesson_enabled === true));
     setEditHomeRadius(
-      teacherRow.home_lesson_radius_km != null ? String(teacherRow.home_lesson_radius_km) : "",
+      restoreSetupField(courseDraft, "homeRadius", teacherRow.home_lesson_radius_km != null ? String(teacherRow.home_lesson_radius_km) : ""),
     );
     const hourlyHomeRaw =
       teacherRow.home_lesson_price != null && teacherRow.home_lesson_price !== ""
         ? Number(teacherRow.home_lesson_price)
         : null;
     setEditHomeHourlyRate(
-      hourlyHomeRaw != null && Number.isFinite(hourlyHomeRaw) && hourlyHomeRaw > 0
+      restoreSetupField(courseDraft, "homeRate", hourlyHomeRaw != null && Number.isFinite(hourlyHomeRaw) && hourlyHomeRaw > 0
         ? String(hourlyHomeRaw)
-        : "",
+        : ""),
     );
     setEditHomeError(null);
     const loc =
@@ -462,7 +478,7 @@ export default function TeacherProfileManagementPage() {
     if (typeof loc.fuzz_radius_km === "number") {
       setZoneFuzzRadiusKm(loc.fuzz_radius_km);
     }
-  }, [teacherRow]);
+  }, [teacherRow, courseDraftKey]);
 
   // ── Google Maps script loader ────────────────────────────────────────────────
   useEffect(() => {
@@ -579,11 +595,11 @@ export default function TeacherProfileManagementPage() {
 
   // ── Profile save ────────────────────────────────────────────────────────────
   const saveProfile = async () => {
-    if (!user?.id || !teacherRow?.id) return;
+    if (!user?.id || !teacherRow?.id) return false;
     const trimmedVideo = editVideoUrl.trim();
     if (trimmedVideo && !isValidVideoUrl(trimmedVideo)) {
       setEditVideoError(t("invalidVideoUrl"));
-      return;
+      return false;
     }
     setEditVideoError(null);
     setBusy("profile");
@@ -612,15 +628,17 @@ export default function TeacherProfileManagementPage() {
       showMsg(t("savedOk"), "ok");
       setExpandedCard(null);
       await load();
+      return true;
     } catch (e) {
       showMsg(e instanceof Error ? e.message : t("anErrorOccurred"), "error");
+      return false;
     } finally {
       setBusy(null);
     }
   };
 
   const saveDisciplinesFormats = async () => {
-    if (!teacherRow?.id) return;
+    if (!teacherRow?.id) return false;
     setBusy("disciplines");
     setMessage(null);
     try {
@@ -634,8 +652,10 @@ export default function TeacherProfileManagementPage() {
       showMsg(t("savedOk"), "ok");
       setExpandedCard(null);
       await load();
+      return true;
     } catch (e) {
       showMsg(e instanceof Error ? e.message : t("anErrorOccurred"), "error");
+      return false;
     } finally {
       setBusy(null);
     }
@@ -762,10 +782,16 @@ export default function TeacherProfileManagementPage() {
     await load();
     setDiscSaving(false);
     setDiscEditorOpen(false);
+    if (courseDraftKey) clearSetupDraft(`${courseDraftKey}:discipline:${discEditorMode}:${discEditorInitial.disciplineId}`);
     showMsg(t("savedOk"), "ok");
   };
 
   const toggleFormat = (key: "person" | "online" | "home") => {
+    rememberCourseField("format", teacherRow?.teaching_mode ?? "", encodeTeachingMode(
+      key === "person" ? !chipsPerson : chipsPerson,
+      key === "online" ? !chipsOnline : chipsOnline,
+      key === "home" ? !chipsHome : chipsHome,
+    ));
     if (key === "person") setChipsPerson((v) => !v);
     if (key === "online") setChipsOnline((v) => !v);
     if (key === "home") setChipsHome((v) => !v);
@@ -906,7 +932,7 @@ export default function TeacherProfileManagementPage() {
   );
 
   useEffect(() => {
-    if (!teacherRow) return;
+    if (!teacherRow || setupMode) return;
     const draft = pricingDraftRef.current;
     setPricingInlineError(null);
     if (!isPricingDraftDirty(draft)) return;
@@ -920,7 +946,7 @@ export default function TeacherProfileManagementPage() {
         pricingAutosaveTimeoutRef.current = null;
       }
     };
-  }, [editPrice, editIntroEnabled, editIntroPrice, isPricingDraftDirty, pricingAutosaveRetryTick, savePricing, teacherRow]);
+  }, [editPrice, editIntroEnabled, editIntroPrice, isPricingDraftDirty, pricingAutosaveRetryTick, savePricing, teacherRow, setupMode]);
 
   // ── Home lessons save ───────────────────────────────────────────────────────
   // Bounds mirror the dedicated validation in app/api/teacher/pricing/route.ts
@@ -932,7 +958,7 @@ export default function TeacherProfileManagementPage() {
   const HOME_HOURLY_RATE_MAX_CAD = 500;
 
   const saveHomeLessons = async () => {
-    if (!user?.id) return;
+    if (!user?.id) return false;
     setEditHomeError(null);
 
     // When the teacher disables the option, we clear the hourly rate but keep
@@ -947,13 +973,13 @@ export default function TeacherProfileManagementPage() {
       const r = Number(radiusRaw);
       if (!Number.isFinite(r) || r < HOME_RADIUS_MIN_KM || r > HOME_RADIUS_MAX_KM) {
         setEditHomeError(t("homeLessonsRadiusError"));
-        return;
+        return false;
       }
       radiusKm = Math.round(r);
     } else if (editHomeEnabled) {
       // Enabling requires a radius so the booking gate knows how far to allow.
       setEditHomeError(t("homeLessonsRadiusError"));
-      return;
+      return false;
     }
 
     let hourlyRate: number | null | undefined;
@@ -961,14 +987,14 @@ export default function TeacherProfileManagementPage() {
       const p = Number(rateRaw);
       if (!Number.isFinite(p) || p < HOME_HOURLY_RATE_MIN_CAD || p > HOME_HOURLY_RATE_MAX_CAD) {
         setEditHomeError(t("homeLessonsRateError"));
-        return;
+        return false;
       }
       hourlyRate = Math.round(p * 100) / 100;
     } else if (editHomeEnabled) {
       // Enabling without a rate would let bookings start but checkout would
       // return 0 (see computeBookingChargeCents). Block here for clarity.
       setEditHomeError(t("homeLessonsRateRequiredWhenEnabled"));
-      return;
+      return false;
     } else {
       // Disabling clears the rate so a future re-enable starts from a known
       // empty state rather than a stale value.
@@ -997,8 +1023,10 @@ export default function TeacherProfileManagementPage() {
       showMsg(t("savedOk"), "ok");
       setExpandedCard(null);
       await load();
+      return true;
     } catch (e) {
       showMsg(e instanceof Error ? e.message : t("anErrorOccurred"), "error");
+      return false;
     } finally {
       setBusy(null);
     }
@@ -1006,7 +1034,7 @@ export default function TeacherProfileManagementPage() {
 
   // ── Zone save ────────────────────────────────────────────────────────────────
   const submitZone = async () => {
-    if (!user) return;
+    if (!user) return false;
     setMessage(null);
     setBusy("zone");
     try {
@@ -1017,10 +1045,10 @@ export default function TeacherProfileManagementPage() {
       const city = zoneCity.trim();
       const region = zoneRegion.trim();
       const countryCode = zoneCountryCode.trim();
-      const addressLine1 = zoneShowManual
+      const addressLine1 = zoneShowManual || setupMode
         ? zoneAddressLine1.trim() || undefined
         : zoneSingleLine.trim() || undefined;
-      const addressLine2 = zoneShowManual ? zoneAddressLine2.trim() || undefined : undefined;
+      const addressLine2 = zoneShowManual || setupMode ? zoneAddressLine2.trim() || undefined : undefined;
       const postalCode = zonePostalCode.trim() || undefined;
 
       const res = await fetch("/api/teacher/location/verify", {
@@ -1033,6 +1061,7 @@ export default function TeacherProfileManagementPage() {
           region,
           postal_code: postalCode,
           country_code: countryCode,
+          ...(setupMode ? { timezone: zoneTimezone } : {}),
           home_lesson_radius_km: zoneRadiusKm.trim() ? Number(zoneRadiusKm.trim()) : undefined,
           ...(zoneLat != null && zoneLng != null ? { lat: zoneLat, lng: zoneLng } : {}),
         }),
@@ -1051,8 +1080,10 @@ export default function TeacherProfileManagementPage() {
       showMsg(j.geocoded ? t("zoneSavedApproximate") : t("zoneSavedPending"), "ok");
       setExpandedCard(null);
       await load();
+      return true;
     } catch (e) {
       showMsg(e instanceof Error ? e.message : t("verificationErrorGeneric"), "error");
+      return false;
     } finally {
       setBusy(null);
     }
@@ -1061,6 +1092,19 @@ export default function TeacherProfileManagementPage() {
   const resetTeachingZoneDraft = () => {
     setTeachingZoneEditorId(null);
     setTeachingZoneDraft(EMPTY_TEACHING_ZONE_DRAFT);
+  };
+
+  const saveGuidedCourse = async (): Promise<boolean> => {
+    if (!teacherRow || busy || discEditorOpen || guidedSaveInFlight.current) return false;
+    guidedSaveInFlight.current = true;
+    try {
+      if ((editName !== (teacherRow.name ?? "") || editBio !== (teacherRow.bio ?? "")) && !await saveProfile()) return false;
+      if (encodeTeachingMode(chipsPerson, chipsOnline, chipsHome) !== teacherRow.teaching_mode && !await saveDisciplinesFormats()) return false;
+      if (isPricingDraftDirty(pricingDraftRef.current) && !await savePricing()) return false;
+      if ((zoneCity !== (teacherRow.city ?? "") || zoneRegion !== (teacherRow.region ?? "") || zoneCountryCode !== (teacherRow.country_code ?? "") || zoneTimezone !== (teacherRow.timezone ?? "")) && !await submitZone()) return false;
+      if (chipsHome && (editHomeEnabled !== (teacherRow.home_lesson_enabled === true) || editHomeRadius !== String(teacherRow.home_lesson_radius_km ?? "") || editHomeHourlyRate !== String(teacherRow.home_lesson_price ?? "")) && !await saveHomeLessons()) return false;
+      return true;
+    } finally { guidedSaveInFlight.current = false; }
   };
 
   const saveTeachingZones = async (nextZones: TeacherTeachingZone[]) => {
@@ -1376,15 +1420,16 @@ export default function TeacherProfileManagementPage() {
 
   return (
     <div className="space-y-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:space-y-8 sm:pb-10" data-testid="teacher-profile-management-page">
+      {setupMode && <TeacherSetupNavigation step="course" beforeNavigate={saveGuidedCourse} />}
       <div>
         <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
           {t("teacherSpaceLabel")}
         </p>
         <h1 className="mt-1 text-2xl font-bold text-[#2C2C2A] flex items-center gap-2">
           <User className="text-teal-700" size={26} aria-hidden />
-          {t("teacherProfileManagementTitle")}
+          {t(setupMode ? "teacherGuidedCourse" : "teacherProfileManagementTitle")}
         </h1>
-        <p className="mt-2 text-sm text-[#6B6A65] max-w-xl">{t("teacherProfileManagementSubtitle")}</p>
+        {!setupMode && <p className="mt-2 text-sm text-[#6B6A65] max-w-xl">{t("teacherProfileManagementSubtitle")}</p>}
         {setupMode ? (
           <p
             className="mt-3 rounded-xl border border-teal-200/80 bg-teal-50/80 px-4 py-3 text-sm text-teal-900"
@@ -1419,13 +1464,14 @@ export default function TeacherProfileManagementPage() {
           }}
           profileRole={profile?.role}
           paymentReady={paymentsReady}
+          stripeSetupHref={setupMode ? "/teacher/setup-payments?setup=1" : undefined}
           onVisibilityChange={(nextPublic) =>
             setTeacherRow((prev) => (prev ? { ...prev, is_public: nextPublic } : prev))
           }
         />
       ) : null}
 
-      <TeacherSeoReadinessCard />
+      {!setupMode && <TeacherSeoReadinessCard />}
 
       {message ? (
         <div
@@ -1456,19 +1502,23 @@ export default function TeacherProfileManagementPage() {
           data-testid="teacher-profile-mgmt-card-public-profile"
         >
           <div className="space-y-4 pt-3">
-            <AvatarUpload
+            {!setupMode && <AvatarUpload
               userId={user.id}
               displayName={editName || user.email || "Teacher"}
               currentPhotoUrl={profilePhotoUrl}
               onPhotoUrlChange={setProfilePhotoUrl}
-            />
+            />}
             <label className="block">
               <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
                 {t("profileDisplayName")}
               </span>
               <input
                 value={editName}
-                onChange={(e) => setEditName(e.target.value)}
+                disabled={busy === "profile"}
+                onChange={(e) => {
+                  rememberCourseField("name", teacherRow.name ?? "", e.target.value);
+                  setEditName(e.target.value);
+                }}
                 className="mt-2 w-full h-11 rounded-xl border border-[#E8E6DF] px-3 text-sm outline-none focus:border-teal-500"
               />
             </label>
@@ -1478,12 +1528,16 @@ export default function TeacherProfileManagementPage() {
               </span>
               <textarea
                 value={editBio}
-                onChange={(e) => setEditBio(e.target.value)}
+                disabled={busy === "profile"}
+                onChange={(e) => {
+                  rememberCourseField("bio", teacherRow.bio ?? "", e.target.value);
+                  setEditBio(e.target.value);
+                }}
                 rows={4}
                 className="mt-2 w-full rounded-xl border border-[#E8E6DF] px-3 py-2 text-sm outline-none focus:border-teal-500"
               />
             </label>
-            <div>
+            {!setupMode && <div>
               <button
                 type="button"
                 onClick={() => setProfileAiOpen((v) => !v)}
@@ -1508,8 +1562,8 @@ export default function TeacherProfileManagementPage() {
                   />
                 </div>
               ) : null}
-            </div>
-            <label className="block">
+            </div>}
+            {!setupMode && <label className="block">
               <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
                 {t("videoPresentationLabel")}
               </span>
@@ -1524,7 +1578,7 @@ export default function TeacherProfileManagementPage() {
                 placeholder="https://youtube.com/..."
               />
               {editVideoError ? <p className="mt-1 text-xs text-red-600">{editVideoError}</p> : null}
-            </label>
+            </label>}
             <button
               type="button"
               onClick={() => void saveProfile()}
@@ -1640,6 +1694,8 @@ export default function TeacherProfileManagementPage() {
                   <p className="text-xs text-[#6B6A65]">{t("maxDisciplinesReached")}</p>
                 ) : null}
                 <TeacherDisciplinesEditor
+                  key={`${discEditorOpen}:${discEditorMode}:${discEditorInitial.disciplineId}`}
+                  draftKey={courseDraftKey ? `${courseDraftKey}:discipline:${discEditorMode}:${discEditorInitial.disciplineId}` : undefined}
                   open={discEditorOpen}
                   mode={discEditorMode}
                   initial={discEditorInitial}
@@ -1711,11 +1767,13 @@ export default function TeacherProfileManagementPage() {
               <input
                 value={editPrice}
                 onChange={(e) => {
+                  rememberCourseField("price", teacherRow.price_per_lesson != null ? String(teacherRow.price_per_lesson) : "", e.target.value);
                   setEditPrice(e.target.value);
                   setPricingInlineError(null);
                   setPricingSaveState("idle");
                 }}
                 onBlur={() => {
+                  if (setupMode) return;
                   if (pricingAutosaveTimeoutRef.current) {
                     clearTimeout(pricingAutosaveTimeoutRef.current);
                     pricingAutosaveTimeoutRef.current = null;
@@ -1765,7 +1823,7 @@ export default function TeacherProfileManagementPage() {
                 currency="CAD"
               />
             </label>
-            <div className="rounded-xl border border-[#E8E6DF] bg-teal-50/40 p-4 space-y-3">
+            {!setupMode && <div className="rounded-xl border border-[#E8E6DF] bg-teal-50/40 p-4 space-y-3">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-sm font-bold text-[#2C2C2A]">{t("introSessionTitle")}</p>
@@ -1820,7 +1878,7 @@ export default function TeacherProfileManagementPage() {
                 </div>
               </label>
               <p className="text-[11px] font-semibold text-[#6B6A65]">{t("introSessionOnePerTeacher")}</p>
-            </div>
+            </div>}
             <button
               type="button"
               onClick={() => void savePricing()}
@@ -1834,7 +1892,7 @@ export default function TeacherProfileManagementPage() {
         </LaunchCard>
       </section>
 
-      <section data-testid="teacher-profile-mgmt-section-availability" className="space-y-3">
+      {!setupMode && <section data-testid="teacher-profile-mgmt-section-availability" className="space-y-3">
         <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
           {t("teacherProfileMgmtSectionAvailability")}
         </h2>
@@ -1851,7 +1909,7 @@ export default function TeacherProfileManagementPage() {
           ctaHref="/teacher/schedule"
           ctaLabel={t("editScheduleAndDuration")}
         />
-      </section>
+      </section>}
 
       <section data-testid="teacher-profile-mgmt-section-teaching-zone" className="space-y-3">
         <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
@@ -1873,6 +1931,7 @@ export default function TeacherProfileManagementPage() {
               <p className="text-xs text-[#6B6A65] mb-2">{t("teacherOnboardingGoogleUnavailable")}</p>
             ) : null}
             <ZoneStep
+              compact={setupMode}
               zone={zoneState}
               busy={busy}
               zoneShowManual={zoneShowManual}
@@ -1894,15 +1953,38 @@ export default function TeacherProfileManagementPage() {
               onSingleLineChange={setZoneSingleLine}
               onLine1Change={setZoneAddressLine1}
               onLine2Change={setZoneAddressLine2}
-              onCityChange={setZoneCity}
-              onRegionChange={setZoneRegion}
+              onCityChange={(value) => {
+                rememberCourseField("city", teacherRow.city ?? "", value);
+                setZoneCity(value);
+                if (setupMode) {
+                  const suggested = suggestTeacherRegion(value, { region: zoneRegion, country: zoneCountryCode });
+                  if (suggested.region) {
+                    rememberCourseField("region", teacherRow.region ?? "", suggested.region);
+                    setZoneRegion(suggested.region);
+                  }
+                  if (suggested.country) {
+                    rememberCourseField("country", teacherRow.country_code ?? "", suggested.country);
+                    setZoneCountryCode(suggested.country);
+                  }
+                }
+              }}
+              onRegionChange={(value) => { rememberCourseField("region", teacherRow.region ?? "", value); setZoneRegion(value); }}
               onPostalCodeChange={setZonePostalCode}
-              onCountryCodeChange={setZoneCountryCode}
+              onCountryCodeChange={(value) => { rememberCourseField("country", teacherRow.country_code ?? "", value); setZoneCountryCode(value); }}
               onRadiusChange={setZoneRadiusKm}
               onSubmit={() => void submitZone()}
               t={t}
             />
-            <div className="mt-5 space-y-4 rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] p-4">
+            {setupMode && <label className="mt-4 block space-y-2 text-sm">
+              <span className="font-semibold">{t("teacherGuidedTimezone")}</span>
+              <input value={zoneTimezone} onChange={event => {
+                rememberCourseField("timezone", teacherRow.timezone ?? "", event.target.value);
+                setZoneTimezone(event.target.value);
+              }} list="teacher-setup-timezones" className="h-12 w-full rounded-lg border px-3" />
+              <datalist id="teacher-setup-timezones">{["America/Toronto", "America/Halifax", "America/St_Johns", "America/Winnipeg", "America/Regina", "America/Edmonton", "America/Vancouver", "America/Whitehorse"].map(zone => <option key={zone} value={zone} />)}</datalist>
+              <span className="block text-xs text-slate-600">{t("teacherGuidedTimezoneHelp")}</span>
+            </label>}
+            {!setupMode && <div className="mt-5 space-y-4 rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] p-4">
               <div>
                 <p className="text-sm font-bold text-[#2C2C2A]">{t("teachingZonesManagerTitle")}</p>
                 <p className="mt-1 text-xs leading-relaxed text-[#6B6A65]">{t("teachingZonesManagerDesc")}</p>
@@ -2081,12 +2163,12 @@ export default function TeacherProfileManagementPage() {
                   </button>
                 ) : null}
               </div>
-            </div>
+            </div>}
           </div>
         </LaunchCard>
       </section>
 
-      <section data-testid="teacher-profile-mgmt-section-home-lessons" className="space-y-3">
+      {(!setupMode || chipsHome) && <section data-testid="teacher-profile-mgmt-section-home-lessons" className="space-y-3">
         <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
           {t("teacherProfileMgmtSectionHomeLessons")}
         </h2>
@@ -2106,7 +2188,7 @@ export default function TeacherProfileManagementPage() {
               <input
                 type="checkbox"
                 checked={editHomeEnabled}
-                onChange={(e) => setEditHomeEnabled(e.target.checked)}
+                onChange={(e) => { writeSetupField(courseDraftKey, "homeEnabled", teacherRow.home_lesson_enabled === true, e.target.checked); setEditHomeEnabled(e.target.checked); }}
                 className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-700"
                 data-testid="teacher-profile-mgmt-home-lessons-enabled"
               />
@@ -2127,7 +2209,7 @@ export default function TeacherProfileManagementPage() {
               <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
                   value={editHomeRadius}
-                  onChange={(e) => setEditHomeRadius(e.target.value)}
+                  onChange={(e) => { rememberCourseField("homeRadius", String(teacherRow.home_lesson_radius_km ?? ""), e.target.value); setEditHomeRadius(e.target.value); }}
                   type="number"
                   min={HOME_RADIUS_MIN_KM}
                   max={HOME_RADIUS_MAX_KM}
@@ -2148,7 +2230,7 @@ export default function TeacherProfileManagementPage() {
               <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
                   value={editHomeHourlyRate}
-                  onChange={(e) => setEditHomeHourlyRate(e.target.value)}
+                  onChange={(e) => { rememberCourseField("homeRate", String(teacherRow.home_lesson_price ?? ""), e.target.value); setEditHomeHourlyRate(e.target.value); }}
                   type="number"
                   min={HOME_HOURLY_RATE_MIN_CAD}
                   max={HOME_HOURLY_RATE_MAX_CAD}
@@ -2231,9 +2313,9 @@ export default function TeacherProfileManagementPage() {
             </button>
           </div>
         </LaunchCard>
-      </section>
+      </section>}
 
-      <section data-testid="teacher-profile-mgmt-section-trust" className="space-y-3">
+      {(!setupMode || isIdentityVerificationFailed(teacherRow)) && <section data-testid="teacher-profile-mgmt-section-trust" className="space-y-3">
         <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
           {t("teacherProfileMgmtSectionTrust")}
         </h2>
@@ -2282,9 +2364,9 @@ export default function TeacherProfileManagementPage() {
             </div>
           </div>
         </LaunchCard>
-      </section>
+      </section>}
 
-      <section data-testid="teacher-profile-mgmt-section-payments" className="space-y-3">
+      {!setupMode && <section data-testid="teacher-profile-mgmt-section-payments" className="space-y-3">
         <h2 className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
           {t("teacherProfileMgmtSectionPayments")}
         </h2>
@@ -2319,7 +2401,11 @@ export default function TeacherProfileManagementPage() {
             </p>
           ) : null}
         </div>
-      </section>
+      </section>}
+      {setupMode && <div className="flex flex-wrap gap-4">
+        <Link href="/teacher/schedule?setup=1" onClick={async event => { event.preventDefault(); if (await saveGuidedCourse()) window.location.assign("/teacher/schedule?setup=1"); }} className="inline-flex min-h-12 items-center rounded-lg bg-teal-700 px-5 font-semibold text-white">{t("teacherGuidedAvailability")}</Link>
+        <Link href="/teacher/verification" onClick={async event => { event.preventDefault(); if (await saveGuidedCourse()) window.location.assign("/teacher/verification"); }} className="inline-flex min-h-12 items-center text-teal-700 underline">{t("teacherProfileManagementTitle")}</Link>
+      </div>}
     </div>
   );
 }
@@ -2389,8 +2475,8 @@ function LaunchCard({
       className="rounded-2xl border border-[#E8E6DF] bg-white p-4 sm:p-5"
       data-testid={testid}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 text-teal-700">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2 text-teal-700">
           {icon}
           <h3 className="text-sm font-bold text-[#2C2C2A]">{title}</h3>
         </div>

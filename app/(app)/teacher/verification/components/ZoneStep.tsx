@@ -6,6 +6,7 @@ import type { VerificationStepState } from "@/lib/verificationState";
 import type { TranslationKey } from "@/lib/translations";
 
 type Props = {
+  compact?: boolean;
   zone: VerificationStepState;
   busy: string | null;
   zoneShowManual: boolean;
@@ -38,6 +39,7 @@ type Props = {
 };
 
 export function ZoneStep({
+  compact = false,
   zone,
   busy,
   zoneShowManual,
@@ -78,7 +80,7 @@ export function ZoneStep({
         {t("verificationZonePrivacyNote")}
       </div>
 
-      <div className="space-y-1.5">
+      {!compact && <div className="space-y-1.5">
         <label
           htmlFor="zone-address-single"
           className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]"
@@ -96,23 +98,23 @@ export function ZoneStep({
           className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
         />
         <p className="text-xs text-[#6B6A65]">{t("verificationZoneAddressHint")}</p>
-      </div>
+      </div>}
 
-      <button
+      {!compact && <button
         type="button"
         onClick={onShowManualToggle}
         className="text-xs font-semibold text-teal-700 hover:underline inline-flex items-center gap-1"
       >
         {zoneShowManual ? t("verificationZoneHideManual") : t("verificationZoneShowManual")}
-      </button>
+      </button>}
 
-      {zoneShowManual ? (
+      {zoneShowManual || compact ? (
         <div className="rounded-xl border border-[#DCEAE3] bg-[#F8F7F2] p-4 space-y-3">
           <p className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
             {t("verificationZoneManualHeading")}
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="space-y-1 sm:col-span-2">
+            {!compact && <label className="space-y-1 sm:col-span-2">
               <span className="text-xs font-medium text-[#6B6A65]">{t("zoneAddressLine1Label")}</span>
               <input
                 value={zoneAddressLine1}
@@ -120,8 +122,8 @@ export function ZoneStep({
                 placeholder="123 Rue Principale"
                 className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
               />
-            </label>
-            <label className="space-y-1 sm:col-span-2">
+            </label>}
+            {!compact && <label className="space-y-1 sm:col-span-2">
               <span className="text-xs font-medium text-[#6B6A65]">
                 {t("verificationZoneAptLabel")}
               </span>
@@ -131,7 +133,7 @@ export function ZoneStep({
                 placeholder="Apt 2"
                 className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
               />
-            </label>
+            </label>}
             <label className="space-y-1">
               <span className="text-xs font-medium text-[#6B6A65]">
                 {t("verificationZoneCityLabel")}
@@ -154,7 +156,7 @@ export function ZoneStep({
                 className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
               />
             </label>
-            <label className="space-y-1">
+            {!compact && <label className="space-y-1">
               <span className="text-xs font-medium text-[#6B6A65]">{t("zonePostalCodeLabel")}</span>
               <input
                 value={zonePostalCode}
@@ -162,7 +164,7 @@ export function ZoneStep({
                 placeholder="H2X 1Y1"
                 className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
               />
-            </label>
+            </label>}
             <label className="space-y-1">
               <span className="text-xs font-medium text-[#6B6A65]">
                 {t("verificationZoneCountryCodeLabel")}
@@ -179,7 +181,7 @@ export function ZoneStep({
         </div>
       ) : null}
 
-      <label className="space-y-1 block">
+      {!compact && <label className="space-y-1 block">
         <span className="text-xs font-bold uppercase tracking-widest text-[#6B6A65]">
           {t("zoneRadiusKmLabel")}
         </span>
@@ -191,13 +193,13 @@ export function ZoneStep({
           className="h-11 w-full rounded-xl border border-[#E8E6DF] bg-white px-3 text-sm outline-none focus:border-teal-500"
         />
         <p className="text-xs text-[#6B6A65]">{t("zoneRadiusKmHelper")}</p>
-      </label>
+      </label>}
 
       <button
         type="button"
         disabled={
           busy !== null ||
-          (zoneShowManual
+          (zoneShowManual || compact
             ? !zoneCity.trim() || !zoneRegion.trim() || !zoneCountryCode.trim()
             : !zoneSingleLine.trim() && !zoneCity.trim())
         }

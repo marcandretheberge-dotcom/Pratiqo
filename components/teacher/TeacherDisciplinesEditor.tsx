@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { readSetupDraft, restoreSetupField, writeSetupField } from "@/lib/teachers/setupDraft";
 import { Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
@@ -46,6 +47,7 @@ function fold(value: string): string {
 }
 
 export function TeacherDisciplinesEditor({
+  draftKey,
   open,
   mode,
   initial,
@@ -54,6 +56,7 @@ export function TeacherDisciplinesEditor({
   onClose,
   onSave,
 }: {
+  draftKey?: string;
   open: boolean;
   mode: "add" | "edit";
   initial: DisciplineCardDraft;
@@ -65,11 +68,17 @@ export function TeacherDisciplinesEditor({
   const { t, locale } = useLocale();
   const enabledDomains = useMemo(() => getEnabledDisciplines(), []);
 
-  const [disciplineId, setDisciplineId] = useState(initial.disciplineId);
+  const [disciplineId, setDisciplineId] = useState(() => restoreSetupField(readSetupDraft(draftKey ?? null), "discipline", initial.disciplineId));
   const [query, setQuery] = useState("");
-  const [specialties, setSpecialties] = useState<string[]>(() => uniqSpecs(initial.specialties));
-  const [custom, setCustom] = useState("");
+  const [specialties, setSpecialties] = useState<string[]>(() => restoreSetupField(readSetupDraft(draftKey ?? null), "specialties", uniqSpecs(initial.specialties)));
+  const [custom, setCustom] = useState<string>(() => restoreSetupField(readSetupDraft(draftKey ?? null), "custom", ""));
   const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!draftKey || !open) return;
+    writeSetupField(draftKey, "discipline", initial.disciplineId, disciplineId);
+    writeSetupField(draftKey, "specialties", uniqSpecs(initial.specialties), specialties);
+    writeSetupField(draftKey, "custom", "", custom);
+  }, [draftKey, open, initial.disciplineId, initial.specialties, disciplineId, specialties, custom]);
 
   const preset = OPTIONAL_PRESET_SPECIALTIES[disciplineId] ?? [];
   const domain = getDisciplineById(disciplineId);

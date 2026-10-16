@@ -57,7 +57,8 @@ async function getAuthenticatedTeacher(req: Request) {
  * Does not mutate bookings, schedule, packages, or Stripe.
  */
 export async function GET(req: Request) {
-  if (!isTeacherAvailabilityPreviewEnabled()) {
+  // The guided setup ships the same read-only preview; ownership checks below remain mandatory.
+  if (!isTeacherAvailabilityPreviewEnabled() && new URL(req.url).searchParams.get("flow") !== "teacher-setup") {
     return NextResponse.json({ error: "feature_disabled" }, { status: 403 });
   }
 

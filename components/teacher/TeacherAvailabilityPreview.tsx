@@ -17,6 +17,7 @@ import { formatLessonDurationLabel } from "@/lib/pricing/lessonDuration";
 import { cn } from "@/lib/utils";
 
 type Props = {
+  guidedSetup?: boolean;
   defaultDurationMinutes: number;
   scheduleDirty: boolean;
   onRequestSave?: () => void;
@@ -55,13 +56,14 @@ function formatDayLabel(isoDate: string, locale: string): string {
  * Read-only “what learners can book” preview on Horaire.
  */
 export function TeacherAvailabilityPreview({
+  guidedSetup = false,
   defaultDurationMinutes,
   scheduleDirty,
   onRequestSave,
 }: Props) {
   const { t, locale } = useLocale();
   const dateLocale = localeToBcp47(locale);
-  const uiEnabled = isTeacherAvailabilityPreviewUiEnabled();
+  const uiEnabled = guidedSetup || isTeacherAvailabilityPreviewUiEnabled();
 
   const [durationMinutes, setDurationMinutes] = useState(() => {
     const d = Math.round(defaultDurationMinutes);
@@ -98,6 +100,7 @@ export function TeacherAvailabilityPreview({
         days: String(daysHorizon),
         durationMinutes: String(durationMinutes),
       });
+      if (guidedSetup) params.set("flow", "teacher-setup");
       const res = await fetch(`/api/teacher/schedule/availability-preview?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -114,7 +117,7 @@ export function TeacherAvailabilityPreview({
     } finally {
       setLoading(false);
     }
-  }, [uiEnabled, scheduleDirty, daysHorizon, durationMinutes, t]);
+  }, [uiEnabled, scheduleDirty, daysHorizon, durationMinutes, t, guidedSetup]);
 
   useEffect(() => {
     void loadPreview();
