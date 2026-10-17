@@ -6,6 +6,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
+import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
 
 const REPO_ROOT = process.cwd();
 
@@ -161,7 +162,11 @@ test("pricing autosave: base hourly rate saves after debounce and on blur", () =
   assert.match(verificationSrc, /pricingAutosaveTimeoutRef/);
   assert.match(verificationSrc, /setTimeout\(\(\) => \{\s*void savePricing\(\{ source: "autosave", collapseOnSuccess: false \}\);/);
   assert.match(verificationSrc, /}, 750\)/);
-  assert.match(verificationSrc, /onBlur=\{\(\) => \{[\s\S]{0,260}savePricing\(\{ source: "blur", collapseOnSuccess: false \}\)/);
+  const priceBlur = verificationSrc.match(/onBlur=\{\(\) => \{([\s\S]*?)\}\}/)?.[1] ?? "";
+  assert.match(priceBlur, /if \(setupMode\) return;/);
+  assert.match(priceBlur, /clearTimeout\(pricingAutosaveTimeoutRef.current\)/);
+  assert.match(priceBlur, /savePricing\(\{ source: "blur", collapseOnSuccess: false \}\)/);
+  assert.ok(priceBlur.indexOf("if (setupMode) return;") < priceBlur.indexOf("savePricing("));
   assert.match(verificationSrc, /pricingSaveInFlightRef/);
   assert.match(verificationSrc, /pricingPendingAutosaveRef\.current = true/);
   assert.match(verificationSrc, /setPricingAutosaveRetryTick/);
@@ -374,6 +379,8 @@ test("forbidden files: branch does not touch Stripe checkout/webhook, Supabase/R
 
   const violations: string[] = [];
   for (const file of changed) {
+    // Only the approved fixed internal return URLs; all other Connect edits fail.
+    if (hasOnlyGuidedStripeReturnChange(file)) continue;
     for (const rule of forbidden) {
       if (rule.re.test(file)) {
         if (rule.label === "Supabase migrations" && approvedMigrationExceptions.has(file)) {

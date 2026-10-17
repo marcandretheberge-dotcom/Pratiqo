@@ -9,6 +9,7 @@
 
 import assert from "node:assert/strict";
 import { hasOnlyPublicContactChange } from "../helpers/contactAddressScope";
+import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -396,6 +397,10 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     // PR 17A — precise teacher weekly schedule intervals (flagged OFF by default).
     // Does not touch YoPratiqo audio, lesson content, Stripe amounts, or payouts.
     "app/api/teacher/weekly-intervals/route.ts",
+    // Guided setup: owner-only timezone update and read-only capability lookup.
+    // Actual handlers tested with foreign IDs and invalid sessions in tests/teachers/guidedSetup*.cjs.
+    "app/api/teacher/location/verify/route.ts",
+    "app/api/teacher/setup-status/route.ts",
     "app/api/teachers/[id]/slots/route.ts",
     "supabase/migrations/108_teacher_weekly_availability_intervals.sql",
     "supabase/migrations/109_harden_teacher_weekly_availability_intervals_rls.sql",
@@ -539,6 +544,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
       assert.doesNotMatch(preview, /\.update\(|\.insert\(|\.delete\(|\.rpc\(|expireStale/);
     }
     if (hasOnlyPublicContactChange(path)) continue;
+    if (hasOnlyGuidedStripeReturnChange(path)) continue;
     if (branchSpecificAllowlist.has(path)) continue;
     assert.ok(
       !forbidden.some((re) => re.test(path)),

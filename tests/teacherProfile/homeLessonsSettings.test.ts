@@ -281,10 +281,10 @@ test("Save handler PATCHes /api/teacher/pricing with the three home-lesson field
 // ── PART F.6: Values reload correctly into the form on mount ─────────────────
 test("Loaded teacher row hydrates the home-lesson editor state", () => {
   assert.ok(
-    /setEditHomeEnabled\(\s*teacherRow\.home_lesson_enabled\s*===\s*true\s*\)/.test(
+    /setEditHomeEnabled\(restoreSetupField\(courseDraft, "homeEnabled", teacherRow\.home_lesson_enabled === true\)\)/.test(
       verificationSrc,
     ),
-    "useEffect must hydrate editHomeEnabled from teacherRow.home_lesson_enabled.",
+    "Draft restoration must retain teacherRow.home_lesson_enabled as the authoritative baseline.",
   );
   assert.ok(
     /setEditHomeRadius\([\s\S]*?teacherRow\.home_lesson_radius_km/.test(verificationSrc),

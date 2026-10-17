@@ -119,6 +119,10 @@ export async function POST(req: Request) {
     const user = auth.user!;
 
     const base = publicBase();
+    // Fixed internal destination only; never accept an arbitrary redirect URL.
+    const returnPath = new URL(req.url).searchParams.get("flow") === "teacher-setup"
+      ? "/teacher/setup-payments?setup=1&"
+      : "/onboarding?";
     const admin = getSupabaseAdmin();
 
     // Ensure teacher row exists (id is text; we use user.id as stable string id)
@@ -191,8 +195,8 @@ export async function POST(req: Request) {
     const accountLink = await stripe.accountLinks.create({
       account: stripeAccountId,
       type: "account_onboarding",
-      refresh_url: `${base}/onboarding?stripe=refresh`,
-      return_url: `${base}/onboarding?stripe=success`,
+      refresh_url: `${base}${returnPath}stripe=refresh`,
+      return_url: `${base}${returnPath}stripe=success`,
     });
 
     return NextResponse.json({ url: accountLink.url, stripe_account_id: stripeAccountId, connect_status: connectStatus });

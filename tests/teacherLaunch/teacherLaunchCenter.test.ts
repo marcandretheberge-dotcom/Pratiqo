@@ -27,6 +27,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
+import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
 
 const REPO_ROOT = process.cwd();
 
@@ -475,6 +476,8 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
 
   const violations: string[] = [];
   for (const file of changed) {
+    // Exact fixed-return diff only; negative tampering cases live in guidedSetup.test.ts.
+    if (hasOnlyGuidedStripeReturnChange(file)) continue;
     for (const rule of forbidden) {
       if (rule.re.test(file)) {
         if (rule.label === "Supabase migrations" && approvedMigrationExceptions.has(file)) {

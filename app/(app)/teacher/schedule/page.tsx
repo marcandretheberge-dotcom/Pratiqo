@@ -4,6 +4,9 @@ import React, { useCallback, useEffect, useMemo, useState, Suspense } from "reac
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Loader2, Save } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
+import Link from "next/link";
+import { TeacherSetupNavigation } from "@/components/teacher/TeacherSetupNavigation";
+import { readSetupDraft, restoreSetupField, setupDraftKey, writeSetupField } from "@/lib/teachers/setupDraft";
 import { getSupabaseClient } from "../../../../lib/supabase";
 import { cn } from "../../../../lib/utils";
 import { formatLocalISODate } from "../../../../lib/slots";
@@ -127,6 +130,7 @@ function TeacherScheduleInner() {
   const dateLocale = localeToBcp47(locale);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const setupMode = searchParams.get("setup") === "1";
 
   // Horaire is now the availability editor. The today/week branches are kept
   // only for backwards-compatible bookmark URLs (?tab=today, ?tab=week); the
@@ -249,7 +253,8 @@ function TeacherScheduleInner() {
     setBufferBefore(clampBufferMinutes(trow.booking_buffer_before_minutes));
     setBufferAfter(clampBufferMinutes(trow.booking_buffer_after_minutes));
     const loadedDuration = normalizeLessonDurationMinutes(trow.default_lesson_duration_minutes);
-    setDefaultLessonDuration(loadedDuration);
+    const scheduleDraftKey = setupMode ? setupDraftKey(userId, tid, "availability") : null;
+    setDefaultLessonDuration(restoreSetupField(readSetupDraft(scheduleDraftKey), "duration", loadedDuration));
     setSavedLessonDuration(loadedDuration);
     const loadedAvailableFrom = normalizeAvailableFromDate(trow.available_from_date);
     setAvailableFromDate(loadedAvailableFrom ?? "");
@@ -257,7 +262,8 @@ function TeacherScheduleInner() {
 
     const avail = trow.availability;
     const availArr = Array.isArray(avail) ? (avail as string[]) : [];
-    setAvailability(availArr);
+    const draftKey = setupMode ? setupDraftKey(userId, tid, "availability") : null;
+    setAvailability(restoreSetupField(readSetupDraft(draftKey), "availability", [...availArr].sort()));
     const mode = String(trow.teaching_mode || "both");
     const before = clampBufferMinutes(trow.booking_buffer_before_minutes);
     const after = clampBufferMinutes(trow.booking_buffer_after_minutes);
@@ -296,7 +302,7 @@ function TeacherScheduleInner() {
     setBookings(withNames);
     setBlockedRows((bl || []) as { id: string; blocked_date: string; period: string | null }[]);
     setLoading(false);
-  }, [userId, weekAnchor, t]);
+  }, [userId, weekAnchor, t, setupMode]);
 
   useEffect(() => {
     void Promise.resolve().then(() => load());
@@ -324,7 +330,12 @@ function TeacherScheduleInner() {
 
   const toggleAvail = (d: string, s: string) => {
     const key = `${d} ${s}`;
-    setAvailability((prev) => (prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key]));
+    const next = availability.includes(key) ? availability.filter(x => x !== key) : [...availability, key];
+    if (setupMode && userId && teacherId && settingsBaseline) {
+      const baseline = JSON.parse(settingsBaseline) as { availability: string[] };
+      writeSetupField(setupDraftKey(userId, teacherId, "availability"), "availability", baseline.availability, [...next].sort());
+    }
+    setAvailability(next);
   };
 
   const cellLockedByNotice = (dayColumnIndex: number, slotFr: (typeof SLOTS)[number]): boolean => {
@@ -401,12 +412,12 @@ function TeacherScheduleInner() {
         setDurationSaveState("saved");
         return true;
       } catch {
-        setDefaultLessonDuration(previous);
+        if (!setupMode) setDefaultLessonDuration(previous);
         setDurationSaveState("error");
         return false;
       }
     },
-    [savedLessonDuration, stickyEnabled, t],
+    [savedLessonDuration, stickyEnabled, t, setupMode],
   );
 
   const saveAvailableFromDate = useCallback(
@@ -465,7 +476,7 @@ function TeacherScheduleInner() {
   );
 
   const saveAll = async (): Promise<boolean> => {
-    if (!userId) return false;
+    if (!userId || saving) return false;
     setSaving(true);
     setFlash(null);
     try {
@@ -475,7 +486,8 @@ function TeacherScheduleInner() {
       const { error } = await supabase
         .from("teachers")
         .update({
-          availability,
+          // The interval endpoint owns its coarse projection; this state may predate its save.
+          ...(!(setupMode && (isTeacherScheduleIntervalsUiEnabled() || isTeacherScheduleInteractiveCellsUiEnabled())) ? { availability } : {}),
           teaching_mode: teachingMode,
           booking_buffer_before_minutes: nextBefore,
           booking_buffer_after_minutes: nextAfter,
@@ -507,6 +519,7 @@ function TeacherScheduleInner() {
         }),
       );
       setSettingsDirty(false);
+      if (setupMode && teacherId) writeSetupField(setupDraftKey(userId, teacherId, "availability"), "availability", [...availability].sort(), [...availability].sort());
       setFlash({ kind: "ok", text: t("availabilitySaved") });
       return true;
     } catch (e) {
@@ -616,6 +629,48 @@ function TeacherScheduleInner() {
         {t("loginToSchedule")}
       </div>
     );
+  }
+
+  if (setupMode) {
+    const preciseEditor = isTeacherScheduleIntervalsUiEnabled() || isTeacherScheduleInteractiveCellsUiEnabled();
+    const canLeave = async () => !loading && teacherLookupState === "found" && !intervalsDirty && (!settingsDirty || await saveAll());
+    return <div className="mx-auto min-w-0 max-w-3xl space-y-5 pb-28" data-testid="teacher-guided-availability">
+      <TeacherSetupNavigation step="availability" beforeNavigate={canLeave} />
+      <h1 className="text-2xl font-bold">{t("teacherGuidedAvailability")}</h1>
+      {loading ? <AppListSkeleton count={2} /> : teacherLookupState !== "found" ? <p role="alert">{t("errorGeneric")}</p> : <>
+        <label className="block space-y-2">
+          <span className="text-sm font-semibold">{t("lessonDurationLabel")}</span>
+          <select value={defaultLessonDuration} disabled={saving} onChange={event => {
+            const next = Number(event.target.value);
+            writeSetupField(setupDraftKey(user.id, teacherId!, "availability"), "duration", savedLessonDuration, next);
+            setDefaultLessonDuration(next);
+          }} className="h-12 w-full rounded-lg border px-3">
+            {LESSON_DURATION_OPTIONS.map(minutes => <option key={minutes} value={minutes}>{formatLessonDurationLabel(minutes, t)}</option>)}
+          </select>
+        </label>
+        {preciseEditor ? <TeacherWeeklyIntervalsEditor
+          draftKey={setupDraftKey(user.id, teacherId!, "intervals")}
+          hasLegacyBlocks={availability.length > 0}
+          onPreciseIntervalCountChange={setPreciseIntervalCount}
+          onDirtyChange={setIntervalsDirty}
+        /> : <div className="space-y-3">{DAYS.map((day, index) => <fieldset key={day} className="min-w-0 border-b pb-3">
+          <legend className="mb-2 text-sm font-semibold">{t(DAY_TKEY[day])}</legend>
+          <div className="grid grid-cols-3 gap-2">{SLOTS.map(slot => <button type="button" key={slot}
+            disabled={cellLockedByNotice(index, slot) || cellHasBooking(index, slot) || saving}
+            aria-pressed={availability.includes(`${day} ${slot}`)} onClick={() => toggleAvail(day, slot)}
+            className={cn("min-h-12 min-w-0 break-words rounded-lg border p-2 text-xs disabled:opacity-40", availability.includes(`${day} ${slot}`) ? "border-teal-700 bg-teal-50 text-teal-900" : "bg-white")}>{t(SLOT_TKEY[slot])}</button>)}</div>
+        </fieldset>)}</div>}
+        {preciseBookingUi && preciseEditor && <TeacherScheduleStatus scheduleMode={scheduleMode} preciseIntervalCount={preciseIntervalCount}
+          preciseBookingUiEnabled={preciseBookingUi} onActivated={({ scheduleMode: next }) => setScheduleMode(next)}
+          onConfigure={() => document.getElementById("teacher-weekly-intervals-editor")?.scrollIntoView({ behavior: "smooth" })} />}
+        <button type="button" disabled={saving || !settingsDirty} onClick={() => void saveAll()} className="min-h-12 rounded-lg border px-4 font-semibold disabled:opacity-50">{t("weeklyIntervalsSave")}</button>
+        {flash && <p role={flash.kind === "err" ? "alert" : "status"}>{flash.text}</p>}
+        <TeacherAvailabilityPreview guidedSetup defaultDurationMinutes={defaultLessonDuration} scheduleDirty={settingsDirty || intervalsDirty} onRequestSave={() => void saveAll()} />
+        {intervalsDirty && <p role="status" className="text-sm text-amber-900">{t("weeklyIntervalsUnsaved")}</p>}
+        <button type="button" disabled={saving || intervalsDirty} onClick={async () => { if (await canLeave()) router.push("/teacher/setup-payments?setup=1"); }} className="min-h-12 w-full rounded-lg bg-teal-700 px-4 font-semibold text-white disabled:opacity-50">{t("teacherGuidedPayments")}</button>
+        <Link href="/teacher/schedule" onClick={async event => { event.preventDefault(); if (await canLeave()) router.push("/teacher/schedule"); }} className="inline-flex min-h-11 items-center text-sm text-teal-700 underline">{t("schedulePageTitle")}</Link>
+      </>}
+    </div>;
   }
 
   return (

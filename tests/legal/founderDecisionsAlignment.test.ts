@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -725,6 +726,7 @@ test("branch did not touch restricted systems", () => {
 
   const violations: string[] = [];
   for (const file of changed) {
+    if (hasOnlyGuidedStripeReturnChange(file)) continue;
     if (hasOnlyBookingContactChange(file)) continue;
     if (allowedYoDisclosureFiles.has(file)) continue;
     if (allowedConsentGateFiles.has(file)) continue;

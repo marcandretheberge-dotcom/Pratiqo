@@ -8,6 +8,7 @@ import { MarketWaitlistCard } from "@/components/MarketWaitlistCard";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
 import { isTeacherProfileComplete } from "@/lib/teacherOnboarding";
+import { hasTeacherSetupProgress, resumeTeacherSetupHref } from "@/lib/teachers/guidedSetup";
 import { buildTeacherSignupLoginHref } from "@/lib/auth/teacherOnboardingIntent";
 import { isTeacherMarketSupported } from "@/lib/config/markets";
 import {
@@ -83,13 +84,18 @@ export default function TeacherOnboardingPage() {
 
       if (cancelled) return;
 
+      if (profile?.teacher_onboarding_complete === true && trow && hasTeacherSetupProgress(user.id)) {
+        router.replace(resumeTeacherSetupHref(user.id));
+        return;
+      }
+
       if (isTeacherProfileComplete(trow ?? null)) {
         router.replace("/dashboard");
         return;
       }
 
       if (profile?.teacher_onboarding_complete === true && trow) {
-        router.replace(SETUP_DESTINATION);
+        router.replace(resumeTeacherSetupHref(user.id));
         return;
       }
 
