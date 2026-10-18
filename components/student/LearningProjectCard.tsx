@@ -273,7 +273,14 @@ export function LearningProjectCard({
                 {project?.completed_at ? (
                   <>
                     <span className="sr-only">{copy.title} : </span>
-                    {project.subject}
+                    {onSearchPage && data?.searchHref ? (
+                      <Link
+                        href={data.searchHref}
+                        className="underline decoration-teal-700/40 underline-offset-4 hover:decoration-teal-700"
+                      >
+                        {project.subject}
+                      </Link>
+                    ) : project.subject}
                   </>
                 ) : (
                   copy.title
