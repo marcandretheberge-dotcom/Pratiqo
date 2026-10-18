@@ -55,11 +55,13 @@ export function LearningProjectCard({
   userId,
   locale,
   manage = false,
+  onSearchPage = false,
   transport = requestProject,
 }: {
   userId: string;
   locale: string;
   manage?: boolean;
+  onSearchPage?: boolean;
   transport?: LearningProjectTransport;
 }) {
   const copy = learningProjectCopy(locale);
@@ -253,18 +255,41 @@ export function LearningProjectCard({
 
   return (
     <section
-      className="rounded-3xl border border-[var(--p-border-light)] bg-white p-5 shadow-sm sm:p-6"
+      className={
+        !editing && project?.completed_at
+          ? "rounded-2xl border border-[var(--p-border-light)] bg-white p-3 shadow-sm sm:p-4"
+          : "rounded-3xl border border-[var(--p-border-light)] bg-white p-5 shadow-sm sm:p-6"
+      }
       aria-labelledby={`${id}-title`}
     >
       {!editing ? (
         <>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 id={`${id}-title`} className="text-lg font-bold text-slate-900">
-              {copy.title}
-            </h2>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h2
+                id={`${id}-title`}
+                className="break-words text-base font-semibold text-teal-900"
+              >
+                {project?.completed_at ? (
+                  <>
+                    <span className="sr-only">{copy.title} : </span>
+                    {project.subject}
+                  </>
+                ) : (
+                  copy.title
+                )}
+              </h2>
+              {project?.completed_at ? (
+                <p className="mt-1 break-words text-sm text-slate-600">
+                  {project.audience === "child" ? `${copy.child} · ` : ""}
+                  {project.city ? `${project.city} · ` : ""}
+                  {copy[project.format]}
+                </p>
+              ) : null}
+            </div>
             <button
               type="button"
-              className={secondary}
+              className={`${secondary} shrink-0`}
               onClick={() => {
                 setEditing(true);
                 setError(null);
@@ -274,15 +299,8 @@ export function LearningProjectCard({
             </button>
           </div>
           {project?.completed_at ? (
-            <>
-              <p className="mt-2 break-words text-xl font-semibold text-teal-900">
-                {project.subject}
-              </p>
-              <p className="mt-1 break-words text-sm text-slate-600">
-                {copy[project.audience]} · {copy[project.format]}
-                {project.city ? ` · ${project.city}` : ""}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
+            !onSearchPage ? (
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Link
                   href={data!.searchHref ?? "/student/search"}
                   className={primary}
@@ -305,10 +323,7 @@ export function LearningProjectCard({
                   </Link>
                 ) : null}
               </div>
-              {!data!.searchHref ? (
-                <p className="mt-3 text-sm text-slate-600">{copy.unknown}</p>
-              ) : null}
-            </>
+            ) : null
           ) : (
             <p className="text-sm text-slate-600">{copy.deferred}</p>
           )}
@@ -480,11 +495,13 @@ export function LearningProjectCard({
           </fieldset>
         </form>
       )}
-      <p className="mt-4 text-xs leading-relaxed text-slate-500">
-        {copy.privacy}
-      </p>
+      {editing ? (
+        <p className="mt-4 text-xs leading-relaxed text-slate-500">
+          {copy.privacy}
+        </p>
+      ) : null}
       <p
-        className="mt-2 text-sm text-teal-800"
+        className={editing && notice ? "mt-2 text-sm text-teal-800" : "sr-only"}
         role="status"
         aria-live="polite"
       >

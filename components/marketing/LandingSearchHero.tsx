@@ -45,6 +45,8 @@ export type LandingSearchHeroProps = {
   showQuizCta?: boolean;
   /** Landing default: true. Search surfaces may hide it. */
   showOtherDisciplinesNote?: boolean;
+  /** Use a short heading and tighter spacing inside the student app. */
+  compact?: boolean;
   /** Optional slot under the advanced filters trigger. */
   extraUnderAdvanced?: React.ReactNode;
   /**
@@ -96,6 +98,7 @@ export function LandingSearchHero({
   showIntentToggle = true,
   showQuizCta = true,
   showOtherDisciplinesNote = true,
+  compact = false,
   extraUnderAdvanced,
   onLocationIntentChange,
 }: LandingSearchHeroProps) {
@@ -116,7 +119,7 @@ export function LandingSearchHero({
 
   return (
     <section className="bg-[#F3FAF6] px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-[1280px] pb-12 pt-14 sm:pb-14 sm:pt-16 lg:pb-16 lg:pt-20">
+      <div className={cn("mx-auto max-w-[1280px]", compact ? "py-4 sm:py-6" : "pb-12 pt-14 sm:pb-14 sm:pt-16 lg:pb-16 lg:pt-20")}>
         <div className="mx-auto max-w-[1120px]">
           {/* Intent toggle */}
           {showIntentToggle ? (
@@ -134,40 +137,46 @@ export function LandingSearchHero({
             </div>
           ) : null}
 
-          <div className={cn("text-center", showIntentToggle ? "mt-10" : "mt-2 sm:mt-4")}>
-            <p className="text-sm font-semibold uppercase tracking-[0.20em] text-teal-700">{t("landingEyebrowLocal")}</p>
+          {compact && mode === "student" ? (
+            <h1 className="text-2xl font-semibold tracking-tight text-[#142235]">
+              {t("findTeacher")}
+            </h1>
+          ) : (
+            <div className={cn("text-center", showIntentToggle ? "mt-10" : "mt-2 sm:mt-4")}>
+              <p className="text-sm font-semibold uppercase tracking-[0.20em] text-teal-700">{t("landingEyebrowLocal")}</p>
 
-            {mode === "student" ? (
-              <>
-                <h1 className="mx-auto mt-4 max-w-[1000px] text-balance text-[36px] font-semibold leading-[1.08] tracking-tight text-[#142235] sm:text-4xl lg:text-[48px] xl:text-[56px]">
-                  {t("landingNeighborhoodHeadline")}
-                </h1>
-                <p className="mx-auto mt-4 max-w-[720px] text-center text-xl text-[#5E6B78]">{t("teacherGridCornerLesson")}</p>
-              </>
-            ) : (
-              <>
-                <h1 className="mx-auto mt-4 max-w-[1000px] text-balance text-[36px] font-semibold leading-[1.08] tracking-tight text-[#142235] sm:text-4xl lg:text-[48px] xl:text-[56px]">
-                  {t("heroTeacherTitle")}
-                </h1>
-                <p className="mx-auto mt-4 max-w-[720px] text-center text-base leading-snug text-[#5E6B78] sm:text-lg">
-                  {t("homeTeacherSub")}
-                </p>
-                <div className="mt-8 flex justify-center">
-                  <Link
-                    href="/devenir-enseignant"
-                    className="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-700 px-6 text-sm font-semibold text-white shadow-[0_14px_40px_rgba(15,110,86,0.18)] hover:bg-[#0B5F4A]"
-                  >
-                    {t("becomeTeacher")}
-                  </Link>
-                </div>
-              </>
-            )}
-          </div>
+              {mode === "student" ? (
+                <>
+                  <h1 className="mx-auto mt-4 max-w-[1000px] text-balance text-[36px] font-semibold leading-[1.08] tracking-tight text-[#142235] sm:text-4xl lg:text-[48px] xl:text-[56px]">
+                    {t("landingNeighborhoodHeadline")}
+                  </h1>
+                  <p className="mx-auto mt-4 max-w-[720px] text-center text-xl text-[#5E6B78]">{t("teacherGridCornerLesson")}</p>
+                </>
+              ) : (
+                <>
+                  <h1 className="mx-auto mt-4 max-w-[1000px] text-balance text-[36px] font-semibold leading-[1.08] tracking-tight text-[#142235] sm:text-4xl lg:text-[48px] xl:text-[56px]">
+                    {t("heroTeacherTitle")}
+                  </h1>
+                  <p className="mx-auto mt-4 max-w-[720px] text-center text-base leading-snug text-[#5E6B78] sm:text-lg">
+                    {t("homeTeacherSub")}
+                  </p>
+                  <div className="mt-8 flex justify-center">
+                    <Link
+                      href="/devenir-enseignant"
+                      className="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-700 px-6 text-sm font-semibold text-white shadow-[0_14px_40px_rgba(15,110,86,0.18)] hover:bg-[#0B5F4A]"
+                    >
+                      {t("becomeTeacher")}
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {mode === "student" ? (
             <>
               {/* Structured search card */}
-              <div className="mx-auto mt-10 w-full max-w-[1120px] rounded-[32px] border border-[#E6E1D8] bg-white p-4 shadow-[0_20px_50px_rgba(15,110,86,0.10)] sm:p-4">
+              <div className={cn("mx-auto w-full max-w-[1120px] rounded-[32px] border border-[#E6E1D8] bg-white p-4 shadow-[0_20px_50px_rgba(15,110,86,0.10)] sm:p-4", compact ? "mt-4" : "mt-10")}>
                 <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1.25fr_1fr_1fr_auto] lg:items-end">
                   <div className="min-w-0">
                     <p className="mb-2 text-xs font-bold tracking-[0.14em] text-[#6B6258]">{t("landingSearchDisciplineLabel")}</p>
@@ -233,7 +242,7 @@ export function LandingSearchHero({
               </div>
 
               {/* Category chips */}
-              <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <div className={cn("flex flex-wrap justify-center gap-3", compact ? "mt-4" : "mt-8")}>
                 {categories.map((c) => (
                   <button
                     key={c.id}
@@ -252,7 +261,7 @@ export function LandingSearchHero({
               ) : null}
 
               {/* Advanced filters (trigger only; panel renders in page.tsx) */}
-              <div className="mx-auto mt-7 max-w-[760px]">
+              <div className={cn("mx-auto max-w-[760px]", compact ? "mt-4" : "mt-7")}>
                 <button
                   type="button"
                   onClick={onToggleAdvanced}

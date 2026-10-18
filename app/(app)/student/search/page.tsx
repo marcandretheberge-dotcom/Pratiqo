@@ -525,7 +525,7 @@ export default function StudentSearchPage() {
     <>
       <div className="min-h-[100dvh] bg-[#F3FAF6]">
         <div className="mx-auto max-w-6xl px-4 pt-4">
-          <StudentLearningProject hidden={Boolean(searchParams.get("openTeacher")) || Boolean(selectedTeacherProfile) || Boolean(bookingTeacher)} />
+          <StudentLearningProject onSearchPage hidden={Boolean(searchParams.get("openTeacher")) || Boolean(selectedTeacherProfile) || Boolean(bookingTeacher)} />
         </div>
         <LandingSearchHero
           query={searchQuery}
@@ -573,6 +573,8 @@ export default function StudentSearchPage() {
           onToggleAdvanced={() => setAdvancedOpen((o) => !o)}
           showIntentToggle={false}
           showQuizCta={false}
+          showOtherDisciplinesNote={false}
+          compact
           extraUnderAdvanced={
             <div className="flex flex-wrap justify-center gap-2">
               {[
