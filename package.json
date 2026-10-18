@@ -75,7 +75,7 @@
     "test:schedule-precise-booking": "tsx tests/schedule/preciseScheduleBookingSource.test.ts && tsx tests/schedule/preciseScheduleBookingEnforcement.test.ts",
     "test:schedule-availability-preview": "tsx tests/schedule/availabilityPreview.test.ts",
     "test:schedule-teacher-lookup": "tsx tests/schedule/teacherScheduleProfileLookup.test.ts",
-    "test:learning-project": "node --import tsx tests/students/learningProject.test.ts && node tests/students/learningProjectRoutes.cjs && node tests/students/learningProjectPostgres.cjs && node tests/students/learningProjectDom.cjs"
+    "test:learning-project": "node --import tsx tests/students/learningProject.test.ts && node tests/students/learningProjectRoutes.cjs && node tests/students/learningProjectPostgres.cjs && node tests/students/learningProjectSaveIntegration.cjs && node tests/students/learningProjectDom.cjs && node tests/students/studentLearningDirectoryDom.cjs"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",

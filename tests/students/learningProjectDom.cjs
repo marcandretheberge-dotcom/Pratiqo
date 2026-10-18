@@ -33,7 +33,7 @@ let stored = null,
 const transport = async (_id, payload) => {
   if (payload) {
     writes++;
-    if (fail) throw new Error("offline");
+    if (fail) throw new Error(fail === "limited" ? "rate_limited" : "offline");
     stored =
       payload.action === "save"
         ? {
@@ -91,6 +91,10 @@ function mount() {
   );
   await screen.findByRole("alert");
   assert.ok(screen.getByLabelText("En ligne").checked);
+  fail = "limited";
+  fireEvent.click(screen.getByRole("button", { name: "Enregistrer mon projet" }));
+  await screen.findByText(/Attends une minute/);
+  assert.ok(screen.getByLabelText("En ligne").checked, "quota failure keeps the form and draft");
   fail = false;
   fireEvent.click(
     screen.getByRole("button", { name: "Enregistrer mon projet" }),

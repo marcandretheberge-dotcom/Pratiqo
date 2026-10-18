@@ -1,4 +1,87 @@
-# Projet d’apprentissage élève — première version
+# Projet d’apprentissage élève
+
+## Correctif du 18 octobre 2026 — sauvegarde et liste admin
+
+**135 est déjà appliquée et #407 déployée.** La nouvelle migration
+`136_learning_project_save_and_directory.sql` est préparée, non appliquée.
+
+### Incident confirmé
+
+Le journal Vercel du **18 octobre 2026 à 12:55:12 America/Toronto** montre
+`PUT /api/student/learning-project → 503` avec
+`[rateLimit] Upstash Redis is not configured — denying requests (fail closed in production).`
+L'appel SQL de sauvegarde n'est pas atteint. La lecture du projet fonctionne ;
+la ville libre « St-Georges » n'est pas la cause. Le précontrôle Supabase en
+lecture seule confirme la présence de 135, les droits/RLS attendus et l'absence
+de projet enregistré pour le compte concerné. Aucun identifiant privé n'est
+nécessaire à ce diagnostic.
+
+### Correction
+
+- Quota conservé : **30 sauvegardes ou reports par minute et par élève**, dans une table
+  privée avec une seule ligne par compte. L'upsert verrouille le compteur ;
+  aucune remise à zéro possible par le client. Pas de nouveau service payant.
+- Trigger après écriture : une sauvegarde par upsert ne consomme qu'une unité.
+  Le quota couvre aussi l'ancien RPC et les INSERT/UPDATE directs. Les DELETE
+  restent soumis à la RLS existante et ne réinitialisent pas le compteur ;
+  les suppressions de comptes en cascade restent possibles. L'échec annule
+  la modification du projet ; compteur et projet sont transactionnels.
+- RPC `save_student_learning_project_v2`, SECURITY INVOKER, conserve l'identité
+  JWT et la RLS. Son nom impose la présence de 136 : pas de repli non limité
+  si le code arrive avant la migration. L'API retourne 429 avec Retry-After
+  et un message distinct conservant la saisie. Les autres limites Redis
+  de l'application ne sont pas modifiées.
+- `/admin/learning-project-demand` présente d'abord les **élèves individuellement** :
+  nom/courriel, ville du profil, ville souhaitée pour les cours, matière,
+  format, destinataire et statut de réponse. Tous les comptes élèves sont
+  inclus, y compris les réponses reportées et manquantes ; comptes inactifs signalés.
+  Recherche littérale par nom/courriel/ville/matière, filtre de réponse,
+  pagination serveur de 25 comptes, lien vers le dossier admin existant.
+- La ville souhaitée ne devient jamais une localisation résidentielle supposée.
+  Une valeur absente est affichée « Non renseignée ». La synthèse de la demande
+  et de l'offre reste disponible dans une section dépliable.
+- Le nouveau RPC de liste est réservé au rôle serveur, derrière
+  `requireAdminApi`. Réponses privées sans cache, aucun export ou envoi ajouté.
+
+### Validation du correctif
+
+`npm run test:learning-project` couvre désormais le vrai handler relié au SQL
+PGlite avec identité synthétique, en mode production et **sans variables Redis** :
+ancien limiteur → 503 ; RPC v2 absent → 503 ; après 136 → sauvegarde et relecture
+réussies de « St-Georges ». Quota à 30, rejet de la 31e écriture, nouveau créneau,
+RLS propriétaire, refus professeur/anonyme, ancien RPC/écriture directe,
+rollback du compteur et projet, données existantes préservées.
+
+La liste SQL est testée sur 29 comptes synthétiques : pagination sans doublon,
+élèves sans réponse, recherche et filtres, villes distinctes, droits serveur.
+Les vrais handlers refusent les accès non admin et les paramètres invalides.
+Le DOM simulé teste recherche, pagination, filtrage, erreur/reprise et absence
+de faux état vide. TypeScript ciblé et `git diff --check` passent.
+
+Ces preuves ne sont pas un build complet, un test Safari physique, un test de
+concurrence multisession ni une restauration complète du schéma de production.
+Les contrôles hébergés et l'application ciblée restent des étapes distinctes.
+
+### Activation contrôlée de 136
+
+1. Confirmer le projet `jwlbwmxoradmbuvqfkhe`, une sauvegarde récente restaurable,
+   135 présente, 136 absente, aucune collision avec les nouveaux objets et les
+   colonnes de profils utilisées. Ne pas lancer de `db push` global.
+2. Répéter 136 dans l'environnement isolé compatible avec le schéma restauré.
+   Vérifier le rollback et, avec deux sessions, le plafond lors d'écritures
+   concurrentes. Aucune fixture via une Preview partageant la production.
+3. Après autorisation, appliquer **136 seule** en transaction avec délais
+   de verrouillage adaptés ; vérifier historique, trigger, RLS/grants et RPC.
+   Recharger le cache PostgREST. Ne pas rejouer 135 ni 128 originale.
+4. Fusionner/déployer le correctif après validation des checks et autorisation.
+   Avec une session élève, enregistrer un besoin réel puis recharger ; avec une
+   session admin, vérifier sa ligne et la synthèse sans créer de fausse demande.
+
+Retour arrière applicatif possible en conservant 135/136, réponses et protections.
+Il réintroduirait le blocage Redis de l'ancien code tant que Redis n'est pas
+configuré. Ne pas supprimer les réponses ni le compteur pour contourner un échec.
+
+## Historique de la première version (135 / PR #407)
 
 ## Besoin et périmètre
 
@@ -45,8 +128,9 @@ pédagogiques existants. Plusieurs projets/enfants par compte restent hors péri
 - distinction entre aucune offre trouvée, besoin à préciser et lecture impossible.
 
 Les chiffres concernent un projet principal par **compte**, pas les visites,
-les recherches répétées, ni le nombre réel d’enfants. Cette version expose une
-synthèse, pas une nouvelle liste nominative ni un outil de relance.
+les recherches répétées, ni le nombre réel d’enfants. La première version
+exposait seulement une synthèse ; le correctif 136 ajoute la liste nominative
+décrite plus haut, sans outil de relance.
 
 ## Données et autorisations
 
@@ -81,7 +165,8 @@ répétition sur le schéma complet de production ou un essai Safari physique.
 
 ## Revue et activation
 
-La migration est préparée, **pas appliquée**. Le build complet et le rendu mobile
+Au moment de cette revue initiale, 135 était préparée et non appliquée.
+Elle a depuis été appliquée et #407 déployée. Le build complet et le rendu mobile
 synthétique sont documentés ci-dessous pour la revue avant fusion. L’application de
 135 est une opération distincte à autoriser ; ne pas lancer un `db push` global
 ni rejouer 128 originale : le bootstrap contrôlé 128/134 demeure applicable.

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { getSupabaseClient } from "@/lib/supabase";
+import { StudentLearningDirectory } from "@/components/admin/StudentLearningDirectory";
 import type {
   DemandSupply,
   LearningProjectOverview,
@@ -59,13 +60,16 @@ export default function LearningProjectDemandPage() {
         Retour au centre de contrôle
       </Link>
       <header>
-        <h1 className="text-2xl font-bold">Besoins d’apprentissage</h1>
+        <h1 className="text-2xl font-bold">Élèves et besoins d’apprentissage</h1>
         <p className="mt-2 text-sm text-slate-600">
           Projets actuels déclarés par les comptes élèves. Un compte correspond
           à un seul projet principal ; ces chiffres ne mesurent ni les visites
           ni le nombre d’enfants.
         </p>
       </header>
+      <StudentLearningDirectory />
+      <details className="rounded-2xl border border-slate-200 p-4">
+      <summary className="min-h-11 cursor-pointer font-bold">Synthèse de la demande et offre de professeurs</summary>
       {failed ? (
         <div
           role="alert"
@@ -162,6 +166,7 @@ export default function LearningProjectDemandPage() {
           )}
         </>
       )}
+      </details>
     </main>
   );
 }

@@ -69,6 +69,7 @@ function loadRoute(file, dependencies) {
     async rpc(name, args) {
       calls.push({ name, args });
       if (writeError) return { error: { code: "unavailable" } };
+      if (limited) return { error: { code: "PT429" } };
       saved =
         args.p_action === "dismiss"
           ? {
@@ -95,16 +96,6 @@ function loadRoute(file, dependencies) {
   const route = loadRoute("app/api/student/learning-project/route.ts", {
     "@/lib/auth/supabaseRouteClient": {
       getSupabaseForRequest: async () => client,
-    },
-    "@/lib/rateLimit": {
-      rateLimitByIp: async (_req, _key, options) => {
-        assert.equal(options.identifier, userId);
-        return {};
-      },
-      rateLimitGuardResponse: () =>
-        limited
-          ? NextResponse.json({ error: "limited" }, { status: 429 })
-          : null,
     },
     "@/lib/studentLearningProject": require(
       path.resolve("lib/studentLearningProject.ts"),
@@ -156,7 +147,7 @@ function loadRoute(file, dependencies) {
   assert.equal(savedResponse.status, 200);
   assert.equal((await savedResponse.json()).project.city, "");
   assert.deepEqual(calls.at(-1), {
-    name: "save_student_learning_project",
+    name: "save_student_learning_project_v2",
     args: {
       p_action: "save",
       p_subject: "Espagnol",
@@ -175,8 +166,11 @@ function loadRoute(file, dependencies) {
   writeError = false;
   limited = true;
   const count = calls.length;
-  assert.equal((await route.PUT(request(body))).status, 429);
-  assert.equal(calls.length, count);
+  const limitedResponse = await route.PUT(request(body));
+  assert.equal(limitedResponse.status, 429);
+  assert.equal(limitedResponse.headers.get("Retry-After"), "60");
+  assert.match(limitedResponse.headers.get("Cache-Control"), /no-store/);
+  assert.equal(calls.length, count + 1, "quota enforced by the database RPC");
   limited = false;
   assert.equal((await route.PUT(request({ action: "dismiss" }))).status, 200);
 
@@ -256,6 +250,39 @@ function loadRoute(file, dependencies) {
   assert.equal(overview.declaredAccounts, 1);
   assert.equal(overview.groups[0].supply, "unavailable");
   assert.equal(overview.groups[0].matchingTeachers, null);
+  let access = "student", directoryCalls = [], directoryFails = false;
+  const directoryRoute = loadRoute("app/api/admin/learning-project-students/route.ts", {
+    "@/lib/auth/admin": { requireAdminApi: async () => access === "admin" ? {
+      status: "ok", admin: { rpc: async (name, args) => {
+        directoryCalls.push({ name, args });
+        return directoryFails ? { error: { code: "unavailable" } } :
+          { data: { students: [], page: args.p_page, pageSize: 25, total: 0 }, error: null };
+      } },
+    } : { status: "error", response: NextResponse.json({ error: "denied" }, { status: access === "anonymous" ? 401 : 403 }) } },
+    "@/lib/admin/studentLearningDirectory": require(path.resolve("lib/admin/studentLearningDirectory.ts")),
+  });
+  for (const deniedRole of ["anonymous", "student", "teacher"]) {
+    access = deniedRole;
+    const denied = await directoryRoute.GET(request());
+    assert.equal(denied.status, deniedRole === "anonymous" ? 401 : 403);
+    assert.match(denied.headers.get("Cache-Control"), /private, no-store/);
+  }
+  assert.equal(directoryCalls.length, 0, "no private data query before admin authorization");
+  access = "admin";
+  const directoryRequest = search => new Request(`https://example.test/api/admin/learning-project-students?${search}`);
+  for (const invalid of ["page=0", "page=-1", "page=1.5", "page=100001", "status=teacher", `q=${"a".repeat(121)}`]) {
+    assert.equal((await directoryRoute.GET(directoryRequest(invalid))).status, 400);
+  }
+  const listing = await directoryRoute.GET(directoryRequest("q=St-Georges&status=unanswered&page=2"));
+  assert.equal(listing.status, 200);
+  assert.match(listing.headers.get("Cache-Control"), /private, no-store/);
+  assert.deepEqual(directoryCalls.at(-1), { name: "admin_student_learning_project_directory", args: {
+    p_query: "St-Georges", p_status: "unanswered", p_page: 2,
+  } });
+  directoryFails = true;
+  const failedList = await directoryRoute.GET(directoryRequest(""));
+  assert.equal(failedList.status, 503);
+  assert.equal((await failedList.json()).directory, undefined, "failure cannot impersonate an empty list");
   console.log(
     "PASS actual route handlers: auth/role checks, owner binding, read-only GET, invalid input, save failure, rate limit, private admin aggregation, unknown supply",
   );

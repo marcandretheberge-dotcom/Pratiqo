@@ -1,0 +1,289 @@
+{
+  "rows": 0,
+  "grants": [
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "YES",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "INSERT",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "YES",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "SELECT",
+      "with_hierarchy": "YES"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "YES",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "UPDATE",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "YES",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "DELETE",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "YES",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "TRUNCATE",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "YES",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "REFERENCES",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "postgres",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "YES",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "TRIGGER",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "NO",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "INSERT",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "NO",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "SELECT",
+      "with_hierarchy": "YES"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "NO",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "UPDATE",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "NO",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "DELETE",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "NO",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "TRUNCATE",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "NO",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "REFERENCES",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "service_role",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "NO",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "TRIGGER",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "authenticated",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "NO",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "INSERT",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "authenticated",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "NO",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "SELECT",
+      "with_hierarchy": "YES"
+    },
+    {
+      "grantee": "authenticated",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "NO",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "UPDATE",
+      "with_hierarchy": "NO"
+    },
+    {
+      "grantee": "authenticated",
+      "grantor": "postgres",
+      "table_name": "student_learning_projects",
+      "is_grantable": "NO",
+      "table_schema": "public",
+      "table_catalog": "postgres",
+      "privilege_type": "DELETE",
+      "with_hierarchy": "NO"
+    }
+  ],
+  "columns": [
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "default": null,
+      "notnull": true
+    },
+    {
+      "name": "subject",
+      "type": "text",
+      "default": "''::text",
+      "notnull": true
+    },
+    {
+      "name": "audience",
+      "type": "text",
+      "default": "'self'::text",
+      "notnull": true
+    },
+    {
+      "name": "format",
+      "type": "text",
+      "default": "'in_person'::text",
+      "notnull": true
+    },
+    {
+      "name": "city",
+      "type": "text",
+      "default": "''::text",
+      "notnull": true
+    },
+    {
+      "name": "completed_at",
+      "type": "timestamp with time zone",
+      "default": null,
+      "notnull": false
+    },
+    {
+      "name": "dismissed_at",
+      "type": "timestamp with time zone",
+      "default": null,
+      "notnull": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "notnull": true
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "notnull": true
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "ALL",
+      "qual": "((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = 'student'::text)))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "student_learning_projects",
+      "permissive": "PERMISSIVE",
+      "policyname": "student_learning_project_owner",
+      "schemaname": "public",
+      "with_check": "((user_id = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1\n   FROM profiles p\n  WHERE ((p.id = auth.uid()) AND (p.role = 'student'::text)))))"
+    }
+  ],
+  "triggers": null,
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "ddl": "CREATE OR REPLACE FUNCTION public.save_student_learning_project(p_action text, p_subject text DEFAULT ''::text, p_audience text DEFAULT 'self'::text, p_format text DEFAULT 'in_person'::text, p_city text DEFAULT ''::text)\n RETURNS student_learning_projects\n LANGUAGE plpgsql\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE result public.student_learning_projects;\nBEGIN\n  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'authentication required' USING ERRCODE = '42501'; END IF;\n  IF p_action = 'dismiss' THEN\n    INSERT INTO public.student_learning_projects (user_id, dismissed_at)\n      VALUES (auth.uid(), now())\n    ON CONFLICT (user_id) DO UPDATE SET\n      dismissed_at = CASE WHEN student_learning_projects.completed_at IS NULL\n        THEN now() ELSE student_learning_projects.dismissed_at END,\n      updated_at = CASE WHEN student_learning_projects.completed_at IS NULL\n        THEN now() ELSE student_learning_projects.updated_at END\n    RETURNING * INTO result;\n  ELSIF p_action = 'save' THEN\n    IF p_subject IS NULL OR length(btrim(p_subject)) = 0 OR\n       p_audience IS NULL OR p_format IS NULL OR p_city IS NULL THEN\n      RAISE EXCEPTION 'invalid learning project' USING ERRCODE = '22023';\n    END IF;\n    INSERT INTO public.student_learning_projects\n      (user_id, subject, audience, format, city, completed_at)\n    VALUES (auth.uid(), btrim(p_subject), p_audience, p_format,\n      CASE WHEN p_format = 'online' THEN '' ELSE btrim(p_city) END, now())\n    ON CONFLICT (user_id) DO UPDATE SET\n      subject = excluded.subject, audience = excluded.audience,\n      format = excluded.format, city = excluded.city,\n      completed_at = excluded.completed_at, dismissed_at = NULL, updated_at = now()\n    RETURNING * INTO result;\n  ELSE\n    RAISE EXCEPTION 'invalid action' USING ERRCODE = '22023';\n  END IF;\n  RETURN result;\nEND;\n$function$\n",
+      "name": "save_student_learning_project"
+    }
+  ],
+  "constraints": [
+    {
+      "ddl": "CHECK ((audience = ANY (ARRAY['self'::text, 'child'::text])))",
+      "name": "student_learning_projects_audience_check"
+    },
+    {
+      "ddl": "CHECK (((char_length(subject) <= 120) AND (char_length(city) <= 120)))",
+      "name": "student_learning_projects_check"
+    },
+    {
+      "ddl": "CHECK (((completed_at IS NULL) OR ((length(btrim(subject)) > 0) AND ((format = 'online'::text) OR (length(btrim(city)) > 0)))))",
+      "name": "student_learning_projects_check1"
+    },
+    {
+      "ddl": "CHECK ((format = ANY (ARRAY['in_person'::text, 'online'::text, 'both'::text])))",
+      "name": "student_learning_projects_format_check"
+    },
+    {
+      "ddl": "PRIMARY KEY (user_id)",
+      "name": "student_learning_projects_pkey"
+    },
+    {
+      "ddl": "FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE",
+      "name": "student_learning_projects_user_id_fkey"
+    }
+  ]
+}
