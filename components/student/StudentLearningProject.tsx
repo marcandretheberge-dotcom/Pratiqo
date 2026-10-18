@@ -9,9 +9,11 @@ import { LearningProjectCard } from "./LearningProjectCard";
 export function StudentLearningProject({
   manage = false,
   hidden = false,
+  onSearchPage = false,
 }: {
   manage?: boolean;
   hidden?: boolean;
+  onSearchPage?: boolean;
 }) {
   const { user, profile, profileHydrated } = useAuth();
   const { locale } = useLocale();
@@ -30,6 +32,7 @@ export function StudentLearningProject({
       userId={user.id}
       locale={locale}
       manage={manage}
+      onSearchPage={onSearchPage}
     />
   );
 }
