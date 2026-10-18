@@ -126,16 +126,16 @@ export function LearningProjectCard({
         } catch {
           /* Storage can be unavailable in private browsing. */
         }
-        if (
-          draft &&
-          (!saved?.completed_at || draft.savedAt > Date.parse(saved.updated_at))
-        ) {
+        const resumeDraft = draft !== null &&
+          (!saved?.completed_at || draft.savedAt > Date.parse(saved.updated_at));
+        if (draft && resumeDraft) {
           seed = draft.values;
           setStep(draft.step);
           setNotice("restored");
+          setDirty(true);
         }
         setValues(seed);
-        setEditing(!saved?.completed_at && !saved?.dismissed_at);
+        setEditing(!saved?.dismissed_at && (resumeDraft || !saved?.completed_at));
       })
       .catch(() => {
         if (!abort.signal.aborted) setLoadFailed(true);

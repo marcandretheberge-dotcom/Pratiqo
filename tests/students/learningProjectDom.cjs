@@ -118,6 +118,14 @@ function mount() {
     screen.getByText("Espagnol"),
     "unsaved edits do not change saved summary",
   );
+  view.unmount();
+  view = mount();
+  await screen.findByLabelText("Une matière ou une envie");
+  assert.equal(
+    screen.getByLabelText("Une matière ou une envie").value,
+    "Piano",
+    "a newer edit draft resumes without silently presenting only the old saved project",
+  );
   cleanup();
   sessionStorage.clear();
   stored = null;
