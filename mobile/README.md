@@ -29,7 +29,7 @@ L’application refuse de démarrer le site sans configuration explicite et rép
 | Emplacement | Variable | Valeur attendue |
 | --- | --- | --- |
 | Mobile / environnement EAS | `EXPO_PUBLIC_WEB_ORIGIN` | Une origine HTTPS exacte, sans chemin |
-| Mobile / environnement EAS | `EAS_PROJECT_ID` | Identifiant du véritable projet Expo |
+| Mobile / environnement EAS | `EAS_PROJECT_ID` | `1c296223-40c1-4ce3-af78-03da7d6d9eb7` |
 | Serveur Web de test | `ENABLE_NATIVE_WRAPPER_BETA` | `true` après vérification de l’isolation |
 | Serveur Web de test | `NATIVE_WRAPPER_WEB_ORIGIN` | La même origine HTTPS |
 | Serveur Web de test | `NEXT_PUBLIC_SUPABASE_URL` | Projet de test, avec configuration Auth existante |
@@ -74,7 +74,10 @@ y compris `javascript:`, `file:`, les nouvelles fenêtres et les redirections.
 
 ## Génération des versions privées
 
-Après connexion à Expo, rattacher le projet réel et renseigner les deux variables publiques :
+Le projet [Pratiqo mobile bêta](https://expo.dev/accounts/markitos2222s-organization/projects/pratiqo-mobile-beta)
+est créé dans `markitos2222s-organization`. Son propriétaire et son identifiant public sont
+renseignés dans `app.config.ts`, indépendamment des projets Denise et staffrelay.
+Renseigner les deux variables publiques dans l’environnement EAS avant compilation :
 
 ```sh
 npx eas-cli@latest login
@@ -87,14 +90,15 @@ npx eas-cli@latest build --platform ios --profile beta
 - `beta` : Android AAB / archive iOS pour distribution de test via les consoles.
 - L’iPhone exige l’accès Apple Developer et la signature. TestFlight nécessite ensuite un envoi
   explicite dans App Store Connect. Aucune soumission automatique n’est configurée.
-- Identifiants provisoires : `ca.pratiqo.app.beta`. Le propriétaire Expo et les identifiants finaux
-  doivent être confirmés avant distribution. Les mises à jour EAS OTA sont désactivées.
+- Identifiants provisoires : `ca.pratiqo.app.beta`. Les identifiants finaux doivent être confirmés
+  avant distribution. Les mises à jour EAS OTA sont désactivées.
 
 ## Preuves et suite ciblée
 
 Au 18 octobre 2026 : tests de protocole et de handlers, régressions OAuth Web, TypeScript,
 lint mobile et exports des bundles sont exécutés dans ce lot. Les résultats hébergés sont
-à lire dans la PR. Aucune session Expo connectée dans l’environnement de préparation.
+à lire dans la PR. Expo/EAS est connecté et le projet dédié est créé. Aucun binaire natif
+n’est encore généré : l’origine HTTPS de test isolée reste à configurer.
 
 Avant de distribuer la bêta : tester sur un iPhone et un Android la connexion Google,
 annulation/reprise, fermeture/réouverture, clavier, retour Android, réseau interrompu,

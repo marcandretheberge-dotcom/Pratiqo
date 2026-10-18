@@ -1,10 +1,11 @@
 import type { ExpoConfig } from 'expo/config';
 
-const projectId = process.env.EAS_PROJECT_ID;
+const projectId = process.env.EAS_PROJECT_ID || '1c296223-40c1-4ce3-af78-03da7d6d9eb7';
 
 const config: ExpoConfig = {
   name: 'Pratiqo Bêta',
   slug: 'pratiqo-mobile-beta',
+  owner: 'markitos2222s-organization',
   version: '0.1.0',
   scheme: 'ca.pratiqo.app.beta',
   userInterfaceStyle: 'light',
