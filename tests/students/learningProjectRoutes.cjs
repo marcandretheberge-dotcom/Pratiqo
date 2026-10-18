@@ -1,0 +1,265 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const ts = require("typescript");
+require("tsx/cjs");
+const { NextResponse } = require("next/server");
+
+function loadRoute(file, dependencies) {
+  const output = ts.transpileModule(fs.readFileSync(file, "utf8"), {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+    },
+  }).outputText;
+  const module = { exports: {} };
+  new Function("require", "module", "exports", output)(
+    (name) => {
+      if (name === "next/server") return { NextResponse };
+      if (Object.hasOwn(dependencies, name)) return dependencies[name];
+      throw new Error(`Unexpected route dependency: ${name}`);
+    },
+    module,
+    module.exports,
+  );
+  return module.exports;
+}
+
+(async () => {
+  let role = "student",
+    authenticated = true,
+    readError = false,
+    writeError = false,
+    limited = false;
+  let saved = null,
+    calls = [],
+    filters = [];
+  const userId = "00000000-0000-4000-8000-000000000001";
+  const client = {
+    auth: {
+      getUser: async () => ({
+        data: { user: authenticated ? { id: userId } : null },
+        error: null,
+      }),
+    },
+    from(table) {
+      const query = {
+        select() {
+          return query;
+        },
+        eq(column, value) {
+          filters.push([table, column, value]);
+          return query;
+        },
+        async maybeSingle() {
+          return {
+            data: table === "profiles" ? { role } : saved,
+            error:
+              readError && table !== "profiles"
+                ? { code: "unavailable" }
+                : null,
+          };
+        },
+        async single() {
+          return query.maybeSingle();
+        },
+      };
+      return query;
+    },
+    async rpc(name, args) {
+      calls.push({ name, args });
+      if (writeError) return { error: { code: "unavailable" } };
+      saved =
+        args.p_action === "dismiss"
+          ? {
+              subject: "",
+              city: "",
+              format: "in_person",
+              audience: "self",
+              completed_at: null,
+              dismissed_at: "2026-10-18T12:00:00Z",
+              updated_at: "2026-10-18T12:00:00Z",
+            }
+          : {
+              subject: args.p_subject,
+              city: args.p_city,
+              audience: args.p_audience,
+              format: args.p_format,
+              completed_at: "2026-10-18T12:00:00Z",
+              dismissed_at: null,
+              updated_at: "2026-10-18T12:00:00Z",
+            };
+      return { error: null };
+    },
+  };
+  const route = loadRoute("app/api/student/learning-project/route.ts", {
+    "@/lib/auth/supabaseRouteClient": {
+      getSupabaseForRequest: async () => client,
+    },
+    "@/lib/rateLimit": {
+      rateLimitByIp: async (_req, _key, options) => {
+        assert.equal(options.identifier, userId);
+        return {};
+      },
+      rateLimitGuardResponse: () =>
+        limited
+          ? NextResponse.json({ error: "limited" }, { status: 429 })
+          : null,
+    },
+    "@/lib/studentLearningProject": require(
+      path.resolve("lib/studentLearningProject.ts"),
+    ),
+  });
+  const request = (body, token = "Bearer fixture") =>
+    new Request("https://example.test/api/student/learning-project", {
+      method: body === undefined ? "GET" : "PUT",
+      headers: {
+        ...(token ? { Authorization: token } : {}),
+        "Content-Type": "application/json",
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+  assert.equal((await route.GET(request(undefined, ""))).status, 401);
+  assert.equal(
+    (await route.PUT(request({ action: "dismiss" }, "bearer fixture"))).status,
+    401,
+  );
+  authenticated = false;
+  assert.equal((await route.GET(request())).status, 401);
+  authenticated = true;
+  role = "teacher";
+  assert.equal((await route.GET(request())).status, 403);
+  role = "student";
+  const empty = await route.GET(request());
+  assert.equal(empty.status, 200);
+  assert.equal((await empty.json()).project, null);
+  assert.match(empty.headers.get("cache-control"), /no-store/);
+  assert.equal(calls.length, 0, "GET never writes");
+  readError = true;
+  assert.equal((await route.GET(request())).status, 503);
+  readError = false;
+  assert.equal(
+    (await route.PUT(request({ action: "save", subject: "Piano" }))).status,
+    400,
+  );
+  assert.equal((await route.PUT(request(null))).status, 400);
+  const body = {
+    action: "save",
+    subject: "Espagnol",
+    audience: "self",
+    format: "online",
+    city: "ignored",
+    user_id: "another-user",
+    alertConsent: true,
+  };
+  const savedResponse = await route.PUT(request(body));
+  assert.equal(savedResponse.status, 200);
+  assert.equal((await savedResponse.json()).project.city, "");
+  assert.deepEqual(calls.at(-1), {
+    name: "save_student_learning_project",
+    args: {
+      p_action: "save",
+      p_subject: "Espagnol",
+      p_audience: "self",
+      p_format: "online",
+      p_city: "",
+    },
+  });
+  assert.ok(
+    filters
+      .filter(([table]) => table === "student_learning_projects")
+      .every(([, column, value]) => column === "user_id" && value === userId),
+  );
+  writeError = true;
+  assert.equal((await route.PUT(request(body))).status, 503);
+  writeError = false;
+  limited = true;
+  const count = calls.length;
+  assert.equal((await route.PUT(request(body))).status, 429);
+  assert.equal(calls.length, count);
+  limited = false;
+  assert.equal((await route.PUT(request({ action: "dismiss" }))).status, 200);
+
+  let adminAllowed = false,
+    rpcCalls = 0;
+  const adminRoute = loadRoute(
+    "app/api/admin/learning-project-demand/route.ts",
+    {
+      "@/lib/auth/admin": {
+        requireAdminApi: async () =>
+          adminAllowed
+            ? {
+                status: "ok",
+                admin: {
+                  rpc: async () => {
+                    rpcCalls++;
+                    return {
+                      data: {
+                        totalAccounts: 1,
+                        declaredAccounts: 1,
+                        deferredAccounts: 0,
+                        unansweredAccounts: 0,
+                        groups: [
+                          {
+                            subject: "Espagnol",
+                            city: "",
+                            format: "online",
+                            audience: "self",
+                            account_count: 1,
+                            updated_at: "2026-10-18T12:00:00Z",
+                          },
+                        ],
+                      },
+                      error: null,
+                    };
+                  },
+                  from: () => ({
+                    select: async () => ({
+                      data: null,
+                      error: { code: "unavailable" },
+                    }),
+                  }),
+                },
+              }
+            : {
+                status: "error",
+                response: NextResponse.json(
+                  { error: "forbidden" },
+                  { status: 403 },
+                ),
+              },
+      },
+      "@/lib/admin/learningProjectDemand": require(
+        path.resolve("lib/admin/learningProjectDemand.ts"),
+      ),
+      "@/lib/learnerDemandSupply": {
+        loadLearnerDemandSupply: async () => {
+          throw new Error("must not load failed supply");
+        },
+      },
+      "@/lib/supabase/queries": {
+        TEACHERS_LIST_SELECT: "id",
+        TEACHERS_PUBLIC_TABLE: "teachers_public",
+      },
+      "@/lib/teacherMapper": {
+        isLaunchEligibleTeacherRow: () => true,
+        teacherRowToTeacher: (row) => row,
+      },
+    },
+  );
+  assert.equal((await adminRoute.GET(request())).status, 403);
+  assert.equal(rpcCalls, 0);
+  adminAllowed = true;
+  const adminResponse = await adminRoute.GET(request());
+  assert.equal(adminResponse.status, 200);
+  const overview = (await adminResponse.json()).overview;
+  assert.equal(overview.declaredAccounts, 1);
+  assert.equal(overview.groups[0].supply, "unavailable");
+  assert.equal(overview.groups[0].matchingTeachers, null);
+  console.log(
+    "PASS actual route handlers: auth/role checks, owner binding, read-only GET, invalid input, save failure, rate limit, private admin aggregation, unknown supply",
+  );
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

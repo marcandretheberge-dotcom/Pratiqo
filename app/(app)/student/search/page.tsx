@@ -29,6 +29,7 @@ import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import type { City } from "../../../../lib/cities";
 import type { MapBounds } from "../../../../components/SearchMapView";
 import { useAuth } from "../../../../components/AuthProvider";
+import { StudentLearningProject } from "@/components/student/StudentLearningProject";
 import type { StudentLocationPrefs } from "../../../../lib/studentLocationSearch";
 import {
   formatApproxDistanceKm,
@@ -523,6 +524,9 @@ export default function StudentSearchPage() {
   return (
     <>
       <div className="min-h-[100dvh] bg-[#F3FAF6]">
+        <div className="mx-auto max-w-6xl px-4 pt-4">
+          <StudentLearningProject hidden={Boolean(searchParams.get("openTeacher")) || Boolean(selectedTeacherProfile) || Boolean(bookingTeacher)} />
+        </div>
         <LandingSearchHero
           query={searchQuery}
           onQueryChange={setSearchQuery}
@@ -1053,4 +1057,5 @@ function TeacherCard({
     </button>
   );
 }
+
 

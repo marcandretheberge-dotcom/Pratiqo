@@ -274,6 +274,9 @@ export default function AdminDashboardPage() {
         </section>
 
         <section aria-labelledby="admin-modules-heading" className="space-y-3">
+          <Link href="/admin/learning-project-demand" className="flex min-h-12 items-center justify-between rounded-2xl border border-teal-200 bg-white px-4 py-3 font-semibold text-teal-800">
+            Besoins d’apprentissage des élèves <ArrowRight size={18} aria-hidden />
+          </Link>
           <h2 id="admin-modules-heading" className="text-sm font-bold uppercase tracking-[0.16em] text-slate-500">
             Modules admin
           </h2>
@@ -343,3 +346,4 @@ export default function AdminDashboardPage() {
     </main>
   );
 }
+

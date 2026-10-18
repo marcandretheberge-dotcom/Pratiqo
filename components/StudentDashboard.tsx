@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AlertTriangle, CalendarDays, MessageSquare, Search, UserRound } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
+import { StudentLearningProject } from "@/components/student/StudentLearningProject";
 import { authDisplayName } from "@/lib/authDisplay";
 import { getSupabaseClient } from "@/lib/supabase";
 import { useLocale } from "@/lib/locale-context";
@@ -409,6 +410,7 @@ export function StudentDashboard() {
       ) : null}
 
       {/* NEXT CLASS — hero */}
+      <StudentLearningProject />
       <section
         className="rounded-[1.75rem] p-5 text-white shadow-[0_18px_50px_rgba(15,110,86,0.18)] sm:rounded-3xl sm:p-6 sm:shadow-[0_24px_80px_rgba(15,110,86,0.22)]"
         style={{ background: "var(--palette-teal-700)" }}
@@ -794,3 +796,4 @@ export function StudentDashboard() {
     </div>
   );
 }
+
