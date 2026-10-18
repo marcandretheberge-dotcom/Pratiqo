@@ -43,6 +43,7 @@ const requestProject: LearningProjectTransport = async (
     },
     ...(payload ? { body: JSON.stringify(payload) } : {}),
   });
+  if (response.status === 429) throw new Error("rate_limited");
   if (!response.ok) throw new Error("project_unavailable");
   const result = (await response.json()) as LearningProjectResponse;
   if (!Object.prototype.hasOwnProperty.call(result, "project"))
@@ -74,7 +75,7 @@ export function LearningProjectCard({
   const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<
-    "subjectError" | "cityError" | "saveError" | null
+    "subjectError" | "cityError" | "saveError" | "rateLimitError" | null
   >(null);
   const [notice, setNotice] = useState<"saved" | "restored" | null>(null);
   const alive = useRef(true);
@@ -183,8 +184,8 @@ export function LearningProjectCard({
           /* Best effort local draft cleanup. */
         }
       }
-    } catch {
-      if (alive.current) setError("saveError");
+    } catch (cause) {
+      if (alive.current) setError(cause instanceof Error && cause.message === "rate_limited" ? "rateLimitError" : "saveError");
     } finally {
       if (alive.current) setBusy(false);
     }

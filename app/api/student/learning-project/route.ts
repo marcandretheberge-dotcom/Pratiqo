@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getSupabaseForRequest } from "@/lib/auth/supabaseRouteClient";
-import { rateLimitByIp, rateLimitGuardResponse } from "@/lib/rateLimit";
 import {
   LEARNING_PROJECT_COLUMNS,
   learningProjectSearchHref,
@@ -88,14 +87,6 @@ export async function PUT(request: Request) {
   try {
     const auth = await student(request);
     if (auth.response) return auth.response;
-    const limited = rateLimitGuardResponse(
-      await rateLimitByIp(request, "student-learning-project", {
-        limit: 30,
-        windowSeconds: 60,
-        identifier: auth.user!.id,
-      }),
-    );
-    if (limited) return limited;
     if (
       !(request.headers.get("content-type") ?? "").includes("application/json")
     ) {
@@ -129,7 +120,9 @@ export async function PUT(request: Request) {
         { status: 400, headers },
       );
     }
-    const { error } = await auth.client!.rpc("save_student_learning_project", {
+    // Migration 136 enforces 30 writes/minute atomically with the save, using
+    // this student's JWT. No Redis dependency or service-role write fallback.
+    const { error } = await auth.client!.rpc("save_student_learning_project_v2", {
       p_action: body.action,
       ...(body.action === "save" && project
         ? {
@@ -140,7 +133,16 @@ export async function PUT(request: Request) {
           }
         : {}),
     });
-    if (error) return unavailable();
+    if (error?.code === "PT429")
+      return NextResponse.json(
+        { error: "learning_project_rate_limited" },
+        { status: 429, headers: { ...headers, "Retry-After": "60" } },
+      );
+    if (error) {
+      // Never log the subject, city, account identifier or bearer token.
+      console.error("[student/learning-project] save failed", { code: error.code });
+      return unavailable();
+    }
     const saved = await auth
       .client!.from("student_learning_projects")
       .select(LEARNING_PROJECT_COLUMNS)

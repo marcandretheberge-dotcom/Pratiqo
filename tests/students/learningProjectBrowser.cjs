@@ -71,6 +71,18 @@ export default function Link({href,children,...props}){return <a href={typeof hr
       json(200,{project,searchHref:project?.completed_at?learningProjectSearchHref(project):null});return;
     }
     if(url.pathname==="/api/admin/learning-project-demand"){json(200,{overview});return;}
+    if(url.pathname==="/api/admin/learning-project-students"){
+      const students=[
+        {id:"qa-student-1",name:"Élève Alpha",email:"alpha@example.test",profile_city:"Québec",project_city:"St-Georges",subject:"Espagnol",audience:"self",format:"in_person",status:"declared",inactive:false,created_at:"2026-10-18",project_updated_at:"2026-10-18T12:00:00Z"},
+        {id:"qa-student-2",name:"Élève Beta",email:"beta@example.test",profile_city:null,project_city:null,subject:null,audience:null,format:null,status:"deferred",inactive:false,created_at:"2026-10-18",project_updated_at:"2026-10-18T12:00:00Z"},
+        {id:"qa-student-3",name:"Élève Gamma",email:null,profile_city:"Montréal",project_city:null,subject:null,audience:null,format:null,status:"unanswered",inactive:false,created_at:"2026-10-18",project_updated_at:null},
+      ];
+      const query=(url.searchParams.get("q")||"").trim().toLowerCase();
+      const status=url.searchParams.get("status")||"all";
+      const page=Number(url.searchParams.get("page")||1);
+      const filtered=students.filter(s=>(status==="all"||s.status===status)&&[s.name,s.email,s.profile_city,s.project_city,s.subject].filter(Boolean).join(" ").toLowerCase().includes(query));
+      json(200,{directory:{page,pageSize:25,total:filtered.length,students:filtered.slice((page-1)*25,page*25)}});return;
+    }
     if(url.pathname.startsWith("/api/")){json(404,{});return;}
     if(url.pathname==="/qa.js"){res.writeHead(200,{"Content-Type":"text/javascript"});res.end(bundle.outputFiles[0].text);return;}
     if(url.pathname==="/qa.css"){res.writeHead(200,{"Content-Type":"text/css"});res.end(css);return;}

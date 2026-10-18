@@ -30,6 +30,7 @@ const fr = {
     "Ton projet est temporairement indisponible. Tu peux continuer à utiliser Pratiqo.",
   saveError:
     "L’enregistrement n’a pas été confirmé. Ta saisie est conservée : réessaie.",
+  rateLimitError: "Trop de tentatives rapprochées. Attends une minute puis réessaie ; ta saisie est conservée.",
   retry: "Réessayer",
   subjectError: "Choisis une matière ou décris ton envie.",
   cityError: "Indique la ville où tu souhaites suivre tes cours.",
@@ -75,6 +76,7 @@ const en: Copy = {
     "Your project is temporarily unavailable. You can keep using Pratiqo.",
   saveError:
     "Saving was not confirmed. Your entries are kept: please try again.",
+  rateLimitError: "Too many attempts. Wait a minute and try again; your entries are kept.",
   retry: "Try again",
   subjectError: "Choose a subject or describe what you want to learn.",
   cityError: "Enter the city where you want to take lessons.",
@@ -119,6 +121,7 @@ const es: Copy = {
     "Tu proyecto no está disponible por el momento. Puedes seguir usando Pratiqo.",
   saveError:
     "No se confirmó el guardado. Conservamos lo que escribiste: inténtalo de nuevo.",
+  rateLimitError: "Demasiados intentos. Espera un minuto y vuelve a intentarlo; conservamos lo que escribiste.",
   retry: "Reintentar",
   subjectError: "Elige una materia o describe lo que quieres aprender.",
   cityError: "Indica la ciudad donde quieres tomar clases.",
