@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MapPin } from "lucide-react";
 import {
   discoveryCardsToMapTeachers,
+  isPriorityLocalDiscoveryPage,
   type LocalTeacherDiscoveryPageBundle,
 } from "@/lib/seo/localTeacherDiscoveryPages";
 import { LocalTeacherDiscoveryCards } from "@/components/seo/LocalTeacherDiscoveryCards";
@@ -183,6 +184,30 @@ export async function LocalTeacherDiscoveryView({ bundle: cachedBundle }: Props)
               <p className="mb-5 text-sm text-[#6B6760]">
                 Aucun cours local correspondant n&apos;est présenté pour le moment. <Link className="text-teal-700 underline" href={`/trouver-mon-prof?${new URLSearchParams({ city: bundle.city.name, subject: bundle.discipline?.name ?? "", online: "0" })}`}>Précisez votre recherche</Link>.
               </p>
+            ) : null}
+            {bundle.localTeacherCount > 0 && isPriorityLocalDiscoveryPage(bundle.canonicalPath) ? (
+              <section className="mb-6 max-w-3xl" aria-labelledby="choose-local-course">
+                <h2 id="choose-local-course" className="text-lg font-semibold">
+                  Choisir votre cours à {bundle.city.name}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed">
+                  {bundle.discipline
+                    ? `Les profils locaux ci-dessous proposent la matière « ${bundle.discipline.name} ». Vérifiez les autres matières et l'approche sur chaque profil pour choisir un cours adapté à votre objectif.`
+                    : "Choisissez une matière parmi les offres locales ci-dessous, puis comparez les profils. Les liens par matière ne présentent que les offres réellement déclarées pour cette ville."}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed">
+                  Comparez le tarif affiché, le format et le lieu proposé avant de choisir un créneau.
+                  « Réserver un cours » et « Demander un cours » correspondent à des parcours différents :
+                  une demande n&apos;est pas une réservation payée confirmée. Les disponibilités et le montant
+                  final sont vérifiés dans le parcours du professeur.
+                </p>
+                {bundle.teachers.some((teacher) => teacher.isOnlineFallback) ? (
+                  <p className="mt-2 text-sm leading-relaxed">
+                    Vous préférez apprendre à distance? Les options en ligne figurent séparément plus bas.
+                    Elles ne sont pas comptées comme des cours en présentiel à {bundle.city.name}.
+                  </p>
+                ) : null}
+              </section>
             ) : null}
             {[
               { title: `Professeurs proposant des cours à ${bundle.city.name}`, teachers: bundle.teachers.filter((teacher) => teacher.isLocalSupply) },

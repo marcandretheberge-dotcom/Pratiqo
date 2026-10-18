@@ -10,7 +10,7 @@ import {
   type TeacherPublicSeoFields,
 } from "@/lib/seo/teacherPublicProfile";
 import { SITE_URL } from "@/lib/seo/site";
-import { cacheSeoData, SEO_SITEMAP_REVALIDATE_SECONDS } from "@/lib/seo/cache";
+import { cacheSeoData, SEO_SITEMAP_REVALIDATE_SECONDS, TEACHER_PUBLIC_SEO_CACHE_TAG } from "@/lib/seo/cache";
 import { hasDeclaredLocalSupply } from "@/lib/teachers/localSupply";
 import { getDisciplineLabel, resolveDisciplineId } from "@/lib/taxonomy/disciplines";
 import { mapTeacherTeachingZoneRow, type TeacherTeachingZonePublicRow } from "@/lib/teacherTeachingZones";
@@ -25,6 +25,11 @@ export const LEGACY_CITY_HUB_PATH_PREFIX = "/tuteurs-prive";
 const PRIMARY_RADIUS_KM = 30;
 const EXPANDED_RADIUS_KM = 150;
 const MAX_TEACHER_CARDS = 9;
+
+// Editorial pilot only; these paths still require real local supply to be indexed.
+export function isPriorityLocalDiscoveryPage(path: string): boolean {
+  return ["/tuteurs/saint-georges", "/cours/francais/saint-georges", "/cours/espagnol/saint-georges"].includes(path);
+}
 
 export type LocalDiscoveryPageType = "city_hub" | "subject_city";
 
@@ -274,8 +279,8 @@ export const fetchIndexableDiscoveryTeachers = cacheSeoData(
       for (const row of rows) row.teachingZones = zonesByTeacher.get(row.id) ?? [];
       return rows;
   },
-  ["local-discovery-indexable-teachers-v3-owner"],
-  { revalidate: SEO_SITEMAP_REVALIDATE_SECONDS },
+  ["local-discovery-indexable-teachers-v4-publication-tag"],
+  { revalidate: SEO_SITEMAP_REVALIDATE_SECONDS, tags: [TEACHER_PUBLIC_SEO_CACHE_TAG] },
 );
 
 export function teacherIsOnlineCapable(teachingMode: string | null | undefined): boolean {
@@ -336,7 +341,7 @@ type RankedTeacher = {
 export function rankTeachersForCity(
   teachers: RawDiscoveryTeacher[],
   city: QcCity,
-  options?: { discipline?: DisciplineConfig | null; allowOnlineFallback?: boolean },
+  options?: { discipline?: DisciplineConfig | null; allowOnlineFallback?: boolean; includeOnlineWithLocal?: boolean },
 ): { ranked: RankedTeacher[]; isNearby: boolean } {
   const discipline = options?.discipline ?? null;
   const allowOnlineFallback = options?.allowOnlineFallback !== false;
@@ -362,7 +367,10 @@ export function rankTeachersForCity(
   // Declared teaching zones take precedence over proximity-only alternatives.
   const localSupply = withDistance.filter(({ row }) => teacherHasLocalDiscoverySupply(row, city));
   if (localSupply.length > 0) {
-    return { ranked: localSupply.slice(0, MAX_TEACHER_CARDS), isNearby: false };
+    const alternatives = options?.includeOnlineWithLocal
+      ? withDistance.filter((entry) => entry.isOnlineFallback)
+      : [];
+    return { ranked: [...localSupply, ...alternatives].slice(0, MAX_TEACHER_CARDS), isNearby: false };
   }
 
   const localPrimary = withDistance
@@ -556,7 +564,9 @@ export async function resolveCityHubDiscoveryPage(
   if (!city) return null;
 
   const allTeachers = (await loadTeachers()).filter(isTeacherPublicProfileIndexable);
-  const { ranked, isNearby } = rankTeachersForCity(allTeachers, city);
+  const { ranked, isNearby } = rankTeachersForCity(allTeachers, city, {
+    includeOnlineWithLocal: isPriorityLocalDiscoveryPage(`/tuteurs/${city.slug}`),
+  });
   return assembleBundle({
     pageType: "city_hub",
     city,
@@ -577,7 +587,10 @@ export async function resolveSubjectCityDiscoveryPage(
   if (!city || !discipline) return null;
 
   const allTeachers = (await loadTeachers()).filter(isTeacherPublicProfileIndexable);
-  const { ranked, isNearby } = rankTeachersForCity(allTeachers, city, { discipline });
+  const { ranked, isNearby } = rankTeachersForCity(allTeachers, city, {
+    discipline,
+    includeOnlineWithLocal: isPriorityLocalDiscoveryPage(`/cours/${discipline.slug}/${city.slug}`),
+  });
   return assembleBundle({
     pageType: "subject_city",
     city,
@@ -677,6 +690,9 @@ export function buildLocalDiscoveryCollectionJsonLd(bundle: LocalTeacherDiscover
         item: {
           "@type": "Person",
           name: teacher.displayName,
+          description: teacher.isLocalSupply
+            ? `Professeurs proposant des cours à ${bundle.city.name}`
+            : teacher.isOnlineFallback ? "D'autres options en ligne" : "Dans une autre ville",
           jobTitle: teacher.discipline ? `Professeur de ${teacher.discipline}` : "Professeur",
           url: `${SITE_URL}${teacher.profilePath}`,
         },
