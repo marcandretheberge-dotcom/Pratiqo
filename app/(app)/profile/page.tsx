@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Bell, ChevronRight, CreditCard, GraduationCap, Loader2, MapPin, Sparkles, TrendingUp } from "lucide-react";
 import { useAuth } from "../../../components/AuthProvider";
+import { StudentLearningProject } from "@/components/student/StudentLearningProject";
 import { logout } from "@/lib/auth";
 import { getSupabaseClient } from "../../../lib/supabase";
 import { authDisplayName } from "../../../lib/authDisplay";
@@ -198,6 +199,7 @@ export default function StudentProfilePage() {
       </section>
 
       {/* SETTINGS */}
+      <StudentLearningProject manage />
       <section className="space-y-3 rounded-[1.75rem] border border-[var(--p-border-light)] bg-white p-4 shadow-sm sm:rounded-3xl">
         <Row label={t("profileLanguage")}>
           <div className="shrink-0 max-w-[200px] sm:max-w-none sm:scale-95 sm:origin-right">
@@ -415,3 +417,4 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
     </div>
   );
 }
+
