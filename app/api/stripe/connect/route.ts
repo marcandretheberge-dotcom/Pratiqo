@@ -1,3 +1,4 @@
+import { blockUnsupportedNativePurchase } from "@/lib/mobile/server";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
@@ -113,6 +114,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const nativeBlock = blockUnsupportedNativePurchase(req);
+  if (nativeBlock) return nativeBlock;
   try {
     const auth = await authenticatedUser(req);
     if (auth.error) return auth.error;
@@ -233,4 +236,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
 

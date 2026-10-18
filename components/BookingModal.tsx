@@ -1,5 +1,7 @@
 "use client";
 
+import { prepareNativeCheckout } from "@/lib/mobile/client";
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
@@ -893,6 +895,8 @@ export function BookingModal({
     setDeferredRequestSent(false);
     let redirecting = false;
     try {
+      const nativeCheckout = sessionBookable && !usePackageCredit
+        ? await prepareNativeCheckout() : null;
       if (!teacherSlotMeetsNotice(selectedDate, selectedSlot, new Date(), teacher.timezone)) {
         setCheckoutError(t("bookingMinimumNoticeError"));
         return;
@@ -1176,6 +1180,7 @@ export function BookingModal({
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
+          ...nativeCheckout?.headers,
         },
         body: JSON.stringify({
           teacher_id: teacher.id,
@@ -1213,8 +1218,12 @@ export function BookingModal({
       const url = payload.url;
       if (!url) throw new Error(t("bookingMissingCheckoutUrl"));
 
-      redirecting = true;
-      window.location.assign(url);
+      if (nativeCheckout) {
+        await nativeCheckout.open(url);
+      } else {
+        redirecting = true;
+        window.location.assign(url);
+      }
     } catch (error) {
       console.error("Booking / checkout error", error);
       const msg = error instanceof Error ? error.message : t("bookingUnknownError");

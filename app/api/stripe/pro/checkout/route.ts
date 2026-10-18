@@ -1,3 +1,4 @@
+import { blockUnsupportedNativePurchase } from "@/lib/mobile/server";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
@@ -93,6 +94,8 @@ const LEGAL_ACCEPTANCE_REQUIRED_ERROR_CODE =
   "legal_acceptance_required" as const;
 
 export async function POST(req: Request) {
+  const nativeBlock = blockUnsupportedNativePurchase(req);
+  if (nativeBlock) return nativeBlock;
   try {
     const { renewalAccepted, legalAccepted, locale } = await readConsentBody(req);
     if (renewalAccepted !== true) {
