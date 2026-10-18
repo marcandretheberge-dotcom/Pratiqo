@@ -26,7 +26,7 @@ import {
 } from "@/lib/seo/teacherPublicProfile";
 import { serializeJsonLd } from "@/lib/seo/jsonLd";
 import { fetchTeacherPublicSeoRowBySlug } from "@/lib/seo/teacherPublicProfileData";
-import { cacheSeoData, SEO_TEACHER_PROFILE_REVALIDATE_SECONDS } from "@/lib/seo/cache";
+import { cacheSeoData, SEO_TEACHER_PROFILE_REVALIDATE_SECONDS, TEACHER_PUBLIC_SEO_CACHE_TAG } from "@/lib/seo/cache";
 import { getTeacherListingCapabilities } from "@/lib/teachers/listingBookability";
 
 function isColumnMismatchError(error: unknown): boolean {
@@ -125,7 +125,7 @@ const getTeacherPublicProfileBundle = cacheSeoData(async (slug: string) => {
     canonical: buildTeacherPublicProfileCanonicalUrl(slug),
     slug,
   };
-}, ["teacher-public-profile-bundle-v1"], { revalidate: SEO_TEACHER_PROFILE_REVALIDATE_SECONDS });
+}, ["teacher-public-profile-bundle-v2-publication-tag"], { revalidate: SEO_TEACHER_PROFILE_REVALIDATE_SECONDS, tags: [TEACHER_PUBLIC_SEO_CACHE_TAG] });
 
 export async function generateMetadata({
   params,

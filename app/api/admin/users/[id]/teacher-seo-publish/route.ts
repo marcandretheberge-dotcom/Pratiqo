@@ -4,6 +4,8 @@
 //   POST /api/admin/users/:id/teacher-seo-publish  { action: publish | unpublish | hide_marketplace | request_corrections }
 
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
+import { TEACHER_PUBLIC_SEO_CACHE_TAG } from "@/lib/seo/cache";
 import { requireAdminApi, insertAdminRoleChangeAudit } from "@/lib/auth/admin";
 import {
   collectTeacherSeoAdminPublishBlockers,
@@ -158,6 +160,9 @@ export async function POST(req: Request, ctx: Params) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
   }
+
+  // Do not serve a stale publication/withdrawal decision after the successful write.
+  revalidateTag(TEACHER_PUBLIC_SEO_CACHE_TAG, { expire: 0 });
 
   const { data: profileEmailRow } = await admin
     .from("profiles")

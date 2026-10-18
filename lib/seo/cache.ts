@@ -3,6 +3,8 @@ import { unstable_cache } from "next/cache";
 export const SEO_CACHE_REVALIDATE_SECONDS = 3600;
 export const SEO_TEACHER_PROFILE_REVALIDATE_SECONDS = 1800;
 export const SEO_SITEMAP_REVALIDATE_SECONDS = 3600;
+// Publication affects profiles, internal links, local supply and the sitemap together.
+export const TEACHER_PUBLIC_SEO_CACHE_TAG = "teacher-public-seo";
 
 export function cacheSeoData<Args extends unknown[], Result>(
   fn: (...args: Args) => Promise<Result>,

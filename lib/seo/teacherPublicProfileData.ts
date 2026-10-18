@@ -1,5 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { cacheSeoData, SEO_SITEMAP_REVALIDATE_SECONDS, SEO_TEACHER_PROFILE_REVALIDATE_SECONDS } from "@/lib/seo/cache";
+import { cacheSeoData, SEO_SITEMAP_REVALIDATE_SECONDS, SEO_TEACHER_PROFILE_REVALIDATE_SECONDS, TEACHER_PUBLIC_SEO_CACHE_TAG } from "@/lib/seo/cache";
 import { isIdentityVerificationFailed } from "@/lib/teachers/identityPublishGate";
 import {
   buildTeacherPublicProfileSlug,
@@ -193,8 +193,8 @@ async function fetchTeacherPublicSeoRowBySlugUncached(
 
 export const fetchTeacherPublicSeoRowBySlug = cacheSeoData(
   fetchTeacherPublicSeoRowBySlugUncached,
-  ["teacher-public-seo-row-by-slug-v1"],
-  { revalidate: SEO_TEACHER_PROFILE_REVALIDATE_SECONDS },
+  ["teacher-public-seo-row-by-slug-v2-publication-tag"],
+  { revalidate: SEO_TEACHER_PROFILE_REVALIDATE_SECONDS, tags: [TEACHER_PUBLIC_SEO_CACHE_TAG] },
 );
 
 export async function fetchTeacherPublicSeoRowById(
@@ -261,8 +261,8 @@ async function fetchIndexableTeacherSitemapRowsUncached(): Promise<
 
 export const fetchIndexableTeacherSitemapRows = cacheSeoData(
   fetchIndexableTeacherSitemapRowsUncached,
-  ["teacher-public-sitemap-rows-v1"],
-  { revalidate: SEO_SITEMAP_REVALIDATE_SECONDS },
+  ["teacher-public-sitemap-rows-v2-publication-tag"],
+  { revalidate: SEO_SITEMAP_REVALIDATE_SECONDS, tags: [TEACHER_PUBLIC_SEO_CACHE_TAG] },
 );
 
 /** Indexable /professeurs/[slug] paths for marketplace teacher cards (never owner-preview URLs). */
@@ -299,8 +299,8 @@ async function fetchIndexableTeacherPublicPathsByIdsUncached(
 
 export const fetchIndexableTeacherPublicPathsByIds = cacheSeoData(
   fetchIndexableTeacherPublicPathsByIdsUncached,
-  ["teacher-public-paths-by-ids-v1"],
-  { revalidate: SEO_TEACHER_PROFILE_REVALIDATE_SECONDS },
+  ["teacher-public-paths-by-ids-v2-publication-tag"],
+  { revalidate: SEO_TEACHER_PROFILE_REVALIDATE_SECONDS, tags: [TEACHER_PUBLIC_SEO_CACHE_TAG] },
 );
 
 export async function allocateUniqueTeacherPublicProfileSlug(input: {
