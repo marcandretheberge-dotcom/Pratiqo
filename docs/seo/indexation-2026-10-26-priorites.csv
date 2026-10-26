@@ -1,0 +1,21 @@
+url,type,sitemap_observe,http_final,canonique_html,robots_html,x_robots_tag,gsc_observe,h1_serveur
+https://www.pratiqo.ca/tuteurs/montreal,page_locale,oui,200,https://www.pratiqo.ca/tuteurs/montreal,"index, follow",,"Détectée, actuellement non indexée — sans exploration",Tuteurs et professeurs privés à Montréal
+https://www.pratiqo.ca/cours/francais/montreal,page_locale,oui,200,https://www.pratiqo.ca/cours/francais/montreal,"index, follow",,"Détectée, actuellement non indexée — sans exploration",Professeurs de français à Montréal
+https://www.pratiqo.ca/tuteurs/varennes,page_locale,oui,200,https://www.pratiqo.ca/tuteurs/varennes,"index, follow",,Indexée,Tuteurs et professeurs privés à Varennes
+https://www.pratiqo.ca/cours/mathematiques/varennes,page_locale,oui,200,https://www.pratiqo.ca/cours/mathematiques/varennes,"index, follow",,"Détectée, actuellement non indexée — sans exploration",Professeurs de mathématiques à Varennes
+https://www.pratiqo.ca/tuteurs/saint-georges,page_locale,oui,200,https://www.pratiqo.ca/tuteurs/saint-georges,"index, follow",,Indexée,Tuteurs et professeurs privés à Saint-Georges
+https://www.pratiqo.ca/cours/piano/saint-georges,page_locale,oui,200,https://www.pratiqo.ca/cours/piano/saint-georges,"index, follow",,"Détectée, actuellement non indexée — sans exploration",Professeurs de piano à Saint-Georges
+https://www.pratiqo.ca/cours/guitare/saint-georges,page_locale,oui,200,https://www.pratiqo.ca/cours/guitare/saint-georges,"index, follow",,Indexée,Professeurs de guitare à Saint-Georges
+https://www.pratiqo.ca/cours/musique/saint-georges,page_locale,oui,200,https://www.pratiqo.ca/cours/musique/saint-georges,"index, follow",,Indexée,Professeurs de musique à Saint-Georges
+https://www.pratiqo.ca/cours/espagnol/saint-georges,page_locale,oui,200,https://www.pratiqo.ca/cours/espagnol/saint-georges,"index, follow",,Indexée,Professeurs d'espagnol à Saint-Georges
+https://www.pratiqo.ca/cours/francais/saint-georges,page_locale,oui,200,https://www.pratiqo.ca/cours/francais/saint-georges,"index, follow",,Indexée,Professeurs de français à Saint-Georges
+https://www.pratiqo.ca/professeurs/beatrice-b-francais-quebec,profil,oui,200,https://www.pratiqo.ca/professeurs/beatrice-b-francais-quebec,"index, follow",,Indexée,Béatrice — French teacher in Montréal
+https://www.pratiqo.ca/professeurs/camila-h-chant-populaire-saint-henri,profil,oui,200,https://www.pratiqo.ca/professeurs/camila-h-chant-populaire-saint-henri,"index, follow",,Indexée,Camila — chant populaire teacher in Saint-Henri
+https://www.pratiqo.ca/professeurs/cassandra-f-francais-quebec,profil,oui,200,https://www.pratiqo.ca/professeurs/cassandra-f-francais-quebec,"index, follow",,Indexée,Cassandra — online French teacher
+https://www.pratiqo.ca/professeurs/el-p-espagnol-saint-georges,profil,oui,200,https://www.pratiqo.ca/professeurs/el-p-espagnol-saint-georges,"index, follow",,Indexée,El — Spanish teacher in Saint-Georges
+https://www.pratiqo.ca/professeurs/eloise-d-cours-saint-georges,profil,oui,200,https://www.pratiqo.ca/professeurs/eloise-d-cours-saint-georges,"index, follow",,Indexée,Éloïse — French teacher in Saint-Georges
+https://www.pratiqo.ca/professeurs/francis-a-guitare-saint-georges,profil,oui,200,https://www.pratiqo.ca/professeurs/francis-a-guitare-saint-georges,"index, follow",,Indexée,Francis — guitar teacher in Saint-Georges
+https://www.pratiqo.ca/professeurs/joanie-entrainement-prive-quebec,profil,oui,200,https://www.pratiqo.ca/professeurs/joanie-entrainement-prive-quebec,"index, follow",,Indexée,Joanie — online Personal training teacher
+https://www.pratiqo.ca/professeurs/maeva-d-francais-varennes,profil,oui,200,https://www.pratiqo.ca/professeurs/maeva-d-francais-varennes,"index, follow",,Indexée,Maéva — Academic tutoring teacher in Varennes
+https://www.pratiqo.ca/professeurs/viviana-g-espagnol-quebec,profil,oui,200,https://www.pratiqo.ca/professeurs/viviana-g-espagnol-quebec,"index, follow",,Indexée,Viviana — online Spanish teacher
+https://www.pratiqo.ca/professeurs/simon-chimie-riviere-du-loup,profil,non,200,https://www.pratiqo.ca/professeurs/simon-chimie-riviere-du-loup,"index, follow",,Google ne reconnaît pas cette URL,Simon — online Chemistry teacher
