@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cache } from "react";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   TEACHERS_LIST_SELECT,
@@ -248,7 +248,7 @@ export default async function TeacherProfilePage({
 
   const seoRow = await fetchTeacherPublicSeoRowById(initialTeacher.id);
   if (seoRow && isTeacherPublicProfileIndexable(seoRow) && seoRow.public_profile_slug?.trim()) {
-    redirect(`/professeurs/${encodeURIComponent(seoRow.public_profile_slug.trim())}`);
+    permanentRedirect(`/professeurs/${encodeURIComponent(seoRow.public_profile_slug.trim())}`);
   }
 
   if (routeId !== initialTeacher.id) {
@@ -328,3 +328,4 @@ export default async function TeacherProfilePage({
     </>
   );
 }
+
