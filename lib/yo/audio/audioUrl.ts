@@ -20,7 +20,8 @@
  * resulting public read URL matches the one this helper builds.
  */
 
-import { YOPRATIQO_AUDIO_BUCKET_DEFAULT } from "@/lib/yo/audio/audioManifest";
+// Keep URL construction independent of every language's recording registry.
+import { YOPRATIQO_AUDIO_BUCKET_DEFAULT } from "@/lib/yo/audio/audioManifest.types-internal";
 
 /** Reserved query string used to bust the browser/CDN cache when audio is regenerated. */
 export const YOPRATIQO_AUDIO_VERSION_PARAM = "v" as const;

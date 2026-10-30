@@ -49,9 +49,9 @@ Desktop uses a course workspace with stage navigation and, at wider widths, a go
 
 ## Audio
 
-Practice audio is user initiated and uses a Japanese voice supplied by the learner's browser/device when available. Playback can be stopped or slowed and stops when the lesson changes or becomes hidden. Listening activities offer a transcript; opening it counts as assistance. A missing Japanese voice is reported without substituting an unrelated language.
+Practice audio is user initiated and resolves versioned MP3s in the existing Supabase `yopratiqo-audio` bucket. The offline generator uses OpenAI's Speech API; no API key or runtime synthesis is exposed to the browser. Playback can be stopped or slowed to 0.78× and stops when the lesson changes or becomes hidden. Listening activities offer a transcript; opening it counts as assistance. A missing recording produces an explicit retry/transcript message. AI-voice attribution is displayed in all three explanation languages.
 
-This change does not create Japanese recordings or claim that device speech has been reviewed by a native speaker. The existing introduction recordings and manifest are preserved. Actual voice availability and sound quality depend on the target device.
+The foundation manifest plans 206 distinct recordings covering all audible lesson content, 92 kana and the context words for all 40 kanji. **Generation/upload is still pending: the execution environment lacks OpenAI and Supabase write credentials.** The 36 existing introduction objects were confirmed in storage; no new foundation object was present at verification. Do not release this course as audio-complete until generation, public verification and listening review are finished. See [the audio delivery notes](JAPANESE_FOUNDATIONS_AUDIO.md) for the exact batch commands and evidence.
 
 ## Kanji provenance
 
@@ -71,7 +71,7 @@ Cultural cases describe particular fictional settings and local instructions. Th
 
 ## Validation
 
-Run `npm run test:yo-japanese-foundations` for curriculum integrity, real stroke data, rendered coach interactions, practice controls, progression/storage and player integration. The script is also included in `test:yo-japanese` and `test:launch-critical`. Rendered tests use React and jsdom and mock native speech only at its browser API boundary.
+Run `npm run test:yo-japanese-foundations` for curriculum integrity, real stroke data, rendered coach interactions, practice controls, progression/storage, player integration and recorded-audio coverage. The script is also included in `test:yo-japanese` and `test:launch-critical`. Rendered tests use React and jsdom and mock HTML audio at its browser API boundary.
 
 Legacy Japanese introduction/audio and shared catalog, landing, product, schema and SEO regressions are checked separately. Targeted strict TypeScript covers the new course components and data. The full application build is verified by the preview deployment rather than inferred from a selective local checkout.
 

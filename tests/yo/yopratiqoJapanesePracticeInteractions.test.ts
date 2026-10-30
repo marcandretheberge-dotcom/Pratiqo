@@ -5,7 +5,6 @@ import path from "node:path";
 import * as React from "react";
 
 import { JapaneseActivityPanel, initialJapaneseActivityState, type JapaneseActivityState } from "@/components/yo/japanese/JapaneseActivityPanel";
-import { JapaneseCourseAudio } from "@/components/yo/japanese/JapaneseCourseAudio";
 import { JapaneseDialoguePanel, JapaneseKanaLab, JapaneseVocabularyLab, JapaneseWritingLab } from "@/components/yo/japanese/JapaneseStudyPanels";
 import type { JapaneseActivity, JapaneseBuildActivity, JapaneseChoiceActivity, JapaneseCourseUnit, JapaneseLocalized, JapaneseMatchActivity, JapanesePhrase, JapaneseReadingActivity } from "@/lib/yo/japaneseCourseTypes";
 import type { YoLocale } from "@/lib/yo/types";
@@ -336,95 +335,9 @@ test("dialogue navigation focuses the new line even when the last Next button be
   assert.equal(document.activeElement, view.getByText("Line 1 / 2").parentElement);
 });
 
-class UtteranceStub {
-  text: string;
-  voice: SpeechSynthesisVoice | null = null;
-  lang = "";
-  rate = 1;
-  onstart: ((event?: unknown) => void) | null = null;
-  onend: ((event?: unknown) => void) | null = null;
-  onerror: ((event: { error: string }) => void) | null = null;
-  constructor(text: string) { this.text = text; }
-}
-function mockSpeech(japanese = true, fail = false) {
-  const calls: UtteranceStub[] = [];
-  let cancelled = 0;
-  const voices = [
-    { name: "English", lang: "en-US", localService: true, default: true, voiceURI: "en" },
-    ...(japanese ? [{ name: "Japanese", lang: "ja-JP", localService: true, default: false, voiceURI: "ja" }] : []),
-  ];
-  Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: UtteranceStub });
-  Object.defineProperty(window, "speechSynthesis", { configurable: true, value: {
-    getVoices: () => voices,
-    cancel: () => { cancelled += 1; },
-    speak: (utterance: UtteranceStub) => { if (fail) throw new Error("Speech unavailable"); calls.push(utterance); },
-  } });
-  return { calls, cancelled: () => cancelled };
-}
-
-test("unavailable Japanese voices show an honest fallback and never use an English voice", () => {
-  const speech = mockSpeech(false);
-  let listened = 0;
-  const view = render(React.createElement(JapaneseCourseAudio, { text: "こんにちは。", locale: "en", onListen: () => { listened += 1; } }));
-  fireEvent.click(view.getByRole("button", { name: "Listen : こんにちは。" }));
-  assert.match(view.getByRole("status").textContent ?? "", /No Japanese voice/);
-  assert.equal(speech.calls.length, 0);
-  assert.equal(listened, 0);
-});
-
-test("audio requires an explicit click, reports listening only on start, and cancels on text change and unmount", () => {
-  const speech = mockSpeech();
-  let listened = 0;
-  const node = (text: string) => React.createElement(JapaneseCourseAudio, { text, locale: "en" as const, onListen: () => { listened += 1; }, label: "the message" });
-  const view = render(node("こんにちは。"));
-  assert.equal(speech.calls.length, 0);
-  fireEvent.click(view.getByRole("button", { name: "Listen : the message" }));
-  assert.equal(speech.calls.length, 1);
-  assert.equal(speech.calls[0].voice?.lang, "ja-JP");
-  assert.equal(listened, 0);
-  act(() => speech.calls[0].onstart?.());
-  assert.equal(listened, 1);
-  const before = speech.cancelled();
-  view.rerender(node("ありがとうございます。"));
-  assert.ok(speech.cancelled() > before);
-  assert.equal(speech.calls[0].onend, null);
-  assert.ok(view.getByRole("button", { name: "Listen : the message" }));
-  fireEvent.click(view.getByRole("button", { name: "Listen : the message" }));
-  const beforeUnmount = speech.cancelled();
-  view.unmount();
-  assert.ok(speech.cancelled() > beforeUnmount);
-  assert.equal(speech.calls[1].onstart, null);
-});
-
-test("starting another player or hiding the document stops the existing Japanese utterance", () => {
-  const speech = mockSpeech();
-  const view = render(React.createElement(React.Fragment, null,
-    React.createElement(JapaneseCourseAudio, { text: "こんにちは。", locale: "en" }),
-    React.createElement(JapaneseCourseAudio, { text: "こんばんは。", locale: "en" })));
-  fireEvent.click(view.getByRole("button", { name: "Listen : こんにちは。" }));
-  fireEvent.click(view.getByRole("button", { name: "Listen : こんばんは。" }));
-  assert.equal(speech.calls[0].onend, null);
-  assert.ok(view.getByRole("button", { name: "Listen : こんにちは。" }));
-  assert.ok(view.getByRole("button", { name: "Stop : こんばんは。" }));
-  Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" });
-  fireEvent(document, new Event("visibilitychange"));
-  assert.equal(speech.calls[1].onend, null);
-  assert.ok(view.getByRole("button", { name: "Listen : こんばんは。" }));
-});
-
-test("a browser speech failure returns to a usable Listen control with feedback", () => {
-  mockSpeech(true, true);
-  const view = render(React.createElement(JapaneseCourseAudio, { text: "こんにちは。", locale: "en" }));
-  fireEvent.click(view.getByRole("button", { name: "Listen : こんにちは。" }));
-  assert.ok(view.getByRole("button", { name: "Listen : こんにちは。" }));
-  assert.match(view.getByRole("status").textContent ?? "", /Playback did not start/);
-});
-
 let failed = 0;
 try {
   for (const [name, run] of cases) {
-    Reflect.deleteProperty(window, "speechSynthesis");
-    Reflect.deleteProperty(window, "SpeechSynthesisUtterance");
     Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
     try { run(); console.log(`ok - ${name}`); }
     catch (error) { failed += 1; console.error(`not ok - ${name}`, error); }

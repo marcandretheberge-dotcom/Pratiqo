@@ -5,6 +5,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import { getJapaneseKanji } from "@/lib/yo/japaneseKanji";
 import type { JapaneseKanjiCard } from "@/lib/yo/japaneseCourseTypes";
 import type { YoLocale } from "@/lib/yo/types";
+import { JapaneseCourseAudio } from "./JapaneseCourseAudio";
 
 const COPY = {
   fr: {
@@ -225,6 +226,7 @@ function KanjiPractice({ card, locale, onPractice }: { card: JapaneseKanjiCard; 
           <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-[#566073]">{copy.contextual}</p>
           <p className="mt-1 text-lg"><ruby lang="ja">{card.word.ja}<rt className="text-xs">{card.word.kana}</rt></ruby> <span className="text-sm text-[#566073]">{card.word.romaji}</span></p>
           <p className="text-sm text-[#566073]">{card.word.meaning[locale]}</p>
+          <div className="mt-2"><JapaneseCourseAudio text={card.word.ja} locale={locale} /></div>
         </div>
       </div>
       <p className="text-xs leading-relaxed text-[#566073]">{copy.readingNote}</p>

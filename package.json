@@ -17,7 +17,7 @@
     "configure:apex-redirect": "tsx scripts/configure_vercel_apex_permanent_redirect.ts",
     "verify:yopratiqo-seo-deploy": "tsx scripts/verify_yopratiqo_seo_deploy.ts",
     "generate:yopratiqo-audio": "tsx scripts/generate-yopratiqo-audio.ts",
-    "test:yo-audio": "tsx tests/yo/yopratiqoAudio.test.ts && tsx tests/yo/yopratiqoSpanishAudioCoverage.test.ts && tsx tests/yo/yopratiqoFrenchQuebecAudio.test.ts && tsx tests/yo/yopratiqoItalianAudio.test.ts && tsx tests/yo/yopratiqoEnglishAudio.test.ts && tsx tests/yo/yopratiqoJapaneseAudio.test.ts && tsx tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
+    "test:yo-audio": "tsx tests/yo/yopratiqoAudio.test.ts && tsx tests/yo/yopratiqoSpanishAudioCoverage.test.ts && tsx tests/yo/yopratiqoFrenchQuebecAudio.test.ts && tsx tests/yo/yopratiqoItalianAudio.test.ts && tsx tests/yo/yopratiqoEnglishAudio.test.ts && tsx tests/yo/yopratiqoJapaneseAudio.test.ts && tsx tests/yo/yopratiqoAudioPronunciationOverrides.test.ts && node --import tsx tests/yo/yopratiqoAudioGenerator.test.ts",
     "test:yo-audio-pronunciation": "tsx tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
     "test:yo-spanish-coverage": "tsx tests/yo/yopratiqoSpanishAudioCoverage.test.ts",
     "test:yo-french-quebec-audio": "tsx tests/yo/yopratiqoFrenchQuebecAudio.test.ts",
@@ -80,7 +80,10 @@
     "test:learning-project": "node --import tsx tests/students/learningProject.test.ts && node tests/students/learningProjectRoutes.cjs && node tests/students/learningProjectPostgres.cjs && node tests/students/learningProjectSaveIntegration.cjs && node tests/students/learningProjectDom.cjs && node tests/students/studentLearningDirectoryDom.cjs",
     "test:yo-rd-m5-practice": "tsx tests/yo/yopratiqoDominicanModule5.test.ts && tsx tests/yo/yopratiqoDominicanModule5Premium.test.ts && tsx tests/yo/yopratiqoDominicanModule5QuizInteraction.test.ts && tsx tests/yo/yopratiqoDominicanModule5SelfAssessment.test.ts",
     "test:credit-rpc-security": "node tests/security/adminCreditRpcPermissions.cjs",
-    "test:yo-japanese-foundations": "node --import tsx tests/yo/yopratiqoJapaneseCourseContent.test.ts && node --import tsx tests/yo/yopratiqoJapaneseKanjiStudio.test.ts && node --import tsx tests/yo/yopratiqoJapaneseYoppoCoach.test.ts && node --import tsx tests/yo/yopratiqoJapanesePracticeInteractions.test.ts && node --import tsx tests/yo/yopratiqoJapaneseCourseProgress.test.ts && node --import tsx tests/yo/yopratiqoJapaneseCoursePlayer.test.ts"
+    "test:yo-japanese-foundations": "node --import tsx tests/yo/yopratiqoJapaneseCourseContent.test.ts && node --import tsx tests/yo/yopratiqoJapaneseKanjiStudio.test.ts && node --import tsx tests/yo/yopratiqoJapaneseYoppoCoach.test.ts && node --import tsx tests/yo/yopratiqoJapanesePracticeInteractions.test.ts && node --import tsx tests/yo/yopratiqoJapaneseCourseProgress.test.ts && node --import tsx tests/yo/yopratiqoJapaneseCoursePlayer.test.ts && npm run test:yo-japanese-recorded-audio",
+    "generate:yo-japanese-foundations-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module japanese-foundations",
+    "verify:yo-japanese-foundations-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module japanese-foundations --verify-only",
+    "test:yo-japanese-recorded-audio": "node --import tsx tests/yo/yopratiqoJapaneseFoundationAudioManifest.test.ts && node --import tsx tests/yo/yopratiqoJapaneseRecordedAudio.test.ts && node --import tsx tests/yo/yopratiqoAudioGenerator.test.ts"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",

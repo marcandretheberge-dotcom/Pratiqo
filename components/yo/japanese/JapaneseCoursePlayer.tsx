@@ -37,7 +37,7 @@ const C = {
   reviewAction: L("Reprendre les exercices à revoir", "Revisit review items", "Volver a los ejercicios para repasar"),
   objective: L("Objectifs de cette étape", "Your learning goals", "Tus objetivos"),
   romanization: L("Aide en rōmaji", "Rōmaji support", "Ayuda en rōmaji"),
-  audio: L("Audio de pratique : voix japonaise de l’appareil, si disponible. La transcription reste accessible.", "Practice audio uses an available Japanese device voice. Transcripts remain accessible.", "El audio utiliza una voz japonesa disponible en el dispositivo. La transcripción sigue accesible."),
+  audio: L("Audio de pratique : voix générée par IA. La transcription reste accessible.", "Practice audio uses an AI-generated voice. Transcripts remain accessible.", "Audio de práctica con voz generada por IA. La transcripción sigue accesible."),
   local: L("Progression conservée sur cet appareil.", "Progress is saved on this device.", "El progreso se guarda en este dispositivo."),
   noStorage: L("La sauvegarde locale est indisponible. Tu peux poursuivre cette séance.", "Local saving is unavailable. You can continue this session.", "El guardado local no está disponible. Puedes continuar esta sesión."),
   complete: L("Les exercices du module sont terminés.", "You have completed this module’s exercises.", "Has completado los ejercicios del módulo."),
