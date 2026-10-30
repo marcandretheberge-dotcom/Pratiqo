@@ -140,14 +140,14 @@ export const yopratiqoSeoEntries = {
     slug: "japonais",
     copy: {
       fr: {
-        title: "Japonais avec YoPratiqo — hiragana, culture et premiers mots",
+        title: "Japonais avec Yoppo | YoPratiqo — 8 modules",
         description:
-          "Découvrez le japonais avec une intro rassurante : hiragana, katakana, kanji, politesse, culture, audio et premières phrases utiles.",
+          "Un parcours de fondation en huit modules : dialogues guidés, 92 kana, 40 kanji en contexte, culture, écriture et révisions avec Yoppo.",
       },
       en: {
-        title: "Japanese with YoPratiqo — hiragana, culture and first words",
+        title: "Japanese with Yoppo | YoPratiqo — 8 modules",
         description:
-          "Discover Japanese with a reassuring intro: hiragana, katakana, kanji, politeness, culture, audio, and first useful phrases.",
+          "An eight-module foundation course: guided dialogues, 92 kana, 40 kanji in context, culture, writing and review with Yoppo.",
       },
     },
   },

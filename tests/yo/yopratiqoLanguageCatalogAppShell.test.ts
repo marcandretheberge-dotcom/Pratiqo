@@ -14,7 +14,7 @@
  *     instead of a one-off "View in English" pill.
  *  5. /yo/langues uses the desktop workspace pattern on lg+.
  *  6. The Spanish, Quebec French, Italian, Japanese, and English
- *     cards point at the correct intro / hub routes.
+ *     cards point at the correct intro / hub / course routes.
  *  7. /yo/langues uses app-like premium tiles (rounded-3xl + soft
  *     shadow + per-card data attribute).
  *  8. Companion presence — Yoppo is named on the catalog rail.
@@ -189,7 +189,7 @@ test("catalog uses a desktop workspace on lg+ (real desktop app workspace, not s
 });
 
 // ─── 6. Honest language routing ──────────────────────────────────
-test("catalog routes each language card to the correct intro / hub", () => {
+test("catalog routes each language card to the correct intro / hub / course", () => {
   // Spanish → /yo/langues/espagnol (the Spanish hub)
   assert.match(
     catalogSrc,
@@ -210,7 +210,7 @@ test("catalog routes each language card to the correct intro / hub", () => {
     exists("app/yo/langues/francais-quebec/intro/page.tsx"),
     "Quebec French intro must exist on disk",
   );
-  // Italian / Japanese
+  // Italian keeps its intro; Japanese enters its foundation course.
   assert.match(
     catalogSrc,
     /id:\s*"italian"[\s\S]*?href:\s*"\/yo\/langues\/italien\/intro"/,
@@ -218,16 +218,20 @@ test("catalog routes each language card to the correct intro / hub", () => {
   );
   assert.match(
     catalogSrc,
-    /id:\s*"japanese"[\s\S]*?href:\s*"\/yo\/langues\/japonais\/intro"/,
-    "Japanese card must point at the intro deck",
+    /id:\s*"japanese"[\s\S]*?href:\s*"\/yo\/langues\/japonais\/parcours"/,
+    "Japanese card must point at the foundation course",
   );
   assert.ok(
     exists("app/yo/langues/italien/intro/page.tsx"),
     "Italian intro page must exist on disk",
   );
   assert.ok(
+    exists("app/yo/langues/japonais/parcours/page.tsx"),
+    "Japanese foundation course must exist on disk",
+  );
+  assert.ok(
     exists("app/yo/langues/japonais/intro/page.tsx"),
-    "Japanese intro page must exist on disk",
+    "Japanese orientation intro must remain available on disk",
   );
   // English: if claimed available, the deck route must exist.
   const englishAvailable =

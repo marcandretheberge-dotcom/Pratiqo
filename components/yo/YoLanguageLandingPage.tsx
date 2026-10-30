@@ -59,7 +59,7 @@ import { SITE_URL } from "@/lib/seo/site";
 import { serializeJsonLd } from "@/lib/seo/jsonLd";
 import { buildYopratiqoCourseSchema } from "@/lib/seo/yopratiqoCourseSchema";
 import { lstr, t } from "@/lib/yo/localize";
-import type { YoLocale } from "@/lib/yo/types";
+import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import type { YoPratiqoLandingContent } from "@/lib/yo/yopratiqoLandingContent";
 import {
   canInjectYoPratiqoCourseSchema,
@@ -100,16 +100,25 @@ export function YoLanguageLandingPage({
   locale,
   moduleConfig,
   content,
+  entryHref,
+  entryCta = INTRO_CTA,
+  entryBadge = HERO_BADGE,
+  languageLabelOverride,
 }: {
   locale: YoLocale;
   moduleConfig: YoPratiqoModuleConfig;
   content: YoPratiqoLandingContent;
+  /** A complete course may follow its retained orientation intro. */
+  entryHref?: string;
+  entryCta?: YoLocalizedString;
+  entryBadge?: YoLocalizedString;
+  languageLabelOverride?: YoLocalizedString;
 }) {
   const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
   const localizedIntroRoute =
     locale === "fr"
-      ? moduleConfig.introRoute
-      : `${moduleConfig.introRoute}?lang=${locale}`;
+      ? (entryHref ?? moduleConfig.introRoute)
+      : `${(entryHref ?? moduleConfig.introRoute)}?lang=${locale}`;
   const backToLanguesHref = `/yo/langues${langSuffix}`;
   const shouldInjectCourseSchema = canInjectYoPratiqoCourseSchema(moduleConfig);
   const courseSchema = shouldInjectCourseSchema
@@ -126,7 +135,7 @@ export function YoLanguageLandingPage({
     : null;
 
   const languageLabel = t(
-    lstr(moduleConfig.languageLabelFr, moduleConfig.languageLabelEn),
+    languageLabelOverride ?? lstr(moduleConfig.languageLabelFr, moduleConfig.languageLabelEn),
     locale,
   );
 
@@ -143,7 +152,7 @@ export function YoLanguageLandingPage({
     >
       <span className="inline-flex w-fit items-center gap-2 rounded-full border border-[#F4B400]/45 bg-white/85 px-3 py-1.5 text-xs font-black uppercase tracking-[0.14em] text-[#0F6E56]">
         <Sparkles className="size-3.5 text-[#F4B400]" aria-hidden />
-        {t(HERO_BADGE, locale)}
+        {t(entryBadge, locale)}
       </span>
       <p className="text-xs font-black uppercase tracking-[0.22em] text-[#1D9E75]">
         {languageLabel}
@@ -231,7 +240,7 @@ export function YoLanguageLandingPage({
         className="mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-[#0F6E56] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_34px_rgba(15,110,86,0.18)] transition hover:bg-[#0b5b47]"
       >
         <BookOpen className="size-4" aria-hidden />
-        {t(INTRO_CTA, locale)}
+        {t(entryCta, locale)}
       </Link>
     </article>
   );
@@ -335,7 +344,7 @@ export function YoLanguageLandingPage({
           // into the free intro deck — the natural primary CTA out
           // of this landing.
           lastStepNextHref: localizedIntroRoute,
-          lastStepNextLabel: t(INTRO_CTA, locale),
+          lastStepNextLabel: t(entryCta, locale),
           steps: [
             {
               id: "hero",
