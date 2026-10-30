@@ -392,17 +392,17 @@ const hotelDialogue: Dom2Dialogue = {
   lines: [
     {
       speaker: lstr("Réceptionniste", "Receptionist"),
-      target: "Buenas tardes. Bienvenido.",
-      glossFr: "Bonsoir. Bienvenue.",
-      glossEn: "Good afternoon. Welcome.",
-      noteFr: "« Bienvenido » pour un homme, « Bienvenida » pour une femme.",
-      noteEn: "\"Bienvenido\" for a man, \"Bienvenida\" for a woman.",
+      target: "Buenas tardes.",
+      glossFr: "Bonjour.",
+      glossEn: "Good afternoon.",
+      noteFr: "« Buenas tardes » s'utilise ici pour saluer dans l'après-midi.",
+      noteEn: "Use \"Buenas tardes\" to greet someone in the afternoon.",
     },
     {
       speaker: lstr("Toi — Viajero", "You — Traveler"),
       isLearner: true,
       target: "Buenas tardes. Tengo una reservación.",
-      glossFr: "Bonsoir. J'ai une réservation.",
+      glossFr: "Bonjour. J'ai une réservation.",
       glossEn: "Good afternoon. I have a reservation.",
     },
     {
@@ -414,11 +414,11 @@ const hotelDialogue: Dom2Dialogue = {
     {
       speaker: lstr("Toi — Viajero", "You — Traveler"),
       isLearner: true,
-      target: "A nombre de [votre nom].",
-      glossFr: "Au nom de [ton nom].",
-      glossEn: "Under the name [your name].",
-      noteFr: "Remplace [votre nom] par ton nom de famille.",
-      noteEn: "Replace [votre nom] with your last name.",
+      target: "A nombre de Alex Martín.",
+      glossFr: "Au nom d'Alex Martín.",
+      glossEn: "Under the name Alex Martín.",
+      noteFr: "Alex Martín est un nom fictif. Pour pratiquer, remplace-le par le nom de ton choix.",
+      noteEn: "Alex Martín is a fictional name. When practising, replace it with a name of your choice.",
     },
     {
       speaker: lstr("Réceptionniste", "Receptionist"),

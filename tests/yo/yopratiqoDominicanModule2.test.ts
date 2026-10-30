@@ -19,12 +19,12 @@
  *  12. No Stripe / payment / tax logic in module files
  *  13. No Supabase imports in module files
  *  14. No legal page modifications
- *  15. Existing Dominican Republic intro route file is untouched
+ *  15. Dominican Republic Course Home and intro routes exist
  *  16. i18n bilingual contract: FR + EN strings present in data
  *  17. Spanish lang="es" markers present in component (lang="es")
  *  18. No fake countdown / fake reviews / fake discounts
- *  19. Breadcrumb includes Dominican Republic intro link
- *  20. Module 2 does not break existing intro route
+ *  19. Module 2 deck returns to the canonical Course Home
+ *  20. Course Home links the intro and Module 2; intro renders its own content
  *
  * Static-source + pure-helper tests only.
  * No browser, no network, no Stripe, no Supabase.
@@ -33,6 +33,7 @@
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
+import { dominicanRepublicHotelAirport } from "@/lib/yo/dominicanRepublicHotelAirport";
 
 const REPO_ROOT = process.cwd();
 
@@ -65,8 +66,10 @@ const CONTENT_FILE = "lib/yo/dominicanRepublicHotelAirport.ts";
 const COMPONENT_FILE = "components/yo/DominicanRepublicModule2Content.tsx";
 const PAGE_FILE =
   "app/yo/langues/espagnol/pays/republique-dominicaine/module-2/page.tsx";
-const INTRO_PAGE_FILE =
+const COURSE_HOME_PAGE_FILE =
   "app/yo/langues/espagnol/pays/republique-dominicaine/page.tsx";
+const INTRO_PAGE_FILE =
+  "app/yo/langues/espagnol/pays/republique-dominicaine/intro/page.tsx";
 
 // ─── File existence ────────────────────────────────────────────────────────
 
@@ -82,7 +85,8 @@ test("page route file exists", () => {
   assert.ok(fileExists(PAGE_FILE), `Missing: ${PAGE_FILE}`);
 });
 
-test("existing Dominican intro page is untouched (still exists)", () => {
+test("Dominican Course Home and intro route exist", () => {
+  assert.ok(fileExists(COURSE_HOME_PAGE_FILE), `Missing: ${COURSE_HOME_PAGE_FILE}`);
   assert.ok(
     fileExists(INTRO_PAGE_FILE),
     `Intro page was deleted or moved: ${INTRO_PAGE_FILE}`,
@@ -172,23 +176,17 @@ test("airport dialogue Spanish lines present", () => {
 });
 
 test("hotel check-in dialogue Spanish lines present", () => {
-  const src = read(CONTENT_FILE);
-  assert.ok(
-    src.includes("Buenas tardes. Bienvenido."),
-    "Missing hotel dialogue: Buenas tardes. Bienvenido.",
-  );
-  assert.ok(
-    src.includes("Tengo una reservación."),
-    "Missing hotel dialogue: Tengo una reservación.",
-  );
-  assert.ok(
-    src.includes("¿A nombre de quién?"),
-    "Missing hotel dialogue: ¿A nombre de quién?",
-  );
-  assert.ok(
-    src.includes("Su habitación es la 204."),
-    "Missing hotel dialogue: Su habitación es la 204.",
-  );
+  const dialogue = dominicanRepublicHotelAirport.hotelDialogue;
+  assert.equal(dialogue.lines[0].target, "Buenas tardes.");
+  assert.equal(dialogue.lines[0].glossFr, "Bonjour.");
+  assert.equal(dialogue.lines[1].glossFr, "Bonjour. J'ai une réservation.");
+  const targets = new Set(dialogue.lines.map((line) => line.target));
+  for (const target of [
+    "Buenas tardes. Tengo una reservación.",
+    "¿A nombre de quién?",
+    "A nombre de Alex Martín.",
+    "Su habitación es la 204.",
+  ]) assert.ok(targets.has(target), `Missing hotel dialogue: ${target}`);
 });
 
 test("flashcards present (13 required vocabulary items)", () => {
@@ -386,19 +384,22 @@ test("page resolves locale from searchParams", () => {
   );
 });
 
-test("page breadcrumb includes Dominican Republic intro link", () => {
-  const src = read(PAGE_FILE);
-  assert.ok(
-    src.includes("republique-dominicaine"),
-    "Breadcrumb must reference the Dominican Republic intro URL",
+test("module deck returns to the canonical Course Home", () => {
+  const src = stripComments(read(COMPONENT_FILE));
+  assert.match(
+    src,
+    /const backHref\s*=\s*`\/yo\/langues\/espagnol\/pays\/republique-dominicaine\$\{langSuffix\}`/,
+    "The deck back link must preserve the locale and point to Course Home",
   );
+  assert.match(src, /backHref=\{backHref\}/, "The deck must receive that back link");
 });
 
-test("page breadcrumb includes Module 2 label", () => {
-  const src = read(PAGE_FILE);
-  assert.ok(
-    src.includes("Module 2"),
-    "Breadcrumb must include Module 2 label",
+test("module page renders the lesson deck", () => {
+  const src = stripComments(read(PAGE_FILE));
+  assert.match(
+    src,
+    /<DominicanRepublicModule2Content\b[^>]*\bmode="deck"/,
+    "The module route must render the lesson deck rather than legacy breadcrumbs",
   );
 });
 
@@ -528,22 +529,23 @@ test("no sitemap or Course JSON-LD generation changes in module files", () => {
   }
 });
 
-// ─── Existing intro page untouched ────────────────────────────────────────
+// ─── Existing Course Home → intro → Module 2 entry points ─────────────────
 
-test("existing Dominican intro page still imports RepubliqueDominicaineContent", () => {
-  const src = read(INTRO_PAGE_FILE);
-  assert.ok(
-    src.includes("RepubliqueDominicaineContent"),
-    "Intro page must still use RepubliqueDominicaineContent",
-  );
+test("intro route renders DominicanRepublicIntroContent with its locale", () => {
+  const src = stripComments(read(INTRO_PAGE_FILE));
+  assert.match(src, /import\s*\{\s*DominicanRepublicIntroContent\s*\}/);
+  assert.match(src, /<DominicanRepublicIntroContent\s+locale=\{locale\}/);
 });
 
-test("existing Dominican intro page route is unchanged", () => {
-  const src = read(INTRO_PAGE_FILE);
-  assert.ok(
-    src.includes("republique-dominicaine"),
-    "Intro page canonical URL must remain unchanged",
-  );
+test("Course Home retains its canonical URL and links Intro and Module 2", () => {
+  const src = stripComments(read(COURSE_HOME_PAGE_FILE));
+  assert.match(src, /canonical:\s*`\$\{SITE_URL\}\/yo\/langues\/espagnol\/pays\/republique-dominicaine`/);
+  for (const step of ["intro", "module-2"]) {
+    assert.ok(
+      src.includes(`href: "/yo/langues/espagnol/pays/republique-dominicaine/${step}"`),
+      `Course Home must link to its ${step} route`,
+    );
+  }
 });
 
 // ─── Run all tests ─────────────────────────────────────────────────────────
