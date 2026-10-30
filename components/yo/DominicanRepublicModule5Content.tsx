@@ -6,7 +6,7 @@
  * Server component. The only client behaviour is delegated to
  * DominicanRepublicModule5Interactive (print button + reveal-only quiz +
  * reading comprehension reveal + final capstone game + writing reveal
- * + roleplay reveal).
+ * + roleplay reveal), with a local self-assessment checklist.
  *
  * Pedagogical contract:
  *   - Pre-reveal, the practice quiz and final game show ONLY Spanish
@@ -51,6 +51,7 @@ import {
   type YoBreadcrumbItem,
 } from "@/components/yo/YoBreadcrumb";
 import { YoSpeechButton } from "@/components/yo/YoSpeechButton";
+import { DominicanRepublicModule5SelfAssessment } from "@/components/yo/DominicanRepublicModule5SelfAssessment";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
 import { YoPrintableResourceCard } from "@/components/yo/YoPrintableResourceCard";
 import {
@@ -1101,25 +1102,10 @@ function SelfAssessmentSection({ locale }: { locale: YoLocale }) {
               : "Coche ce que tu sais déjà faire (auto-évaluation A2)"
         }
       />
-      <ul className="grid gap-3 md:grid-cols-2">
-        {data.selfAssessment.map((item) => (
-          <li
-            key={item.id}
-            className="flex items-start gap-3 rounded-2xl border border-[#0F6E56]/12 bg-white/90 p-4"
-            data-yo-module5-self-assessment-item
-          >
-            <span
-              aria-hidden
-              className="mt-0.5 grid size-5 shrink-0 place-items-center rounded border border-[#0F6E56]/35 bg-white"
-            >
-              <CheckCircle2 className="size-4 text-[#1D9E75]/0" aria-hidden />
-            </span>
-            <p className="text-sm leading-relaxed text-[#0B3040]/85">
-              <L value={item.statement} locale={locale} />
-            </p>
-          </li>
-        ))}
-      </ul>
+      <DominicanRepublicModule5SelfAssessment
+        items={data.selfAssessment}
+        locale={locale}
+      />
     </section>
   );
 }

@@ -316,6 +316,142 @@ test("pending audio still permits text-based roleplay without media calls", asyn
   assert.equal(FakeAudio.instances.length, 0);
 });
 
+test("hotel questions can be reviewed backwards with answers preserved and focus on the question", async () => {
+  const labels = {
+    fr: { stage: "2 · Comprendre", next: "Question suivante", previous: "Question précédente", retry: "Réessayer cette question" },
+    en: { stage: "2 · Understand", next: "Next question", previous: "Previous question", retry: "Try this question again" },
+    es: { stage: "2 · Comprender", next: "Siguiente pregunta", previous: "Pregunta anterior", retry: "Reintentar esta pregunta" },
+  } as const;
+  const [first, second] = arrivalListeningScenes.hotel.questions;
+  for (const locale of ["fr", "en", "es"] as const) {
+    const view = render(node("hotel", locale));
+    const activate = async (name: string) => {
+      const button = view.getByRole("button", { name });
+      button.focus();
+      await click(button);
+    };
+    await activate(labels[locale].stage);
+    const wrong = first.options.find((option) => option.id !== first.correctOptionId)!;
+    await activate(wrong.target);
+    await activate(labels[locale].next);
+    assert.ok(document.activeElement === view.getByRole("heading", { name: second.prompt[locale]! }));
+    await activate(second.options.find((option) => option.id === second.correctOptionId)!.target);
+    await activate(labels[locale].previous);
+    assert.ok(document.activeElement === view.getByRole("heading", { name: first.prompt[locale]! }));
+    assert.equal(view.getByRole("button", { name: wrong.target }).getAttribute("aria-pressed"), "true");
+    assert.ok(view.getByText(first.feedback[locale]!));
+    await activate(labels[locale].retry);
+    assert.ok(document.activeElement === view.getByRole("heading", { name: first.prompt[locale]! }));
+    assert.equal(view.queryByText(first.feedback[locale]!), null);
+    assert.equal((view.getByRole("button", { name: wrong.target }) as HTMLButtonElement).disabled, false);
+    await activate(first.options.find((option) => option.id === first.correctOptionId)!.target);
+    await activate(labels[locale].next);
+    assert.ok(view.getByText(second.feedback[locale]!), "Returning to a question must preserve its answer");
+    assert.equal(FakeAudio.instances.length, 0);
+    cleanup();
+  }
+});
+
+test("explicit roleplay transitions keep keyboard focus on the model, instruction or completion", async () => {
+  const view = render(node("hotel", "en"));
+  const activate = async (name: string) => {
+    const button = view.getByRole("button", { name });
+    button.focus();
+    await click(button);
+  };
+  await activate("4 · Speak");
+  await activate("Read the line and respond");
+  await activate("I've answered — show the model");
+  assert.ok(document.activeElement === view.getByRole("heading", { name: "One possible response" }));
+  await activate("Next exchange");
+  assert.ok(document.activeElement === view.getByRole("heading", { name: arrivalListeningScenes.hotel.roleplay[1].instruction.en }));
+  await activate("Previous exchange");
+  assert.ok(document.activeElement === view.getByRole("heading", { name: arrivalListeningScenes.hotel.roleplay[0].instruction.en }));
+  for (let i = 0; i < arrivalListeningScenes.hotel.roleplay.length; i += 1) {
+    await activate("Read the line and respond");
+    await activate("I've answered — show the model");
+    await activate(i === arrivalListeningScenes.hotel.roleplay.length - 1 ? "Finish practice" : "Next exchange");
+  }
+  assert.ok(document.activeElement === view.getByText("Practice complete. Replay the exchanges you found difficult."));
+  await activate("Replay the roleplay");
+  assert.ok(document.activeElement === view.getByRole("heading", { name: arrivalListeningScenes.hotel.roleplay[0].instruction.en }));
+  assert.equal(FakeAudio.instances.length, 0);
+});
+
+test("content navigation moves focus into the new stage while persistent stage buttons retain focus", async () => {
+  const view = render(node("hotel", "en"));
+  const activate = async (name: string) => {
+    const button = view.getByRole("button", { name });
+    button.focus();
+    await click(button);
+    return button;
+  };
+  await activate("Open the transcript");
+  assert.ok(document.activeElement === view.getByRole("heading", { name: "1 / 8 · Receptionist" }));
+  await activate("My turn to speak");
+  assert.ok(document.activeElement === view.getByRole("heading", { name: arrivalListeningScenes.hotel.roleplay[0].instruction.en }));
+  const listen = await activate("1 · Listen");
+  assert.ok(document.activeElement === listen);
+  await activate("Check my understanding");
+  assert.ok(document.activeElement === view.getByRole("heading", { name: arrivalListeningScenes.hotel.questions[0].prompt.en }));
+  await activate("Read the conversation");
+  assert.ok(document.activeElement === view.getByRole("heading", { name: "1 / 8 · Receptionist" }));
+});
+
+test("opening the current transcript after an audio error consumes its focus request immediately", async () => {
+  arrivalListeningScenes.hotel.audioReady = true;
+  const view = render(node("hotel", "en"));
+  const activate = async (name: string) => {
+    const button = view.getByRole("button", { name });
+    button.focus();
+    await click(button);
+    return button;
+  };
+  await activate("3 · Read");
+  FakeAudio.rejectNext = true;
+  await activate("Play this line");
+  assert.ok(view.getByRole("alert"));
+  await activate("Open the transcript");
+  assert.equal(view.queryByRole("alert"), null);
+  assert.ok(document.activeElement === view.getByRole("heading", { name: "1 / 8 · Receptionist" }));
+  const nextLine = await activate("Next line");
+  assert.ok(document.activeElement === nextLine, "Later transcript state must not replay a consumed focus request");
+  const play = await activate("Play this line");
+  await end(FakeAudio.instances[0]);
+  assert.ok(document.activeElement === play, "Later playback completion must not replay a consumed focus request");
+  view.rerender(node("hotel", "fr"));
+  assert.ok(document.activeElement === play, "A later locale render must not replay a consumed focus request");
+});
+
+test("mount, locale changes, audio completion and hidden deck transitions do not steal focus", async () => {
+  arrivalListeningScenes.hotel.audioReady = true;
+  const tree = (locale: "fr" | "en") => React.createElement(React.Fragment, null,
+    React.createElement("button", { type: "button" }, "Outside the lesson"),
+    React.createElement("div", { "data-yo-lesson-deck-screen-host-id": "hotel", "data-yo-lesson-deck-screen-host-active": "true" }, node("hotel", locale)),
+  );
+  const view = render(tree("fr"));
+  assert.ok(document.activeElement === document.body);
+  const outside = view.getByRole("button", { name: "Outside the lesson" });
+  outside.focus();
+  view.rerender(tree("en"));
+  assert.ok(document.activeElement === outside);
+  const stage = view.getByRole("button", { name: "4 · Speak" });
+  stage.focus();
+  await click(stage);
+  assert.ok(document.activeElement === stage);
+  const prompt = view.getByRole("button", { name: "Play the other person's line" });
+  prompt.focus();
+  await click(prompt);
+  await end(FakeAudio.instances[0]);
+  assert.ok(document.activeElement === prompt, "Async audio completion must not move the learner's focus");
+  await click(view.getByRole("button", { name: "I've answered — show the model" }));
+  const host = view.container.querySelector("[data-yo-lesson-deck-screen-host-id]")!;
+  await act(async () => { host.setAttribute("data-yo-lesson-deck-screen-host-active", "false"); });
+  outside.focus();
+  await click(view.getByRole("button", { name: "Next exchange" }));
+  assert.ok(document.activeElement === outside, "A hidden deck screen must never capture focus");
+});
+
 async function main() {
   let failed = 0;
   const originalAudioReady = {

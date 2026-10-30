@@ -10,6 +10,7 @@ const STAGES = ["listen", "questions", "transcript", "roleplay"] as const;
 type Stage = (typeof STAGES)[number];
 type Playback = "idle" | "loading" | "playing";
 type RoleplayPhase = "ready" | "listening" | "respond" | "model";
+type FocusTarget = "question" | "transcript" | "turn" | "model" | "finished";
 
 const COPY = {
   stages: {
@@ -40,6 +41,7 @@ const COPY = {
   correct: lstr("Bien repéré !", "You caught it!", "¡Bien identificado!"),
   incorrect: lstr("À revoir", "Review this", "Para repasar"),
   tryAgain: lstr("Réessayer cette question", "Try this question again", "Reintentar esta pregunta"),
+  previousQuestion: lstr("Question précédente", "Previous question", "Pregunta anterior"),
   nextQuestion: lstr("Question suivante", "Next question", "Siguiente pregunta"),
   reviewDialogue: lstr("Lire le dialogue", "Read the conversation", "Leer el diálogo"),
   previousLine: lstr("Réplique précédente", "Previous line", "Frase anterior"),
@@ -75,6 +77,9 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
   const cancelClipRef = useRef<(() => void) | null>(null);
   const lastPlayRef = useRef<{ ids: string[]; onComplete?: () => void } | null>(null);
   const rateRef = useRef(1);
+  const pendingFocusRef = useRef<FocusTarget | null>(null);
+  const focusTargetsRef = useRef<Partial<Record<FocusTarget, HTMLElement | null>>>({});
+  const [focusRequest, setFocusRequest] = useState(0);
   const [stage, setStage] = useState<Stage>("listen");
   const [playback, setPlayback] = useState<Playback>("idle");
   const [audioError, setAudioError] = useState(false);
@@ -92,6 +97,26 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
   const selected = responses[question.id];
   const line = scene.lines[transcriptIndex];
   const text = (key: keyof Omit<typeof COPY, "stages">) => t(COPY[key], locale);
+
+  // Only explicit learner transitions request focus. Media completion, locale
+  // changes and initial rendering must leave the learner's focus untouched.
+  // Each request has its own render token, including same-stage transitions.
+  useEffect(() => {
+    const target = pendingFocusRef.current;
+    pendingFocusRef.current = null;
+    if (!target) return;
+    const root = rootRef.current;
+    const host = root?.closest("[data-yo-lesson-deck-screen-host-id]");
+    if (!root || document.visibilityState === "hidden" ||
+      host?.getAttribute("data-yo-lesson-deck-screen-host-active") === "false" ||
+      root.closest('[hidden], [inert], [aria-hidden="true"]')) return;
+    focusTargetsRef.current[target]?.focus();
+  }, [focusRequest]);
+
+  function requestFocus(target: FocusTarget) {
+    pendingFocusRef.current = target;
+    setFocusRequest((request) => request + 1);
+  }
 
   const stopPlayback = useCallback((updateUI = true) => {
     runRef.current += 1;
@@ -192,16 +217,22 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
     }
   }
 
-  function changeStage(next: Stage) {
+  function changeStage(next: Stage, moveFocus = false) {
     stopPlayback();
     lastPlayRef.current = null;
     setAudioError(false);
+    if (moveFocus) {
+      const target = next === "questions" ? "question" : next === "transcript" ? "transcript" :
+        next === "roleplay" ? roleplayFinished ? "finished" : "turn" : null;
+      if (target) requestFocus(target);
+    }
     setStage(next);
   }
-  function changeItem(update: () => void) {
+  function changeItem(update: () => void, focusTarget?: FocusTarget) {
     stopPlayback();
     lastPlayRef.current = null;
     setAudioError(false);
+    if (focusTarget) requestFocus(focusTarget);
     update();
   }
   function changeRate(value: number) {
@@ -217,6 +248,7 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
     setRoleplayPhase("ready");
     setShowPrompt(false);
     setRoleplayFinished(false);
+    requestFocus("turn");
   }
   function beginResponse() {
     if (turn.promptLineIds.length === 0) {
@@ -251,7 +283,7 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
         <p>{text("error")}</p>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => { const request = lastPlayRef.current; if (request) void playLines(request.ids, request.onComplete); }} className={secondary}>{text("retryAudio")}</button>
-          <button type="button" onClick={() => changeStage("transcript")} className={secondary}>{text("transcript")}</button>
+          <button type="button" onClick={() => changeStage("transcript", true)} className={secondary}>{text("transcript")}</button>
         </div>
       </div> : null}
 
@@ -259,14 +291,14 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
         <p className="text-sm text-[#566073]">{text("listenHint")}</p>
         <button type="button" disabled={!scene.audioReady} onClick={() => void playLines(scene.lines.map((item) => item.id))} className={primary}>{text("play")}</button>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => changeStage("questions")} className={secondary}>{text("check")}</button>
-          <button type="button" onClick={() => changeStage("transcript")} className={secondary}>{text("transcript")}</button>
+          <button type="button" onClick={() => changeStage("questions", true)} className={secondary}>{text("check")}</button>
+          <button type="button" onClick={() => changeStage("transcript", true)} className={secondary}>{text("transcript")}</button>
         </div>
       </div> : null}
 
       {stage === "questions" ? <div className="space-y-3" data-testid="arrival-questions">
         <p className="text-xs font-semibold text-[#566073]">{questionIndex + 1} / {scene.questions.length} · {text("questionHint")}</p>
-        <h3 aria-live="polite" className="font-bold text-[#0F6E56]">{t(question.prompt, locale)}</h3>
+        <h3 ref={(node) => { focusTargetsRef.current.question = node; }} tabIndex={-1} aria-live="polite" className="font-bold text-[#0F6E56]">{t(question.prompt, locale)}</h3>
         <button type="button" disabled={!scene.audioReady} onClick={() => void playLines([question.replayLineId])} className={secondary}>{text("replay")}</button>
         <div className="grid gap-2">
           {question.options.map((option) => <button key={option.id} type="button" lang="es" aria-pressed={selected === option.id} disabled={Boolean(selected)} onClick={() => setResponses((current) => ({ ...current, [question.id]: option.id }))} className={`${secondary} text-left ${selected === option.id ? "ring-2 ring-[#0F6E56]" : ""}`}>{option.target}</button>)}
@@ -274,16 +306,17 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
         {selected ? <div role="status" className="space-y-2 rounded-xl bg-[#F4FBF9] p-3 text-sm text-[#0F6E56]">
           <p className="font-bold">{selected === question.correctOptionId ? text("correct") : text("incorrect")}</p>
           <p>{t(question.feedback, locale)}</p>
-          <button type="button" onClick={() => setResponses((current) => { const next = { ...current }; delete next[question.id]; return next; })} className={secondary}>{text("tryAgain")}</button>
+          <button type="button" onClick={() => { requestFocus("question"); setResponses((current) => { const next = { ...current }; delete next[question.id]; return next; }); }} className={secondary}>{text("tryAgain")}</button>
         </div> : null}
         <div className="flex flex-wrap gap-2">
-          {selected && questionIndex < scene.questions.length - 1 ? <button type="button" onClick={() => changeItem(() => setQuestionIndex(questionIndex + 1))} className={primary}>{text("nextQuestion")}</button> : null}
-          <button type="button" onClick={() => changeStage("transcript")} className={secondary}>{text("reviewDialogue")}</button>
+          {questionIndex > 0 ? <button type="button" onClick={() => changeItem(() => setQuestionIndex(questionIndex - 1), "question")} className={secondary}>{text("previousQuestion")}</button> : null}
+          {selected && questionIndex < scene.questions.length - 1 ? <button type="button" onClick={() => changeItem(() => setQuestionIndex(questionIndex + 1), "question")} className={primary}>{text("nextQuestion")}</button> : null}
+          <button type="button" onClick={() => changeStage("transcript", true)} className={secondary}>{text("reviewDialogue")}</button>
         </div>
       </div> : null}
 
       {stage === "transcript" ? <div className="space-y-3" data-testid="arrival-transcript">
-        <p className="text-xs font-semibold text-[#566073]">{transcriptIndex + 1} / {scene.lines.length} · {t(line.speaker, locale)}</p>
+        <h3 ref={(node) => { focusTargetsRef.current.transcript = node; }} tabIndex={-1} className="text-xs font-semibold text-[#566073]">{transcriptIndex + 1} / {scene.lines.length} · {t(line.speaker, locale)}</h3>
         <div className="space-y-2 rounded-xl border border-[#DDF4F1] bg-white p-3">
           <p lang="es" className="text-lg font-semibold text-[#0F6E56]">{line.target}</p>
           {locale !== "es" ? <p className="text-sm text-[#566073]">{t(line.translation, locale)}</p> : null}
@@ -297,16 +330,16 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
           <summary className="cursor-pointer font-bold">{text("phrases")}</summary>
           <ul className="mt-2 space-y-2">{scene.phrases.map((phrase) => <li key={phrase.id}><p lang="es" className="font-semibold">{phrase.target}</p>{locale !== "es" ? <p className="text-[#566073]">{t(phrase.translation, locale)}</p> : null}</li>)}</ul>
         </details>
-        <button type="button" onClick={() => changeStage("roleplay")} className={primary}>{text("startRoleplay")}</button>
+        <button type="button" onClick={() => changeStage("roleplay", true)} className={primary}>{text("startRoleplay")}</button>
       </div> : null}
 
       {stage === "roleplay" ? <div className="space-y-3" data-testid="arrival-roleplay">
         {roleplayFinished ? <>
-          <p role="status" className="rounded-xl bg-[#DDF4F1]/65 p-3 font-semibold text-[#0F6E56]">{text("finished")}</p>
+          <p ref={(node) => { focusTargetsRef.current.finished = node; }} tabIndex={-1} role="status" className="rounded-xl bg-[#DDF4F1]/65 p-3 font-semibold text-[#0F6E56]">{text("finished")}</p>
           <button type="button" onClick={() => moveTurn(0)} className={secondary}>{text("restart")}</button>
         </> : <>
           <p className="text-xs text-[#566073]">{roleplayIndex + 1} / {scene.roleplay.length} · {text("roleplayHint")}</p>
-          <p className="font-semibold text-[#0F6E56]">{t(turn.instruction, locale)}</p>
+          <h3 ref={(node) => { focusTargetsRef.current.turn = node; }} tabIndex={-1} className="font-semibold text-[#0F6E56]">{t(turn.instruction, locale)}</h3>
           <div className="flex flex-wrap gap-2">
             <button type="button" disabled={turn.promptLineIds.length > 0 && !scene.audioReady} onClick={beginResponse} className={primary}>{turn.promptLineIds.length > 0 ? text("prompt") : text("ready")}</button>
             {turn.promptLineIds.length > 0 ? <button type="button" onClick={() => changeItem(() => { setShowPrompt(true); setRoleplayPhase("respond"); })} className={secondary}>{text("readPrompt")}</button> : null}
@@ -314,16 +347,16 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
           {showPrompt ? <div className="space-y-1 rounded-xl bg-[#F4FBF9] p-3">{turn.promptLineIds.map((id) => <p key={id} lang="es" className="text-sm font-semibold text-[#0F6E56]">{allLines.find((item) => item.id === id)?.target}</p>)}</div> : null}
           {roleplayPhase === "respond" ? <div className="space-y-3 rounded-xl border border-[#DDF4F1] p-3">
             <p role="status" className="text-sm text-[#0F6E56]">{text("yourTurn")}</p>
-            <button type="button" onClick={() => changeItem(() => setRoleplayPhase("model"))} className={secondary}>{text("revealModel")}</button>
+            <button type="button" onClick={() => changeItem(() => setRoleplayPhase("model"), "model")} className={secondary}>{text("revealModel")}</button>
           </div> : null}
           {roleplayPhase === "model" ? <div data-testid="arrival-roleplay-model" className="space-y-2 rounded-xl bg-[#DDF4F1]/65 p-3">
-            <p className="text-xs font-bold uppercase tracking-wide text-[#0F6E56]/70">{text("model")}</p>
+            <h3 ref={(node) => { focusTargetsRef.current.model = node; }} tabIndex={-1} className="text-xs font-bold uppercase tracking-wide text-[#0F6E56]/70">{text("model")}</h3>
             {turn.modelLineIds.map((id) => { const model = allLines.find((item) => item.id === id)!; return <div key={id}><p lang="es" className="font-semibold text-[#0F6E56]">{model.target}</p>{locale !== "es" ? <p className="text-sm text-[#566073]">{t(model.translation, locale)}</p> : null}</div>; })}
             <button type="button" disabled={!scene.audioReady} onClick={() => void playLines(turn.modelLineIds)} className={secondary}>{text("playModel")}</button>
           </div> : null}
           <div className="flex flex-wrap gap-2">
             {roleplayIndex > 0 ? <button type="button" onClick={() => moveTurn(roleplayIndex - 1)} className={secondary}>{text("previousTurn")}</button> : null}
-            {roleplayPhase === "model" ? <button type="button" onClick={() => { if (roleplayIndex < scene.roleplay.length - 1) moveTurn(roleplayIndex + 1); else changeItem(() => setRoleplayFinished(true)); }} className={primary}>{roleplayIndex < scene.roleplay.length - 1 ? text("nextTurn") : text("finish")}</button> : null}
+            {roleplayPhase === "model" ? <button type="button" onClick={() => { if (roleplayIndex < scene.roleplay.length - 1) moveTurn(roleplayIndex + 1); else changeItem(() => setRoleplayFinished(true), "finished"); }} className={primary}>{roleplayIndex < scene.roleplay.length - 1 ? text("nextTurn") : text("finish")}</button> : null}
           </div>
         </>}
       </div> : null}
