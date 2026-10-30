@@ -542,11 +542,48 @@ const restrictedPathPatterns: RegExp[] = [
   /^app\/\(app\)\/legal\//,
   /^public\/.*\.(?:mp3|wav|m4a)$/i,
   /^public\/audio\//,
+  /\.mp3$/i,
   /^scripts\/(?:generate-yopratiqo-audio|.*openai)/i,
   /^app\/sitemap\.ts$/,
   /^app\/robots\.ts$/,
   /^lib\/seo\//,
 ];
+const arrivalAudioRoot = "public/audio/yo/es/do/module-2/arrival-v1";
+const allowedArrivalPublicClips = new Set([
+  ...Array.from({ length: 5 }, (_, index) => `${arrivalAudioRoot}/airport-${String(index + 1).padStart(2, "0")}.mp3`),
+  ...Array.from({ length: 8 }, (_, index) => `${arrivalAudioRoot}/hotel-${String(index + 1).padStart(2, "0")}.mp3`),
+  `${arrivalAudioRoot}/hotel-repeat.mp3`,
+]);
+// Preserve only the two approved original takes outside public/. These
+// provenance masters are never served as additional lesson audio paths.
+const allowedArrivalSourceMasters = new Set([
+  "docs/yopratiqo/audio/arrival-v1/masters/staff-original.mp3",
+  "docs/yopratiqo/audio/arrival-v1/masters/traveler-original.mp3",
+]);
+function isRestrictedChange(file: string): boolean {
+  if (allowedArrivalPublicClips.has(file) || allowedArrivalSourceMasters.has(file)) return false;
+  return restrictedPathPatterns.some((pattern) => pattern.test(file));
+}
+assert.equal(allowedArrivalPublicClips.size, 14);
+assert.equal(allowedArrivalSourceMasters.size, 2);
+for (const file of [...allowedArrivalPublicClips, ...allowedArrivalSourceMasters]) {
+  assert.equal(isRestrictedChange(file), false, `Approved arrival recording rejected: ${file}`);
+}
+for (const file of [
+  `${arrivalAudioRoot}/airport-06.mp3`,
+  `${arrivalAudioRoot}/hotel-09.mp3`,
+  `${arrivalAudioRoot}/hotel-01.wav`,
+  `${arrivalAudioRoot}/staff-original.mp3`,
+  "public/audio/yo/es/do/module-2/arrival-v2/hotel-01.mp3",
+  "docs/yopratiqo/audio/arrival-v1/masters/extra.mp3",
+  "docs/yopratiqo/audio/arrival-v1/masters/staff-original-2.mp3",
+  "docs/yopratiqo/audio/arrival-v2/masters/staff-original.mp3",
+  "docs/unrelated.mp3",
+  "lib/payments/checkout.ts",
+  "supabase/migrations/example.sql",
+]) {
+  assert.equal(isRestrictedChange(file), true, `Scope guard must reject ${file}`);
+}
 const status = execSync("git status --porcelain -uall", {
   cwd: root,
   encoding: "utf8",
@@ -568,12 +605,8 @@ const ignoredUntracked = new Set([
 ]);
 for (const file of changedFiles) {
   if (ignoredUntracked.has(file)) continue;
-  for (const re of restrictedPathPatterns) {
-    if (re.test(file)) {
-      assert.fail(`restricted system touched by lesson-deck PR: ${file}`);
-    }
-  }
+  assert.equal(isRestrictedChange(file), false, `restricted system touched by lesson-deck PR: ${file}`);
 }
-ok("15) no restricted system (Stripe / payments / tax / RLS / migrations / legal / Membre Pro / audio / SEO) touched");
+ok("15) restricted systems unchanged; only 14 arrival clips and two approved source takes allowed");
 
 console.log(`\n${pass} module-lesson-deck assertions passed`);

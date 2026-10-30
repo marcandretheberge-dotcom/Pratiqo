@@ -4,10 +4,11 @@
  *
  * Design contract:
  *   - No "use client". Pure server render — no hooks, no browser APIs.
- *   - Browser SpeechSynthesis audio only. No MP3s generated or imported.
+ *   - Arrival dialogues use an asset-gated listening lesson. Other practice
+ *     surfaces retain their browser-speech controls.
  *   - No checkout, no payment gating, no Stripe, no Supabase.
- *   - Interactive elements (quiz reveals, mini-mission) use <details>/<summary>
- *     so they work without JavaScript.
+ *   - Static reveal sections (quiz, mini-mission) use <details>/<summary>.
+ *     The arrival listening lesson is an interactive client component.
  *   - All UI labels use YoLocalizedString + t() for FR/EN/ES support.
  *   - Spanish phrases rendered with lang="es" for accessibility.
  *
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 
 import { dominicanRepublicHotelAirport } from "@/lib/yo/dominicanRepublicHotelAirport";
+import { arrivalListeningScenes } from "@/lib/yo/dominicanArrivalListening";
 import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale } from "@/lib/yo/types";
 import {
@@ -36,6 +38,7 @@ import {
   type YoBreadcrumbItem,
 } from "@/components/yo/YoBreadcrumb";
 import { YoSpeechButton } from "@/components/yo/YoSpeechButton";
+import { YoArrivalListeningLesson } from "@/components/yo/YoArrivalListeningLesson";
 import { YoFlashcardPreview } from "@/components/yo/YoFlashcardPreview";
 import { YoPrintableResourceCard } from "@/components/yo/YoPrintableResourceCard";
 import { module2FlashcardsToYo } from "@/lib/yo/dominicanRepublicFlashcardAdapters";
@@ -67,12 +70,13 @@ const LABEL_NOTE = lstr("Note", "Note");
 const LABEL_DIALOGUE_AIRPORT_EYEBROW = lstr(
   "Dialogue · Aéroport",
   "Dialogue · Airport",
+  "Diálogo · Aeropuerto",
 );
 const LABEL_DIALOGUE_HOTEL_EYEBROW = lstr(
   "Dialogue · Hôtel",
   "Dialogue · Hotel",
+  "Diálogo · Hotel",
 );
-const LABEL_DIALOGUE_SCENARIO = lstr("La scène", "The scene");
 const LABEL_SPANISH = lstr("En espagnol", "In Spanish");
 const LABEL_GLOSS = lstr("Traduction", "Translation");
 const LABEL_GRAMMAR = lstr("Grammaire express", "Quick grammar");
@@ -133,9 +137,9 @@ const LABEL_AUDIO_COMING = lstr(
   "Audio de práctica",
 );
 const LABEL_AUDIO_NOTE = lstr(
-  "Audio de pratique intégré au navigateur. La voix peut varier selon l'appareil.",
-  "Practice audio uses your browser voice. Voice quality may vary by device.",
-  "El audio de práctica usa la voz del navegador. La calidad puede variar según el dispositivo.",
+  "Pour les phrases, les cartes et les réponses d'exercice, la voix du navigateur peut varier selon l'appareil.",
+  "For phrases, flashcards, and exercise answers, the browser voice may vary by device.",
+  "En las frases, las tarjetas y las respuestas de los ejercicios, la voz del navegador puede variar según el dispositivo.",
 );
 const LABEL_WORKSHEETS = lstr(
   "Cahier imprimable",
@@ -441,84 +445,23 @@ function DialogueSection({
   dialogue: Dom2Dialogue;
   locale: YoLocale;
   eyebrowLabel: ReturnType<typeof lstr>;
-  sectionId: string;
+  sectionId: "airport" | "hotel";
 }) {
   const titleId = `yo-do-m2-${sectionId}-title`;
   return (
     <section
       aria-labelledby={titleId}
-      className="mx-auto w-full max-w-5xl px-5 pt-10 sm:px-8 sm:pt-14"
+      data-yo-dialogue-id={dialogue.id}
+      className="mx-auto w-full max-w-5xl px-3 pt-3 sm:px-5 sm:pt-4"
     >
-      <p className="flex items-center gap-2 text-[0.75rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/70">
+      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#0F6E56]/70">
         <Users className="size-4 text-[#1D9E75]" aria-hidden />
         {t(eyebrowLabel, locale)}
       </p>
-      <h2
-        id={titleId}
-        className="mt-2 text-xl font-semibold tracking-tight text-[#0F6E56] sm:text-2xl"
-      >
-        {t(dialogue.title, locale)}
+      <h2 id={titleId} className="mt-2 text-xl font-semibold text-[#0F6E56]">
+        {t(arrivalListeningScenes[sectionId].title, locale)}
       </h2>
-
-      {/* Scenario */}
-      <div className="mt-3 rounded-2xl border border-[#DDF4F1] bg-[#F4FBF9] p-4 sm:p-5">
-        <p className="text-[0.7rem] font-black uppercase tracking-[0.14em] text-[#0F6E56]/60">
-          {t(LABEL_DIALOGUE_SCENARIO, locale)}
-        </p>
-        <p className="mt-1 text-sm leading-relaxed text-[#0F6E56]/80">
-          {t(dialogue.scenario, locale)}
-        </p>
-      </div>
-
-      {/* Dialogue lines */}
-      <ol role="list" className="mt-4 space-y-2.5">
-        {dialogue.lines.map((line, i) => {
-          const isLearner = line.isLearner === true;
-          const note = pickLocale(locale, line.noteFr ?? "", line.noteEn ?? "");
-          return (
-            <li
-              key={`${sectionId}-line-${i}`}
-              className={`flex ${isLearner ? "justify-end" : "justify-start"}`}
-            >
-              <div
-                className={`max-w-[85%] rounded-2xl p-3.5 sm:p-4 ${
-                  isLearner
-                    ? "rounded-tr-sm border border-teal-200 bg-[#DDF4F1]/60"
-                    : "rounded-tl-sm border border-gray-100 bg-white shadow-[0_1px_2px_rgba(15,58,52,0.04)]"
-                }`}
-              >
-                <p
-                  className={`text-[0.65rem] font-black uppercase tracking-[0.14em] ${
-                    isLearner ? "text-[#1D9E75]" : "text-[#0F6E56]/50"
-                  }`}
-                >
-                  {t(line.speaker, locale)}
-                </p>
-                {/* Spanish target */}
-                <div className="mt-1 flex flex-wrap items-start justify-between gap-3">
-                  <p
-                    className="text-sm font-semibold leading-snug text-[#0F6E56] sm:text-base"
-                    lang="es"
-                  >
-                    {line.target}
-                  </p>
-                  <YoSpeechButton text={line.target} locale={locale} compact />
-                </div>
-                {/* FR/EN gloss */}
-                <p className="mt-1 text-xs italic text-[#0F6E56]/65">
-                  {pickLocale(locale, line.glossFr, line.glossEn)}
-                </p>
-                {/* Optional note */}
-                {note ? (
-                  <p className="mt-2 text-[0.7rem] leading-relaxed text-[#0F6E56]/50">
-                    {note}
-                  </p>
-                ) : null}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+      <YoArrivalListeningLesson sceneId={sectionId} locale={locale} />
     </section>
   );
 }
@@ -668,11 +611,9 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
         title={t(LABEL_FLASHCARDS_TITLE, locale)}
         subtitle={t(LABEL_HINT, locale)}
         sectionClassName="pt-3 sm:pt-4"
-        // The browser-only audio button used across Module 2 — keeps
-        // the same speech/no-MP3 implementation that all other Module
-        // 2 surfaces rely on. Uses a serializable string discriminator
-        // because YoFlashcardPreview is a client component mounted from
-        // this server component (RSC boundary forbids function props).
+        // Flashcards retain browser speech; the arrival dialogues use
+        // their own recordings. The serializable discriminator crosses
+        // the Server-to-Client boundary without a function prop.
         audioMode="browser-speech"
       />
     </div>
@@ -1070,9 +1011,9 @@ const DECK_TITLE_PHRASES = lstr(
   "15 frases que te salvan al llegar",
 );
 const DECK_TITLE_AIRPORT = lstr(
-  "Tu viens d'atterrir à Punta Cana",
-  "You just landed in Punta Cana",
-  "Acabas de aterrizar en Punta Cana",
+  "Tu arrives à l'aéroport",
+  "You arrive at the airport",
+  "Llegas al aeropuerto",
 );
 const DECK_TITLE_HOTEL = lstr(
   "Le check-in à l'hôtel",
@@ -1126,9 +1067,9 @@ const DECK_HELPER_PHRASES = lstr(
   "No tienes que memorizar todo ahora — léelas y vuelve.",
 );
 const DECK_HELPER_AIRPORT = lstr(
-  "Lis le dialogue, écoute la voix, respire — tu y arrives.",
-  "Read the dialogue, listen to the voice, breathe — you've got this.",
-  "Lee el diálogo, escucha la voz, respira — lo logras.",
+  "Écoute, vérifie ce que tu as compris, puis prends la parole.",
+  "Listen, check what you understood, then take your turn speaking.",
+  "Escucha, comprueba lo que entendiste y toma tu turno para hablar.",
 );
 const DECK_HELPER_HOTEL = lstr(
   "Annonce ta réservation calmement — c'est le moment clé.",

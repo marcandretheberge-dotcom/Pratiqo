@@ -50,6 +50,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { useLocale } from "@/lib/locale-context";
+import { buildYoLocaleHref } from "@/lib/yo/localize";
 import { YoStudentCompanionCard } from "@/components/yo/YoStudentCompanionCard";
 import { YoStepNavigator } from "@/components/yo/YoStepNavigator";
 import type { StudentCompanionLocale } from "@/lib/yopratiqo/studentCompanionState";
@@ -255,7 +256,7 @@ export function YoStudentHubContent(): React.JSX.Element {
     return deriveDominicanRdCourseProgress(snapshots);
   }, [progressFetch]);
 
-  const continueHref = courseProgress.continueHref;
+  const continueHref = buildYoLocaleHref(courseProgress.continueHref, l);
   const continueLabel =
     progressFetch.status === "loading"
       ? copy.continueLabel
@@ -340,7 +341,7 @@ export function YoStudentHubContent(): React.JSX.Element {
         </Link>
         <Link
           data-testid="yo-student-hub-course-home-link"
-          href={HREFS.courseHome}
+          href={buildYoLocaleHref(HREFS.courseHome, l)}
           className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#0F6E56]/20 bg-white px-5 py-3 text-sm font-bold text-[#0F6E56] transition hover:bg-[#FFF4D6]"
         >
           <MapPin className="size-4 text-[#1D9E75]" aria-hidden />
@@ -378,7 +379,7 @@ export function YoStudentHubContent(): React.JSX.Element {
         {pathSteps.map((step, idx) => (
           <li key={step.href}>
             <Link
-              href={step.href}
+              href={buildYoLocaleHref(step.href, l)}
               data-testid={`yo-student-hub-path-step-${idx + 1}`}
               className={cn(
                 "group flex items-center gap-3 rounded-2xl border border-[#DDF4F1] bg-[#FAFCFB] px-3 py-3 transition hover:border-[#1D9E75]/40 hover:bg-white",
