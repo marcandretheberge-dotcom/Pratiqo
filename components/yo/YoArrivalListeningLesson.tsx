@@ -10,7 +10,7 @@ const STAGES = ["listen", "questions", "transcript", "roleplay"] as const;
 type Stage = (typeof STAGES)[number];
 type Playback = "idle" | "loading" | "playing";
 type RoleplayPhase = "ready" | "listening" | "respond" | "model";
-type FocusTarget = "question" | "transcript" | "turn" | "model" | "finished";
+type FocusTarget = "question" | "feedback" | "transcript" | "turn" | "model" | "finished";
 
 const COPY = {
   stages: {
@@ -301,10 +301,10 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
         <h3 ref={(node) => { focusTargetsRef.current.question = node; }} tabIndex={-1} aria-live="polite" className="font-bold text-[#0F6E56]">{t(question.prompt, locale)}</h3>
         <button type="button" disabled={!scene.audioReady} onClick={() => void playLines([question.replayLineId])} className={secondary}>{text("replay")}</button>
         <div className="grid gap-2">
-          {question.options.map((option) => <button key={option.id} type="button" lang="es" aria-pressed={selected === option.id} disabled={Boolean(selected)} onClick={() => setResponses((current) => ({ ...current, [question.id]: option.id }))} className={`${secondary} text-left ${selected === option.id ? "ring-2 ring-[#0F6E56]" : ""}`}>{option.target}</button>)}
+          {question.options.map((option) => <button key={option.id} type="button" lang="es" aria-pressed={selected === option.id} disabled={Boolean(selected)} onClick={() => { requestFocus("feedback"); setResponses((current) => ({ ...current, [question.id]: option.id })); }} className={`${secondary} text-left ${selected === option.id ? "ring-2 ring-[#0F6E56]" : ""}`}>{option.target}</button>)}
         </div>
         {selected ? <div role="status" className="space-y-2 rounded-xl bg-[#F4FBF9] p-3 text-sm text-[#0F6E56]">
-          <p className="font-bold">{selected === question.correctOptionId ? text("correct") : text("incorrect")}</p>
+          <h4 ref={(node) => { focusTargetsRef.current.feedback = node; }} tabIndex={-1} className="font-bold">{selected === question.correctOptionId ? text("correct") : text("incorrect")}</h4>
           <p>{t(question.feedback, locale)}</p>
           <button type="button" onClick={() => { requestFocus("question"); setResponses((current) => { const next = { ...current }; delete next[question.id]; return next; }); }} className={secondary}>{text("tryAgain")}</button>
         </div> : null}

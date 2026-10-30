@@ -241,6 +241,33 @@ test("questions show Spanish choices before localized feedback and allow retry",
   assert.ok(view.getByText("You caught it!"));
 });
 
+test("committing an answer moves focus from the disabled choice to localized feedback, then retry restores the question", async () => {
+  const labels = {
+    fr: { stage: "2 · Comprendre", incorrect: "À revoir", correct: "Bien repéré !", retry: "Réessayer cette question" },
+    en: { stage: "2 · Understand", incorrect: "Review this", correct: "You caught it!", retry: "Try this question again" },
+    es: { stage: "2 · Comprender", incorrect: "Para repasar", correct: "¡Bien identificado!", retry: "Reintentar esta pregunta" },
+  } as const;
+  const question = arrivalListeningScenes.airport.questions[0];
+  for (const locale of ["fr", "en", "es"] as const) {
+    const view = render(node("airport", locale));
+    await click(view.getByRole("button", { name: labels[locale].stage }));
+    for (const correct of [false, true]) {
+      const option = question.options.find((item) => (item.id === question.correctOptionId) === correct)!;
+      const choice = view.getByRole("button", { name: option.target }) as HTMLButtonElement;
+      choice.focus();
+      await click(choice);
+      assert.equal(choice.disabled, true);
+      assert.ok(document.activeElement === view.getByRole("heading", { name: correct ? labels[locale].correct : labels[locale].incorrect }));
+      const retry = view.getByRole("button", { name: labels[locale].retry });
+      retry.focus();
+      await click(retry);
+      assert.ok(document.activeElement === view.getByRole("heading", { name: question.prompt[locale]! }));
+      assert.equal(choice.disabled, false);
+    }
+    cleanup();
+  }
+});
+
 test("both hotel listening questions are reachable without exposing transcripts", async () => {
   const view = render(node("hotel"));
   await click(view.getByRole("button", { name: "2 · Comprendre" }));
