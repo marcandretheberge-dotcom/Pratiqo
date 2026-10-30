@@ -47,7 +47,12 @@ export interface ArrivalListeningPhrase {
 
 export interface ArrivalListeningScene {
   id: ArrivalSceneId;
-  /** Enable only after every referenced recording is present and reviewed. */
+  /**
+   * Technical availability for the draft preview: every referenced clip
+   * exists and decodes, with content-check findings documented. This does not approve
+   * pronunciation, naturalness, or accent; human listening remains required
+   * before publication.
+   */
   audioReady: boolean;
   title: YoLocalizedString;
   scenario: YoLocalizedString;
@@ -119,7 +124,7 @@ function phrase(line: ArrivalListeningLine): ArrivalListeningPhrase {
 export const arrivalListeningScenes: Record<ArrivalSceneId, ArrivalListeningScene> = {
   airport: {
     id: "airport",
-    audioReady: false,
+    audioReady: true,
     title: lstr("Trouver un taxi", "Find a taxi", "Encontrar un taxi"),
     scenario: lstr(
       "Scène fictive à l'aéroport : tu cherches un taxi pour rejoindre ton hôtel.",
@@ -191,7 +196,7 @@ export const arrivalListeningScenes: Record<ArrivalSceneId, ArrivalListeningScen
   },
   hotel: {
     id: "hotel",
-    audioReady: false,
+    audioReady: true,
     title: lstr("À la réception", "At the front desk", "En recepción"),
     scenario: lstr(
       "Scène fictive : tu arrives à l'hôtel dans l'après-midi. La réservation est au nom d'Alex Martín.",

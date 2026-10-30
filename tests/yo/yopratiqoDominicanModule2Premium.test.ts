@@ -57,9 +57,15 @@ const ALLOWED_ARRIVAL_AUDIO_FILES = new Set([
   ...Array.from({ length: 8 }, (_, index) => `${ARRIVAL_AUDIO_ROOT}/hotel-${String(index + 1).padStart(2, "0")}.mp3`),
   `${ARRIVAL_AUDIO_ROOT}/hotel-repeat.mp3`,
 ]);
+// The two approved source takes are preserved outside public/. They are
+// provenance assets, not additional playable lesson paths.
+const ALLOWED_ARRIVAL_SOURCE_MASTERS = new Set([
+  "docs/yopratiqo/audio/arrival-v1/masters/staff-original.mp3",
+  "docs/yopratiqo/audio/arrival-v1/masters/traveler-original.mp3",
+]);
 
 function assertAllowedChange(file: string): void {
-  if (ALLOWED_ARRIVAL_AUDIO_FILES.has(file)) return;
+  if (ALLOWED_ARRIVAL_AUDIO_FILES.has(file) || ALLOWED_ARRIVAL_SOURCE_MASTERS.has(file)) return;
   const forbiddenPrefixes = [
     "app/api/",
     "app/(auth)/",
@@ -130,9 +136,12 @@ test("printable worksheet surface is present and print-friendly", () => {
   assert.ok(src.includes("itinerary"));
 });
 
-test("audio allowance covers exactly 14 planned clips and preserves restricted systems", () => {
+test("audio allowance covers 14 public clips and two approved source takes", () => {
   assert.equal(ALLOWED_ARRIVAL_AUDIO_FILES.size, 14);
-  for (const file of ALLOWED_ARRIVAL_AUDIO_FILES) assert.doesNotThrow(() => assertAllowedChange(file));
+  assert.equal(ALLOWED_ARRIVAL_SOURCE_MASTERS.size, 2);
+  for (const file of [...ALLOWED_ARRIVAL_AUDIO_FILES, ...ALLOWED_ARRIVAL_SOURCE_MASTERS]) {
+    assert.doesNotThrow(() => assertAllowedChange(file));
+  }
   for (const file of [
     `${ARRIVAL_AUDIO_ROOT}/airport-00.mp3`,
     `${ARRIVAL_AUDIO_ROOT}/airport-06.mp3`,
@@ -142,6 +151,10 @@ test("audio allowance covers exactly 14 planned clips and preserves restricted s
     "public/audio/yo/es/do/module-2/arrival-v2/hotel-01.mp3",
     "public/audio/unrelated.mp3",
     "assets/unrelated.mp3",
+    "docs/yopratiqo/audio/arrival-v1/masters/extra.mp3",
+    "docs/yopratiqo/audio/arrival-v1/masters/staff-original-2.mp3",
+    "docs/yopratiqo/audio/arrival-v2/masters/staff-original.mp3",
+    `${ARRIVAL_AUDIO_ROOT}/staff-original.mp3`,
     "app/api/audio/route.ts",
     "app/(auth)/signin/page.tsx",
     "app/auth/callback/route.ts",

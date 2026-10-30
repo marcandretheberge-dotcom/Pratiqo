@@ -137,9 +137,9 @@ const LABEL_AUDIO_COMING = lstr(
   "Audio de práctica",
 );
 const LABEL_AUDIO_NOTE = lstr(
-  "Audio de pratique intégré au navigateur. La voix peut varier selon l'appareil.",
-  "Practice audio uses your browser voice. Voice quality may vary by device.",
-  "El audio de práctica usa la voz del navegador. La calidad puede variar según el dispositivo.",
+  "Pour les phrases, les cartes et les réponses d'exercice, la voix du navigateur peut varier selon l'appareil.",
+  "For phrases, flashcards, and exercise answers, the browser voice may vary by device.",
+  "En las frases, las tarjetas y las respuestas de los ejercicios, la voz del navegador puede variar según el dispositivo.",
 );
 const LABEL_WORKSHEETS = lstr(
   "Cahier imprimable",
@@ -611,11 +611,9 @@ function FlashcardsSection({ locale }: { locale: YoLocale }) {
         title={t(LABEL_FLASHCARDS_TITLE, locale)}
         subtitle={t(LABEL_HINT, locale)}
         sectionClassName="pt-3 sm:pt-4"
-        // The browser-only audio button used across Module 2 — keeps
-        // the same speech/no-MP3 implementation that all other Module
-        // 2 surfaces rely on. Uses a serializable string discriminator
-        // because YoFlashcardPreview is a client component mounted from
-        // this server component (RSC boundary forbids function props).
+        // Flashcards retain browser speech; the arrival dialogues use
+        // their own recordings. The serializable discriminator crosses
+        // the Server-to-Client boundary without a function prop.
         audioMode="browser-speech"
       />
     </div>

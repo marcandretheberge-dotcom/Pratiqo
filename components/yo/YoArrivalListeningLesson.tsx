@@ -23,7 +23,7 @@ const COPY = {
   listenHint: lstr("Écoute une première fois. Repère l'information utile avant d'ouvrir le texte.", "Listen once and pick out the useful information before opening the text.", "Escucha una vez e identifica la información útil antes de abrir el texto."),
   pending: lstr("Audio en préparation", "Audio in preparation", "Audio en preparación"),
   pendingHint: lstr("Les enregistrements ne sont pas encore disponibles. Tu peux déjà lire le dialogue et pratiquer à voix haute.", "The recordings are not available yet. You can already read the conversation and practise aloud.", "Las grabaciones todavía no están disponibles. Ya puedes leer el diálogo y practicar en voz alta."),
-  synthetic: lstr("Voix de synthèse · dialogue de pratique", "Synthetic voices · practice conversation", "Voces sintéticas · diálogo de práctica"),
+  synthetic: lstr("Voix de synthèse · version à valider à l’écoute", "Synthetic voices · awaiting listening review", "Voces sintéticas · versión pendiente de escucha y validación"),
   play: lstr("Écouter le dialogue", "Play the conversation", "Escuchar el diálogo"),
   replay: lstr("Réécouter", "Replay", "Volver a escuchar"),
   stop: lstr("Arrêter l'audio", "Stop audio", "Detener el audio"),
@@ -245,6 +245,7 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
         </div>
         {playback !== "idle" ? <button type="button" onClick={() => stopPlayback()} className={secondary}>{text("stop")}</button> : null}
       </div>}
+      {scene.audioReady ? <p className="text-xs text-[#566073]">{text("synthetic")}</p> : null}
       <p role="status" aria-live="polite" className={playback === "idle" ? "sr-only" : "text-xs text-[#0F6E56]/70"}>{playback === "loading" ? text("loading") : playback === "playing" ? text("playing") : ""}</p>
       {audioError ? <div role="alert" className="space-y-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
         <p>{text("error")}</p>
@@ -257,7 +258,6 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
       {stage === "listen" ? <div className="space-y-3" data-testid="arrival-listen">
         <p className="text-sm text-[#566073]">{text("listenHint")}</p>
         <button type="button" disabled={!scene.audioReady} onClick={() => void playLines(scene.lines.map((item) => item.id))} className={primary}>{text("play")}</button>
-        {scene.audioReady ? <p className="text-xs text-[#566073]">{text("synthetic")}</p> : null}
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => changeStage("questions")} className={secondary}>{text("check")}</button>
           <button type="button" onClick={() => changeStage("transcript")} className={secondary}>{text("transcript")}</button>

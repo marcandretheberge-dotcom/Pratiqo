@@ -73,6 +73,37 @@ test("pending scenes make no media request and remain readable in FR/EN/ES", asy
   }
 });
 
+test("ready preview keeps the listening-review notice visible in every stage and locale", async () => {
+  const copy = {
+    fr: {
+      notice: "Voix de synthèse · version à valider à l’écoute",
+      pending: "Audio en préparation",
+      steps: ["1 · Écouter", "2 · Comprendre", "3 · Lire", "4 · Parler"],
+    },
+    en: {
+      notice: "Synthetic voices · awaiting listening review",
+      pending: "Audio in preparation",
+      steps: ["1 · Listen", "2 · Understand", "3 · Read", "4 · Speak"],
+    },
+    es: {
+      notice: "Voces sintéticas · versión pendiente de escucha y validación",
+      pending: "Audio en preparación",
+      steps: ["1 · Escuchar", "2 · Comprender", "3 · Leer", "4 · Hablar"],
+    },
+  } as const;
+  arrivalListeningScenes.hotel.audioReady = true;
+  for (const locale of ["fr", "en", "es"] as const) {
+    const view = render(node("hotel", locale));
+    assert.equal(view.queryByText(copy[locale].pending), null);
+    for (const step of copy[locale].steps) {
+      await click(view.getByRole("button", { name: step }));
+      assert.ok(view.getByText(copy[locale].notice));
+      assert.equal(FakeAudio.instances.length, 0, "Stage navigation must not start media");
+    }
+    cleanup();
+  }
+});
+
 test("listening starts without text leakage or autoplay and sequences all scene clips", async () => {
   arrivalListeningScenes.airport.audioReady = true;
   const view = render(node("airport", "en"));
@@ -287,14 +318,20 @@ test("pending audio still permits text-based roleplay without media calls", asyn
 
 async function main() {
   let failed = 0;
+  const originalAudioReady = {
+    airport: arrivalListeningScenes.airport.audioReady,
+    hotel: arrivalListeningScenes.hotel.audioReady,
+  };
   try {
     for (const [name, fn] of cases) {
+      // Every case starts with an explicit pending fixture, regardless of
+      // whether the checked-in production scenes already have recordings.
+      arrivalListeningScenes.airport.audioReady = false;
+      arrivalListeningScenes.hotel.audioReady = false;
       try { await fn(); console.log(`ok - ${name}`); }
       catch (error) { failed += 1; console.error(`FAIL - ${name}`, error); }
       finally {
         cleanup();
-        arrivalListeningScenes.airport.audioReady = false;
-        arrivalListeningScenes.hotel.audioReady = false;
         FakeAudio.instances = [];
         FakeAudio.failConstruction = false;
         FakeAudio.rejectNext = false;
@@ -304,7 +341,10 @@ async function main() {
     assert.equal(failed, 0, `${failed} listening lesson cases failed`);
     console.log(`\n${cases.length} rendered arrival listening cases passed.`);
   } finally {
-    cleanup(); dom.window.close();
+    cleanup();
+    arrivalListeningScenes.airport.audioReady = originalAudioReady.airport;
+    arrivalListeningScenes.hotel.audioReady = originalAudioReady.hotel;
+    dom.window.close();
     for (const [key, descriptor] of originals) {
       if (descriptor) Object.defineProperty(globalThis, key, descriptor);
       else Reflect.deleteProperty(globalThis, key);

@@ -1,0 +1,1240 @@
+{
+  "version": "arrival-v1",
+  "status": "technical_candidate_pending_human_listening",
+  "language": "es",
+  "synthetic": true,
+  "accent_status": "Spanish practice voices; Dominican accent not validated.",
+  "method": {
+    "phrase_assignment": "Exact provider timestamp words split on provider break markers; compared with approved script.",
+    "cut_boundaries": "Independent ASR phrase windows crosschecked against provider words and sustained20ms waveform RMS activity, with300ms lead/220ms tail safety padding. The unclassified staff18.56-19.12s burst is retained before hotel-07 rather than excised.",
+    "activity_threshold_dbfs": -50.0,
+    "activity_rms_threshold_dbfs": -40.0,
+    "activity_frame_seconds": 0.02,
+    "encoding": "MP3 libmp3lame q:a=2, mono44.1kHz, uniform-1.5dB headroom,10ms fade-in/20ms fade-out confined to outer safety padding, metadata removed, Xing duration header.",
+    "independent_transcription": "No-prompt Whisper base traveler / small staff on source takes and final14clips.13/14final excerpts match normalized script; airport-04 puede/puedes varies with decoding context.",
+    "perceptual_review": "Not performed: audio input is unavailable in this assistant session. Human listening, pronunciation and regional-accent review remain required before publication."
+  },
+  "sources": [
+    {
+      "role": "staff",
+      "original_filename": "staff-original.wav",
+      "original_sha256": "6d2f4fdd7146887f348afed2daa4331050506cac8f4564aad85ee1ed7141c76e",
+      "original_size_bytes": 758178,
+      "url_filename_extension": ".wav",
+      "actual_format": "mp3",
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "duration_reported_seconds": 23.693061224489796,
+      "request_id": "2bfe5c6c6d3f41f5bef71a011fa8410a",
+      "engine_requested": "heygen_voice",
+      "engine_returned": "orca",
+      "voice_id": "3a991e0f1c824228bba932cdf8b0768e",
+      "voice_name": "Lucía Sabia",
+      "provider_word_script_match": true,
+      "independent_asr_model": "Systran/faster-whisper-small",
+      "independent_asr_report": "asr-verification.json#/full_take_reports/staff_small",
+      "independent_asr_normalized_script_match": false,
+      "independent_asr_differences": [
+        {
+          "type": "replace",
+          "expected": [
+            "tiene"
+          ],
+          "recognized": [
+            "tienes"
+          ]
+        }
+      ],
+      "provider_break_count": 5,
+      "measurement": {
+        "decoded_duration_seconds": 23.693061,
+        "peak_dbfs": -0.009,
+        "rms_dbfs": -18.108,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.300635,
+        "trailing_below_minus50db_seconds": 0.119546
+      },
+      "provider_breaks": [
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 2.362,
+          "end": 4.362
+        },
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 6.809,
+          "end": 8.809000000000001
+        },
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 9.786000000000001,
+          "end": 11.786000000000001
+        },
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 13.512,
+          "end": 15.494
+        },
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 17.283,
+          "end": 19.746
+        }
+      ],
+      "repo_path": "docs/yopratiqo/audio/arrival-v1/masters/staff-original.mp3",
+      "stored_filename": "staff-original.mp3"
+    },
+    {
+      "role": "traveler",
+      "original_filename": "traveler-original.wav",
+      "original_sha256": "5f3fc278ef80b55e52d7fd2b029b340943e28c1d3815ff8432a09cca135355c5",
+      "original_size_bytes": 982204,
+      "url_filename_extension": ".wav",
+      "actual_format": "mp3",
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "duration_reported_seconds": 30.693877551020407,
+      "request_id": "4721ce13a88d4464afd3f85e58e4541a",
+      "engine_requested": "heygen_voice",
+      "engine_returned": "orca",
+      "voice_id": "da30cca4a70f437aa89a3f1fbe9332be",
+      "voice_name": "Scholarly Sergio",
+      "provider_word_script_match": true,
+      "independent_asr_model": "Systran/faster-whisper-base",
+      "independent_asr_report": "asr-verification.json#/full_take_reports/traveler_base",
+      "independent_asr_normalized_script_match": true,
+      "independent_asr_differences": [],
+      "provider_break_count": 7,
+      "measurement": {
+        "decoded_duration_seconds": 30.693878,
+        "peak_dbfs": -0.037,
+        "rms_dbfs": -17.889,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.028027,
+        "trailing_below_minus50db_seconds": 0.069274
+      },
+      "provider_breaks": [
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 3.35,
+          "end": 5.291
+        },
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 7.063,
+          "end": 9.045
+        },
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 10.086,
+          "end": 12.086
+        },
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 14.654,
+          "end": 16.654
+        },
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 18.547,
+          "end": 20.547
+        },
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 21.834,
+          "end": 23.834
+        },
+        {
+          "word": "<break time=\"2.0s\"/>",
+          "start": 26.542,
+          "end": 28.415
+        }
+      ],
+      "repo_path": "docs/yopratiqo/audio/arrival-v1/masters/traveler-original.mp3",
+      "stored_filename": "traveler-original.mp3"
+    }
+  ],
+  "clips": [
+    {
+      "id": "airport-02",
+      "filename": "airport-02.mp3",
+      "text": "Los taxis están afuera, a la derecha.",
+      "role": "staff",
+      "source_request_id": "2bfe5c6c6d3f41f5bef71a011fa8410a",
+      "source_sha256": "6d2f4fdd7146887f348afed2daa4331050506cac8f4564aad85ee1ed7141c76e",
+      "source_cut_start_seconds": 0.0,
+      "source_cut_end_seconds": 2.64,
+      "source_cut_duration_seconds": 2.64,
+      "provider_phrase_start_seconds": 0.256,
+      "provider_phrase_end_seconds": 2.362,
+      "independent_asr_text": "Los taxis están afuera, a la derecha.",
+      "independent_asr_start_seconds": 0.0,
+      "independent_asr_end_seconds": 2.62,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 0.3,
+      "waveform_activity_end_seconds": 2.42,
+      "provider_vs_waveform_start_delta_seconds": 0.044,
+      "provider_vs_waveform_end_delta_seconds": 0.058,
+      "provider_words": [
+        {
+          "word": "Los",
+          "start": 0.256,
+          "end": 0.4267
+        },
+        {
+          "word": "taxis",
+          "start": 0.512,
+          "end": 0.8107
+        },
+        {
+          "word": "están",
+          "start": 0.853,
+          "end": 1.152
+        },
+        {
+          "word": "afuera,",
+          "start": 1.195,
+          "end": 1.6
+        },
+        {
+          "word": "a",
+          "start": 1.749,
+          "end": 1.877
+        },
+        {
+          "word": "la",
+          "start": 1.92,
+          "end": 1.9627
+        },
+        {
+          "word": "derecha.",
+          "start": 2.005,
+          "end": 2.362
+        }
+      ],
+      "size_bytes": 34589,
+      "sha256": "ddf1daacbe74412cc29528df86f9d13a4a6bf51d7563febb9c308a2ee81bd80a",
+      "duration_container_seconds": 2.690612,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 2.64,
+        "peak_dbfs": -1.484,
+        "rms_dbfs": -18.253,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.301655,
+        "trailing_below_minus50db_seconds": 0.182857
+      },
+      "final_excerpt_asr": {
+        "model": "small",
+        "recognized": "Los taxis están afuera, a la derecha.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Los taxis están afuera, a la derecha.",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/airport-02"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/airport-02.mp3"
+    },
+    {
+      "id": "airport-04",
+      "filename": "airport-04.mp3",
+      "text": "Muy bien. Puede salir por esa puerta.",
+      "role": "staff",
+      "source_request_id": "2bfe5c6c6d3f41f5bef71a011fa8410a",
+      "source_sha256": "6d2f4fdd7146887f348afed2daa4331050506cac8f4564aad85ee1ed7141c76e",
+      "source_cut_start_seconds": 4.39,
+      "source_cut_end_seconds": 7.07,
+      "source_cut_duration_seconds": 2.68,
+      "provider_phrase_start_seconds": 4.362,
+      "provider_phrase_end_seconds": 6.809,
+      "independent_asr_text": "Muy bien, puede salir por esa puerta.",
+      "independent_asr_start_seconds": 3.9800000000000018,
+      "independent_asr_end_seconds": 6.66,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 4.69,
+      "waveform_activity_end_seconds": 6.85,
+      "provider_vs_waveform_start_delta_seconds": 0.328,
+      "provider_vs_waveform_end_delta_seconds": 0.041,
+      "provider_words": [
+        {
+          "word": "Muy",
+          "start": 4.362,
+          "end": 4.874
+        },
+        {
+          "word": "bien.",
+          "start": 4.917,
+          "end": 5.237
+        },
+        {
+          "word": "Puede",
+          "start": 5.429,
+          "end": 5.727
+        },
+        {
+          "word": "salir",
+          "start": 5.77,
+          "end": 6.026
+        },
+        {
+          "word": "por",
+          "start": 6.111,
+          "end": 6.197
+        },
+        {
+          "word": "esa",
+          "start": 6.239,
+          "end": 6.41
+        },
+        {
+          "word": "puerta.",
+          "start": 6.453,
+          "end": 6.809
+        }
+      ],
+      "size_bytes": 33838,
+      "sha256": "038ffd46ea52235dbacd2307f84043c6fda6d9f418489ff4abe7c2710e262494",
+      "duration_container_seconds": 2.716735,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 2.68,
+        "peak_dbfs": -1.709,
+        "rms_dbfs": -17.863,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.151587,
+        "trailing_below_minus50db_seconds": 0.193719
+      },
+      "final_excerpt_asr": {
+        "model": "small",
+        "recognized": "Muy bien, puedes salir por esa puerta.",
+        "normalized_exact_match": false,
+        "source_full_take_asr": "Muy bien, puede salir por esa puerta.",
+        "matches_full_take_asr": false,
+        "differences": [
+          {
+            "type": "replace",
+            "expected": [
+              "puede"
+            ],
+            "recognized": [
+              "puedes"
+            ]
+          }
+        ],
+        "report": "asr-verification.json#/clip_reports/airport-04"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/airport-04.mp3"
+    },
+    {
+      "id": "hotel-01",
+      "filename": "hotel-01.mp3",
+      "text": "Buenas tardes.",
+      "role": "staff",
+      "source_request_id": "2bfe5c6c6d3f41f5bef71a011fa8410a",
+      "source_sha256": "6d2f4fdd7146887f348afed2daa4331050506cac8f4564aad85ee1ed7141c76e",
+      "source_cut_start_seconds": 8.59,
+      "source_cut_end_seconds": 10.11,
+      "source_cut_duration_seconds": 1.52,
+      "provider_phrase_start_seconds": 8.809000000000001,
+      "provider_phrase_end_seconds": 9.786000000000001,
+      "independent_asr_text": "Buenas tardes.",
+      "independent_asr_start_seconds": 8.7,
+      "independent_asr_end_seconds": 9.86,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 8.89,
+      "waveform_activity_end_seconds": 9.89,
+      "provider_vs_waveform_start_delta_seconds": 0.081,
+      "provider_vs_waveform_end_delta_seconds": 0.104,
+      "provider_words": [
+        {
+          "word": "Buenas",
+          "start": 8.809000000000001,
+          "end": 9.321000000000002
+        },
+        {
+          "word": "tardes.",
+          "start": 9.407,
+          "end": 9.786000000000001
+        }
+      ],
+      "size_bytes": 17351,
+      "sha256": "39c12336f921198fff6c92d450c4caf098dd51214d8f2d176e2c7218e11435da",
+      "duration_container_seconds": 1.567347,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 1.52,
+        "peak_dbfs": -1.77,
+        "rms_dbfs": -18.037,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.076395,
+        "trailing_below_minus50db_seconds": 0.171633
+      },
+      "final_excerpt_asr": {
+        "model": "small",
+        "recognized": "Buenas tardes.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Buenas tardes.",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/hotel-01"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/hotel-01.mp3"
+    },
+    {
+      "id": "hotel-03",
+      "filename": "hotel-03.mp3",
+      "text": "¿A nombre de quién?",
+      "role": "staff",
+      "source_request_id": "2bfe5c6c6d3f41f5bef71a011fa8410a",
+      "source_sha256": "6d2f4fdd7146887f348afed2daa4331050506cac8f4564aad85ee1ed7141c76e",
+      "source_cut_start_seconds": 12.59,
+      "source_cut_end_seconds": 13.97,
+      "source_cut_duration_seconds": 1.38,
+      "provider_phrase_start_seconds": 11.786000000000001,
+      "provider_phrase_end_seconds": 13.512,
+      "independent_asr_text": "¿A nombre de quién?",
+      "independent_asr_start_seconds": 12.3,
+      "independent_asr_end_seconds": 13.54,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 12.89,
+      "waveform_activity_end_seconds": 13.75,
+      "provider_vs_waveform_start_delta_seconds": 1.104,
+      "provider_vs_waveform_end_delta_seconds": 0.238,
+      "provider_words": [
+        {
+          "word": "¿A",
+          "start": 11.786000000000001,
+          "end": 12.806000000000001
+        },
+        {
+          "word": "nombre",
+          "start": 12.848000000000003,
+          "end": 13.019000000000002
+        },
+        {
+          "word": "de",
+          "start": 13.104000000000003,
+          "end": 13.147000000000002
+        },
+        {
+          "word": "quién?",
+          "start": 13.190000000000001,
+          "end": 13.512
+        }
+      ],
+      "size_bytes": 15868,
+      "sha256": "b3effc791018b37cda1b1f1d82f51ee65c6057ea8d1d3a388f08158c7a884229",
+      "duration_container_seconds": 1.410612,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 1.38,
+        "peak_dbfs": -1.878,
+        "rms_dbfs": -17.145,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.304218,
+        "trailing_below_minus50db_seconds": 0.215488
+      },
+      "final_excerpt_asr": {
+        "model": "small",
+        "recognized": "¿A nombre de quién?",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "¿A nombre de quién?",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/hotel-03"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/hotel-03.mp3"
+    },
+    {
+      "id": "hotel-05",
+      "filename": "hotel-05.mp3",
+      "text": "Perfecto. ¿Tiene su pasaporte?",
+      "role": "staff",
+      "source_request_id": "2bfe5c6c6d3f41f5bef71a011fa8410a",
+      "source_sha256": "6d2f4fdd7146887f348afed2daa4331050506cac8f4564aad85ee1ed7141c76e",
+      "source_cut_start_seconds": 15.11,
+      "source_cut_end_seconds": 17.75,
+      "source_cut_duration_seconds": 2.64,
+      "provider_phrase_start_seconds": 15.494,
+      "provider_phrase_end_seconds": 17.283,
+      "independent_asr_text": "Perfecto. ¿Tienes su pasaporte?",
+      "independent_asr_start_seconds": 15.440000000000003,
+      "independent_asr_end_seconds": 17.34,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 15.41,
+      "waveform_activity_end_seconds": 17.53,
+      "provider_vs_waveform_start_delta_seconds": -0.084,
+      "provider_vs_waveform_end_delta_seconds": 0.247,
+      "provider_words": [
+        {
+          "word": "Perfecto.",
+          "start": 15.494,
+          "end": 16.105
+        },
+        {
+          "word": "¿Tiene",
+          "start": 16.248,
+          "end": 16.560000000000002
+        },
+        {
+          "word": "su",
+          "start": 16.646,
+          "end": 16.731
+        },
+        {
+          "word": "pasaporte?",
+          "start": 16.774,
+          "end": 17.283
+        }
+      ],
+      "size_bytes": 31531,
+      "sha256": "4a7616b94e8d382618878e34f0bb6c4889f2d354e2fa96ef68c5210b84e838c6",
+      "duration_container_seconds": 2.690612,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 2.64,
+        "peak_dbfs": -1.991,
+        "rms_dbfs": -18.254,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.282902,
+        "trailing_below_minus50db_seconds": 0.203741
+      },
+      "final_excerpt_asr": {
+        "model": "small",
+        "recognized": "Perfecto. ¿Tiene su pasaporte?",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Perfecto. ¿Tienes su pasaporte?",
+        "matches_full_take_asr": false,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/hotel-05"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/hotel-05.mp3"
+    },
+    {
+      "id": "hotel-07",
+      "filename": "hotel-07.mp3",
+      "text": "Su habitación es la doscientos cuatro.",
+      "role": "staff",
+      "source_request_id": "2bfe5c6c6d3f41f5bef71a011fa8410a",
+      "source_sha256": "6d2f4fdd7146887f348afed2daa4331050506cac8f4564aad85ee1ed7141c76e",
+      "source_cut_start_seconds": 18.4,
+      "source_cut_end_seconds": 23.693061224,
+      "source_cut_duration_seconds": 5.293061224,
+      "provider_phrase_start_seconds": 19.746,
+      "provider_phrase_end_seconds": 23.453,
+      "independent_asr_text": "Su habitación es la 204.",
+      "independent_asr_start_seconds": 19.540000000000003,
+      "independent_asr_end_seconds": 23.28,
+      "retained_unclassified_prefix": {
+        "source_start_seconds": 18.56,
+        "source_end_seconds": 19.12,
+        "classification": "unknown; preserved pending human listening"
+      },
+      "waveform_activity_start_seconds": 20.17,
+      "waveform_activity_end_seconds": 23.55,
+      "provider_vs_waveform_start_delta_seconds": 0.424,
+      "provider_vs_waveform_end_delta_seconds": 0.097,
+      "provider_words": [
+        {
+          "word": "Su",
+          "start": 19.746,
+          "end": 20.173000000000002
+        },
+        {
+          "word": "habitación",
+          "start": 20.215,
+          "end": 20.898
+        },
+        {
+          "word": "es",
+          "start": 20.983,
+          "end": 21.453
+        },
+        {
+          "word": "la",
+          "start": 21.88,
+          "end": 22.093
+        },
+        {
+          "word": "doscientos",
+          "start": 22.178,
+          "end": 22.861
+        },
+        {
+          "word": "cuatro.",
+          "start": 22.946,
+          "end": 23.453
+        }
+      ],
+      "size_bytes": 56931,
+      "sha256": "fcafedbb2f91a39e45df9ffdb5549a3231866d24ee63ac3db3beb315619ae46b",
+      "duration_container_seconds": 5.32898,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 5.293061,
+        "peak_dbfs": -1.693,
+        "rms_dbfs": -17.915,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.116485,
+        "trailing_below_minus50db_seconds": 0.119615
+      },
+      "final_excerpt_asr": {
+        "model": "small",
+        "recognized": "Su habitación es la 204.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Su habitación es la 204.",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/hotel-07"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/hotel-07.mp3"
+    },
+    {
+      "id": "airport-01",
+      "filename": "airport-01.mp3",
+      "text": "Hola, buenos días. ¿Dónde puedo tomar un taxi?",
+      "role": "traveler",
+      "source_request_id": "4721ce13a88d4464afd3f85e58e4541a",
+      "source_sha256": "5f3fc278ef80b55e52d7fd2b029b340943e28c1d3815ff8432a09cca135355c5",
+      "source_cut_start_seconds": 0.0,
+      "source_cut_end_seconds": 3.6,
+      "source_cut_duration_seconds": 3.6,
+      "provider_phrase_start_seconds": 0.256,
+      "provider_phrase_end_seconds": 3.35,
+      "independent_asr_text": "Hola, buenos días. ¿Dónde puedo tomar un taxi?",
+      "independent_asr_start_seconds": 0.0,
+      "independent_asr_end_seconds": 3.22,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 0.3,
+      "waveform_activity_end_seconds": 3.38,
+      "provider_vs_waveform_start_delta_seconds": 0.044,
+      "provider_vs_waveform_end_delta_seconds": 0.03,
+      "provider_words": [
+        {
+          "word": "Hola,",
+          "start": 0.256,
+          "end": 0.704
+        },
+        {
+          "word": "buenos",
+          "start": 0.853,
+          "end": 1.1947
+        },
+        {
+          "word": "días.",
+          "start": 1.237,
+          "end": 1.636
+        },
+        {
+          "word": "¿Dónde",
+          "start": 1.778,
+          "end": 2.261
+        },
+        {
+          "word": "puedo",
+          "start": 2.347,
+          "end": 2.6027
+        },
+        {
+          "word": "tomar",
+          "start": 2.645,
+          "end": 2.859
+        },
+        {
+          "word": "un",
+          "start": 2.901,
+          "end": 2.944
+        },
+        {
+          "word": "taxi?",
+          "start": 2.987,
+          "end": 3.35
+        }
+      ],
+      "size_bytes": 49415,
+      "sha256": "2b51e085a37cb4d2817035df4d0a127317ef52307f7c13a4d0d755a715aefcee",
+      "duration_container_seconds": 3.63102,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 3.6,
+        "peak_dbfs": -2.344,
+        "rms_dbfs": -18.084,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.037959,
+        "trailing_below_minus50db_seconds": 0.202472
+      },
+      "final_excerpt_asr": {
+        "model": "base",
+        "recognized": "Hola, buenos días, ¿dónde puedo tomar un taxi?",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Hola, buenos días. ¿Dónde puedo tomar un taxi?",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/airport-01"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/airport-01.mp3"
+    },
+    {
+      "id": "airport-03",
+      "filename": "airport-03.mp3",
+      "text": "Perfecto, gracias. Voy a este hotel.",
+      "role": "traveler",
+      "source_request_id": "4721ce13a88d4464afd3f85e58e4541a",
+      "source_sha256": "5f3fc278ef80b55e52d7fd2b029b340943e28c1d3815ff8432a09cca135355c5",
+      "source_cut_start_seconds": 5.09,
+      "source_cut_end_seconds": 7.29,
+      "source_cut_duration_seconds": 2.2,
+      "provider_phrase_start_seconds": 5.291,
+      "provider_phrase_end_seconds": 7.063,
+      "independent_asr_text": "Perfecto, gracias. Voy a este hotel.",
+      "independent_asr_start_seconds": 5.36,
+      "independent_asr_end_seconds": 6.94,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 5.39,
+      "waveform_activity_end_seconds": 7.07,
+      "provider_vs_waveform_start_delta_seconds": 0.099,
+      "provider_vs_waveform_end_delta_seconds": 0.007,
+      "provider_words": [
+        {
+          "word": "Perfecto,",
+          "start": 5.291,
+          "end": 5.888
+        },
+        {
+          "word": "gracias.",
+          "start": 5.931,
+          "end": 6.293
+        },
+        {
+          "word": "Voy",
+          "start": 6.357,
+          "end": 6.485
+        },
+        {
+          "word": "a",
+          "start": 6.528,
+          "end": 6.571
+        },
+        {
+          "word": "este",
+          "start": 6.613,
+          "end": 6.741
+        },
+        {
+          "word": "hotel.",
+          "start": 6.784,
+          "end": 7.063
+        }
+      ],
+      "size_bytes": 34500,
+      "sha256": "30ab720f3648e45d9f2305c38c37dd2ab5fea92bacf9becf29255f78fa9579a3",
+      "duration_container_seconds": 2.246531,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 2.2,
+        "peak_dbfs": -2.128,
+        "rms_dbfs": -17.536,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.057619,
+        "trailing_below_minus50db_seconds": 0.189592
+      },
+      "final_excerpt_asr": {
+        "model": "base",
+        "recognized": "Perfecto gracias, voy a este hotel.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Perfecto, gracias. Voy a este hotel.",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/airport-03"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/airport-03.mp3"
+    },
+    {
+      "id": "airport-05",
+      "filename": "airport-05.mp3",
+      "text": "Gracias, muy amable.",
+      "role": "traveler",
+      "source_request_id": "4721ce13a88d4464afd3f85e58e4541a",
+      "source_sha256": "5f3fc278ef80b55e52d7fd2b029b340943e28c1d3815ff8432a09cca135355c5",
+      "source_cut_start_seconds": 8.75,
+      "source_cut_end_seconds": 10.43,
+      "source_cut_duration_seconds": 1.68,
+      "provider_phrase_start_seconds": 9.045,
+      "provider_phrase_end_seconds": 10.086,
+      "independent_asr_text": "Gracias, muy amable.",
+      "independent_asr_start_seconds": 9.04,
+      "independent_asr_end_seconds": 10.12,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 9.05,
+      "waveform_activity_end_seconds": 10.21,
+      "provider_vs_waveform_start_delta_seconds": 0.005,
+      "provider_vs_waveform_end_delta_seconds": 0.124,
+      "provider_words": [
+        {
+          "word": "Gracias,",
+          "start": 9.045,
+          "end": 9.557
+        },
+        {
+          "word": "muy",
+          "start": 9.6,
+          "end": 9.771
+        },
+        {
+          "word": "amable.",
+          "start": 9.813,
+          "end": 10.086
+        }
+      ],
+      "size_bytes": 25762,
+      "sha256": "709342f8eb848c6dddef1904b426d31445caa1c82dac02e5771afb5bc15791de",
+      "duration_container_seconds": 1.724082,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 1.68,
+        "peak_dbfs": -4.166,
+        "rms_dbfs": -17.969,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.038798,
+        "trailing_below_minus50db_seconds": 0.174603
+      },
+      "final_excerpt_asr": {
+        "model": "base",
+        "recognized": "Gracias muy amable.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Gracias, muy amable.",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/airport-05"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/airport-05.mp3"
+    },
+    {
+      "id": "hotel-02",
+      "filename": "hotel-02.mp3",
+      "text": "Buenas tardes. Tengo una reservación.",
+      "role": "traveler",
+      "source_request_id": "4721ce13a88d4464afd3f85e58e4541a",
+      "source_sha256": "5f3fc278ef80b55e52d7fd2b029b340943e28c1d3815ff8432a09cca135355c5",
+      "source_cut_start_seconds": 12.05,
+      "source_cut_end_seconds": 15.13,
+      "source_cut_duration_seconds": 3.08,
+      "provider_phrase_start_seconds": 12.086,
+      "provider_phrase_end_seconds": 14.654,
+      "independent_asr_text": "Buenas tardes. Tengo una reservación.",
+      "independent_asr_start_seconds": 12.08,
+      "independent_asr_end_seconds": 14.84,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 12.35,
+      "waveform_activity_end_seconds": 14.91,
+      "provider_vs_waveform_start_delta_seconds": 0.264,
+      "provider_vs_waveform_end_delta_seconds": 0.256,
+      "provider_words": [
+        {
+          "word": "Buenas",
+          "start": 12.086,
+          "end": 12.555000000000001
+        },
+        {
+          "word": "tardes.",
+          "start": 12.597000000000001,
+          "end": 13.195
+        },
+        {
+          "word": "Tengo",
+          "start": 13.494000000000002,
+          "end": 13.835
+        },
+        {
+          "word": "una",
+          "start": 13.878,
+          "end": 14.006
+        },
+        {
+          "word": "reservación.",
+          "start": 14.048,
+          "end": 14.654
+        }
+      ],
+      "size_bytes": 44150,
+      "sha256": "90542e0cac21132b03385f6e46c278b9eb46bdcc88f5b7baf0f657be74b74401",
+      "duration_container_seconds": 3.108571,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 3.08,
+        "peak_dbfs": -2.931,
+        "rms_dbfs": -17.706,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.032177,
+        "trailing_below_minus50db_seconds": 0.17449
+      },
+      "final_excerpt_asr": {
+        "model": "base",
+        "recognized": "Buenas tardes. Tengo una reservación.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Buenas tardes. Tengo una reservación.",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/hotel-02"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/hotel-02.mp3"
+    },
+    {
+      "id": "hotel-04",
+      "filename": "hotel-04.mp3",
+      "text": "A nombre de Alex Martín.",
+      "role": "traveler",
+      "source_request_id": "4721ce13a88d4464afd3f85e58e4541a",
+      "source_sha256": "5f3fc278ef80b55e52d7fd2b029b340943e28c1d3815ff8432a09cca135355c5",
+      "source_cut_start_seconds": 17.01,
+      "source_cut_end_seconds": 19.01,
+      "source_cut_duration_seconds": 2.0,
+      "provider_phrase_start_seconds": 16.654,
+      "provider_phrase_end_seconds": 18.547,
+      "independent_asr_text": "A nombre de Alex Martín.",
+      "independent_asr_start_seconds": 17.06,
+      "independent_asr_end_seconds": 18.72,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 17.31,
+      "waveform_activity_end_seconds": 18.79,
+      "provider_vs_waveform_start_delta_seconds": 0.656,
+      "provider_vs_waveform_end_delta_seconds": 0.243,
+      "provider_words": [
+        {
+          "word": "A",
+          "start": 16.654,
+          "end": 17.251
+        },
+        {
+          "word": "nombre",
+          "start": 17.294,
+          "end": 17.55
+        },
+        {
+          "word": "de",
+          "start": 17.635,
+          "end": 17.763
+        },
+        {
+          "word": "Alex",
+          "start": 17.805,
+          "end": 18.019000000000002
+        },
+        {
+          "word": "Martín.",
+          "start": 18.147000000000002,
+          "end": 18.547
+        }
+      ],
+      "size_bytes": 32725,
+      "sha256": "8ea356da645dc45d6816a1c045131538f1b03ef00f7a8293a825070666e57706",
+      "duration_container_seconds": 2.037551,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 2.0,
+        "peak_dbfs": -2.623,
+        "rms_dbfs": -17.154,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.017347,
+        "trailing_below_minus50db_seconds": 0.210408
+      },
+      "final_excerpt_asr": {
+        "model": "base",
+        "recognized": "A nombre de Alex Martín.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "A nombre de Alex Martín.",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/hotel-04"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/hotel-04.mp3"
+    },
+    {
+      "id": "hotel-06",
+      "filename": "hotel-06.mp3",
+      "text": "Sí, aquí está.",
+      "role": "traveler",
+      "source_request_id": "4721ce13a88d4464afd3f85e58e4541a",
+      "source_sha256": "5f3fc278ef80b55e52d7fd2b029b340943e28c1d3815ff8432a09cca135355c5",
+      "source_cut_start_seconds": 20.49,
+      "source_cut_end_seconds": 22.31,
+      "source_cut_duration_seconds": 1.82,
+      "provider_phrase_start_seconds": 20.547,
+      "provider_phrase_end_seconds": 21.834,
+      "independent_asr_text": "Sí, aquí está.",
+      "independent_asr_start_seconds": 20.7,
+      "independent_asr_end_seconds": 21.96,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 20.79,
+      "waveform_activity_end_seconds": 22.09,
+      "provider_vs_waveform_start_delta_seconds": 0.243,
+      "provider_vs_waveform_end_delta_seconds": 0.256,
+      "provider_words": [
+        {
+          "word": "Sí,",
+          "start": 20.547,
+          "end": 20.974
+        },
+        {
+          "word": "aquí",
+          "start": 21.144000000000002,
+          "end": 21.528000000000002
+        },
+        {
+          "word": "está.",
+          "start": 21.571,
+          "end": 21.834
+        }
+      ],
+      "size_bytes": 24848,
+      "sha256": "93beed28d38cf7640e9175397c655de50b307a8f703efab7a5b23b8590413e95",
+      "duration_container_seconds": 1.854694,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 1.82,
+        "peak_dbfs": -2.489,
+        "rms_dbfs": -19.349,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.055714,
+        "trailing_below_minus50db_seconds": 0.13068
+      },
+      "final_excerpt_asr": {
+        "model": "base",
+        "recognized": "Sí, aquí está.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Sí, aquí está.",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/hotel-06"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/hotel-06.mp3"
+    },
+    {
+      "id": "hotel-08",
+      "filename": "hotel-08.mp3",
+      "text": "Gracias. ¿Cuál es la contraseña del wifi?",
+      "role": "traveler",
+      "source_request_id": "4721ce13a88d4464afd3f85e58e4541a",
+      "source_sha256": "5f3fc278ef80b55e52d7fd2b029b340943e28c1d3815ff8432a09cca135355c5",
+      "source_cut_start_seconds": 23.73,
+      "source_cut_end_seconds": 27.05,
+      "source_cut_duration_seconds": 3.32,
+      "provider_phrase_start_seconds": 23.834,
+      "provider_phrase_end_seconds": 26.542,
+      "independent_asr_text": "Gracias. ¿Cuál es la contraseña del Wi-Fi?",
+      "independent_asr_start_seconds": 23.88,
+      "independent_asr_end_seconds": 26.7,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 24.03,
+      "waveform_activity_end_seconds": 26.83,
+      "provider_vs_waveform_start_delta_seconds": 0.196,
+      "provider_vs_waveform_end_delta_seconds": 0.288,
+      "provider_words": [
+        {
+          "word": "Gracias.",
+          "start": 23.834,
+          "end": 24.489
+        },
+        {
+          "word": "¿Cuál",
+          "start": 24.631,
+          "end": 25.029
+        },
+        {
+          "word": "es",
+          "start": 25.072,
+          "end": 25.157
+        },
+        {
+          "word": "la",
+          "start": 25.2,
+          "end": 25.285
+        },
+        {
+          "word": "contraseña",
+          "start": 25.328,
+          "end": 25.925
+        },
+        {
+          "word": "del",
+          "start": 25.968,
+          "end": 26.053
+        },
+        {
+          "word": "wifi?",
+          "start": 26.138,
+          "end": 26.542
+        }
+      ],
+      "size_bytes": 49521,
+      "sha256": "8115e4ecd67b26a9dce9d5a387c9019ca4889c8ccc30037e87b4facaa6f6a022",
+      "duration_container_seconds": 3.369796,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 3.32,
+        "peak_dbfs": -1.43,
+        "rms_dbfs": -16.74,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.026553,
+        "trailing_below_minus50db_seconds": 0.151406
+      },
+      "final_excerpt_asr": {
+        "model": "base",
+        "recognized": "Gracias, ¿cuál es la contraseña del Wi-Fi?",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Gracias. ¿Cuál es la contraseña del Wi-Fi?",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/hotel-08"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/hotel-08.mp3"
+    },
+    {
+      "id": "hotel-repeat",
+      "filename": "hotel-repeat.mp3",
+      "text": "¿Me puede repetir, por favor?",
+      "role": "traveler",
+      "source_request_id": "4721ce13a88d4464afd3f85e58e4541a",
+      "source_sha256": "5f3fc278ef80b55e52d7fd2b029b340943e28c1d3815ff8432a09cca135355c5",
+      "source_cut_start_seconds": 28.43,
+      "source_cut_end_seconds": 30.693877551,
+      "source_cut_duration_seconds": 2.263877551,
+      "provider_phrase_start_seconds": 28.415,
+      "provider_phrase_end_seconds": 30.45,
+      "independent_asr_text": "¿Me puede repetir por favor?",
+      "independent_asr_start_seconds": 28.18,
+      "independent_asr_end_seconds": 30.34,
+      "retained_unclassified_prefix": null,
+      "waveform_activity_start_seconds": 28.73,
+      "waveform_activity_end_seconds": 30.49,
+      "provider_vs_waveform_start_delta_seconds": 0.315,
+      "provider_vs_waveform_end_delta_seconds": 0.04,
+      "provider_words": [
+        {
+          "word": "¿Me",
+          "start": 28.415,
+          "end": 28.691
+        },
+        {
+          "word": "puede",
+          "start": 28.733,
+          "end": 29.075
+        },
+        {
+          "word": "repetir,",
+          "start": 29.117,
+          "end": 29.651
+        },
+        {
+          "word": "por",
+          "start": 29.715,
+          "end": 29.8
+        },
+        {
+          "word": "favor?",
+          "start": 29.885,
+          "end": 30.45
+        }
+      ],
+      "size_bytes": 37791,
+      "sha256": "22788dc2426122c8ebc2b96e98355a9a4f318f76a79da54d9c5f80373d04e3ec",
+      "duration_container_seconds": 2.298776,
+      "codec": "mp3",
+      "sample_rate": 44100,
+      "channels": 1,
+      "measurement": {
+        "decoded_duration_seconds": 2.263878,
+        "peak_dbfs": -1.97,
+        "rms_dbfs": -16.57,
+        "hard_clip_samples": 0,
+        "leading_below_minus50db_seconds": 0.275692,
+        "trailing_below_minus50db_seconds": 0.113764
+      },
+      "final_excerpt_asr": {
+        "model": "base",
+        "recognized": "¿Me puede repetir por favor?",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "¿Me puede repetir por favor?",
+        "matches_full_take_asr": true,
+        "differences": [],
+        "report": "asr-verification.json#/clip_reports/hotel-repeat"
+      },
+      "public_path": "/audio/yo/es/do/module-2/arrival-v1/hotel-repeat.mp3"
+    }
+  ],
+  "total_clip_bytes": 488820,
+  "total_decoded_clip_seconds": 36.116939,
+  "warnings": [
+    "airport-04: final excerpt ASR reads puedes salir; full-take small ASR reads approved puede salir. Context-dependent /s/ word-boundary variation is not proof of a synthesis or cutting defect; human audition required.",
+    "hotel-05: final excerpt ASR matches approved tiene su; full-take ASR had rendered tienes su. Retained in audit history; human audition recommended.",
+    "hotel-07: source signal18.56-19.12s retained before room sentence; no extra word identified by either source ASR or final excerpt ASR. Classification remains unknown; human audition required.",
+    "No human listening, naturalness assessment, physical-device playback, or Dominican accent validation has been completed by this processing workflow."
+  ],
+  "review_files": [
+    {
+      "scene": "airport",
+      "normal": "review-airport-normal.wav",
+      "slow_0_8x": "review-airport-slow.wav",
+      "clip_order": [
+        "airport-01",
+        "airport-02",
+        "airport-03",
+        "airport-04",
+        "airport-05"
+      ],
+      "normal_duration_seconds": 12.8
+    },
+    {
+      "scene": "hotel",
+      "normal": "review-hotel-normal.wav",
+      "slow_0_8x": "review-hotel-slow.wav",
+      "clip_order": [
+        "hotel-01",
+        "hotel-02",
+        "hotel-03",
+        "hotel-04",
+        "hotel-05",
+        "hotel-06",
+        "hotel-07",
+        "hotel-08"
+      ],
+      "normal_duration_seconds": 21.053061
+    }
+  ],
+  "final_excerpt_asr": {
+    "clip_count": 14,
+    "normalized_exact_matches": 13,
+    "sha256_matches": 14,
+    "report": "asr-results/final-clips/summary.json",
+    "human_listening": false
+  },
+  "preview_status": "Playable draft for human review after technical and machine-transcription checks; not publication approval."
+}
