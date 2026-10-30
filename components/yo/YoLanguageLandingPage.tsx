@@ -120,6 +120,7 @@ export function YoLanguageLandingPage({
       ? (entryHref ?? moduleConfig.introRoute)
       : `${(entryHref ?? moduleConfig.introRoute)}?lang=${locale}`;
   const backToLanguesHref = `/yo/langues${langSuffix}`;
+  const localizedTeacherUrl = moduleConfig.teacherSearchUrl + (locale === "fr" ? "" : (moduleConfig.teacherSearchUrl.includes("?") ? "&" : "?") + "lang=" + locale);
   const shouldInjectCourseSchema = canInjectYoPratiqoCourseSchema(moduleConfig);
   const courseSchema = shouldInjectCourseSchema
     ? buildYopratiqoCourseSchema({
@@ -252,9 +253,10 @@ export function YoLanguageLandingPage({
         moduleConfig={moduleConfig}
         title={content.teacherCardTitle}
         body={content.teacherCardBody}
+        href={localizedTeacherUrl}
       />
       <Link
-        href={moduleConfig.teacherSearchUrl}
+        href={localizedTeacherUrl}
         className="inline-flex items-center justify-center gap-2 rounded-full border border-[#F4B400]/60 bg-[#FFF4D6]/85 px-5 py-3 text-sm font-bold text-[#0F6E56] transition hover:bg-white"
       >
         <Compass className="size-4" aria-hidden />
