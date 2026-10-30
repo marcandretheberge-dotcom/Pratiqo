@@ -281,7 +281,7 @@ function buildRoadmap(
       level: step.level,
       status: progress.roadmapStatuses[step.id],
       ctaLabel: c.cta,
-      href: step.href,
+      href: step.href ? buildYoLocaleHref(step.href, locale) : undefined,
     };
   });
 }
