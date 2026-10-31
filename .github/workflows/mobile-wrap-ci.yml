@@ -64,6 +64,13 @@ jobs:
           package-manager-cache: false
       - name: Resolve the mobile dependency tree
         run: npm install --no-audit --no-fund
+      - name: Upload resolved mobile lockfile
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: mobile-package-lock
+          path: apps/mobile/package-lock.json
+          archive: false
+          retention-days: 7
       - name: Expo dependency compatibility
         run: npx expo install --check
       - name: Expo Doctor
