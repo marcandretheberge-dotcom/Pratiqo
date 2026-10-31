@@ -508,7 +508,14 @@ async function main(): Promise<void> {
     const { loadEnvConfig } = await import("@next/env");
     loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production", { info: () => undefined, error: () => undefined });
   }
-  const summary = await runAudioPipeline(YOPRATIQO_AUDIO_MANIFEST, opts, resolveConfig(opts));
+  // A full course is opt-in and loaded only by this offline command. Include its
+  // exact Italian dependencies while keeping the global no-module scope stable.
+  const courseScope = opts.moduleId === "italian-course-a1";
+  const manifest = courseScope
+    ? (await import("../lib/yo/audio/italianCourseAudio")).italianCourseAudioDependencies
+    : YOPRATIQO_AUDIO_MANIFEST;
+  const scopedOptions = courseScope ? { ...opts, moduleId: undefined } : opts;
+  const summary = await runAudioPipeline(manifest, scopedOptions, resolveConfig(opts));
   if (summary.failed) process.exitCode = 1;
 }
 

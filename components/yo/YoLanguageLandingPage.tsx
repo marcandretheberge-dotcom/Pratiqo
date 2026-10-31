@@ -105,7 +105,7 @@ export function YoLanguageLandingPage({
   locale: YoLocale;
   moduleConfig: YoPratiqoModuleConfig;
   content: YoPratiqoLandingContent;
-  practiceEntry?: { href: string; title: YoLocalizedString; body: YoLocalizedString; cta: YoLocalizedString };
+  practiceEntry?: { href: string; title: YoLocalizedString; body: YoLocalizedString; cta: YoLocalizedString; eyebrow?: YoLocalizedString };
 }) {
   const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
   const localizedIntroRoute =
@@ -267,7 +267,7 @@ export function YoLanguageLandingPage({
 
   const practiceCardBlock = practiceEntry ? (
     <article className="rounded-3xl border border-[#d9b48b] bg-[#fff1df] p-5 shadow-sm sm:p-6">
-      <span className="text-[10px] font-black uppercase tracking-[.18em] text-[#a95c37]">{t(lstr("Module pratique · A1", "Practice module · A1", "Módulo práctico · A1"), locale)}</span>
+      <span className="text-[10px] font-black uppercase tracking-[.18em] text-[#a95c37]">{t(practiceEntry.eyebrow ?? lstr("Module pratique · A1", "Practice module · A1", "Módulo práctico · A1"), locale)}</span>
       <h2 className="mt-2 font-serif text-2xl text-[#245a46]">{t(practiceEntry.title, locale)}</h2>
       <p className="mt-3 text-sm leading-relaxed text-[#68553e]">{t(practiceEntry.body, locale)}</p>
       <Link href={practiceEntry.href} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#245a46] px-5 py-3 text-sm font-bold text-white hover:bg-[#173d2e]"><Sparkles size={17} aria-hidden />{t(practiceEntry.cta, locale)}</Link>

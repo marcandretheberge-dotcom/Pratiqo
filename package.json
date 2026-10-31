@@ -22,7 +22,7 @@
     "test:yo-spanish-coverage": "tsx tests/yo/yopratiqoSpanishAudioCoverage.test.ts",
     "test:yo-french-quebec-audio": "tsx tests/yo/yopratiqoFrenchQuebecAudio.test.ts",
     "test:yo-italian-audio": "tsx tests/yo/yopratiqoItalianAudio.test.ts",
-    "test:yo-italian": "tsx tests/yo/yopratiqoItalianIntro.test.ts && tsx tests/yo/yopratiqoItalianAudio.test.ts && npm run test:yo-italian-module",
+    "test:yo-italian": "tsx tests/yo/yopratiqoItalianIntro.test.ts && tsx tests/yo/yopratiqoItalianAudio.test.ts && npm run test:yo-italian-module && npm run test:yo-italian-course",
     "test:yo-english-audio": "tsx tests/yo/yopratiqoEnglishAudio.test.ts",
     "test:yo-english": "tsx tests/yo/yopratiqoEnglishIntro.test.ts && tsx tests/yo/yopratiqoEnglishAudio.test.ts",
     "test:yo-japanese-audio": "tsx tests/yo/yopratiqoJapaneseAudio.test.ts",
@@ -83,7 +83,11 @@
     "test:yo-italian-module": "node --import tsx tests/yo/yopratiqoItalianModuleContent.test.ts && node --import tsx tests/yo/yopratiqoItalianGames.test.ts && node --import tsx tests/yo/yopratiqoItalianProgress.test.ts && node --import tsx tests/yo/yopratiqoItalianYoppo.test.ts && node --import tsx tests/yo/yopratiqoItalianAdventure.test.ts && npm run test:yo-italian-recorded-audio",
     "test:yo-italian-recorded-audio": "node --import tsx tests/yo/yopratiqoItalianBolognaAudioManifest.test.ts && node --import tsx tests/yo/yopratiqoItalianModuleAudio.test.ts && node --import tsx tests/yo/yopratiqoAudioGenerator.test.ts",
     "generate:yo-italian-bologna-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module italian-bologna-a1",
-    "verify:yo-italian-bologna-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module italian-bologna-a1 --verify-only"
+    "verify:yo-italian-bologna-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module italian-bologna-a1 --verify-only",
+    "test:yo-italian-course": "node --import tsx tests/yo/yopratiqoItalianCourseContent.test.ts && node --import tsx tests/yo/yopratiqoItalianCourseProgress.test.ts && node --import tsx tests/yo/yopratiqoItalianCoursePlayer.test.ts && node --import tsx tests/yo/yopratiqoItalianCourseAudio.test.ts && node --import tsx tests/yo/yopratiqoItalianCourseNavigation.test.ts",
+    "build:yo-italian-course-audio-plan": "node --import tsx scripts/build-italian-course-audio-plan.ts",
+    "generate:yo-italian-course-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module italian-course-a1",
+    "verify:yo-italian-course-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module italian-course-a1 --verify-only"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",

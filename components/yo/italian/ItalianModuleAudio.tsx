@@ -5,6 +5,7 @@ import { Loader2, Volume2, Square } from "lucide-react";
 import { buildPublicAudioUrl } from "@/lib/yo/audio/audioUrl";
 import { getItalianBolognaAudioItem } from "@/lib/yo/audio/italianBolognaAudio";
 import type { YoLocale } from "@/lib/yo/types";
+import { useItalianAudioPath } from "./ItalianAudioProvider";
 
 const copy = {
   fr: { play: "Écouter", stop: "Arrêter", slow: "Ralentir", aiVoice: "Voix IA", unavailable: "Cet enregistrement est indisponible. Utilise la transcription.", failed: "La lecture a été interrompue ou n’a pas démarré. Réessaie ou lis la transcription." },
@@ -27,6 +28,7 @@ export interface ItalianModuleAudioProps {
 }
 
 export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianModuleAudioProps) {
+  const coursePath = useItalianAudioPath(text);
   const [state, setState] = useState<PlaybackState>("idle");
   const [slow, setSlow] = useState(false);
   const [error, setError] = useState<"unavailable" | "failed" | null>(null);
@@ -57,13 +59,14 @@ export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianMod
       document.removeEventListener("visibilitychange", visibility);
       stop();
     };
-  }, [text, stop]);
+  }, [text, coursePath, stop]);
 
   function play() {
     if (session.current) { stop(); return; }
     setError(null);
     const item = getItalianBolognaAudioItem(text);
-    const url = item && buildPublicAudioUrl(item.storagePath);
+    const storagePath = coursePath ?? item?.storagePath;
+    const url = storagePath && buildPublicAudioUrl(storagePath);
     if (!url || typeof window.Audio !== "function") { setError("unavailable"); return; }
 
     window.dispatchEvent(new Event(ITALIAN_MODULE_AUDIO_STOP_EVENT));

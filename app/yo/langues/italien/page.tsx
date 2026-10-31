@@ -31,10 +31,11 @@ export default async function YoItalianLandingPage({
       moduleConfig={getYoPratiqoModuleBySlug("italien")}
       content={yopratiqoLandingContent.italien}
       practiceEntry={{
-        href: buildYoLocaleHref("/yo/langues/italien/module-1", locale),
-        title: lstr("Une matinée à Bologne", "A morning in Bologna", "Una mañana en Bolonia"),
-        body: lstr("Un module complet pour jouer, commander au café et explorer la ville avec Yoppo : 16 défis, 24 expressions et huit façons de pratiquer.", "A complete module to play, order at a café and explore the city with Yoppo: 16 challenges, 24 expressions and eight ways to practise.", "Un módulo completo para jugar, pedir en un café y explorar la ciudad con Yoppo: 16 retos, 24 expresiones y ocho formas de practicar."),
-        cta: lstr("Jouer le module 1", "Play module 1", "Jugar el módulo 1"),
+        eyebrow: lstr("Cours italien · Fondations A1", "Italian course · A1 foundations", "Curso de italiano · Bases A1"),
+        href: buildYoLocaleHref("/yo/langues/italien/parcours", locale),
+        title: lstr("Italien 1 · La vie en italien", "Italian 1 · Life in Italian", "Italiano 1 · La vida en italiano"),
+        body: lstr("Un cours progressif avec Yoppo : douze unités, trente-six leçons, des jeux, des lectures, des bilans et des projets écrits et oraux.", "A progressive course with Yoppo: twelve units, thirty-six lessons, games, readings, checkpoints and written and spoken projects.", "Un curso progresivo con Yoppo: doce unidades, treinta y seis lecciones, juegos, lecturas, balances y proyectos escritos y orales."),
+        cta: lstr("Explorer le cours italien", "Explore the Italian course", "Explorar el curso de italiano"),
       }}
     />
   );
