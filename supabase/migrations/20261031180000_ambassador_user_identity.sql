@@ -98,33 +98,25 @@ BEGIN
     RAISE EXCEPTION 'AMBASSADOR_USER_REQUIRED';
   END IF;
 
-  IF v_identifier ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$' THEN
-    SELECT p.id, p.name, p.display_name, p.email, p.deleted_at, p.anonymized_at
-      INTO v_profile
-    FROM public.profiles p
-    WHERE p.id = v_identifier::uuid;
-  END IF;
+  SELECT p.id, p.name, p.display_name, p.email, p.deleted_at, p.anonymized_at
+    INTO v_profile
+  FROM public.profiles p
+  WHERE p.id::text = lower(v_identifier)
+     OR lower(p.email) = lower(v_identifier)
+  ORDER BY CASE WHEN p.id::text = lower(v_identifier) THEN 0 ELSE 1 END, p.created_at ASC
+  LIMIT 1;
 
-  IF v_profile.id IS NULL THEN
-    SELECT p.id, p.name, p.display_name, p.email, p.deleted_at, p.anonymized_at
-      INTO v_profile
-    FROM public.profiles p
-    WHERE lower(p.email) = lower(v_identifier)
-    ORDER BY p.created_at ASC
-    LIMIT 1;
-  END IF;
-
-  IF v_profile.id IS NULL THEN
+  IF NOT FOUND THEN
     SELECT p.id, p.name, p.display_name, p.email, p.deleted_at, p.anonymized_at
       INTO v_profile
     FROM public.teachers t
     JOIN public.profiles p ON p.id = t.user_id
     WHERE t.id = v_identifier
     LIMIT 1;
-  END IF;
 
-  IF v_profile.id IS NULL THEN
-    RAISE EXCEPTION 'AMBASSADOR_USER_NOT_FOUND';
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'AMBASSADOR_USER_NOT_FOUND';
+    END IF;
   END IF;
 
   IF v_profile.deleted_at IS NOT NULL OR v_profile.anonymized_at IS NOT NULL THEN
@@ -135,7 +127,7 @@ BEGIN
     INTO v_teacher_id, v_teacher_name
   FROM public.teachers t
   WHERE t.user_id = v_profile.id
-  ORDER BY t.created_at ASC NULLS LAST, t.id ASC
+  ORDER BY t.id ASC
   LIMIT 1;
 
   v_note := nullif(btrim(coalesce(p_internal_note, '')), '');
