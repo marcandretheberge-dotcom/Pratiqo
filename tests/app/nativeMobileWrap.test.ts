@@ -41,8 +41,8 @@ assert.ok(bridge.includes("pratiqo:native-auth-session"));
 
 const auth = read("lib/auth.ts");
 assert.ok(auth.includes("postPratiqoNativeMessage"));
-assert.ok(auth.includes('provider: "google"'));
-assert.ok(auth.includes("loginWithApple"));
+assert.ok(auth.includes('return loginWithOAuthProvider("google"'));
+assert.ok(auth.includes('return loginWithOAuthProvider("apple"'));
 
 const login = read("app/login/page.tsx");
 assert.ok(login.includes("getPratiqoNativePlatform"));
