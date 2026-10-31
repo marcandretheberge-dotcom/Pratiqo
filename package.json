@@ -87,7 +87,8 @@
     "test:yo-italian-course": "node --import tsx tests/yo/yopratiqoItalianCourseContent.test.ts && node --import tsx tests/yo/yopratiqoItalianCourseProgress.test.ts && node --import tsx tests/yo/yopratiqoItalianCoursePlayer.test.ts && node --import tsx tests/yo/yopratiqoItalianCourseAudio.test.ts && node --import tsx tests/yo/yopratiqoItalianCourseNavigation.test.ts",
     "build:yo-italian-course-audio-plan": "node --import tsx scripts/build-italian-course-audio-plan.ts",
     "generate:yo-italian-course-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module italian-course-a1",
-    "verify:yo-italian-course-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module italian-course-a1 --verify-only"
+    "verify:yo-italian-course-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module italian-course-a1 --verify-only",
+    "test:mobile-wrap": "tsx tests/app/nativeMobileWrap.test.ts"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",

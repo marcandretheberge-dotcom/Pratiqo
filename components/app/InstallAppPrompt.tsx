@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/lib/locale-context";
 import { getPwaCopy } from "@/lib/pwa/copy";
+import { isPratiqoNativeApp } from "@/lib/mobile/nativeBridge";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -70,7 +71,7 @@ export function InstallAppPrompt() {
   useEffect(() => {
     setMounted(true);
 
-    if (isCrawler() || isStandaloneDisplay() || !isMobileBrowser()) return;
+    if (isPratiqoNativeApp() || isCrawler() || isStandaloneDisplay() || !isMobileBrowser()) return;
 
     try {
       if (window.localStorage.getItem(DISMISSED_KEY) === "1") return;
@@ -95,7 +96,7 @@ export function InstallAppPrompt() {
     }
   }, [pathname]);
 
-  if (!mounted || !visible || isSensitivePath(pathname)) return null;
+  if (!mounted || !visible || isPratiqoNativeApp() || isSensitivePath(pathname)) return null;
 
   const dismiss = () => {
     setVisible(false);
