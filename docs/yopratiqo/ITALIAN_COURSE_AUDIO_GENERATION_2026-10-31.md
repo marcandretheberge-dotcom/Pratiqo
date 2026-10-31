@@ -91,9 +91,9 @@ Also covered: intro (`yo/it/italian-intro/...`) and Bologna (`yo/it/italian-bolo
 ## Browser / pronunciation QA
 
 - **Transport / publication:** verified by public GET + MP3 frame/hash pipeline for all 854 expected paths.
-- **In-course projection:** PR preview unit pages (`/yo/langues/italien/parcours/u01`, `u05`, `u06`, `u08`, `u11`, `u12`) embed public `yo/it/.../*.mp3` paths with `NEXT_PUBLIC_SUPABASE_URL`; sampled HEADs return `200` / `audio/mpeg`; HTML contains no `speechSynthesis` fallback. Preview initially still showed the pre-publication “recordings being prepared” notice; copy was updated to state that course recordings are available (follow-up commit on this branch).
-- **Interactive player controls** (click Play / 0.78× / Stop / one-at-a-time): automated browser MCP was unavailable after the first dashboard load in this session, so full click-through transport QA is **not claimed** here. The shared `ItalianModuleAudio` player used by the course already implements those controls against public MP3 URLs.
-- **Linguistic listening QA** (double consonants, `gli`/`gn`, `c/ch`, `g/gh`, stress, numbers/prices, passato prossimo): **not claimed as completed** in this report. Automated HTTP/MP3 checks do not prove pronunciation quality.
+- **In-course projection:** PR preview unit pages (`/yo/langues/italien/parcours/u01`, `u05`, `u06`, `u08`, `u11`, `u12`) embed public `yo/it/.../*.mp3` paths with `NEXT_PUBLIC_SUPABASE_URL`; sampled HEADs return `200` / `audio/mpeg`; HTML contains no `speechSynthesis` fallback. Preview initially still showed the pre-publication “recordings being prepared” notice; copy was updated to state that course recordings are available (`6285f98f`).
+- **Interactive player controls** (Play → Stop / Slow `aria-pressed` / switch clip / no error status / no Web Speech): Playwright smoke on preview units **u01** (Buongiorno!), **u05** (Vorrei un caffè.), **u06** (C’è una cucina.), **u11** (Ieri ho visitato un museo.), **u12** (Arriviamo venerdì sera.) — all `ok`, no playback error banners. This validates transport wiring, not ear-based pronunciation.
+- **Linguistic listening QA** (double consonants, `gli`/`gn`, `c/ch`, `g/gh`, stress, numbers/prices, passato prossimo): **not claimed as completed** in this report. Automated HTTP/MP3 checks and UI smoke do not prove pronunciation quality.
 
 ## Safety notes
 
