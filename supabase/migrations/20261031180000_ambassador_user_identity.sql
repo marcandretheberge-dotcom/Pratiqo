@@ -505,6 +505,166 @@ END;
 $$;
 
 
+CREATE OR REPLACE VIEW public.ambassador_reward_economics
+WITH (security_invoker = true)
+AS
+WITH active_rule AS (
+  SELECT r.*
+  FROM public.ambassador_reward_rules r
+  WHERE r.active = true
+    AND r.effective_at <= now()
+  ORDER BY r.effective_at DESC
+  LIMIT 1
+), attribution_rollup AS (
+  SELECT
+    ra.ambassador_link_id,
+    count(*) FILTER (WHERE ra.referral_type = 'student') AS referred_learners,
+    count(*) FILTER (WHERE ra.referral_type = 'teacher') AS referred_teachers
+  FROM public.referral_attributions ra
+  GROUP BY ra.ambassador_link_id
+), student_fee_rows AS (
+  SELECT
+    ra.ambassador_link_id,
+    bp.booking_id,
+    bp.platform_fee_cents AS gross_platform_fee_cents,
+    public.ambassador_net_platform_contribution_cents(
+      bp.amount_cents,
+      bp.platform_fee_cents,
+      r.payment_cost_reserve_bps,
+      r.payment_cost_reserve_fixed_cents
+    ) AS net_platform_contribution_cents
+  FROM public.referral_attributions ra
+  JOIN public.booking_payments bp ON bp.student_id = ra.referred_user_id
+  JOIN public.bookings b ON b.id = bp.booking_id
+  CROSS JOIN active_rule r
+  WHERE ra.referral_type = 'student'
+    AND bp.payment_status = 'paid'
+    AND bp.refunded_cents = 0
+    AND bp.currency = r.currency
+    AND b.status = 'completed'
+    AND b.completion_outcome = 'held'
+), teacher_fee_rows AS (
+  SELECT
+    ra.ambassador_link_id,
+    bp.booking_id,
+    bp.platform_fee_cents AS gross_platform_fee_cents,
+    public.ambassador_net_platform_contribution_cents(
+      bp.amount_cents,
+      bp.platform_fee_cents,
+      r.payment_cost_reserve_bps,
+      r.payment_cost_reserve_fixed_cents
+    ) AS net_platform_contribution_cents
+  FROM public.referral_attributions ra
+  JOIN public.teachers referred_teacher ON referred_teacher.user_id = ra.referred_user_id
+  JOIN public.booking_payments bp ON bp.teacher_id = referred_teacher.id
+  JOIN public.bookings b ON b.id = bp.booking_id
+  CROSS JOIN active_rule r
+  WHERE ra.referral_type = 'teacher'
+    AND bp.payment_status = 'paid'
+    AND bp.refunded_cents = 0
+    AND bp.currency = r.currency
+    AND b.status = 'completed'
+    AND b.completion_outcome = 'held'
+), student_fee_rollup AS (
+  SELECT
+    ambassador_link_id,
+    count(*)::bigint AS referred_student_eligible_bookings,
+    COALESCE(sum(gross_platform_fee_cents), 0)::bigint AS student_platform_fee_cents,
+    COALESCE(sum(net_platform_contribution_cents), 0)::bigint AS student_net_platform_contribution_cents
+  FROM student_fee_rows
+  GROUP BY ambassador_link_id
+), teacher_fee_rollup AS (
+  SELECT
+    ambassador_link_id,
+    count(*)::bigint AS referred_teacher_eligible_bookings,
+    COALESCE(sum(gross_platform_fee_cents), 0)::bigint AS teacher_platform_fee_cents,
+    COALESCE(sum(net_platform_contribution_cents), 0)::bigint AS teacher_net_platform_contribution_cents
+  FROM teacher_fee_rows
+  GROUP BY ambassador_link_id
+), unique_fee_rollup AS (
+  SELECT
+    x.ambassador_link_id,
+    count(*)::bigint AS unique_eligible_completed_bookings,
+    COALESCE(sum(x.gross_platform_fee_cents), 0)::bigint AS unique_realized_platform_fee_cents,
+    COALESCE(sum(x.net_platform_contribution_cents), 0)::bigint AS unique_realized_net_platform_contribution_cents
+  FROM (
+    SELECT ambassador_link_id, booking_id, gross_platform_fee_cents, net_platform_contribution_cents FROM student_fee_rows
+    UNION
+    SELECT ambassador_link_id, booking_id, gross_platform_fee_cents, net_platform_contribution_cents FROM teacher_fee_rows
+  ) x
+  GROUP BY x.ambassador_link_id
+), reward_rollup AS (
+  SELECT
+    ar.ambassador_link_id,
+    COALESCE(sum(ar.amount_cents) FILTER (
+      WHERE ar.status IN ('pending', 'earned')
+    ), 0)::bigint AS rewards_outstanding_cents,
+    COALESCE(sum(ar.amount_cents) FILTER (
+      WHERE ar.status = 'paid'
+    ), 0)::bigint AS rewards_paid_cents,
+    COALESCE(sum(ar.amount_cents) FILTER (
+      WHERE ar.status = 'reversed'
+    ), 0)::bigint AS rewards_reversed_unrecovered_cents,
+    COALESCE(sum(ar.amount_cents) FILTER (
+      WHERE ar.reward_type = 'student_completed_booking_share'
+        AND ar.status IN ('pending', 'earned', 'paid', 'reversed')
+    ), 0)::bigint AS student_rewards_active_cents,
+    COALESCE(sum(ar.amount_cents) FILTER (
+      WHERE ar.reward_type = 'teacher_activation_margin_bonus'
+        AND ar.status IN ('pending', 'earned', 'paid', 'reversed')
+    ), 0)::bigint AS teacher_rewards_active_cents
+  FROM public.ambassador_rewards ar
+  GROUP BY ar.ambassador_link_id
+)
+SELECT
+  al.id AS ambassador_link_id,
+  al.code,
+  al.teacher_id,
+  a.user_id AS ambassador_user_id,
+  COALESCE(aroll.referred_learners, 0) AS referred_learners,
+  COALESCE(aroll.referred_teachers, 0) AS referred_teachers,
+  COALESCE(sfr.referred_student_eligible_bookings, 0) AS referred_student_eligible_bookings,
+  COALESCE(tfr.referred_teacher_eligible_bookings, 0) AS referred_teacher_eligible_bookings,
+  COALESCE(ufr.unique_eligible_completed_bookings, 0) AS unique_eligible_completed_bookings,
+  COALESCE(sfr.student_platform_fee_cents, 0) AS referred_student_platform_fee_cents,
+  COALESCE(tfr.teacher_platform_fee_cents, 0) AS referred_teacher_platform_fee_cents,
+  COALESCE(ufr.unique_realized_platform_fee_cents, 0) AS unique_realized_platform_fee_cents,
+  COALESCE(sfr.student_net_platform_contribution_cents, 0) AS referred_student_net_platform_contribution_cents,
+  COALESCE(tfr.teacher_net_platform_contribution_cents, 0) AS referred_teacher_net_platform_contribution_cents,
+  COALESCE(ufr.unique_realized_net_platform_contribution_cents, 0) AS unique_realized_net_platform_contribution_cents,
+  COALESCE(rr.student_rewards_active_cents, 0) AS student_rewards_active_cents,
+  COALESCE(rr.teacher_rewards_active_cents, 0) AS teacher_rewards_active_cents,
+  COALESCE(rr.rewards_outstanding_cents, 0) AS rewards_outstanding_cents,
+  COALESCE(rr.rewards_outstanding_cents, 0) AS rewards_due_cents,
+  COALESCE(rr.rewards_paid_cents, 0) AS rewards_paid_cents,
+  COALESCE(rr.rewards_reversed_unrecovered_cents, 0) AS rewards_reversed_unrecovered_cents,
+  COALESCE(rr.rewards_reversed_unrecovered_cents, 0) AS rewards_reversed_cents,
+  (
+    COALESCE(rr.rewards_outstanding_cents, 0)
+    + COALESCE(rr.rewards_paid_cents, 0)
+    + COALESCE(rr.rewards_reversed_unrecovered_cents, 0)
+  ) AS ambassador_total_economic_cost_cents,
+  (
+    COALESCE(ufr.unique_realized_net_platform_contribution_cents, 0)
+    - COALESCE(rr.rewards_outstanding_cents, 0)
+    - COALESCE(rr.rewards_paid_cents, 0)
+    - COALESCE(rr.rewards_reversed_unrecovered_cents, 0)
+  ) AS net_contribution_after_ambassador_cost_cents,
+  (
+    COALESCE(ufr.unique_realized_net_platform_contribution_cents, 0)
+    - COALESCE(rr.rewards_outstanding_cents, 0)
+    - COALESCE(rr.rewards_paid_cents, 0)
+    - COALESCE(rr.rewards_reversed_unrecovered_cents, 0)
+  ) AS realized_fee_after_active_rewards_cents
+FROM public.ambassador_links al
+LEFT JOIN public.ambassadors a ON a.id = al.ambassador_id
+LEFT JOIN attribution_rollup aroll ON aroll.ambassador_link_id = al.id
+LEFT JOIN student_fee_rollup sfr ON sfr.ambassador_link_id = al.id
+LEFT JOIN teacher_fee_rollup tfr ON tfr.ambassador_link_id = al.id
+LEFT JOIN unique_fee_rollup ufr ON ufr.ambassador_link_id = al.id
+LEFT JOIN reward_rollup rr ON rr.ambassador_link_id = al.id;
+
+
 DROP VIEW IF EXISTS public.ambassador_admin_overview;
 CREATE OR REPLACE VIEW public.ambassador_admin_overview AS
 WITH link_rollup AS (
@@ -682,6 +842,8 @@ GRANT EXECUTE ON FUNCTION public.admin_create_ambassador_link(uuid, text, text, 
   TO service_role;
 
 REVOKE ALL ON public.ambassadors FROM anon, authenticated;
+REVOKE ALL ON public.ambassador_reward_economics FROM anon, authenticated;
 REVOKE ALL ON public.ambassador_admin_overview FROM anon, authenticated;
 GRANT ALL ON public.ambassadors TO service_role;
+GRANT SELECT ON public.ambassador_reward_economics TO service_role;
 GRANT SELECT ON public.ambassador_admin_overview TO service_role;
