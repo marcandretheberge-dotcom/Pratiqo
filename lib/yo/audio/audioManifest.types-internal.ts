@@ -11,10 +11,9 @@
  *   → data), so any value they need (item shape, slug builder, path
  *   builders) lives here instead.
  *
- *   Consumers OUTSIDE the audio manifest (the generator script, the
- *   AudioPlayer, tests) MUST import from `@/lib/yo/audio/audioManifest`,
- *   not from this file. This file is treated as a private
- *   implementation detail.
+ *   Registry consumers (the generator script and manifest tests) use
+ *   `@/lib/yo/audio/audioManifest`. The low-level public URL helper may
+ *   import the bucket constant here without loading all recording data.
  *
  * No Stripe / Supabase / RLS / migrations / search / booking / Membre
  * Pro logic in this file. Pure types + pure helpers.

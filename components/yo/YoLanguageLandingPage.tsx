@@ -59,7 +59,7 @@ import { SITE_URL } from "@/lib/seo/site";
 import { serializeJsonLd } from "@/lib/seo/jsonLd";
 import { buildYopratiqoCourseSchema } from "@/lib/seo/yopratiqoCourseSchema";
 import { lstr, t } from "@/lib/yo/localize";
-import type { YoLocale } from "@/lib/yo/types";
+import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import type { YoPratiqoLandingContent } from "@/lib/yo/yopratiqoLandingContent";
 import {
   canInjectYoPratiqoCourseSchema,
@@ -100,10 +100,12 @@ export function YoLanguageLandingPage({
   locale,
   moduleConfig,
   content,
+  practiceEntry,
 }: {
   locale: YoLocale;
   moduleConfig: YoPratiqoModuleConfig;
   content: YoPratiqoLandingContent;
+  practiceEntry?: { href: string; title: YoLocalizedString; body: YoLocalizedString; cta: YoLocalizedString; eyebrow?: YoLocalizedString };
 }) {
   const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
   const localizedIntroRoute =
@@ -263,11 +265,21 @@ export function YoLanguageLandingPage({
     </section>
   );
 
+  const practiceCardBlock = practiceEntry ? (
+    <article className="rounded-3xl border border-[#d9b48b] bg-[#fff1df] p-5 shadow-sm sm:p-6">
+      <span className="text-[10px] font-black uppercase tracking-[.18em] text-[#a95c37]">{t(practiceEntry.eyebrow ?? lstr("Module pratique · A1", "Practice module · A1", "Módulo práctico · A1"), locale)}</span>
+      <h2 className="mt-2 font-serif text-2xl text-[#245a46]">{t(practiceEntry.title, locale)}</h2>
+      <p className="mt-3 text-sm leading-relaxed text-[#68553e]">{t(practiceEntry.body, locale)}</p>
+      <Link href={practiceEntry.href} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#245a46] px-5 py-3 text-sm font-bold text-white hover:bg-[#173d2e]"><Sparkles size={17} aria-hidden />{t(practiceEntry.cta, locale)}</Link>
+    </article>
+  ) : null;
+
   // ─── Mobile steps ─────────────────────────────────────────────
   const stepHero = (
     <div className="flex w-full flex-col gap-4 px-4 py-4">
       {heroBlock}
       {audienceBlock}
+      {practiceCardBlock}
     </div>
   );
   const stepIntroPreview = (
@@ -381,6 +393,7 @@ export function YoLanguageLandingPage({
           ),
           center: (
             <div className="flex flex-col gap-5">
+              {practiceCardBlock}
               {introCardBlock}
               {learnBlock}
               {whyBlock}

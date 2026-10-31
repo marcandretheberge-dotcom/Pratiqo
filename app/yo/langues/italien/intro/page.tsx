@@ -540,6 +540,13 @@ export default async function YoItalianIntroPage({ searchParams }: PageProps) {
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
+                href={buildYoLocaleHref("/yo/langues/italien/parcours", locale)}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#245a46] px-5 py-3 text-sm font-bold text-white hover:bg-[#173d2e]"
+              >
+                <BookOpen className="size-4" aria-hidden />
+                {t(lstr("Continuer vers le cours italien", "Continue to the Italian course", "Continuar al curso de italiano"), locale)}
+              </Link>
+              <Link
                 href={teacherHref}
                 className="ds-btn-primary inline-flex items-center justify-center gap-2 text-center text-sm sm:text-base"
               >
