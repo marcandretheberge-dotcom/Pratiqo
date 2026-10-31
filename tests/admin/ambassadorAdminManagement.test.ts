@@ -90,6 +90,11 @@ test("ambassador identity is user-first and teacher participation is optional", 
   assert.match(migrationUserIdentity, /lower\(p\.email\) = lower\(v_identifier\)/);
   assert.match(migrationUserIdentity, /a\.user_id AS ambassador_user_id/);
   assert.match(migrationUserIdentity, /LEFT JOIN public\.teachers t ON t\.id = a\.teacher_id/);
+  assert.match(migrationUserIdentity, /CREATE OR REPLACE VIEW public\.ambassador_reward_economics/);
+  assert.match(
+    migrationUserIdentity,
+    /FROM public\.ambassador_links al\s+LEFT JOIN public\.ambassadors a ON a\.id = al\.ambassador_id/,
+  );
   assert.match(migrationUserIdentity, /FROM public\.ambassadors a\s+WHERE a\.id = v_link\.ambassador_id/);
   assert.doesNotMatch(migrationUserIdentity, /INSERT INTO public\.profiles/);
   assert.doesNotMatch(migrationUserIdentity, /INSERT INTO public\.teachers/);
