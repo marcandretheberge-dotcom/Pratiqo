@@ -238,6 +238,29 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.admin_activate_ambassador(
+  p_teacher_id text,
+  p_preferred_code text DEFAULT NULL,
+  p_internal_note text DEFAULT NULL,
+  p_actor_id uuid DEFAULT NULL,
+  p_actor_email text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $
+BEGIN
+  RETURN public.admin_activate_ambassador_user(
+    p_teacher_id,
+    p_preferred_code,
+    p_internal_note,
+    p_actor_id,
+    p_actor_email
+  );
+END;
+$;
+
 CREATE OR REPLACE FUNCTION public.admin_create_ambassador_link(
   p_ambassador_id uuid,
   p_preferred_code text,
@@ -640,6 +663,11 @@ COMMENT ON VIEW public.ambassador_admin_overview IS
 REVOKE ALL ON FUNCTION public.admin_activate_ambassador_user(text, text, text, uuid, text)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_activate_ambassador_user(text, text, text, uuid, text)
+  TO service_role;
+
+REVOKE ALL ON FUNCTION public.admin_activate_ambassador(text, text, text, uuid, text)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_activate_ambassador(text, text, text, uuid, text)
   TO service_role;
 
 -- Re-assert the existing claim/link RPC boundaries after replacement.
