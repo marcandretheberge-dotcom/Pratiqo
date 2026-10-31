@@ -100,7 +100,7 @@ function deepLinkToWeb(url: string): string | null {
 }
 
 function NativeShell() {
-  const webViewRef = useRef<WebView>(null);
+  const webViewRef = useRef<WebView<{}>>(null);
   const [uri, setUri] = useState(webUrl("/"));
   const [canGoBack, setCanGoBack] = useState(false);
   const [currentUrl, setCurrentUrl] = useState(uri);
@@ -283,7 +283,7 @@ function NativeShell() {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <View style={styles.container}>
-        <WebView
+        <WebView<{}>
           ref={webViewRef}
           source={{ uri }}
           style={styles.webView}
@@ -293,7 +293,7 @@ function NativeShell() {
           onShouldStartLoadWithRequest={shouldStart}
           onNavigationStateChange={navigationChanged}
           onError={() => setWebFailed(true)}
-          onHttpError={({ nativeEvent }) => {
+          onHttpError={({ nativeEvent }: { nativeEvent: { statusCode: number } }) => {
             if (nativeEvent.statusCode >= 500) setWebFailed(true);
           }}
           onContentProcessDidTerminate={() => webViewRef.current?.reload()}
@@ -365,7 +365,10 @@ const styles = StyleSheet.create({
   tabText: { fontSize: 11, fontWeight: "700", color: "#66756f" },
   tabSelected: { color: "#0F6E56" },
   errorOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
     bottom: 62,
     alignItems: "center",
     justifyContent: "center",

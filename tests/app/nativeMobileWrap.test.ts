@@ -11,16 +11,17 @@ assert.equal(pkg.dependencies["react-native-webview"], "14.0.1");
 assert.equal(pkg.dependencies["@supabase/supabase-js"], "2.105.4");
 
 const config = read("apps/mobile/app.config.ts");
+const mobileConfig = read("apps/mobile/src/config.ts");
 assert.ok(config.includes('bundleIdentifier: "ca.pratiqo.app"'));
 assert.ok(config.includes('package: "ca.pratiqo.app"'));
 assert.ok(config.includes('scheme: "pratiqo"'));
 assert.ok(config.includes("expo-web-browser"));
+assert.ok(mobileConfig.includes('pratiqo://auth/callback'));
 
 const app = read("apps/mobile/App.tsx");
 for (const required of [
   "react-native-webview",
   "openAuthSessionAsync",
-  "pratiqo://auth/callback",
   "hardwareBackPress",
   "onShouldStartLoadWithRequest",
   "mediaPlaybackRequiresUserAction",
