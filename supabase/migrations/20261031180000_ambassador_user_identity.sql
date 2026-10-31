@@ -249,7 +249,7 @@ RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
-AS $
+AS $$
 BEGIN
   RETURN public.admin_activate_ambassador_user(
     p_teacher_id,
@@ -259,7 +259,7 @@ BEGIN
     p_actor_email
   );
 END;
-$;
+$$;
 
 CREATE OR REPLACE FUNCTION public.admin_create_ambassador_link(
   p_ambassador_id uuid,
