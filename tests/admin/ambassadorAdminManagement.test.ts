@@ -38,6 +38,9 @@ function changedFiles(): string[] {
 }
 
 const migration095 = read("supabase/migrations/095_ambassador_membership_admin.sql");
+const migrationUserIdentity = read(
+  "supabase/migrations/20261031180000_ambassador_user_identity.sql",
+);
 const adminLib = read("lib/admin/ambassadors.ts");
 const auditLib = read("lib/admin/auditLog.ts");
 const referralRoute = read("app/r/[code]/route.ts");
@@ -71,6 +74,23 @@ test("existing teachers are activated without account or teacher recreation", ()
   assert.doesNotMatch(migration095, /INSERT INTO public\.profiles/);
   assert.match(adminUserDetail, /data-testid="admin-user-ambassador-card"/);
   assert.match(adminUserDetail, /Activer comme ambassadeur/);
+});
+
+test("ambassador identity is user-first and teacher participation is optional", () => {
+  assert.match(migrationUserIdentity, /ADD COLUMN IF NOT EXISTS user_id uuid/);
+  assert.match(migrationUserIdentity, /ALTER COLUMN user_id SET NOT NULL/);
+  assert.match(migrationUserIdentity, /idx_ambassadors_user_unique/);
+  assert.match(migrationUserIdentity, /ALTER COLUMN teacher_id DROP NOT NULL/);
+  assert.match(migrationUserIdentity, /admin_activate_ambassador_user/);
+  assert.match(migrationUserIdentity, /p_user_identifier text/);
+  assert.match(migrationUserIdentity, /lower\(p\.email\) = lower\(v_identifier\)/);
+  assert.match(migrationUserIdentity, /a\.user_id AS ambassador_user_id/);
+  assert.match(migrationUserIdentity, /LEFT JOIN public\.teachers t ON t\.id = a\.teacher_id/);
+  assert.match(migrationUserIdentity, /FROM public\.ambassadors a\s+WHERE a\.id = v_link\.ambassador_id/);
+  assert.doesNotMatch(migrationUserIdentity, /INSERT INTO public\.profiles/);
+  assert.doesNotMatch(migrationUserIdentity, /INSERT INTO public\.teachers/);
+  assert.match(adminLib, /admin_activate_ambassador_user/);
+  assert.match(adminPage, /courriel, son UUID utilisateur ou son Teacher ID/);
 });
 
 test("new referral tracking requires active link and active ambassador membership", () => {
@@ -178,7 +198,8 @@ test("ambassador admin docs document deferred economic-acquisition scope", () =>
   assert.match(adminDoc, /new-account eligibility/i);
   assert.match(adminDoc, /new economic acquisition/i);
   assert.match(adminDoc, /deferred/i);
-  assert.match(adminDoc, /Apply migration `095_ambassador_membership_admin\.sql`/);
+  assert.match(adminDoc, /20261031180000_ambassador_user_identity\.sql/);
+  assert.match(adminDoc, /teacher profile is optional|teacher profile.*optional/i);
 });
 
 test("package ambassador script includes admin management regression", () => {
