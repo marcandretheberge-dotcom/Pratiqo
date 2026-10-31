@@ -133,19 +133,24 @@ Le cours utilise le pipeline **OpenAI TTS → fichiers MP3 → Supabase Storage 
 
 Le plan audio est construit depuis le contenu italien : vocabulaire, exemples, mots de prononciation, lectures, cibles des jeux, dialogues, commandes, indications, bilans et modèles de production. Les traductions et les réponses libres de l’apprenant ne sont pas transmises au TTS.
 
-Le plan régénéré depuis le contenu final le 31 octobre 2026 comporte **854 textes distincts : 825 nouvelles cibles et 29 réutilisations exactes**, soit 23 254 caractères italiens pour les nouvelles cibles. Ces comptes décrivent des références prévues. Ils n’attestent ni la génération des MP3 ni leur disponibilité publique.
+Le plan régénéré depuis le contenu final le 31 octobre 2026 comporte **854 textes distincts : 825 nouvelles cibles et 29 réutilisations exactes**, soit 23 254 caractères italiens pour les nouvelles cibles (dry-run : 23 649 caractères d’entrée TTS sur les 854 items sélectionnés).
 
-### État des enregistrements constaté à cette étape
+### État des enregistrements — publication vérifiée (31 octobre 2026)
 
-| Groupe | État constaté | Portée de la preuve |
-|---|---|---|
-| 7 des 29 dépendances réutilisées | Disponibles par GET public : `Ciao`, `Buongiorno`, `Grazie`, `Per favore`, `Scusi`, `Vorrei`, `Non capisco`. | Accès aux fichiers publics constaté ; cela ne constitue pas une revue humaine de leur prononciation. |
-| 22 autres dépendances réutilisées | Fichiers de l’atelier de Bologne absents au contrôle. | Le GET public renvoie HTTP 400 avec un corps indiquant 404. |
-| 825 nouvelles cibles | Ni générées ni vérifiées dans cette livraison de code. | Présence dans le plan uniquement. |
+| Métrique | Résultat |
+|---|---:|
+| Items sélectionnés (`italian-course-a1` + dépendances exactes) | 854 |
+| Déjà présents / ignorés lors de la génération (dont 7 intros déjà publiques) | 35 |
+| Nouveaux MP3 générés (OpenAI) puis téléversés | 847 au total sur la session (28 canary + 819 lot complet) |
+| Vérification publique `verify:yo-italian-course-audio` | **854/854, 0 échec** |
+| Modèle / voix | `gpt-4o-mini-tts` / `alloy` (défauts ; pas d’override env) |
+| Bucket / projet | `yopratiqo-audio` / `jwlbwmxoradmbuvqfkhe` |
+| Préfixe nouvelles cibles | `yo/it/italian-course-a1/v1/italian-standard/sentence/` |
+| Cache local (hors Git) | 847 MP3, ~40,7 Mo d’octets générés |
 
-**L’audio du cours complet n’est donc pas prêt à être annoncé comme disponible.** Le sélecteur du cours inclut les dépendances manquantes ; une génération réelle doit traiter les nouvelles cibles et les fichiers réutilisés encore absents, puis vérifier l’ensemble. Ces observations doivent être actualisées après régénération du plan final et après toute publication audio.
+**Les 854 chemins attendus du cours sont disponibles par GET public** (HTTP 200, `audio/mpeg`, trames MP3 et SHA-256 contrôlés quand la provenance locale existe). Voir le rapport détaillé [ITALIAN_COURSE_AUDIO_GENERATION_2026-10-31.md](ITALIAN_COURSE_AUDIO_GENERATION_2026-10-31.md).
 
-La déduplication repose sur le texte exact normalisé en NFC et débarrassé de ses espaces extérieurs. Les changements de ponctuation et les nouvelles formulations peuvent créer de nouvelles cibles. Le plan conserve les chemins existants pour les correspondances exactes dans les registres de l’introduction et de l’atelier de Bologne. **Les références réutilisées doivent elles aussi être vérifiées**, y compris lorsqu’elles proviennent d’un ancien plan.
+La déduplication repose sur le texte exact normalisé en NFC et débarrassé de ses espaces extérieurs. Les chemins d’introduction et de Bologne réutilisés ont été inclus dans la vérification. **La validation linguistique humaine (écoute qualitative) reste distincte** des contrôles HTTP/MP3/empreinte.
 
 ### Fichiers et portée
 

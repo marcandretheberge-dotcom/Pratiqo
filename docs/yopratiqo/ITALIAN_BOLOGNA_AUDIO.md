@@ -37,4 +37,8 @@ Verification fetches every expected new public URL and checks MP3 frames and, wh
 
 Before marking audio complete, verify **48/48 new recordings plus 8/8 reused recordings**, zero failures. Record actual model/voice, time, object path, byte count and SHA-256 without secrets. Test actual browser playback in vocabulary, a dialogue, listening, map instructions, café and Yoppo examples. Review short Italian words, accented syllables, numbers and sentence endings by listening; transport checks do not establish pronunciation quality.
 
+### Course-scope publication note (2026-10-31)
+
+Running `npm run generate:yo-italian-course-audio` / `verify:yo-italian-course-audio` includes Bologna dependency paths required by the complete course. Those paths were generated (where missing) and publicly verified as part of the **854/854** course-scope check. See [ITALIAN_COURSE_AUDIO_GENERATION_2026-10-31.md](ITALIAN_COURSE_AUDIO_GENERATION_2026-10-31.md) and [ITALIAN_COURSE.md](ITALIAN_COURSE.md).
+
 If a key is missing, report the variable name and required runtime. Do not describe the manifest, a dry run, a mocked player or an unavailable URL as a published recording.
