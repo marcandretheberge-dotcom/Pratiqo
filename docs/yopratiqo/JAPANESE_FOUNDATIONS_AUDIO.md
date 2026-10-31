@@ -4,16 +4,16 @@
 
 The course player is wired to prerecorded MP3s in the existing `yopratiqo-audio` bucket. A manifest is a recording plan, not evidence that those recordings exist.
 
-On 2026-10-30, implementation and generation preparation were completed without an OpenAI API key or a Supabase Storage write key in the execution environment. **No foundation MP3 was generated or uploaded in this change.** The production release remains blocked on generation, public-file verification and listening review.
+**Latest verification (2026-10-31 UTC, branch `feat/yopratiqo-japanese-foundations-20261030`, commit `b973b3ec`):** offline dry-run selected **206** unique `japanese-foundations` paths; public verify reported **0 verified / 206 failed** (HTTP 400 — objects absent). Bucket listing under `yo/ja/japanese-foundations/` is empty. Japanese introduction objects remain **36**. Full report: [audio/japanese-foundations-v1/GENERATION_REPORT.md](audio/japanese-foundations-v1/GENERATION_REPORT.md).
 
-Read-only checks confirmed:
+Environment in the Cloud Agent that ran the generator:
 
-- Project: `jwlbwmxoradmbuvqfkhe` (`Pratiqo`).
-- Existing bucket: `yopratiqo-audio`, public, `audio/mpeg`, maximum object size 5 MiB.
-- Existing Japanese introduction objects: **36**. An introduction MP3 returned HTTP 200, `audio/mpeg`, and 25,728 bytes.
-- New `yo/ja/japanese-foundations/v1/` objects at the time of the check: **0**.
-- The corrected CLI verified an existing introduction MP3 (`sekai.mp3`): HTTP 200, 16,128 bytes, SHA256 `e19fa53c9af6ae8814101baaa1c06f26fe6ca915af83dac99b716f4a5ddcf78c`. Verification of the first three foundation URLs failed as expected because the objects are absent (Supabase returned HTTP 400).
-- No deployed Supabase Edge Function is available for this generation job.
+- `NEXT_PUBLIC_SUPABASE_URL`: present (project `jwlbwmxoradmbuvqfkhe`).
+- `SUPABASE_SERVICE_ROLE_KEY`: present; Storage list works; `audio/mpeg` upload to `yopratiqo-audio` works (bucket MIME allowlist rejects non-audio).
+- `OPENAI_API_KEY`: **missing** from the process environment (and absent from Vercel project env names). This blocks Speech API generation. Edge Function secrets do not feed this Node script.
+- Planned TTS for this series (dry-run / defaults): model `gpt-4o-mini-tts`, voice `alloy`, format `mp3` / `audio/mpeg`; no `speed` request param; player slow mode remains 0.78×.
+
+**No foundation MP3 was generated or uploaded in this verification pass.** Production audio-complete release remains blocked on OpenAI key injection into the Cursor generator environment, then generate → verify → listening review.
 
 Neither storage policies nor authentication are changed. Existing introduction audio is preserved.
 
