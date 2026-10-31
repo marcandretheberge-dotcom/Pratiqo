@@ -16,7 +16,8 @@ import {
 export const runtime = "nodejs";
 
 type PostBody = {
-  teacherId?: unknown;
+  userIdentifier?: unknown;
+  teacherId?: unknown; // legacy admin links may still prefill this
   preferredCode?: unknown;
   internalNote?: unknown;
 };
@@ -51,7 +52,7 @@ export async function POST(req: Request) {
   }
 
   const result = await activateAdminAmbassador(admin, actor, {
-    teacherId: body.teacherId,
+    userIdentifier: body.userIdentifier ?? body.teacherId,
     preferredCode: body.preferredCode,
     internalNote: body.internalNote,
   });

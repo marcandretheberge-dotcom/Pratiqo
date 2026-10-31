@@ -18,7 +18,7 @@ export type AmbassadorRewardStatus = "pending" | "earned" | "paid" | "void" | "r
 
 export type AdminAmbassadorOverview = {
   ambassadorId: string;
-  teacherId: string;
+  teacherId: string | null;
   ambassadorUserId: string | null;
   teacherName: string | null;
   teacherEmail: string | null;
@@ -53,7 +53,7 @@ export type AdminAmbassadorOverview = {
 export type AdminAmbassadorLink = {
   id: string;
   ambassadorId: string | null;
-  teacherId: string;
+  teacherId: string | null;
   code: string;
   destinationPath: string;
   campaign: string | null;
@@ -148,8 +148,8 @@ function parseOverviewRow(data: unknown): AdminAmbassadorOverview | null {
   if (!data || typeof data !== "object") return null;
   const row = data as Record<string, unknown>;
   const ambassadorId = asString(row.ambassador_id);
-  const teacherId = asString(row.teacher_id);
-  if (!ambassadorId || !teacherId) return null;
+  const teacherId = asNullableString(row.teacher_id);
+  if (!ambassadorId) return null;
 
   return {
     ambassadorId,
@@ -194,9 +194,9 @@ function parseLinkRow(data: unknown): AdminAmbassadorLink | null {
   if (!data || typeof data !== "object") return null;
   const row = data as Record<string, unknown>;
   const id = asString(row.id);
-  const teacherId = asString(row.teacher_id);
+  const teacherId = asNullableString(row.teacher_id);
   const code = asString(row.code);
-  if (!id || !teacherId || !code) return null;
+  if (!id || !code) return null;
 
   return {
     id,
@@ -250,12 +250,15 @@ function mapRpcError(message: string | undefined, fallback: string): Result<neve
     code.includes("AMBASSADOR_NOT_FOUND") ||
     code.includes("AMBASSADOR_LINK_NOT_FOUND") ||
     code.includes("AMBASSADOR_REWARD_NOT_FOUND") ||
-    code.includes("AMBASSADOR_TEACHER_NOT_FOUND")
+    code.includes("AMBASSADOR_TEACHER_NOT_FOUND") ||
+    code.includes("AMBASSADOR_USER_NOT_FOUND")
   ) {
     return { ok: false, status: 404, error: "Ressource ambassadeur introuvable." };
   }
   if (
     code.includes("AMBASSADOR_TEACHER_REQUIRED") ||
+    code.includes("AMBASSADOR_USER_REQUIRED") ||
+    code.includes("AMBASSADOR_USER_UNAVAILABLE") ||
     code.includes("AMBASSADOR_REQUIRES_EXISTING_TEACHER_ACCOUNT") ||
     code.includes("AMBASSADOR_STATUS_INVALID") ||
     code.includes("AMBASSADOR_DESTINATION_INVALID") ||
@@ -351,7 +354,7 @@ export async function getAdminAmbassadorDetail(
 }
 
 export type ActivateAmbassadorInput = {
-  teacherId: unknown;
+  userIdentifier: unknown;
   preferredCode?: unknown;
   internalNote?: unknown;
 };
@@ -361,8 +364,11 @@ export async function activateAdminAmbassador(
   actor: { id: string; email: string | null },
   input: ActivateAmbassadorInput,
 ): Promise<Result<{ ambassador: unknown; primaryLink: unknown }>> {
-  const teacherId = typeof input.teacherId === "string" ? input.teacherId.trim() : "";
-  if (!teacherId) return { ok: false, status: 400, error: "Identifiant professeur requis." };
+  const userIdentifier =
+    typeof input.userIdentifier === "string" ? input.userIdentifier.trim() : "";
+  if (!userIdentifier) {
+    return { ok: false, status: 400, error: "Compte Pratiqo requis (courriel, UUID ou Teacher ID)." };
+  }
 
   const preferredCode = optionalText(input.preferredCode, 64);
   if (preferredCode === undefined) return { ok: false, status: 400, error: "Code trop long." };
@@ -370,8 +376,8 @@ export async function activateAdminAmbassador(
   const internalNote = optionalText(input.internalNote, 2000);
   if (internalNote === undefined) return { ok: false, status: 400, error: "Note trop longue." };
 
-  const { data, error } = await admin.rpc("admin_activate_ambassador", {
-    p_teacher_id: teacherId,
+  const { data, error } = await admin.rpc("admin_activate_ambassador_user", {
+    p_user_identifier: userIdentifier,
     p_preferred_code: preferredCode,
     p_internal_note: internalNote,
     p_actor_id: actor.id,
