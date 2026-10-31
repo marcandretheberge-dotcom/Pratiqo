@@ -82,6 +82,10 @@ test("ambassador identity is user-first and teacher participation is optional", 
   assert.match(migrationUserIdentity, /idx_ambassadors_user_unique/);
   assert.match(migrationUserIdentity, /ALTER COLUMN teacher_id DROP NOT NULL/);
   assert.match(migrationUserIdentity, /admin_activate_ambassador_user/);
+  assert.match(
+    migrationUserIdentity,
+    /CREATE OR REPLACE FUNCTION public\.admin_activate_ambassador\([\s\S]*RETURN public\.admin_activate_ambassador_user/,
+  );
   assert.match(migrationUserIdentity, /p_user_identifier text/);
   assert.match(migrationUserIdentity, /lower\(p\.email\) = lower\(v_identifier\)/);
   assert.match(migrationUserIdentity, /a\.user_id AS ambassador_user_id/);
