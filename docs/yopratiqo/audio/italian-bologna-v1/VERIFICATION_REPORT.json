@@ -1,0 +1,560 @@
+{
+  "module": "italian-bologna-a1",
+  "version": "v1",
+  "projectId": "jwlbwmxoradmbuvqfkhe",
+  "bucket": "yopratiqo-audio",
+  "verificationMethod": "Public GET; successful recordings checked for MIME, MPEG Layer III structure, size and SHA-256. No generation or upload.",
+  "counts": {
+    "pedagogicalReferences": 90,
+    "uniqueTexts": 56,
+    "reusedExpected": 8,
+    "reusedVerified": 8,
+    "newExpected": 48,
+    "newVerified": 0,
+    "generated": 0,
+    "uploaded": 0
+  },
+  "newGenerationPlan": {
+    "modelDefault": "gpt-4o-mini-tts",
+    "voiceDefault": "alloy",
+    "format": "mp3",
+    "inputCharacters": 955,
+    "status": "Not generated in this execution. Every new public URL was unavailable during verification."
+  },
+  "limits": [
+    "Existing recordings have no local generation provenance: historical model and voice are not asserted.",
+    "Successful transport and structural MP3 checks do not establish pronunciation quality. Human listening review remains pending."
+  ],
+  "reusedRecordings": [
+    {
+      "at": "2026-10-31T02:32:32.751Z",
+      "mode": "verify-only",
+      "id": "it-iti-word-ciao",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-intro/intro/italian-standard/word/ciao.mp3",
+      "status": "verified",
+      "provenance": "existing-recording-unattributed",
+      "bytes": 19968,
+      "sha256": "41cc3ec5298555b2bb8e8fae293e4153bc2febcbe79c38a9353c4049867e7a76",
+      "durationSeconds": 1.248
+    },
+    {
+      "at": "2026-10-31T02:32:33.096Z",
+      "mode": "verify-only",
+      "id": "it-iti-word-buongiorno",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-intro/intro/italian-standard/word/buongiorno.mp3",
+      "status": "verified",
+      "provenance": "existing-recording-unattributed",
+      "bytes": 21888,
+      "sha256": "638a00b315da1f2c6050fb914a3a09a26bd694cdb7e483ea4c7139a258d2e2c5",
+      "durationSeconds": 1.368
+    },
+    {
+      "at": "2026-10-31T02:32:33.537Z",
+      "mode": "verify-only",
+      "id": "it-iti-word-grazie",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-intro/intro/italian-standard/word/grazie.mp3",
+      "status": "verified",
+      "provenance": "existing-recording-unattributed",
+      "bytes": 42624,
+      "sha256": "bc289b725a700478bef3c1e19572b6c2269736eb6df6ff949ee76c14750d80d1",
+      "durationSeconds": 2.664
+    },
+    {
+      "at": "2026-10-31T02:32:33.886Z",
+      "mode": "verify-only",
+      "id": "it-iti-word-prego",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-intro/intro/italian-standard/word/prego.mp3",
+      "status": "verified",
+      "provenance": "existing-recording-unattributed",
+      "bytes": 13824,
+      "sha256": "0a35c7fb62ae0b946d13f75d4816db778ab3abfb4ff99354794568c7612708b4",
+      "durationSeconds": 0.864
+    },
+    {
+      "at": "2026-10-31T02:32:34.311Z",
+      "mode": "verify-only",
+      "id": "it-iti-phrase-per-favore",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-intro/intro/italian-standard/phrase/per-favore.mp3",
+      "status": "verified",
+      "provenance": "existing-recording-unattributed",
+      "bytes": 31488,
+      "sha256": "a41e982b430b6c0c85c3d504c5a6f51313bb41189ce11762787a8f8d6b25960c",
+      "durationSeconds": 1.968
+    },
+    {
+      "at": "2026-10-31T02:32:34.763Z",
+      "mode": "verify-only",
+      "id": "it-iti-word-scusi",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-intro/intro/italian-standard/word/scusi.mp3",
+      "status": "verified",
+      "provenance": "existing-recording-unattributed",
+      "bytes": 19968,
+      "sha256": "5da0616194fb781882eed7730fe19e6ae7fda2df8e707431f493a85b708e2f2d",
+      "durationSeconds": 1.248
+    },
+    {
+      "at": "2026-10-31T02:32:35.165Z",
+      "mode": "verify-only",
+      "id": "it-iti-phrase-quanto-costa",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-intro/intro/italian-standard/phrase/quanto-costa.mp3",
+      "status": "verified",
+      "provenance": "existing-recording-unattributed",
+      "bytes": 36864,
+      "sha256": "a11de94b26e3480ce466b64b8f0cc5b1becb4499cb4946445b92f59b1509faa8",
+      "durationSeconds": 2.304
+    },
+    {
+      "at": "2026-10-31T02:32:35.496Z",
+      "mode": "verify-only",
+      "id": "it-iti-phrase-vorrei",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-intro/intro/italian-standard/phrase/vorrei.mp3",
+      "status": "verified",
+      "provenance": "existing-recording-unattributed",
+      "bytes": 16896,
+      "sha256": "bf04a4151545135a5dd1dff85c2ad31a141f8781104d38d090e8b5d59f364e30",
+      "durationSeconds": 1.056
+    }
+  ],
+  "newRecordingAvailability": [
+    {
+      "at": "2026-10-31T02:33:25.597Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-arrivederci-5b7e2a22e42b",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/arrivederci-5b7e2a22e42b.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:25.853Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-non-ho-capito-6ce8893ccfb6",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/non-ho-capito-6ce8893ccfb6.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:26.087Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-puo-ripetere-per-favore-e5422a0382a5",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/puo-ripetere-per-favore-e5422a0382a5.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:26.285Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-un-caffe-7e8b715f8141",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/un-caffe-7e8b715f8141.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:26.505Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-un-te-d769afc9aabf",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/un-te-d769afc9aabf.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:26.694Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-una-bottiglia-d-acqua-d85c22cf4342",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/una-bottiglia-d-acqua-d85c22cf4342.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:27.015Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-un-panino-8c96c40359d2",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/un-panino-8c96c40359d2.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:27.215Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-al-banco-2aed21931e6f",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/al-banco-2aed21931e6f.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:27.479Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-al-tavolo-6bad8986295d",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/al-tavolo-6bad8986295d.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:27.657Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-due-euro-09c9cfa42a71",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/due-euro-09c9cfa42a71.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:27.964Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-tre-euro-e-cinquanta-da1969ff0b46",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/tre-euro-e-cinquanta-da1969ff0b46.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:28.218Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-dov-e-la-piazza-d5ca2179abbb",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/dov-e-la-piazza-d5ca2179abbb.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:28.411Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-dov-e-il-mercato-83022a049787",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/dov-e-il-mercato-83022a049787.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:28.643Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-a-destra-dfe40a34a6d1",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/a-destra-dfe40a34a6d1.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:28.859Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-a-sinistra-9c3eb862b3e0",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/a-sinistra-9c3eb862b3e0.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:29.042Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-sempre-dritto-9d71551e0551",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/sempre-dritto-9d71551e0551.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:29.229Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-vorrei-un-caffe-per-favore-34bdcb9cd90c",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/vorrei-un-caffe-per-favore-34bdcb9cd90c.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:29.455Z",
+      "mode": "verify-only",
+      "id": "it-bologna-sentence-vorrei-una-bottiglia-d-acqua-5e74e8f25291",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/sentence/vorrei-una-bottiglia-d-acqua-5e74e8f25291.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:29.625Z",
+      "mode": "verify-only",
+      "id": "it-bologna-sentence-un-panino-una-bottiglia-d-acqua-fdd5910fc3dc",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/sentence/un-panino-una-bottiglia-d-acqua-fdd5910fc3dc.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:29.761Z",
+      "mode": "verify-only",
+      "id": "it-bologna-sentence-scusi-non-ho-capito-puo-ripetere-per-favore-856abcabc791",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/sentence/scusi-non-ho-capito-puo-ripetere-per-favore-856abcabc791.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:29.899Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-buongiorno-65f3c469a1b9",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/buongiorno-65f3c469a1b9.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:30.142Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-buonanotte-ec91e41c5888",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/buonanotte-ec91e41c5888.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:30.328Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-vorrei-un-te-per-favore-e2745c54e62b",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/vorrei-un-te-per-favore-e2745c54e62b.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:30.460Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-un-caffe-670a2bd3329e",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/un-caffe-670a2bd3329e.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:30.641Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-un-te-2a205bb2ab23",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/un-te-2a205bb2ab23.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:30.911Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-una-bottiglia-d-acqua-0f94a0a39847",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/una-bottiglia-d-acqua-0f94a0a39847.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:31.132Z",
+      "mode": "verify-only",
+      "id": "it-bologna-sentence-due-caffe-e-una-bottiglia-d-acqua-per-favore-4891dd49a4bb",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/sentence/due-caffe-e-una-bottiglia-d-acqua-per-favore-4891dd49a4bb.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:31.310Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-un-panino-db8af6624021",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/un-panino-db8af6624021.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:31.486Z",
+      "mode": "verify-only",
+      "id": "it-bologna-dialogue-buongiorno-che-cosa-desidera-06a4a61322eb",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/buongiorno-che-cosa-desidera-06a4a61322eb.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:31.659Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-vorrei-un-panino-per-favore-8c1b75cc879d",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/vorrei-un-panino-per-favore-8c1b75cc879d.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:31.874Z",
+      "mode": "verify-only",
+      "id": "it-bologna-dialogue-al-banco-o-al-tavolo-ecf3d121cb3d",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/al-banco-o-al-tavolo-ecf3d121cb3d.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:32.093Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-al-tavolo-per-favore-53ef0a924dc6",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/al-tavolo-per-favore-53ef0a924dc6.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:32.273Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-al-banco-per-favore-5e47d54ec934",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/al-banco-per-favore-5e47d54ec934.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:32.543Z",
+      "mode": "verify-only",
+      "id": "it-bologna-dialogue-ecco-il-panino-8e96516a7987",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/ecco-il-panino-8e96516a7987.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:33.081Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-grazie-2696e753632c",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/grazie-2696e753632c.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:33.298Z",
+      "mode": "verify-only",
+      "id": "it-bologna-instruction-vai-dritto-per-due-caselle-2881297ddf5e",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/instruction/vai-dritto-per-due-caselle-2881297ddf5e.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:33.511Z",
+      "mode": "verify-only",
+      "id": "it-bologna-instruction-poi-gira-a-destra-e-continua-per-due-caselle-03d9575e947b",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/instruction/poi-gira-a-destra-e-continua-per-due-caselle-03d9575e947b.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:33.656Z",
+      "mode": "verify-only",
+      "id": "it-bologna-sentence-sono-tre-euro-e-cinquanta-d41177e973ca",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/sentence/sono-tre-euro-e-cinquanta-d41177e973ca.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:33.862Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-scusi-dov-e-il-mercato-b4072a51a8de",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/scusi-dov-e-il-mercato-b4072a51a8de.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:34.017Z",
+      "mode": "verify-only",
+      "id": "it-bologna-dialogue-la-piazza-chiediamo-6f04543e4979",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/la-piazza-chiediamo-6f04543e4979.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:34.264Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-scusi-dov-e-la-piazza-c944ec8be3fd",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/scusi-dov-e-la-piazza-c944ec8be3fd.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:34.425Z",
+      "mode": "verify-only",
+      "id": "it-bologna-dialogue-sempre-dritto-poi-a-destra-1244ffadd103",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/sempre-dritto-poi-a-destra-1244ffadd103.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:34.572Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-una-bottiglia-d-acqua-per-favore-7fd2d2cee89b",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/una-bottiglia-d-acqua-per-favore-7fd2d2cee89b.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:34.742Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-prego-19268f8dadb6",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/prego-19268f8dadb6.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:34.922Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-vorrei-una-bottiglia-d-acqua-per-favore-00cadd271cb3",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/vorrei-una-bottiglia-d-acqua-per-favore-00cadd271cb3.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:35.152Z",
+      "mode": "verify-only",
+      "id": "it-bologna-dialogue-ecco-l-acqua-f2e5fd400626",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/ecco-l-acqua-f2e5fd400626.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:35.306Z",
+      "mode": "verify-only",
+      "id": "it-bologna-phrase-puo-ripetere-add083f6d794",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/puo-ripetere-add083f6d794.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    },
+    {
+      "at": "2026-10-31T02:33:35.465Z",
+      "mode": "verify-only",
+      "id": "it-bologna-dialogue-prego-buona-giornata-efb70108a57e",
+      "bucket": "yopratiqo-audio",
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/prego-buona-giornata-efb70108a57e.mp3",
+      "status": "failed",
+      "error": "Public audio is unavailable (HTTP 400)."
+    }
+  ]
+}

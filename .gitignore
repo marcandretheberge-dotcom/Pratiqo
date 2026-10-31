@@ -63,3 +63,4 @@ backups/
 # Editor/Office temporary lock files
 ~$*
 **/~$*
+/.cache/yopratiqo-audio/

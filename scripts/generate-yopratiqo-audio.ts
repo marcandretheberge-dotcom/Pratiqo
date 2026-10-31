@@ -1,79 +1,28 @@
 /**
- * YoPratiqo — pre-generated audio pipeline (server / local only).
+ * YoPratiqo pre-generated MP3s: OpenAI Speech API -> Supabase Storage.
+ * Server/local only; never import this script from the application.
  *
- * Reads `lib/yo/audio/audioManifest.ts`, asks OpenAI's text-to-speech
- * endpoint to produce an MP3 for every item that does not already
- * exist in the Supabase Storage `yopratiqo-audio` bucket, and uploads
- * the result. Idempotent — re-runs are cheap because existing objects
- * are skipped via a HEAD-style `list` probe.
+ * Examples (use node --import tsx when the tsx CLI cannot open its IPC socket):
+ *   node --import tsx scripts/generate-yopratiqo-audio.ts --module japanese-foundations --dry-run
+ *   node --import tsx scripts/generate-yopratiqo-audio.ts --module japanese-foundations --limit 3
+ *   node --import tsx scripts/generate-yopratiqo-audio.ts --module japanese-foundations --verify-only
  *
- * SECURITY (re-affirmed in code, not just docs):
- *   - This file is invoked by `npm run generate:yopratiqo-audio` and
- *     `tsx scripts/generate-yopratiqo-audio.ts`. It NEVER ships in the
- *     browser bundle. It is not imported by any `app/`, `components/`,
- *     or `lib/yo/audio/audioUrl.ts` module (those are what the client
- *     touches).
- *   - Reads `OPENAI_API_KEY` (server-only, must NEVER appear in
- *     `NEXT_PUBLIC_*`) and `SUPABASE_SERVICE_ROLE_KEY` (server-only).
- *     Both are loaded from `.env.local` via `dotenv`, the same way the
- *     other server scripts in this repo do.
- *   - Exits non-zero on missing config so accidental CI runs without
- *     credentials surface immediately.
+ * An invocation without flags retains the existing live whole-manifest behavior.
+ * --dry-run is genuinely offline: no SDK, .env files, credentials, disk writes,
+ * network or uploads. --verify-only needs only NEXT_PUBLIC_SUPABASE_URL.
+ * Live generation needs OPENAI_API_KEY and SUPABASE_SERVICE_ROLE_KEY as well.
+ * Neither secret may ever be mirrored into a NEXT_PUBLIC_* variable.
  *
- * MODEL / VOICE:
- *   The defaults below match OpenAI's documented TTS API
- *   (`POST /v1/audio/speech`). Override at runtime via env if needed:
- *
- *     - `YOPRATIQO_TTS_MODEL`  (default: `gpt-4o-mini-tts`)
- *     - `YOPRATIQO_TTS_VOICE`  (default: `alloy`)
- *     - `YOPRATIQO_AUDIO_BUCKET` (default: `yopratiqo-audio`)
- *
- *   Both `tts-1` / `tts-1-hd` and `gpt-4o-mini-tts` accept the same
- *   `voice` set: `alloy | echo | fable | onyx | nova | shimmer` plus
- *   newer steerable voices. We use `alloy` because it sounds natural
- *   for short Spanish vocabulary and is documented as broadly stable.
- *
- * USAGE:
- *
- *     # Dry run (default — show what *would* happen, no network calls):
- *     tsx scripts/generate-yopratiqo-audio.ts --dry-run
- *
- *     # Real run — generate missing MP3s + upload to the bucket:
- *     OPENAI_API_KEY=sk-... \
- *     NEXT_PUBLIC_SUPABASE_URL=https://xyz.supabase.co \
- *     SUPABASE_SERVICE_ROLE_KEY=eyJ... \
- *       tsx scripts/generate-yopratiqo-audio.ts
- *
- *     # Re-generate even when the object exists (force overwrite):
- *     tsx scripts/generate-yopratiqo-audio.ts --force
- *
- *     # IMPORTANT: pronunciation metadata is generation-only.
- *     # `spokenText` changes the TTS input without changing visible
- *     # lesson text, ids, or storage paths; `pronunciationHint` is
- *     # appended to steerable model instructions when supported.
- *
- * EXIT CODES:
- *   0  success (or dry-run finished cleanly)
- *   1  fatal config error (missing env, bad bucket, network failure
- *      during a non-dry run)
+ * The cache (default .cache/yopratiqo-audio) stores each validated MP3 and its
+ * request/content hashes BEFORE upload. A failed upload resumes from that file.
+ * --force permits overwriting storage; it still reuses a matching cached request.
+ * Change the manifest version/path and generation request to revise recordings.
  */
 
-// Load env BEFORE any `process.env.*` read.
-//
-// We prefer `@next/env`'s `loadEnvConfig` over a plain `dotenv` call so
-// the script sees the same variables `next dev` / `next build` would —
-// i.e. it loads `.env`, `.env.local`, `.env.<NODE_ENV>`, and
-// `.env.<NODE_ENV>.local` with Next.js's documented precedence (later
-// files win). Without this, `npm run generate:yopratiqo-audio` could
-// skip `.env.local` and fail with "NEXT_PUBLIC_SUPABASE_URL is required"
-// on a developer machine that only has `.env.local`.
-//
-// `@next/env` is already part of the dependency tree via `next` itself,
-// so this does not add a new top-level dep.
-import { loadEnvConfig } from "@next/env";
-loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production");
-
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createHash, randomUUID } from "node:crypto";
+import { mkdir, open, readFile, rename, rm, stat } from "node:fs/promises";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import {
   YOPRATIQO_AUDIO_BUCKET_DEFAULT,
@@ -82,366 +31,487 @@ import {
 } from "../lib/yo/audio/audioManifest";
 import { getYoAudioAccentProfile } from "../lib/yo/audio/accentProfiles";
 
-// ─────────────────────────────────────────────────────────────────────
-// Constants — keep TTS model + voice in one place so a future tweak is
-// a single-line change.
-// ─────────────────────────────────────────────────────────────────────
+const DEFAULT_TTS_MODEL = "gpt-4o-mini-tts";
+const DEFAULT_TTS_VOICE = "alloy";
+const OPENAI_TTS_ENDPOINT = "https://api.openai.com/v1/audio/speech";
+const CONTENT_TYPE = "audio/mpeg";
+const MAX_AUDIO_BYTES = 5 * 1024 * 1024;
+const MAX_REQUEST_ATTEMPTS = 3;
 
-const DEFAULT_TTS_MODEL = "gpt-4o-mini-tts" as const;
-const DEFAULT_TTS_VOICE = "alloy" as const;
-const OPENAI_TTS_ENDPOINT = "https://api.openai.com/v1/audio/speech" as const;
-const RESPONSE_FORMAT = "mp3" as const;
-const CONTENT_TYPE = "audio/mpeg" as const;
-
-// ─────────────────────────────────────────────────────────────────────
-// CLI flag parsing (zero-deps)
-// ─────────────────────────────────────────────────────────────────────
-
-interface CliOptions {
+export interface CliOptions {
   dryRun: boolean;
   force: boolean;
+  verifyOnly: boolean;
+  help: boolean;
+  moduleId?: string;
+  limit?: number;
+  cacheDir?: string;
 }
 
-function parseCli(argv: readonly string[]): CliOptions {
-  const dryRun = argv.includes("--dry-run") || argv.includes("-n");
-  const force = argv.includes("--force") || argv.includes("-f");
-  return { dryRun, force };
+export function parseCli(argv: readonly string[]): CliOptions {
+  const opts: CliOptions = { dryRun: false, force: false, verifyOnly: false, help: false };
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === "--dry-run" || arg === "-n") opts.dryRun = true;
+    else if (arg === "--force" || arg === "-f") opts.force = true;
+    else if (arg === "--verify-only") opts.verifyOnly = true;
+    else if (arg === "--help" || arg === "-h") opts.help = true;
+    else if (["--module", "--limit", "--cache-dir"].includes(arg)) {
+      const value = argv[++i];
+      if (!value || value.startsWith("--")) throw new AudioPipelineError(`${arg} requires a value.`);
+      if (arg === "--module") {
+        if (!/^[a-z0-9][a-z0-9-]*$/.test(value)) throw new AudioPipelineError("Invalid module id.");
+        opts.moduleId = value;
+      } else if (arg === "--limit") {
+        if (!/^[1-9][0-9]*$/.test(value) || Number(value) > 10000) {
+          throw new AudioPipelineError("--limit must be an integer from 1 to 10000.");
+        }
+        opts.limit = Number(value);
+      } else opts.cacheDir = value;
+    } else throw new AudioPipelineError(`Unknown option: ${arg.split("=")[0]}`);
+  }
+  if (opts.dryRun && opts.verifyOnly) throw new AudioPipelineError("Choose --dry-run or --verify-only.");
+  if (opts.verifyOnly && opts.force) throw new AudioPipelineError("--verify-only cannot overwrite files.");
+  return opts;
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// Tiny structured logger (TAP-ish so it slots into existing scripts)
-// ─────────────────────────────────────────────────────────────────────
-
-const log = {
-  info: (msg: string) => console.log(`[yo-audio] ${msg}`),
-  ok: (msg: string) => console.log(`ok - ${msg}`),
-  skip: (msg: string) => console.log(`skip - ${msg}`),
-  error: (msg: string) => console.error(`not ok - ${msg}`),
-};
-
-function failFatal(msg: string): never {
-  log.error(`FATAL: ${msg}`);
-  process.exit(1);
+export class AudioPipelineError extends Error {
+  constructor(message: string, readonly status?: number) {
+    super(message);
+    this.name = "AudioPipelineError";
+  }
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// Env validation
-// ─────────────────────────────────────────────────────────────────────
-
-interface ResolvedConfig {
+export interface ResolvedConfig {
   openAiApiKey: string;
   supabaseUrl: string;
   serviceRoleKey: string;
   bucket: string;
   model: string;
-  voice: string;
+  voiceOverride?: string;
+  cacheDir: string;
 }
 
-function resolveConfig(opts: CliOptions): ResolvedConfig {
-  const openAiApiKey = process.env.OPENAI_API_KEY?.trim();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  const bucket =
-    process.env.YOPRATIQO_AUDIO_BUCKET?.trim() ||
-    YOPRATIQO_AUDIO_BUCKET_DEFAULT;
-  const model = process.env.YOPRATIQO_TTS_MODEL?.trim() || DEFAULT_TTS_MODEL;
-  const voice = process.env.YOPRATIQO_TTS_VOICE?.trim() || DEFAULT_TTS_VOICE;
-
-  if (!supabaseUrl) {
-    failFatal(
-      "NEXT_PUBLIC_SUPABASE_URL is required (set in .env.local). The script needs it to upload via the Supabase REST API.",
-    );
+export function resolveConfig(
+  opts: CliOptions,
+  env: Readonly<Record<string, string | undefined>> = process.env,
+  cwd = process.cwd(),
+): ResolvedConfig {
+  const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL?.trim().replace(/\/+$/, "") ?? "";
+  const openAiApiKey = env.OPENAI_API_KEY?.trim() ?? "";
+  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? "";
+  if (!opts.dryRun) {
+    if (!supabaseUrl) throw new AudioPipelineError("NEXT_PUBLIC_SUPABASE_URL is required.");
+    let url: URL;
+    try { url = new URL(supabaseUrl); } catch { throw new AudioPipelineError("Invalid Supabase URL."); }
+    const local = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+    if ((url.protocol !== "https:" && !(url.protocol === "http:" && local)) ||
+        url.username || url.password || url.search || url.hash || url.pathname !== "/") {
+      throw new AudioPipelineError("Supabase URL must be an HTTPS origin (HTTP is allowed only for localhost).");
+    }
+    if (!opts.verifyOnly && !serviceRoleKey) throw new AudioPipelineError("SUPABASE_SERVICE_ROLE_KEY is required for upload; never expose it to the browser.");
+    if (!opts.verifyOnly && !openAiApiKey) throw new AudioPipelineError("OPENAI_API_KEY is required for generation. Use --dry-run for an offline plan.");
   }
-  if (!serviceRoleKey) {
-    failFatal(
-      "SUPABASE_SERVICE_ROLE_KEY is required (set in .env.local). NEVER expose this key to the browser.",
-    );
+  const bucket = env.YOPRATIQO_AUDIO_BUCKET?.trim() || YOPRATIQO_AUDIO_BUCKET_DEFAULT;
+  const model = env.YOPRATIQO_TTS_MODEL?.trim() || DEFAULT_TTS_MODEL;
+  const voiceOverride = env.YOPRATIQO_TTS_VOICE?.trim() || undefined;
+  if (!/^[a-z0-9][a-z0-9._-]*$/.test(bucket)) throw new AudioPipelineError("Invalid bucket name.");
+  if (!/^[a-zA-Z0-9._-]{1,120}$/.test(model) || (voiceOverride && !/^[a-zA-Z0-9._-]{1,120}$/.test(voiceOverride))) {
+    throw new AudioPipelineError("Invalid TTS model or voice identifier.");
   }
-
-  // OpenAI is only required when we actually call the API. Allow a dry
-  // run without it so contributors can preview manifest plans without
-  // ever needing a real key.
-  if (!opts.dryRun && !openAiApiKey) {
-    failFatal(
-      "OPENAI_API_KEY is required for a real run (set in .env.local). Run with --dry-run to preview the plan without an API key.",
-    );
-  }
-
   return {
-    openAiApiKey: openAiApiKey ?? "",
-    supabaseUrl,
-    serviceRoleKey,
-    bucket,
-    model,
-    voice,
+    openAiApiKey, supabaseUrl, serviceRoleKey, bucket, model, voiceOverride,
+    cacheDir: resolve(cwd, opts.cacheDir || env.YOPRATIQO_AUDIO_CACHE_DIR || ".cache/yopratiqo-audio"),
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// Manifest pre-flight: catch slug collisions / bad paths up front so a
-// half-failed batch upload does not corrupt the bucket.
-// ─────────────────────────────────────────────────────────────────────
-
-function preflightManifest(items: readonly YoAudioItem[]): void {
-  const ids = new Map<string, YoAudioItem>();
-  const paths = new Map<string, YoAudioItem>();
-
+export function preflightManifest(items: readonly YoAudioItem[]): void {
+  const ids = new Set<string>();
+  const paths = new Set<string>();
   for (const item of items) {
-    if (!item.storagePath.endsWith(".mp3")) {
-      failFatal(`Manifest item ${item.id} storagePath does not end in .mp3 (${item.storagePath})`);
+    if (!item.id || ids.has(item.id)) throw new AudioPipelineError("Manifest contains an empty or duplicate id.");
+    if (!/^yo\/[a-z0-9/_-]+\.mp3$/.test(item.storagePath) || item.storagePath.split("/").includes("..") || paths.has(item.storagePath)) {
+      throw new AudioPipelineError(`Manifest contains an unsafe or duplicate MP3 path for ${item.id}.`);
     }
-    if (/\s/.test(item.storagePath)) {
-      failFatal(`Manifest item ${item.id} storagePath contains whitespace (${item.storagePath})`);
-    }
-    if (item.storagePath !== item.storagePath.toLowerCase()) {
-      failFatal(`Manifest item ${item.id} storagePath must be lowercase (${item.storagePath})`);
-    }
-    const existingId = ids.get(item.id);
-    if (existingId) {
-      failFatal(`Manifest duplicate id "${item.id}" — collision between texts ${JSON.stringify(existingId.text)} and ${JSON.stringify(item.text)}`);
-    }
-    const existingPath = paths.get(item.storagePath);
-    if (existingPath) {
-      failFatal(`Manifest duplicate storagePath "${item.storagePath}" — collision between ids ${existingPath.id} and ${item.id}`);
-    }
-    ids.set(item.id, item);
-    paths.set(item.storagePath, item);
+    const spoken = resolveSpokenText(item);
+    if (!spoken.trim() || spoken.length > 4096) throw new AudioPipelineError(`Invalid speech input length for ${item.id}.`);
+    getYoAudioAccentProfile(item.accentProfile);
+    ids.add(item.id);
+    paths.add(item.storagePath);
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// Supabase Storage helpers (service-role key — server-only)
-// ─────────────────────────────────────────────────────────────────────
-
-function makeSupabaseAdmin(cfg: ResolvedConfig): SupabaseClient {
-  return createClient(cfg.supabaseUrl, cfg.serviceRoleKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
+export function selectItems(items: readonly YoAudioItem[], opts: CliOptions): YoAudioItem[] {
+  preflightManifest(items);
+  const selected = items.filter((item) => !opts.moduleId || item.moduleId === opts.moduleId);
+  if (!selected.length) throw new AudioPipelineError("No manifest items match the requested module.");
+  return opts.limit ? selected.slice(0, opts.limit) : selected;
 }
 
-async function objectExists(
-  supabase: SupabaseClient,
-  bucket: string,
-  storagePath: string,
-): Promise<boolean> {
-  // Supabase Storage v2 exposes `list(prefix)`; we list the file's parent
-  // and look for the matching name. This avoids depending on the
-  // signed/public download API for an existence check.
-  const lastSlash = storagePath.lastIndexOf("/");
-  const prefix = lastSlash >= 0 ? storagePath.slice(0, lastSlash) : "";
-  const fileName = lastSlash >= 0 ? storagePath.slice(lastSlash + 1) : storagePath;
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .list(prefix, { search: fileName, limit: 100 });
-  if (error) {
-    // A missing folder surfaces as 404-ish; treat as "does not exist"
-    // so the script can still upload it. Any other error is fatal so
-    // we don't silently skip real failures.
-    if (/not\s*found/i.test(error.message)) return false;
-    throw new Error(`Supabase storage list failed for ${storagePath}: ${error.message}`);
-  }
-  return Boolean(data?.some((row) => row.name === fileName));
+export function modelSupportsInstructions(model: string): boolean {
+  return /^gpt-(?:4o|5)(?:-[a-z0-9]+)*-tts(?:-\d{4}-\d{2}-\d{2})?$/i.test(model);
 }
 
-async function uploadMp3(
-  supabase: SupabaseClient,
-  bucket: string,
-  storagePath: string,
-  buffer: ArrayBuffer,
-): Promise<void> {
-  const { error } = await supabase.storage
-    .from(bucket)
-    .upload(storagePath, new Uint8Array(buffer), {
-      contentType: CONTENT_TYPE,
-      upsert: true,
-      cacheControl: "public, max-age=31536000, immutable",
-    });
-  if (error) {
-    throw new Error(`Supabase storage upload failed for ${storagePath}: ${error.message}`);
-  }
+export function resolveSpokenText(item: YoAudioItem): string {
+  return item.spokenText?.trim() || item.text;
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// Per-item plan resolution — pull voice + instructions out of the
-// accent profile so the data layer stays the source of truth and the
-// generator just executes.
-// ─────────────────────────────────────────────────────────────────────
-
-interface ItemPlan {
-  /** Final OpenAI voice id used for this request. */
-  voice: string;
-  /**
-   * `instructions` payload for OpenAI's `/v1/audio/speech`. When the
-   * model does not support steering (older `tts-1` / `tts-1-hd`), the
-   * field is silently ignored by the API — keeping it omitted on those
-   * models avoids 400s from strict gateways, which is why we let the
-   * env-overridable model decide whether instructions are sent.
-   */
-  instructions: string | null;
+export function appendPronunciationHint(instructions: string, hint: string | undefined): string {
+  return hint?.trim() ? `${instructions}\n\nPronunciation note for this exact item: ${hint.trim()}` : instructions;
 }
 
-/**
- * `instructions` is documented for the steerable speech models
- * (`gpt-4o-mini-tts` and the newer `gpt-4o-tts-*` family). Older
- * `tts-1` / `tts-1-hd` models accept the field but ignore it; we still
- * skip it on those to keep the request body minimal.
- */
-function modelSupportsInstructions(model: string): boolean {
-  return /(?:^|-)(?:gpt-4o[-\w]*-tts|gpt-5[-\w]*-tts)$/i.test(model)
-    || /^gpt-4o-mini-tts$/i.test(model);
-}
-
-function resolveSpokenText(item: YoAudioItem): string {
-  const spoken = item.spokenText?.trim();
-  return spoken && spoken.length > 0 ? spoken : item.text;
-}
-
-function appendPronunciationHint(
-  instructions: string,
-  hint: string | undefined,
-): string {
-  const trimmedHint = hint?.trim();
-  if (!trimmedHint) return instructions;
-  return instructions + "\n\nPronunciation note for this exact item: " + trimmedHint;
-}
-
-function resolveItemPlan(cfg: ResolvedConfig, item: YoAudioItem): ItemPlan {
+export function resolveSpeechRequest(cfg: ResolvedConfig, item: YoAudioItem) {
   const profile = getYoAudioAccentProfile(item.accentProfile);
-  // Env override always wins so a contributor can A/B voices without
-  // touching the manifest. When env is unset we fall back to the
-  // profile's documented default voice.
-  const voice =
-    process.env.YOPRATIQO_TTS_VOICE?.trim() || profile.defaultVoice || cfg.voice;
-  const baseInstructions = item.ttsInstructions ?? profile.ttsInstructions;
-  const instructions = modelSupportsInstructions(cfg.model)
-    ? appendPronunciationHint(baseInstructions, item.pronunciationHint)
-    : null;
-  return { voice, instructions };
-}
-
-// ─────────────────────────────────────────────────────────────────────
-// OpenAI TTS call — direct fetch against the documented REST endpoint.
-// We avoid pulling the openai SDK as a dep because nothing else in the
-// repo needs it and the API surface here is just one POST.
-// ─────────────────────────────────────────────────────────────────────
-
-async function generateMp3(
-  cfg: ResolvedConfig,
-  item: YoAudioItem,
-  plan: ItemPlan,
-): Promise<ArrayBuffer> {
-  const body: Record<string, unknown> = {
+  const voice = cfg.voiceOverride || profile.defaultVoice || DEFAULT_TTS_VOICE;
+  const request: { model: string; input: string; voice: string; response_format: "mp3"; instructions?: string } = {
     model: cfg.model,
     input: resolveSpokenText(item),
-    voice: plan.voice,
-    response_format: RESPONSE_FORMAT,
+    voice,
+    response_format: "mp3",
   };
-  if (plan.instructions) {
-    body.instructions = plan.instructions;
+  if (modelSupportsInstructions(cfg.model)) {
+    request.instructions = appendPronunciationHint(item.ttsInstructions ?? profile.ttsInstructions, item.pronunciationHint);
   }
-  const res = await fetch(OPENAI_TTS_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${cfg.openAiApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+  return request;
+}
+
+type SpeechRequest = ReturnType<typeof resolveSpeechRequest>;
+export function sha256(bytes: Uint8Array | string): string {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+/** Structural MP3 validation, not a human pronunciation or full decode assessment. */
+export function validateMp3(bytes: Uint8Array, contentType = CONTENT_TYPE): { frames: number; durationSeconds: number } {
+  if (!/^audio\/(?:mpeg|mp3)(?:\s*;|$)/i.test(contentType)) throw new AudioPipelineError("Expected an audio/mpeg response.");
+  if (bytes.byteLength < 256 || bytes.byteLength > MAX_AUDIO_BYTES) throw new AudioPipelineError("MP3 byte length is outside the allowed range.");
+  let offset = 0;
+  if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
+    if ([bytes[6], bytes[7], bytes[8], bytes[9]].some((byte) => byte > 0x7f)) throw new AudioPipelineError("Invalid MP3 ID3 header.");
+    offset = 10 + ((bytes[6] << 21) | (bytes[7] << 14) | (bytes[8] << 7) | bytes[9]);
+    if (bytes[3] === 4 && (bytes[5] & 0x10)) offset += 10;
+    if (offset > bytes.length) throw new AudioPipelineError("Truncated MP3 ID3 tag.");
+  }
+  // ID3v1 is an optional, exactly 128-byte trailing tag. Arbitrary trailing
+  // padding, broken frame headers and partial frames are not valid audio.
+  let audioEnd = bytes.length;
+  const tagStart = bytes.length - 128;
+  if (tagStart >= offset && bytes[tagStart] === 0x54 && bytes[tagStart + 1] === 0x41 && bytes[tagStart + 2] === 0x47) {
+    audioEnd = tagStart;
+  }
+  let frames = 0;
+  let durationSeconds = 0;
+  while (offset < audioEnd) {
+    if (offset + 4 > audioEnd) throw new AudioPipelineError("Truncated MP3 frame header.");
+    const version = (bytes[offset + 1] >> 3) & 3;
+    const layer = (bytes[offset + 1] >> 1) & 3;
+    const bitRateIndex = bytes[offset + 2] >> 4;
+    const rateIndex = (bytes[offset + 2] >> 2) & 3;
+    if (bytes[offset] !== 0xff || (bytes[offset + 1] & 0xe0) !== 0xe0 || version === 1 || layer !== 1 || bitRateIndex === 0 || bitRateIndex === 15 || rateIndex === 3) {
+      throw new AudioPipelineError("Invalid MPEG Layer III frame header or unsupported trailing data.");
+    }
+    const bitRates = version === 3 ? [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320] : [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160];
+    const sampleRate = [44100, 48000, 32000][rateIndex] / (version === 3 ? 1 : version === 2 ? 2 : 4);
+    const frameBytes = Math.floor((version === 3 ? 144 : 72) * bitRates[bitRateIndex] * 1000 / sampleRate) + ((bytes[offset + 2] >> 1) & 1);
+    if (offset + frameBytes > audioEnd) throw new AudioPipelineError("Truncated MP3 frame.");
+    frames += 1;
+    durationSeconds += (version === 3 ? 1152 : 576) / sampleRate;
+    offset += frameBytes;
+  }
+  if (frames < 2) throw new AudioPipelineError("MP3 does not contain consecutive complete MPEG Layer III frames.");
+  return { frames, durationSeconds };
+}
+
+export interface RuntimeDependencies {
+  fetch: typeof fetch;
+  sleep: (ms: number) => Promise<void>;
+  log: (message: string) => void;
+  timeoutMs: number;
+  now: () => string;
+  storageFactory?: (cfg: ResolvedConfig, network: typeof fetch) => Promise<StorageAdapter>;
+}
+
+export interface StorageAdapter {
+  exists: (path: string) => Promise<boolean>;
+  upload: (path: string, bytes: Uint8Array, upsert: boolean) => Promise<"uploaded" | "already-exists">;
+}
+
+function defaults(overrides: Partial<RuntimeDependencies>): RuntimeDependencies {
+  return {
+    fetch: globalThis.fetch,
+    sleep: (ms) => new Promise((done) => setTimeout(done, ms)),
+    log: (message) => console.log(`[yo-audio] ${message}`),
+    timeoutMs: 30000,
+    now: () => new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+/** Read responses within a timeout and size bound, retry only explicit 429/5xx.
+ * A transport timeout may follow a charged TTS request; do not blindly repeat it.
+ * Raw remote error bodies, request headers and credentials are never logged.
+ */
+export function boundedFetch(deps: RuntimeDependencies): typeof fetch {
+  return async (input, init) => {
+    for (let attempt = 0; attempt < MAX_REQUEST_ATTEMPTS; attempt += 1) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), deps.timeoutMs);
+      let response: Response;
+      let bytes: Uint8Array;
+      try {
+        response = await deps.fetch(input, { ...init, signal: controller.signal, redirect: "error" });
+        if (Number(response.headers.get("content-length")) > MAX_AUDIO_BYTES) throw new AudioPipelineError("Response exceeds the maximum byte size.");
+        const reader = response.body?.getReader();
+        const chunks: Uint8Array[] = [];
+        let size = 0;
+        if (reader) {
+          while (true) {
+            const chunk = await reader.read();
+            if (chunk.done) break;
+            size += chunk.value.byteLength;
+            if (size > MAX_AUDIO_BYTES) {
+              await reader.cancel();
+              throw new AudioPipelineError("Response exceeds the maximum byte size.");
+            }
+            chunks.push(chunk.value);
+          }
+        }
+        bytes = new Uint8Array(size);
+        let offset = 0;
+        for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
+      } catch (error) {
+        if (error instanceof AudioPipelineError) throw error;
+        throw new AudioPipelineError(controller.signal.aborted ? "Request timed out; check the cache and provider before retrying generation." : "Network request failed; no automatic retry of an uncertain request.");
+      } finally { clearTimeout(timer); }
+      if ((response.status === 429 || response.status >= 500) && attempt + 1 < MAX_REQUEST_ATTEMPTS) {
+        const retryAfter = Number(response.headers.get("retry-after"));
+        const delay = Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter * 1000, 10000) : 500 * 2 ** attempt;
+        await deps.sleep(delay);
+        continue;
+      }
+      return new Response([204, 205, 304].includes(response.status) ? null : new Uint8Array(bytes).buffer, {
+        status: response.status, statusText: response.statusText, headers: response.headers,
+      });
+    }
+    throw new AudioPipelineError("Request retry limit exhausted.");
+  };
+}
+
+/** storage-js separates HTTP status from semantic statusCode (e.g. AccessDenied). */
+export function storageErrorStatus(error: unknown): number | undefined {
+  if (!error || typeof error !== "object") return undefined;
+  const fields = error as { status?: unknown; statusCode?: unknown };
+  for (const value of [fields.status, fields.statusCode]) {
+    const numeric = typeof value === "number" ? value : typeof value === "string" && /^\d{3}$/.test(value) ? Number(value) : NaN;
+    if (Number.isInteger(numeric) && numeric >= 100 && numeric <= 599) return numeric;
+  }
+  return undefined;
+}
+
+async function makeSupabaseStorage(cfg: ResolvedConfig, network: typeof fetch): Promise<StorageAdapter> {
+  // Dynamic import keeps an offline plan usable without this installed SDK.
+  const { createClient } = await import("@supabase/supabase-js");
+  const supabase = createClient(cfg.supabaseUrl, cfg.serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { fetch: network },
   });
-  if (!res.ok) {
-    const detail = await safeReadError(res);
-    throw new Error(
-      `OpenAI TTS failed for ${item.id} (${res.status} ${res.statusText}): ${detail}`,
-    );
-  }
-  return res.arrayBuffer();
+  const bucket = supabase.storage.from(cfg.bucket);
+  return {
+    async exists(storagePath) {
+      const lastSlash = storagePath.lastIndexOf("/");
+      const name = storagePath.slice(lastSlash + 1);
+      const { data, error } = await bucket.list(storagePath.slice(0, lastSlash), { search: name, limit: 100 });
+      if (error) throw new AudioPipelineError(`Storage listing failed (HTTP ${storageErrorStatus(error) || "unknown"}).`, storageErrorStatus(error));
+      return Boolean(data?.some((row) => row.name === name));
+    },
+    async upload(storagePath, bytes, upsert) {
+      const { error } = await bucket.upload(storagePath, bytes, {
+        contentType: CONTENT_TYPE,
+        upsert,
+        cacheControl: "31536000",
+      });
+      if (error && storageErrorStatus(error) === 409 && !upsert) return "already-exists";
+      if (error) throw new AudioPipelineError(`Storage upload failed (HTTP ${storageErrorStatus(error) || "unknown"}).`, storageErrorStatus(error));
+      return "uploaded";
+    },
+  };
 }
 
-async function safeReadError(res: Response): Promise<string> {
+export interface CachedRecording {
+  bytes: Uint8Array;
+  metadata: {
+    version: 1;
+    requestHash: string;
+    sha256: string;
+    bytes: number;
+    createdAt: string;
+    request: SpeechRequest;
+  };
+}
+
+function requestHash(request: SpeechRequest): string { return sha256(JSON.stringify(request)); }
+
+export async function readCachedRecording(cacheDir: string, request: SpeechRequest): Promise<CachedRecording | null> {
+  const hash = requestHash(request);
+  const directory = join(cacheDir, "recordings", hash);
+  try { await stat(directory); } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw new AudioPipelineError("Cannot inspect the local recording cache.");
+  }
   try {
-    const text = await res.text();
-    return text.slice(0, 600);
-  } catch {
-    return "(could not read response body)";
-  }
+    const bytes = new Uint8Array(await readFile(join(directory, "audio.mp3")));
+    const metadata = JSON.parse(await readFile(join(directory, "metadata.json"), "utf8")) as CachedRecording["metadata"];
+    validateMp3(bytes);
+    if (metadata.version !== 1 || metadata.requestHash !== hash || requestHash(metadata.request) !== hash || metadata.sha256 !== sha256(bytes) || metadata.bytes !== bytes.length) {
+      throw new Error("cache mismatch");
+    }
+    return { bytes, metadata };
+  } catch { throw new AudioPipelineError("Recording cache is incomplete or has a hash mismatch; inspect it before regenerating."); }
 }
 
-// ─────────────────────────────────────────────────────────────────────
-// Main
-// ─────────────────────────────────────────────────────────────────────
+async function writeDurableFile(path: string, bytes: Uint8Array | string): Promise<void> {
+  const file = await open(path, "wx", 0o600);
+  try { await file.writeFile(bytes); await file.sync(); } finally { await file.close(); }
+}
+
+export async function cacheRecording(cacheDir: string, request: SpeechRequest, bytes: Uint8Array, createdAt: string): Promise<CachedRecording> {
+  validateMp3(bytes);
+  const hash = requestHash(request);
+  const parent = join(cacheDir, "recordings");
+  await mkdir(parent, { recursive: true, mode: 0o700 });
+  const temporary = join(parent, `.pending-${randomUUID()}`);
+  await mkdir(temporary, { mode: 0o700 });
+  const metadata: CachedRecording["metadata"] = { version: 1, requestHash: hash, sha256: sha256(bytes), bytes: bytes.length, createdAt, request };
+  try {
+    await writeDurableFile(join(temporary, "audio.mp3"), bytes);
+    await writeDurableFile(join(temporary, "metadata.json"), JSON.stringify(metadata, null, 2) + "\n");
+    await rename(temporary, join(parent, hash));
+  } finally { await rm(temporary, { recursive: true, force: true }); }
+  return { bytes, metadata };
+}
+
+export function publicAudioUrl(cfg: ResolvedConfig, item: YoAudioItem): string {
+  return `${cfg.supabaseUrl}/storage/v1/object/public/${encodeURIComponent(cfg.bucket)}/${item.storagePath.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+async function verifyPublic(cfg: ResolvedConfig, item: YoAudioItem, network: typeof fetch, expectedSha?: string) {
+  const response = await network(publicAudioUrl(cfg, item), { method: "GET" });
+  if (!response.ok) throw new AudioPipelineError(`Public audio is unavailable (HTTP ${response.status}).`, response.status);
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  const details = validateMp3(bytes, response.headers.get("content-type") || "");
+  const hash = sha256(bytes);
+  if (expectedSha && expectedSha !== hash) throw new AudioPipelineError("Public audio hash does not match the cached generated recording; no overwrite attempted.");
+  return { bytes: bytes.length, sha256: hash, durationSeconds: Number(details.durationSeconds.toFixed(3)) };
+}
+
+async function appendAudit(cacheDir: string, record: Record<string, unknown>): Promise<void> {
+  await mkdir(cacheDir, { recursive: true, mode: 0o700 });
+  const file = await open(join(cacheDir, "runs.jsonl"), "a", 0o600);
+  try { await file.writeFile(JSON.stringify(record) + "\n"); await file.sync(); } finally { await file.close(); }
+}
+
+function safeError(error: unknown): string {
+  return error instanceof AudioPipelineError ? error.message : "Local operation failed; inspect the cache and configuration.";
+}
+
+export interface RunSummary { selected: number; generated: number; cached: number; uploaded: number; skipped: number; verified: number; failed: number; }
+
+export async function runAudioPipeline(
+  manifest: readonly YoAudioItem[], opts: CliOptions, cfg: ResolvedConfig,
+  overrides: Partial<RuntimeDependencies> = {},
+): Promise<RunSummary> {
+  const deps = defaults(overrides);
+  const items = selectItems(manifest, opts);
+  const summary: RunSummary = { selected: items.length, generated: 0, cached: 0, uploaded: 0, skipped: 0, verified: 0, failed: 0 };
+  const mode = opts.dryRun ? "dry-run" : opts.verifyOnly ? "verify-only" : "live";
+  deps.log(`mode=${mode} module=${opts.moduleId || "all"} bucket=${cfg.bucket} selected=${items.length}`);
+  if (opts.dryRun) {
+    let characters = 0;
+    for (const item of items) {
+      const request = resolveSpeechRequest(cfg, item);
+      characters += request.input.length;
+      deps.log(`would generate ${item.id} lang=${item.targetLanguage} accent=${item.accentProfile} model=${request.model} voice=${request.voice} inputCharacters=${request.input.length} -> ${item.storagePath}`);
+    }
+    deps.log(`offline plan: ${items.length} items, ${characters} input characters; storage presence and generation costs are not checked.`);
+    return summary;
+  }
+
+  const network = boundedFetch(deps);
+  let releaseLock: (() => Promise<void>) | undefined;
+  try {
+    let storage: StorageAdapter | undefined;
+    if (!opts.verifyOnly) {
+      await mkdir(cfg.cacheDir, { recursive: true, mode: 0o700 });
+      const lockPath = join(cfg.cacheDir, "generation.lock");
+      let lock;
+      try { lock = await open(lockPath, "wx", 0o600); }
+      catch { throw new AudioPipelineError("The recording cache is locked or unwritable. Confirm no generator is running before removing generation.lock."); }
+      releaseLock = () => rm(lockPath, { force: true });
+      try { await lock.writeFile(JSON.stringify({ pid: process.pid, startedAt: deps.now() })); }
+      finally { await lock.close(); }
+      storage = await (deps.storageFactory || makeSupabaseStorage)(cfg, network);
+    }
+
+    for (const item of items) {
+      const request = resolveSpeechRequest(cfg, item);
+      try {
+        let cached = await readCachedRecording(cfg.cacheDir, request);
+        if (opts.verifyOnly || (!opts.force && await storage!.exists(item.storagePath))) {
+          const verified = await verifyPublic(cfg, item, network, cached?.metadata.sha256);
+          summary.verified += 1;
+          if (!opts.verifyOnly) summary.skipped += 1;
+          await appendAudit(cfg.cacheDir, { at: deps.now(), mode, id: item.id, bucket: cfg.bucket, path: item.storagePath, status: "verified", provenance: cached ? "matching-cached-generation" : "existing-recording-unattributed", ...verified });
+          deps.log(`verified ${item.id} bytes=${verified.bytes} sha256=${verified.sha256}`);
+          continue;
+        }
+        if (cached) summary.cached += 1;
+        else {
+          const response = await network(OPENAI_TTS_ENDPOINT, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${cfg.openAiApiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify(request),
+          });
+          if (!response.ok) throw new AudioPipelineError(`OpenAI speech generation failed (HTTP ${response.status}).`, response.status);
+          const bytes = new Uint8Array(await response.arrayBuffer());
+          validateMp3(bytes, response.headers.get("content-type") || "");
+          cached = await cacheRecording(cfg.cacheDir, request, bytes, deps.now());
+          summary.generated += 1;
+          deps.log(`generated ${item.id} lang=${item.targetLanguage} accent=${item.accentProfile} model=${request.model} voice=${request.voice} bytes=${bytes.length}; cached before upload`);
+        }
+        const uploaded = await storage!.upload(item.storagePath, cached.bytes, opts.force);
+        if (uploaded === "uploaded") summary.uploaded += 1;
+        const verified = await verifyPublic(cfg, item, network, cached.metadata.sha256);
+        summary.verified += 1;
+        await appendAudit(cfg.cacheDir, { at: deps.now(), mode, id: item.id, bucket: cfg.bucket, path: item.storagePath, status: uploaded === "uploaded" ? "uploaded-and-verified" : "concurrent-upload-verified", requestHash: cached.metadata.requestHash, model: request.model, voice: request.voice, ...verified });
+        deps.log(`verified ${item.id} bytes=${verified.bytes} sha256=${verified.sha256}`);
+      } catch (error) {
+        summary.failed += 1;
+        deps.log(`failed ${item.id}: ${safeError(error)}`);
+        await appendAudit(cfg.cacheDir, { at: deps.now(), mode, id: item.id, bucket: cfg.bucket, path: item.storagePath, status: "failed", error: safeError(error) });
+        if (error instanceof AudioPipelineError && [401, 403].includes(error.status || 0)) {
+          deps.log("Stopped: authentication/authorization failed; no further items attempted.");
+          break;
+        }
+      }
+    }
+  } finally { if (releaseLock) await releaseLock(); }
+  deps.log(`summary ${JSON.stringify(summary)}`);
+  return summary;
+}
 
 async function main(): Promise<void> {
   const opts = parseCli(process.argv.slice(2));
-  const cfg = resolveConfig(opts);
-
-  preflightManifest(YOPRATIQO_AUDIO_MANIFEST);
-
-  log.info(
-    `bucket=${cfg.bucket} model=${cfg.model} voice=${cfg.voice} items=${
-      YOPRATIQO_AUDIO_MANIFEST.length
-    } mode=${opts.dryRun ? "dry-run" : "live"}${opts.force ? " force=on" : ""}`,
-  );
-
-  const supabase = makeSupabaseAdmin(cfg);
-
-  let generated = 0;
-  let skipped = 0;
-  let failed = 0;
-
-  for (const item of YOPRATIQO_AUDIO_MANIFEST) {
-    const plan = resolveItemPlan(cfg, item);
-    let exists = false;
-    try {
-      exists = await objectExists(supabase, cfg.bucket, item.storagePath);
-    } catch (err) {
-      if (opts.dryRun) {
-        // Dry run is allowed to lose its bucket connection (e.g. tests
-        // running with placeholder env values). Treat as missing.
-        exists = false;
-      } else {
-        log.error(`exists-check failed: ${item.id} :: ${(err as Error).message}`);
-        failed += 1;
-        continue;
-      }
-    }
-
-    if (exists && !opts.force) {
-      log.skip(`exists ${item.id} → ${item.storagePath}`);
-      skipped += 1;
-      continue;
-    }
-
-    if (opts.dryRun) {
-      const instructionsTag = plan.instructions
-        ? "instructions=present"
-        : "instructions=absent";
-      log.info(
-        `would generate ${item.id} (${item.type}, "${item.text}") lang=${item.targetLanguage} accent=${item.accentProfile} voice=${plan.voice} ${instructionsTag} → ${item.storagePath}`,
-      );
-      generated += 1;
-      continue;
-    }
-
-    try {
-      const mp3 = await generateMp3(cfg, item, plan);
-      await uploadMp3(supabase, cfg.bucket, item.storagePath, mp3);
-      log.ok(
-        `generated ${item.id} lang=${item.targetLanguage} accent=${item.accentProfile} voice=${plan.voice} → ${item.storagePath} (${mp3.byteLength} bytes)`,
-      );
-      generated += 1;
-    } catch (err) {
-      log.error(`${item.id} :: ${(err as Error).message}`);
-      failed += 1;
-    }
+  if (opts.help) {
+    console.log("Usage: generate-yopratiqo-audio.ts [--module ID] [--limit N] [--dry-run | --verify-only] [--force] [--cache-dir PATH]\nNo flags: generate all missing manifest entries. --force permits overwrite using the matching cached request.\n--dry-run: offline plan, no credentials or network. --verify-only: public MP3 GET and hash checks, no generation/upload.\nCache: YOPRATIQO_AUDIO_CACHE_DIR or .cache/yopratiqo-audio. Never commit this cache or .env files.");
+    return;
   }
-
-  log.info(
-    `summary: generated=${generated} skipped=${skipped} failed=${failed} total=${YOPRATIQO_AUDIO_MANIFEST.length}`,
-  );
-
-  if (failed > 0) process.exit(1);
+  if (!opts.dryRun) {
+    const { loadEnvConfig } = await import("@next/env");
+    loadEnvConfig(process.cwd(), process.env.NODE_ENV !== "production", { info: () => undefined, error: () => undefined });
+  }
+  const summary = await runAudioPipeline(YOPRATIQO_AUDIO_MANIFEST, opts, resolveConfig(opts));
+  if (summary.failed) process.exitCode = 1;
 }
 
-main().catch((err) => {
-  log.error(`unexpected error: ${(err as Error).message}`);
-  process.exit(1);
-});
+if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
+  main().catch((error) => { console.error(`[yo-audio] ${safeError(error)}`); process.exitCode = 1; });
+}
