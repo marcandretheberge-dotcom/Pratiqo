@@ -6,7 +6,7 @@
 - Branch: `feat/yopratiqo-italian-bologna-20261030`
 - PR: https://github.com/marcandretheberge-dotcom/Pratiqo/pull/416
 - Base commit before this work: `25159f1478ae76193380fae00fa54c62b38298e0`
-- Docs evidence commit: `33583c4464f5a4b66fcdcaa42c3454ae4b61f198`
+- Docs evidence commit: `5ced6ec1ec128289594b287ae9d3004fc12fde17` (this report)
 - Module selector: `italian-course-a1` (loads course targets + exact Italian dependencies)
 
 ## Environment (presence only — no secret values)
