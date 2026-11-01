@@ -417,7 +417,7 @@ test("Spanish, Quebec French, Italian, English, and Japanese are all available",
   );
   assert.match(
     pageSrc,
-    /id:\s*"japanese"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/japonais\/intro"/,
+    /id:\s*"japanese"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/japonais\/parcours"/,
   );
   // Defensive: NO `coming_soon` status string should appear in the
   // shipped data anymore (the literal can still appear in JSDoc /
