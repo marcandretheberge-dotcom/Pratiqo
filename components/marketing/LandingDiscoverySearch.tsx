@@ -44,61 +44,69 @@ export function LandingDiscoverySearch({
   const { t } = useLocale();
 
   const fmtOptions: { v: LandingFormatFilter; lab: TranslationKey }[] = [
-    { v: "all", lab: "landingFormatSelectOptionAll" },
+    { v: "all", lab: "landingHomepageAnyFormat" },
     { v: "online", lab: "landingFormatOnlineOpt" },
     { v: "in_person", lab: "landingFormatInPersonOpt" },
     { v: "hybrid", lab: "landingFormatHybridOpt" },
   ];
 
   return (
-    <div
+    <form
       role="search"
-      className="rounded-3xl border border-[#E4E2DA] bg-white p-2 text-left shadow-[0_6px_20px_rgba(44,44,42,0.06)] lg:p-3 lg:shadow-[0_8px_32px_rgba(44,44,42,0.07)]"
+      aria-label={t("landingSearchSubmit")}
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSearchSubmit();
+      }}
+      className="min-w-0 text-left"
     >
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:gap-2">
-        <div className="min-w-0 flex-1 space-y-1">
-          <label htmlFor="landing-discipline" className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-neutral-700">
+      <div className="grid min-w-0 grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+        <div className="col-span-full min-w-0 space-y-1.5">
+          <label htmlFor="landing-discipline" className="sr-only">
             {t("landingSearchDisciplineLabel")}
           </label>
-          <div className="[&_input]:rounded-2xl [&_>div]:rounded-2xl [&_>div]:border-[#EFECE6] [&_>div]:shadow-none">
+          <div>
             <SmartSearchInput
+              inputId="landing-discipline"
+              onSubmit={onSearchSubmit}
               value={searchQuery}
               onChange={onSearchQueryChange}
               teachers={teachersForSearch}
               geo={geo}
               onSelectTeacher={onSelectTeacher}
-              onSelectDiscipline={(label) => {
-                onSelectDiscipline(label);
-                onSearchQueryChange("");
-              }}
+              onSelectDiscipline={onSelectDiscipline}
               // The Quoi segment is subject-only. Cities live in the
               // dedicated Lieu segment so place suggestions can never
               // overwrite the subject text. (See LandingLocationSearch
               // below for the dedicated place autocomplete.)
               disableCitySuggestions
               inputPlaceholderKey={searchInputPlaceholderKey}
-              className=""
+              shellClassName="min-h-16 rounded-xl border-teal-800/25 px-5 py-4 shadow-[0_4px_24px_rgba(15,110,86,0.06)]"
+              inputClassName="text-base sm:text-lg"
             />
           </div>
         </div>
 
-        <div className="min-w-0 flex-1 space-y-1 lg:max-w-[260px]">
-          <label className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-neutral-700" htmlFor="landing-loc-trigger">
+        <div className="min-w-0 space-y-1">
+          <label className="block text-xs font-medium text-neutral-600" htmlFor="landing-location">
             {t("landingSearchLocationLabel")}
           </label>
           <LandingLocationSearch
+            inputId="landing-location"
             value={locationSearch}
             onChange={onLocationSearchChange}
             geo={geo}
             onSelectCity={onSelectCity}
             onIntentChange={onLieuIntentChange}
-            placeholderKey="landingSearchLocationPlaceholder"
-            className="w-full [&_>_div]:rounded-2xl"
+            placeholderKey="landingHomepageLocationPlaceholder"
+            className="w-full min-w-0"
+            shellClassName="h-12 rounded-lg px-3 py-2 shadow-none"
+            inputClassName="text-base"
           />
         </div>
 
-        <div className="min-w-0 flex-1 space-y-1 lg:max-w-[200px]">
-          <label htmlFor="landing-format" className="block pl-1 text-[10px] font-bold uppercase tracking-wider text-neutral-700">
+        <div className="min-w-0 space-y-1">
+          <label htmlFor="landing-format" className="block text-xs font-medium text-neutral-600">
             {t("landingSearchFormatLabel")}
           </label>
           <select
@@ -106,7 +114,7 @@ export function LandingDiscoverySearch({
             value={formatFilter}
             onChange={(e) => onFormatFilterChange(e.target.value as LandingFormatFilter)}
             aria-label={t("landingSearchFormatLabel")}
-            className="h-[46px] w-full rounded-2xl border border-[#E8E6DF] bg-[#FAFCFB] px-4 text-sm font-medium text-[#2C2C2A] outline-none ring-0 focus:border-teal-700/40"
+            className="h-12 w-full min-w-0 rounded-lg border border-[#E0DED5] bg-white px-2 text-base text-[#2C2C2A] outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-500/30"
           >
             {fmtOptions.map((o) => (
               <option key={o.v} value={o.v}>
@@ -116,17 +124,16 @@ export function LandingDiscoverySearch({
           </select>
         </div>
 
-        <div className="shrink-0 pt-5 lg:pt-0 lg:pb-px">
+        <div className="col-span-full self-end sm:col-span-1">
           <button
-            type="button"
-            onClick={onSearchSubmit}
-            className="flex h-[46px] w-full items-center justify-center gap-2 rounded-full bg-teal-700 px-8 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#0c5c48] lg:w-auto lg:min-w-[132px]"
+            type="submit"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-teal-700 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0c5c48] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
           >
             <Search size={16} aria-hidden />
             {t("landingSearchSubmit")}
           </button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }

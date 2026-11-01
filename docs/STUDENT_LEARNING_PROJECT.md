@@ -192,7 +192,7 @@ son affichage compact et n'impose pas de formulaire au retour.
 
 ### QA navigateur reproductible
 
-Après le build, lancer `node tests/students/learningProjectBrowser.cjs` et ouvrir
+Après le build, lancer `node tests/students/learningProjectBrowser.mjs` et ouvrir
 l'URL loopback affichée. Le serveur refuse les autres noms d'hôte, ne lit aucun
 secret et n'appelle aucun service externe. Son CSP limite les connexions à lui-même.
 
@@ -236,7 +236,7 @@ Le banc navigateur ne doit jamais être déployé ni exposé hors loopback.
 - `next build` via le lanceur Node ci-dessous : PASS, Next 16.2.9, TypeScript et 332 pages.
 - `npx tsc --noEmit --incremental false` : PASS sur l'arbre final complet. Une première exécution avait signalé deux gardes de nullité manquants dans la correction de reprise ; corrigés et contrôle entièrement relancé.
 - `npx eslint components/student/LearningProjectCard.tsx tests/students/learningProjectBrowserFixture.tsx` : PASS, zéro erreur, un avertissement existant `set-state-in-effect` sur l'initialisation du chargement.
-- `node --check tests/students/learningProjectBrowser.cjs` et `node --check tests/students/learningProjectDom.cjs` : PASS.
+- `node --check tests/students/learningProjectBrowser.mjs` et `node --check tests/students/learningProjectDom.mjs` : PASS.
 - `git diff --check` : PASS.
 
 Commande exacte du build isolé (aucun fichier `.env` de production chargé) :

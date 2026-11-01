@@ -1,7 +1,7 @@
-const assert=require('node:assert/strict');
-const {build}=require('esbuild');
-const Module=require('node:module');
-const path=require('node:path');
+import assert from "node:assert/strict";
+import {build} from "esbuild";
+import Module from "node:module";
+import path from "node:path";
 // Bundle the real handler, mocking only its external authentication/DB boundary.
 const state={valid:true,teacher:true,calls:[]};
 global.__zoneRouteTest={
@@ -22,7 +22,7 @@ const request=(body,auth='Bearer valid')=>new Request('https://example.invalid/a
 async function main(){
  const output=await build({entryPoints:['app/api/teacher/teaching-zones/route.ts'],bundle:true,platform:'node',format:'cjs',write:false,external:['next/server','zod'],plugins:[virtual]});
  const filename=path.resolve('tests/teacherZones/runtime-handler.cjs');
- const mod=new Module(filename,module);mod.filename=filename;mod.paths=module.paths;mod._compile(output.outputFiles[0].text,filename);
+ const mod=new Module(filename);mod.filename=filename;mod.paths = Module._nodeModulePaths(path.dirname(filename));mod._compile(output.outputFiles[0].text,filename);
  assert.equal((await mod.exports.PUT(request({zones:[zone]},''))).status,401);assert.equal(state.calls.length,0);
  state.valid=false;assert.equal((await mod.exports.PUT(request({zones:[zone]}))).status,401);assert.equal(state.calls.length,0);state.valid=true;
  state.teacher=false;assert.equal((await mod.exports.PUT(request({zones:[zone]}))).status,404);assert.ok(!state.calls.some(c=>c.name));state.teacher=true;state.calls=[];

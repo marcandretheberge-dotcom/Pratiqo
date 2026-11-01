@@ -1,6 +1,6 @@
-const assert=require('node:assert/strict');
-const {readFileSync,readdirSync}=require('node:fs');
-const {build,plan,buildSchema}=require('../../scripts/prepare_teaching_zones_install.cjs');
+import assert from "node:assert/strict";
+import {readFileSync,readdirSync} from "node:fs";
+import {build,plan,buildSchema} from "../../scripts/prepare_teaching_zones_install.mjs";
 const before=[129,130,131,132,133].map(version=>({version:String(version)}));
 const fresh=plan(before);
 assert.equal(fresh.standardPushAllowed,false);

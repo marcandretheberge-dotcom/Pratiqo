@@ -1,8 +1,10 @@
+import { createRequire } from "node:module";
+const load = createRequire(import.meta.url);
 // Isolated PostgreSQL container only. No network connection strings or secrets.
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const { spawn } = require('node:child_process');
-const snapshot = require('./fixtures/learning-project-schema.json');
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { spawn } from "node:child_process";
+const snapshot = load('./fixtures/learning-project-schema.json');
 const migration = fs.readFileSync('supabase/migrations/136_learning_project_save_and_directory.sql','utf8');
 const container = process.env.TEST_POSTGRES_CONTAINER;
 assert.match(container || '', /^[a-f0-9]{12,64}$/, 'Requires an explicitly selected local test container');

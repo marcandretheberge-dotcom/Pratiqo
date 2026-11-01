@@ -56,6 +56,10 @@ type Props = {
   initialZoom?: number;
   /** Emphasizes the marker matching this teacher id (e.g. list hover). */
   highlightedTeacherId?: string | null;
+  /** Automatic views must not prompt for browser location without an action. */
+  requestLocationOnMount?: boolean;
+  /** Frame the first public result set once, without fighting later map drags. */
+  fitTeachersOnLoad?: boolean;
 };
 
 const MAP_MINIMAL_STYLES: google.maps.MapTypeStyle[] = [
@@ -112,6 +116,8 @@ export function SearchMapView({
   mapHeight = "calc(100vh - 200px)",
   initialZoom = 12,
   highlightedTeacherId = null,
+  requestLocationOnMount = true,
+  fitTeachersOnLoad = false,
 }: Props) {
   const { t, formatDisplayPrice } = useLocale();
 
@@ -121,6 +127,7 @@ export function SearchMapView({
   const clustererRef = useRef<MarkerClusterer | null>(null);
   const markersRef = useRef<google.maps.Marker[]>([]);
   const userMarkerRef = useRef<google.maps.Marker | null>(null);
+  const framedTeachersRef = useRef(false);
 
   // ── Always-current copies of props ───────────────────────────────────────
   // Assigned synchronously during render so effects never read stale values.
@@ -152,6 +159,23 @@ export function SearchMapView({
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const teachersWithCoords = useMemo(() => teachers.filter(hasCoords), [teachers]);
 
+  useEffect(() => {
+    if (!apiKey) return;
+    // Google can reject a key after its loader promise has already resolved.
+    const mapsWindow = window as Window & { gm_authFailure?: () => void };
+    const previous = mapsWindow.gm_authFailure;
+    let active = true;
+    const onAuthFailure = () => {
+      if (active) setLoadError("authentication");
+      previous?.();
+    };
+    mapsWindow.gm_authFailure = onAuthFailure;
+    return () => {
+      active = false;
+      if (mapsWindow.gm_authFailure === onAuthFailure) mapsWindow.gm_authFailure = previous;
+    };
+  }, [apiKey]);
+
   // ── Effect 1: Initialize the map ONCE ────────────────────────────────────
   //
   // Depends ONLY on `apiKey`.  All prop / state changes that should NOT
@@ -170,10 +194,12 @@ export function SearchMapView({
 
         // Determine initial centre (priority: props → browser geo → fallback).
         let center: { lat: number; lng: number };
-        if (userLatRef.current && userLngRef.current) {
+        if (userLatRef.current != null && userLngRef.current != null) {
           center = { lat: userLatRef.current, lng: userLngRef.current };
           centeredOnUserRef.current = true;
           lastAppliedUserLatLng.current = { lat: center.lat, lng: center.lng };
+        } else if (!requestLocationOnMount) {
+          center = FALLBACK_CENTER;
         } else {
           center = await new Promise<{ lat: number; lng: number }>((resolve) => {
             if (!("geolocation" in navigator)) {
@@ -257,6 +283,7 @@ export function SearchMapView({
       centeredOnUserRef.current = false;
       lastAppliedUserLatLng.current = null;
       boundsRef.current = null;
+      framedTeachersRef.current = false;
       if (mapRef.current) mapRef.current.innerHTML = "";
       setMapsReady(false);
       setShowSearchButton(false);
@@ -365,21 +392,28 @@ export function SearchMapView({
     // Hand all markers to the clusterer at once — a single render pass is
     // more efficient than adding them one-by-one.
     clusterer.addMarkers(newMarkers);
-  }, [mapsReady, teachersWithCoords, highlightedTeacherId, formatDisplayPrice]); // onTeacherSelect deliberately excluded
+    const map = mapInstanceRef.current;
+    if (map && fitTeachersOnLoad && !framedTeachersRef.current && teachersWithCoords.length > 0) {
+      framedTeachersRef.current = true;
+      if (userLatRef.current == null || userLngRef.current == null) {
+        const bounds = new google.maps.LatLngBounds();
+        teachersWithCoords.forEach((teacher) => {
+          const coords = getTeacherMapCoords(teacher);
+          if (coords) bounds.extend(coords);
+        });
+        map.fitBounds(bounds, 48);
+        google.maps.event.addListenerOnce(map, "idle", () => {
+          if ((map.getZoom() ?? initialZoom) > initialZoom) map.setZoom(initialZoom);
+        });
+      }
+    }
+  }, [mapsReady, teachersWithCoords, highlightedTeacherId, formatDisplayPrice, fitTeachersOnLoad, initialZoom]); // onTeacherSelect deliberately excluded
 
   // ── Early returns ─────────────────────────────────────────────────────────
-  if (!apiKey) {
+  if (!apiKey || loadError) {
     return (
-      <div className="rounded-xl border border-dashed border-[#E8E6DF] bg-white p-4 text-sm text-[#6B6A65]">
-        {t("noCoordinates")} — <code className="text-xs">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>
-      </div>
-    );
-  }
-
-  if (loadError) {
-    return (
-      <div className="rounded-xl border border-[#F3D0D0] bg-[#FFF5F5] p-4 text-sm text-[#B42318]">
-        {loadError}
+      <div role="status" style={{ height: mapHeight }} className="flex min-h-40 items-center justify-center rounded-xl border border-[#E8E6DF] bg-[#F3F7F5] p-6 text-center text-sm text-neutral-600">
+        {t("landingMapUnavailable")}
       </div>
     );
   }
@@ -388,7 +422,7 @@ export function SearchMapView({
   return (
     <div className="relative">
       {!mapsReady ? (
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-teal-700">
+        <div role="status" className="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-[#F3F7F5] text-sm font-semibold text-teal-700">
           <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
           {t("loadingMap")}
         </div>

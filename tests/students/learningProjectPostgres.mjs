@@ -1,7 +1,7 @@
 // In-memory PostgreSQL only. No DATABASE_URL, network or production credentials.
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const { PGlite } = require("@electric-sql/pglite");
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { PGlite } from "@electric-sql/pglite";
 
 (async () => {
   const db = new PGlite();

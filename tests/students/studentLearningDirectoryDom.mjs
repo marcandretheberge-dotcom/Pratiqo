@@ -1,20 +1,22 @@
-const assert = require("node:assert/strict");
-const { JSDOM } = require("jsdom");
+import { createRequire } from "node:module";
+const load = createRequire(import.meta.url);
+import assert from "node:assert/strict";
+import { JSDOM } from "jsdom";
 const dom = new JSDOM('<div id="root"></div>', { url: "https://example.test/admin/learning-project-demand" });
 Object.assign(global, { window: dom.window, self: dom.window, document: dom.window.document,
   HTMLElement: dom.window.HTMLElement, Event: dom.window.Event, IS_REACT_ACT_ENVIRONMENT: true });
 Object.defineProperty(global, "navigator", { value: dom.window.navigator, configurable: true });
-require("tsx/cjs");
-const React = require("react");
-const { render, screen, fireEvent, cleanup, waitFor } = require("@testing-library/react");
-const Module = require("node:module");
+load("tsx/cjs");
+const React = load("react");
+const { render, screen, fireEvent, cleanup, waitFor } = load("@testing-library/react");
+const Module = load("node:module");
 const originalLoad = Module._load;
 Module._load = function(id, ...rest) {
   if (id === "@/lib/supabase") return { getSupabaseClient: () => ({ auth: { getSession: async () =>
     ({ data: { session: { access_token: "synthetic-only" } } }) } }) };
   return originalLoad.call(this, id, ...rest);
 };
-const { StudentLearningDirectory } = require(require("node:path").resolve("components/admin/StudentLearningDirectory.tsx"));
+const { StudentLearningDirectory } = load(load("node:path").resolve("components/admin/StudentLearningDirectory.tsx"));
 Module._load = originalLoad;
 const first = { id: "fixture-1", name: "Élève Alpha", email: "alpha@example.test", profile_city: "Québec",
   project_city: "St-Georges", subject: "Espagnol", audience: "self", format: "in_person", status: "declared",

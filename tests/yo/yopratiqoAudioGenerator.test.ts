@@ -77,6 +77,16 @@ void test("verify-only requires the public URL, while live requires both server 
   assert.throws(() => resolveConfig(verify, { NEXT_PUBLIC_SUPABASE_URL: "https://example.com/path" }), /HTTPS origin/);
 });
 
+void test("server secrets use the explicit environment, never public-key aliases", () => {
+  const opts = parseCli([]);
+  const supplied = { ...env, NEXT_PUBLIC_OPENAI_API_KEY: "public-decoy", NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY: "public-decoy" };
+  const config = resolveConfig(opts, supplied);
+  assert.equal(config.openAiApiKey, env.OPENAI_API_KEY);
+  assert.equal(config.serviceRoleKey, env.SUPABASE_SERVICE_ROLE_KEY);
+  assert.throws(() => resolveConfig(opts, { ...supplied, OPENAI_API_KEY: undefined }), /OPENAI_API_KEY/);
+  assert.throws(() => resolveConfig(opts, { ...supplied, SUPABASE_SERVICE_ROLE_KEY: undefined }), /SUPABASE_SERVICE_ROLE_KEY/);
+});
+
 void test("generation keeps pronunciation overrides, dated model instructions and profile voice", () => {
   const cfg = resolveConfig(parseCli(["--dry-run"]), { YOPRATIQO_TTS_MODEL: "gpt-4o-mini-tts-2025-12-15" });
   const request = resolveSpeechRequest(cfg, item);

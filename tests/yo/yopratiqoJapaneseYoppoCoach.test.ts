@@ -59,8 +59,7 @@ function point(view: ReturnType<typeof render>) {
 for (const locale of ["fr", "en", "es"] as const) {
   test(`${locale}: help opens only on request and support notifies the lesson before disclosure`, () => {
     const actions: string[] = [];
-    let view: ReturnType<typeof render>;
-    view = render(node({ locale, onAction: (action) => {
+    const view: ReturnType<typeof render> = render(node({ locale, onAction: (action) => {
       if (action === "hint") assert.equal(view.queryByText(props.hint[locale]), null);
       if (action === "explain") assert.equal(view.queryByText(props.explanation[locale]), null);
       if (action === "example") assert.equal(view.queryByText(props.example!.ja), null);

@@ -1,9 +1,10 @@
+import { fileURLToPath } from "node:url";
 // Real PostgreSQL execution in PGlite; synthetic records only, no network clients.
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const { PGlite } = require('@electric-sql/pglite');
-const root = path.resolve(__dirname, '../..');
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { PGlite } from "@electric-sql/pglite";
+const root = path.resolve(fileURLToPath(new URL(".", import.meta.url)), '../..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8');
 const migrationName = fs.readdirSync(path.join(root, 'supabase/migrations'))
   .find(n => n.endsWith('_restrict_admin_student_credit_rpc_execution.sql'));

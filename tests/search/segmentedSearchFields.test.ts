@@ -514,8 +514,12 @@ test("LandingLocationSearch echoes the selected 'City, PROV' label back into the
     /onChange\(\s*formatPlaceLabel\(/.test(landingLocationSrc),
     "selectPlace must echo formatPlaceLabel(...) into onChange",
   );
+  const selectCityHandler = landingClientSrc.match(
+    /const selectCityForSearch = useCallback\(\(city: City\) => \{([\s\S]*?)\}, \[\]\)/,
+  );
+  assert.ok(selectCityHandler, "The city selection callback must remain inspectable");
   assert.ok(
-    !/setLocationSearch\(\s*""\s*\)/.test(landingClientSrc),
+    !/setLocationSearch\(\s*""\s*\)/.test(selectCityHandler[1]),
     "LandingPageClient.selectCityForSearch must not clear locationSearch — the child owns the echoed label",
   );
   const studentSearchSrc = readFileSync(
@@ -587,15 +591,12 @@ test("LandingPageClient defines a hasSearchIntent flag", () => {
   }
 });
 
-test("Quiz CTA + hero trust strip are hidden when search intent exists", () => {
-  // The quiz CTA + LandingHeroTrustStrip live between the filters and
-  // the results section. When a query is active they must not render
-  // — that is the root cause of the reported "huge vertical gap".
+test("Secondary quiz CTA is hidden when search intent exists", () => {
   assert.ok(
-    /hasSearchIntent\s*\?\s*null\s*:\s*\(\s*<div[\s\S]*?marketplaceQuizCta[\s\S]*?LandingHeroTrustStrip/.test(
+    /hasSearchIntent\s*\?\s*null\s*:\s*\(\s*<div[\s\S]*?landingHomepageQuizCta/.test(
       landingClientSrc,
     ),
-    "Quiz CTA + LandingHeroTrustStrip block must be gated behind !hasSearchIntent",
+    "Quiz CTA must be gated behind !hasSearchIntent",
   );
 });
 
@@ -703,15 +704,11 @@ test("New results-summary i18n keys exist in fr/en/es", () => {
   }
 });
 
-test("Results-mode marketing blocks (LandingNeighborhoodSignals) are gated", () => {
-  // The neighborhood signals block is decorative pre-search marketing;
-  // in results mode the cards should appear immediately under the
-  // filter row instead of after another marketing module.
-  assert.ok(
-    /hasSearchIntent\s*\?\s*null\s*:\s*\(\s*<LandingNeighborhoodSignals/.test(
-      landingClientSrc,
-    ),
-    "LandingNeighborhoodSignals must only render when !hasSearchIntent",
+test("Repeated marketing blocks no longer push results below the filters", () => {
+  assert.doesNotMatch(
+    landingClientSrc,
+    /<LandingNeighborhoodSignals|<LandingHeroTrustStrip/,
+    "Repeated trust and neighborhood blocks must not precede results",
   );
 });
 
@@ -828,12 +825,12 @@ test("Lieu typing intent does not write to or clear Quoi", () => {
   );
   // The new state setter must not appear inside the Quoi handler.
   const onSearchQueryUsage = landingClientSrc.match(
-    /onSearchQueryChange=\{setSearchQuery\}/,
+    /onSearchQueryChange=\{\(query\) => \{([\s\S]*?)\}\}/,
   );
-  assert.ok(
-    onSearchQueryUsage,
-    "Quoi must remain wired to setSearchQuery directly (independent state)",
-  );
+  assert.ok(onSearchQueryUsage, "Quoi must retain its own handler");
+  assert.match(onSearchQueryUsage[1], /setSearchQuery\(query\)/);
+  assert.doesNotMatch(onSearchQueryUsage[1], /setLocationSearch|setGeo|setHasLieuTypingIntent/);
+  assert.match(onSearchQueryUsage[1], /setActiveCat\("All"\)/, "Typing a new subject must replace the previously selected category");
 });
 
 test("LandingSearchHero forwards onLocationIntentChange (defense in depth for /student/search)", () => {

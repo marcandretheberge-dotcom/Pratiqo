@@ -6,30 +6,29 @@ import React, { useCallback, useEffect, useMemo, useRef, useState, type ReactNod
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { BookOpen, GraduationCap, LayoutGrid, LayoutList, Map, MapPin, Music, Sparkles } from "lucide-react";
+import { MapPin, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import type { Teacher } from "../types";
 import { cn } from "../lib/utils";
-import { getFeaturedFilterDisciplines } from "../lib/disciplines";
+import { getDisciplineLabel } from "../lib/disciplines";
 import { isEnabled } from "../lib/features";
 import { getSupabaseClient } from "../lib/supabase";
 import { fetchTeacherDisciplinesMap, mergeTeachersWithDisciplines } from "../lib/teacherDisciplines";
 import { isLaunchEligibleTeacherRow, teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { TEACHERS_LIST_SELECT, TEACHERS_LIST_SELECT_LEGACY_PUBLIC, TEACHERS_PUBLIC_TABLE } from "../lib/supabase/queries";
 import { applyTeacherListingMetadata } from "@/lib/teacherListingMetadata";
-import { buildTeacherSignupLoginHref } from "@/lib/auth/teacherOnboardingIntent";
 import { useLocale } from "../lib/locale-context";
 import { useAuth } from "../components/AuthProvider";
 import type { BookingInitialLessonKind } from "../components/BookingModal";
 import type { TeacherBookContext } from "../components/TeacherProfile";
 import type { MapBounds } from "../components/SearchMapView";
 import { LandingDiscoverySearch } from "../components/marketing/LandingDiscoverySearch";
-import { LandingHeroTrustStrip } from "../components/marketing/LandingHeroTrustStrip";
-import { LandingNeighborhoodSignals } from "../components/marketing/LandingNeighborhoodSignals";
 import { LandingTeacherListingCard } from "../components/marketing/LandingTeacherListingCard";
 import { LandingResourcesSection } from "../components/marketing/LandingResourcesSection";
-import type { TranslationKey } from "../lib/translations";
+import { LandingHeadline } from "../components/marketing/LandingHeadline";
+import { getTeacherPublicFormatIds } from "@/lib/teachers/display";
 import type { LandingFormatFilter } from "../lib/landingTeacherFilter";
 import { filterTeacherPool, buildTeacherSearchRows, sortRows } from "../lib/teacherSearchEngine";
+import { teachersInLandingMapArea } from "@/lib/landingTeacherMap";
 import { attachPublicTeachingZones, getTeacherMapCoords } from "@/lib/teacherTeachingZones";
 import { TeacherSearchAdvancedPanel, type AdvancedFilterValues } from "../components/TeacherSearchAdvancedPanel";
 import { logSearchEvent } from "../lib/searchAnalytics";
@@ -56,17 +55,12 @@ const SearchMapView = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex flex-col items-center justify-center gap-2 h-[480px] rounded-2xl bg-[#F1EFE8] text-sm text-neutral-700">
+      <div className="flex h-[var(--landing-map-height)] flex-col items-center justify-center gap-2 rounded-xl bg-[#F3F7F5] text-sm text-neutral-700">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-teal-700 border-t-transparent" />
         <MapLoadingLabel />
       </div>
     ),
   },
-);
-
-const SocialProofTestimonials = dynamic(
-  () => import("../components/marketing/SocialProofTestimonials").then((m) => m.SocialProofTestimonials),
-  { loading: () => <div className="min-h-[280px] bg-[#FAFCFB] py-14 sm:min-h-[320px]" /> },
 );
 
 const TrustSafetySection = dynamic(
@@ -89,7 +83,11 @@ const TeacherQuiz = dynamic(
   { ssr: false, loading: () => null },
 );
 
-type HeroMode = "student" | "teacher";
+const SUBJECT_EXAMPLES = ["piano", "francais", "mathematiques"] as const;
+const EMPTY_FILTERS: AdvancedFilterValues = {
+  minRating: "", maxPrice: "", verifiedOnly: false, language: "", level: "",
+  availabilityDay: "", availabilityPeriod: "", teacherPreference: "", formatExtra: "",
+};
 
 function InlineLoading() {
   const { t } = useLocale();
@@ -105,14 +103,9 @@ function LandingHeroClientCopy() {
   const { t } = useLocale();
   return (
     <div suppressHydrationWarning>
-      <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-teal-800">{t("landingEyebrowLocal")}</p>
-      <p className="mt-3 text-[15px] font-semibold text-teal-700 lg:hidden">{t("landingMobileNearYou")}</p>
-      <p className="mt-1 text-sm leading-snug text-neutral-700 lg:hidden">{t("landingMobileCornerHint")}</p>
-      <h1 className="mt-4 text-2xl font-bold tracking-tight text-[#1a1f1d] sm:text-3xl lg:mt-2 lg:text-[2.15rem] lg:leading-[1.12]">
-        {t("landingNeighborhoodHeadline")}
-      </h1>
-      <p className="mx-auto mt-3 hidden max-w-2xl text-[15px] leading-relaxed text-neutral-700 sm:text-base lg:block">
-        {t("teacherGridCornerLesson")}
+      <LandingHeadline title={t("landingNeighborhoodHeadline")} accent={t("landingHomepageHeadlineAccent")} />
+      <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-neutral-700 sm:text-base">
+        {t("landingHomepageIntro")}
       </p>
     </div>
   );
@@ -128,22 +121,9 @@ function isMissingStripeIdentityStatus(error: unknown) {
 export function LandingPageClient({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { user } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [clientHeroReady, setClientHeroReady] = useState(false);
-  const [mode, setMode] = useState<HeroMode>("student");
   const [quizOpen, setQuizOpen] = useState(false);
-
-  const CATEGORY_I18N: Record<string, TranslationKey> = {
-    musique: "marketplaceCategoryMusic",
-    langues: "marketplaceCategoryLanguages",
-    tuteurs: "marketplaceCategoryAcademic",
-  };
-
-  const CATEGORY_ICON: Record<string, typeof Music> = {
-    musique: Music,
-    langues: BookOpen,
-    tuteurs: GraduationCap,
-  };
 
   // Teachers + search state
   const [locationSearch, setLocationSearch] = useState("");
@@ -164,6 +144,8 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
   const [activeCat, setActiveCat] = useState<string>("All");
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loadingTeachers, setLoadingTeachers] = useState(true);
+  const [teacherLoadFailed, setTeacherLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   // Geo
   const [geo, setGeo] = useState<{ lat: number; lng: number } | null>(null);
@@ -174,21 +156,9 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
 
   const [formatFilter, setFormatFilter] = useState<LandingFormatFilter>("all");
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [adv, setAdv] = useState<AdvancedFilterValues>({
-    minRating: "",
-    maxPrice: "",
-    verifiedOnly: false,
-    language: "",
-    level: "",
-    availabilityDay: "",
-    availabilityPeriod: "",
-    teacherPreference: "",
-    formatExtra: "",
-  });
+  const [adv, setAdv] = useState<AdvancedFilterValues>(EMPTY_FILTERS);
 
-  // View
-  const [viewMode, setViewMode] = useState<"list" | "map">("list");
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const [highlightedTeacherId, setHighlightedTeacherId] = useState<string | null>(null);
 
   // Profile / booking modals
   const [selectedTeacherProfile, setSelectedTeacherProfile] = useState<Teacher | null>(null);
@@ -206,18 +176,22 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
 
   // Load teachers
   useEffect(() => {
+    let cancelled = false;
     const supabase = getSupabaseClient();
     const load = async () => {
+      setLoadingTeachers(true);
+      setTeacherLoadFailed(false);
+      const updateTeachers = (list: Teacher[]) => { if (!cancelled) setTeachers(list); };
       const mergePlans = async (list: Teacher[]) => {
         const ids = list.map((t) => t.id).join(",");
-        if (!ids) { setTeachers(list); return; }
+        if (!ids) { updateTeachers(list); return; }
         try {
           const pr = await fetch(`/api/teachers/plans?ids=${encodeURIComponent(ids)}`);
           if (!pr.ok) throw new Error("Teacher public metadata lookup failed");
           const body = (await pr.json()) as Parameters<typeof applyTeacherListingMetadata>[1];
-          setTeachers(applyTeacherListingMetadata(list, body));
+          updateTeachers(applyTeacherListingMetadata(list, body));
         } catch {
-          setTeachers(list.map((t) => ({ ...t, profilePlan: "free" })));
+          updateTeachers(list.map((t) => ({ ...t, profilePlan: "free" })));
         }
       };
       const queryPublicTeachers = (select: string) =>
@@ -233,15 +207,9 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       }
 
       const { data, error } = response;
-      if (error || !data?.length) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn(
-            "[LandingPageClient] teachers_public unavailable or empty; skipping demo teachers (IDs must be UUIDs).",
-            error,
-          );
-        }
+      if (error) throw new Error("Public teacher lookup failed");
+      if (!data?.length) {
         await mergePlans([]);
-        setLoadingTeachers(false);
         return;
       }
       const mapped = (data as unknown as TeacherRow[])
@@ -250,10 +218,15 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       const mappedWithZones = await attachPublicTeachingZones(supabase, mapped);
       const discMap = await fetchTeacherDisciplinesMap(supabase, mappedWithZones.map((t) => t.id));
       await mergePlans(mergeTeachersWithDisciplines(mappedWithZones, discMap));
-      setLoadingTeachers(false);
     };
-    void load();
-  }, []);
+    void load().catch(() => {
+      if (!cancelled) {
+        setTeachers([]);
+        setTeacherLoadFailed(true);
+      }
+    }).finally(() => { if (!cancelled) setLoadingTeachers(false); });
+    return () => { cancelled = true; };
+  }, [loadAttempt]);
 
   const requestGeo = useCallback(() => {
     if (!("geolocation" in navigator)) return;
@@ -301,33 +274,25 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
       availabilityPeriod: adv.availabilityPeriod || undefined,
       teacherPreference: adv.teacherPreference || undefined,
     });
-    let rows = buildTeacherSearchRows(pool, {
+    const rows = mapBounds && fmt !== "online" ? teachersInLandingMapArea(pool, mapBounds) : buildTeacherSearchRows(pool, {
       geo,
       locationText: { city: committedPlaceLabel ?? (locationSearch.trim() || null), region: null },
     });
-
-    if (mapBounds) {
-      rows = rows.filter(({ teacher: tt }) => {
-        const coords = getTeacherMapCoords(tt);
-        const lat = coords?.lat;
-        const lng = coords?.lng;
-        if (typeof lat !== "number" || typeof lng !== "number") return false;
-        const { ne, sw } = mapBounds;
-        // Handle antimeridian wrapping for longitude
-        const lngInBounds = ne.lng < sw.lng ? lng >= sw.lng || lng <= ne.lng : lng >= sw.lng && lng <= ne.lng;
-        return lat >= sw.lat && lat <= ne.lat && lngInBounds;
-      });
-    }
 
     const sorted = sortRows(rows, {
       sortMode: sortMode === "nearest" ? "nearest" : "relevance",
       searchQuery,
       format: fmt,
-      hasLocationContext: Boolean(geo),
+      hasLocationContext: Boolean(geo || mapBounds),
       studentPrefs: null,
     });
     return sorted.map((r) => r.teacher);
   }, [teachers, searchQuery, activeCat, sortMode, geo, mapBounds, formatFilter, adv, committedPlaceLabel, locationSearch]);
+
+  // Online-only profiles stay in the results, never as in-person map pins.
+  const mapTeachers = useMemo(() => (adv.formatExtra || formatFilter) === "online" ? [] : filtered.filter((teacher) => (
+    getTeacherPublicFormatIds(teacher).some((format) => format !== "online") && getTeacherMapCoords(teacher) != null
+  )), [filtered, formatFilter, adv.formatExtra]);
 
   const resultCountRef = useRef(0);
   useEffect(() => {
@@ -399,6 +364,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
   // value so the user can see which place is currently selected. If the
   // parent reset it to "" the user would lose that visual confirmation.
   const selectCityForSearch = useCallback((city: City) => {
+    setMapBounds(null);
     setGeo({ lat: city.lat, lng: city.lng });
     setSortMode("nearest");
   }, []);
@@ -438,44 +404,36 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
     return hasAdvancedFilter;
   }, [searchQuery, activeCat, geo, formatFilter, mapBounds, hasLieuTypingIntent, hasAdvancedFilter]);
 
-  // Display the selected place label only when it's been *committed* via the
-  const subjectLabel = searchQuery.trim();
+  const subjectLabel = searchQuery.trim() || (activeCat === "All" ? "" : getDisciplineLabel(activeCat, locale));
 
   return (
     <>
-      {/* ── HERO (student / teacher toggle; motion deferred — no motion/react in this module) ── */}
-      <section className="relative overflow-hidden">
-          {mode === "student" ? (
-            <div key="student" className="bg-[#FAFCFB] text-[#2C2C2A]">
-              <div className="relative border-b border-[#E8E6DF]/80 bg-[#FAFCFB] lg:bg-gradient-to-b lg:from-[#EFF8F4] lg:via-[#FAFCFB] lg:to-[#FAFCFB]">
+      <section className="relative">
+            <div className="bg-[#FAFCFB] text-[#2C2C2A]">
+              <div className="relative border-b border-[#E8E6DF]/80 bg-[#FAFCFB]">
                 <div
                   className={cn(
-                    "relative mx-auto max-w-[1440px] px-4 pt-6 sm:px-6 lg:pt-8",
+                    "relative mx-auto max-w-[1440px] px-4 pt-8 sm:px-6",
                     // Results mode: shrink the hero's bottom padding so the
                     // results section sits directly under the filters with
                     // a deliberate, tight visual rhythm.
                     hasSearchIntent ? "pb-3 sm:pb-4" : "pb-8 lg:pb-10",
                   )}
                 >
-                  <div className="mb-6 flex justify-center">
-                    <div className="flex flex-wrap justify-center gap-1 rounded-2xl border border-[#E8E6DF] bg-white p-1 shadow-sm">
-                      <ToggleSegment active onClick={() => setMode("student")}>
-                        {t("iAmStudent")}
-                      </ToggleSegment>
-                      <ToggleSegment active={false} onClick={() => setMode("teacher")}>
-                        {t("iAmTeacher")}
-                      </ToggleSegment>
-                    </div>
-                  </div>
-
-                  <div className="mx-auto max-w-4xl space-y-5 text-center">
+                  <div className="mx-auto max-w-3xl space-y-6 text-center">
                     {clientHeroReady ? <LandingHeroClientCopy /> : children}
                     <LandingDiscoverySearch
                       teachersForSearch={teachers}
                       searchQuery={searchQuery}
-                      onSearchQueryChange={setSearchQuery}
+                      onSearchQueryChange={(query) => {
+                        setActiveCat("All");
+                        setSearchQuery(query);
+                      }}
                       locationSearch={locationSearch}
-                      onLocationSearchChange={setLocationSearch}
+                      onLocationSearchChange={(place) => {
+                        setMapBounds(null);
+                        setLocationSearch(place);
+                      }}
                       geo={geo}
                       onSelectTeacher={(teacher) => setSelectedTeacherProfile(teacher)}
                       onSelectDiscipline={(label) => {
@@ -491,79 +449,32 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                     />
                   </div>
 
-                  <div className="mx-auto mt-5 max-w-4xl">
-                    <div className="flex flex-wrap justify-center gap-2">
-                      {getFeaturedFilterDisciplines().map((d) => {
-                        const catKey = CATEGORY_I18N[d.id];
-                        const Icon = CATEGORY_ICON[d.id];
-                        const active = activeCat === d.label;
-                        return (
-                          <button
-                            key={d.id}
-                            type="button"
-                            onClick={() => setActiveCat(active ? "All" : d.label)}
-                            className={cn(
-                              "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
-                              active
-                                ? "border-teal-700 bg-teal-700 text-white shadow-sm"
-                                : "border-[#E0DED5] bg-white text-[#2C2C2A] hover:border-teal-700/35 hover:bg-[#F9F8F5]",
-                            )}
-                          >
-                            {Icon ? <Icon size={15} aria-hidden strokeWidth={2.25} /> : null}
-                            {catKey ? t(catKey) : d.label}
-                          </button>
-                        );
-                      })}
-                      {isEnabled("group_sessions") ? (
-                        <Link
-                          href="/group-sessions"
-                          className="inline-flex items-center rounded-full border border-[#E0DED5] bg-white px-4 py-2 text-xs font-semibold text-[#2C2C2A] transition-colors hover:border-teal-700/35 hover:bg-[#F9F8F5]"
-                        >
-                          {t("groupCoursesLink")}
-                        </Link>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={() => setActiveCat("All")}
-                        className={cn(
-                          "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition-colors",
-                          activeCat === "All"
-                            ? "border-teal-700 bg-teal-700 text-white shadow-sm"
-                            : "border-[#E0DED5] bg-white text-[#2C2C2A] hover:border-teal-700/35",
-                        )}
-                      >
-                        <LayoutGrid size={15} aria-hidden strokeWidth={2.25} />
-                        {t("filterAll")}
-                      </button>
-                    </div>
-                    <p className="mt-3 text-center text-[11px] text-neutral-700">{t("otherDisciplines")}</p>
-                    <div className="mx-auto mt-4 max-w-xl">
-                      <TeacherSearchAdvancedPanel
-                        open={advancedOpen}
-                        onToggle={() => setAdvancedOpen((o) => !o)}
-                        values={adv}
-                        onChange={(patch) => setAdv((a) => ({ ...a, ...patch }))}
-                        t={t}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Quiz CTA + hero trust strip live here only when the
-                      user has not signalled search intent. In results mode
-                      they would push the cards far below the fold and break
-                      the search → results visual rhythm. */}
                   {hasSearchIntent ? null : (
-                    <div className="mx-auto mt-10 w-full max-w-lg px-2 text-center">
+                    <div className="mx-auto mt-3 max-w-3xl text-center">
+                      <div className="flex flex-wrap items-center justify-center gap-x-4" aria-label={t("landingHomepageExamples")}>
+                        <span className="text-xs text-neutral-500">{t("landingHomepageExamples")}</span>
+                        {SUBJECT_EXAMPLES.map((id) => (
+                          <button
+                            key={id}
+                            type="button"
+                            onClick={() => {
+                              setActiveCat("All");
+                              setSearchQuery(getDisciplineLabel(id, locale));
+                            }}
+                            className="min-h-11 text-sm font-medium text-teal-800 underline decoration-teal-800/30 underline-offset-4 hover:decoration-teal-800 focus-visible:outline-2 focus-visible:outline-teal-700"
+                          >
+                            {getDisciplineLabel(id, locale)}
+                          </button>
+                        ))}
+                      </div>
                       <button
                         type="button"
                         onClick={() => setQuizOpen(true)}
-                        className="inline-flex min-h-[52px] w-full max-w-md items-center justify-center gap-2.5 rounded-2xl border-2 border-[#C5E7DB] bg-white px-6 py-3.5 text-sm font-bold text-teal-700 shadow-md transition-all hover:border-teal-700/40 hover:bg-[#FAFFFC] hover:shadow-lg lg:shadow-[0_10px_36px_rgba(15,110,86,0.08)] lg:hover:shadow-[0_14px_40px_rgba(15,110,86,0.12)] motion-safe:active:scale-[0.99]"
+                        className="inline-flex min-h-11 max-w-full items-center justify-center gap-2 px-3 py-2 text-sm font-semibold text-teal-700 underline underline-offset-4 hover:text-teal-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700"
                       >
-                        <Sparkles size={20} className="shrink-0 text-[#F4B400]" strokeWidth={2.25} aria-hidden />
-                        {t("marketplaceQuizCta")}
+                        <Sparkles size={16} className="shrink-0" aria-hidden />
+                        {t("landingHomepageQuizCta")}
                       </button>
-                      <p className="mx-auto mt-3 max-w-md text-[13px] leading-relaxed text-neutral-700">{t("landingQuizHelper")}</p>
-                      <LandingHeroTrustStrip className="mt-8" />
                     </div>
                   )}
                 </div>
@@ -585,10 +496,6 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                       : "py-8 sm:py-10",
                   )}
                 >
-                  {hasSearchIntent ? null : (
-                    <LandingNeighborhoodSignals className="mb-4" />
-                  )}
-
                   <div
                     className={cn(
                       "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between",
@@ -599,16 +506,16 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                       <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-700">
                         {loadingTeachers
                           ? t("loading")
-                          : `${filtered.length} ${filtered.length !== 1 ? t("profilesPlural") : t("profileSingular")}`}
+                          : teacherLoadFailed ? t("landingHomepageLoadErrorTitle") : `${filtered.length} ${filtered.length !== 1 ? t("profilesPlural") : t("profileSingular")}`}
                       </p>
                       <span aria-hidden className="hidden h-3 w-px shrink-0 bg-[#D3D1C7] sm:inline-block" />
-                      <span className="text-sm font-semibold text-[#2C2C2A]">
+                      <h2 className="text-base font-semibold text-[#2C2C2A]">
                         <LandingResultsHeading
                           hasSearchIntent={hasSearchIntent}
                           subject={subjectLabel}
                           place={committedPlaceLabel}
                         />
-                      </span>
+                      </h2>
                       <button
                         type="button"
                         onClick={requestGeo}
@@ -623,41 +530,90 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                         <MapPin size={11} aria-hidden /> {t("findNearMe")}
                       </button>
                     </div>
-                    <div className="flex items-center gap-1 self-stretch rounded-xl border border-[#E8E6DF] bg-white p-1 sm:self-auto sm:shrink-0">
+                    <div className="flex items-center self-start sm:shrink-0">
                       <button
                         type="button"
-                        onClick={() => setViewMode("list")}
-                        className={cn(
-                          "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:min-h-0 sm:flex-initial",
-                          viewMode === "list"
-                            ? "bg-teal-700 text-white shadow-sm"
-                            : "text-neutral-700 hover:text-[#2C2C2A]",
-                        )}
+                        onClick={() => setAdvancedOpen((open) => !open)}
+                        aria-expanded={advancedOpen}
+                        aria-controls="advanced-search-filters"
+                        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-[#E8E6DF] bg-white px-4 text-sm font-semibold text-teal-800 hover:bg-teal-50 focus-visible:outline-2 focus-visible:outline-teal-700"
                       >
-                        <LayoutList size={13} aria-hidden /> {t("viewList")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setViewMode("map");
-                          setMapLoaded(true);
-                        }}
-                        className={cn(
-                          "flex min-h-[40px] flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:min-h-0 sm:flex-initial",
-                          viewMode === "map"
-                            ? "bg-teal-700 text-white shadow-sm"
-                            : "text-neutral-700 hover:text-[#2C2C2A]",
-                        )}
-                      >
-                        <Map size={13} aria-hidden /> {t("viewMap")}
+                        <SlidersHorizontal size={16} aria-hidden />
+                        {t("landingHomepageFilters")}
+                        {hasAdvancedFilter ? <span className="h-2 w-2 rounded-full bg-teal-700"><span className="sr-only">{t("landingHomepageFiltersActive")}</span></span> : null}
                       </button>
                     </div>
                   </div>
 
-                  {viewMode === "list" ? (
-                    loadingTeachers ? (
+                  {hasSearchIntent ? (
+                    <button
+                      type="button"
+                      className="mb-3 inline-flex min-h-11 items-center gap-1.5 text-xs font-medium text-teal-800 underline underline-offset-4"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setActiveCat("All");
+                        setLocationSearch("");
+                        setHasLieuTypingIntent(false);
+                        setGeo(null);
+                        setSortMode("relevance");
+                        setFormatFilter("all");
+                        setAdv(EMPTY_FILTERS);
+                        setMapBounds(null);
+                      }}
+                    >
+                      <X size={14} aria-hidden /> {t("landingHomepageReset")}
+                    </button>
+                  ) : null}
+                  <div className={advancedOpen ? "mb-6" : undefined}>
+                    <TeacherSearchAdvancedPanel
+                      hideTrigger
+                      open={advancedOpen}
+                      onToggle={() => setAdvancedOpen((open) => !open)}
+                      values={adv}
+                      onChange={(patch) => setAdv((a) => ({ ...a, ...patch }))}
+                      t={t}
+                    />
+                    {advancedOpen && isEnabled("group_sessions") ? (
+                      <Link href="/group-sessions" className="mt-3 inline-flex min-h-11 items-center text-sm text-teal-800 underline">{t("groupCoursesLink")}</Link>
+                    ) : null}
+                  </div>
+
+                  <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] lg:gap-6">
+                    <section
+                      aria-label={t("landingHomepageMapTitle")}
+                      data-testid="landing-map"
+                      className="min-w-0 [--landing-map-height:320px] sm:[--landing-map-height:400px] lg:sticky lg:top-20 lg:[--landing-map-height:560px]"
+                    >
+                      <SearchMapView
+                        teachers={mapTeachers}
+                        userLat={geo?.lat ?? null}
+                        userLng={geo?.lng ?? null}
+                        selectedTeacher={mapTeachers.find((teacher) => teacher.id === selectedMapTeacher?.id) ?? null}
+                        onTeacherSelect={setSelectedMapTeacher}
+                        onViewProfile={setSelectedTeacherProfile}
+                        onCloseSelected={() => setSelectedMapTeacher(null)}
+                        onBoundsSearch={(adv.formatExtra || formatFilter) === "online" ? undefined : (bounds) => {
+                          setLocationSearch("");
+                          setGeo(null);
+                          setHasLieuTypingIntent(false);
+                          setMapBounds(bounds);
+                        }}
+                        highlightedTeacherId={highlightedTeacherId ?? selectedMapTeacher?.id ?? null}
+                        mapHeight="var(--landing-map-height)"
+                        requestLocationOnMount={false}
+                        fitTeachersOnLoad
+                      />
+                      {!loadingTeachers && !teacherLoadFailed ? <p className="mt-2 text-xs text-neutral-600">{mapTeachers.length ? t("landingHomepageMapCount").replace("{count}", String(mapTeachers.length)) : t("landingHomepageMapEmpty")}</p> : null}
+                    </section>
+                    <div className="min-w-0" data-testid="landing-teacher-cards">
+                    {loadingTeachers ? (
                       <div className="flex justify-center py-14">
                         <div className="h-9 w-9 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
+                      </div>
+                    ) : teacherLoadFailed ? (
+                      <div role="alert" className="py-8 text-sm text-neutral-700">
+                        <p>{t("landingHomepageLoadError")}</p>
+                        <button type="button" onClick={() => setLoadAttempt((attempt) => attempt + 1)} className="mt-3 min-h-11 font-semibold text-teal-800 underline underline-offset-4">{t("landingHomepageRetry")}</button>
                       </div>
                     ) : filtered.length === 0 ? (
                       <LandingResultsEmptyState
@@ -667,13 +623,14 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                       />
                     ) : (
                       <>
-                        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-                          {filtered.slice(0, 9).map((teacher, index) => (
-                            <div key={teacher.id} className={cn(index >= 4 && "hidden lg:block")}>
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1">
+                          {filtered.slice(0, 4).map((teacher) => (
+                            <div key={teacher.id}>
                               <LandingTeacherListingCard
                                 teacher={teacher}
                                 geo={geo}
-                                isHighlighted={selectedMapTeacher?.id === teacher.id}
+                                isHighlighted={selectedMapTeacher?.id === teacher.id || highlightedTeacherId === teacher.id}
+                                onHoverChange={setHighlightedTeacherId}
                                 onOpen={() => setSelectedTeacherProfile(teacher)}
                               />
                             </div>
@@ -691,88 +648,22 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                           </div>
                         ) : null}
                       </>
-                    )
-                  ) : null}
-
-                  {viewMode === "map" && mapLoaded ? (
-                    <div className="mt-2 h-[min(520px,calc(100dvh-12rem))] overflow-hidden rounded-3xl border border-[#E8E6DF] bg-white shadow-sm">
-                      {/*
-                       * Future enhancement: sync visible teacher results with current map bounds.
-                       */}
-                      <SearchMapView
-                        teachers={filtered}
-                        userLat={geo?.lat ?? null}
-                        userLng={geo?.lng ?? null}
-                        selectedTeacher={selectedMapTeacher}
-                        onTeacherSelect={(tt) => setSelectedMapTeacher(tt)}
-                        onViewProfile={(tt) => setSelectedTeacherProfile(tt)}
-                        onCloseSelected={() => setSelectedMapTeacher(null)}
-                        onBoundsSearch={(bounds) => setMapBounds(bounds)}
-                        highlightedTeacherId={selectedMapTeacher?.id ?? null}
-                      />
+                    )}
                     </div>
-                  ) : null}
+                  </div>
                 </div>
               </div>
             </div>
 
-          ) : (
-            <div key="teacher" className="bg-[#2C2C2A] text-white">
-              <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-16">
-                <div className="mb-6 flex flex-wrap justify-center gap-2 rounded-2xl bg-black/20 p-1 sm:inline-flex">
-                  <TogglePill active={false} onClick={() => setMode("student")} darkMode>{t("iAmStudent")}</TogglePill>
-                  <TogglePill active onClick={() => setMode("teacher")} darkMode>{t("iAmTeacher")}</TogglePill>
-                </div>
-
-                <h2 className="text-center text-2xl font-bold leading-tight sm:text-4xl">
-                  {t("homeTeacherH1")}
-                  <br />
-                  <span className="text-white/75">{t("homeTeacherH1Sub")}</span>
-                </h2>
-                <p className="mt-4 text-center text-sm text-white/80 max-w-xl mx-auto">
-                  {t("homeTeacherSub")}
-                </p>
-
-                {/* 3-stat row */}
-                <div className="mx-auto mt-10 grid max-w-3xl gap-3 grid-cols-3">
-                  <StatCard label={t("homeStatCommFree")} value="12-15%" />
-                  <StatCard label={t("homeStatCommPro")} value="3.5-5%" />
-                  <StatCard label={t("homeStatRistourne")} value="5% profits" />
-                </div>
-
-                <ul className="mx-auto mt-8 max-w-xl space-y-2.5 text-sm text-white/85">
-                  {[
-                    t("homeBullet1"),
-                    t("homeBullet2"),
-                    t("homeBullet3"),
-                  ].map((b) => (
-                    <li key={b} className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-3">
-                      <span className="h-2 w-2 shrink-0 rounded-full bg-teal-600" />
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-10 flex flex-col items-center gap-3">
-                  <Link href="/become-teacher" className="inline-flex h-12 items-center justify-center rounded-2xl bg-teal-700 px-8 text-sm font-bold text-white hover:brightness-105">
-                    {t("homeTeacherSeePlans")}
-                  </Link>
-                  <Link href={buildTeacherSignupLoginHref()} prefetch={false} className="text-sm font-medium text-white/80 underline underline-offset-2 hover:text-white">
-                    {t("joinFree")}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
       </section>
 
-      <SocialProofTestimonials className="bg-[#FAFCFB] py-14 sm:py-20" />
-      <TrustSafetySection className="border-t border-[#E8E6DF] bg-[#F8F6F1] py-14 sm:py-20" />
-      <LandingHowItWorks className="border-t border-[#E8E6DF] bg-[#FAFCFB] py-14 sm:py-20" />
+      <LandingHowItWorks className="border-t border-[#E8E6DF] bg-[#FAFCFB] py-10 sm:py-12" />
 
-      <div className="mx-auto max-w-[1440px] bg-[#F8F6F1] pb-6 text-center">
-        <p className="mx-auto max-w-xl px-4 text-xs leading-relaxed text-neutral-700">{t("creditsDisclaimer")}</p>
-      </div>
+      <details className="mx-auto max-w-5xl border-t border-[#E8E6DF] px-4 py-2 sm:px-6">
+        <summary className="cursor-pointer py-4 text-sm font-semibold text-teal-800 focus-visible:outline-2 focus-visible:outline-teal-700">{t("landingHomepageTrustDetails")}</summary>
+        <TrustSafetySection className="py-6" />
+        <p className="mx-auto max-w-xl pb-4 text-center text-xs leading-relaxed text-neutral-700">{t("creditsDisclaimer")}</p>
+      </details>
 
       <LandingResourcesSection />
 
@@ -829,47 +720,6 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-
-function ToggleSegment({ children, active, onClick }: { children: React.ReactNode; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "min-w-[128px] rounded-xl px-4 py-2.5 text-xs font-bold transition-colors",
-        active ? "bg-teal-700 text-white shadow-sm" : "text-neutral-700 hover:bg-[#f0f0eb]",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function TogglePill({ children, active, onClick, darkMode }: { children: React.ReactNode; active: boolean; onClick: () => void; darkMode?: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "min-w-[130px] rounded-xl px-4 py-2.5 text-xs font-bold transition-colors",
-        active
-          ? darkMode ? "bg-white text-[#2C2C2A] shadow-sm" : "bg-white text-teal-700 shadow-sm"
-          : "bg-transparent text-white/85 hover:bg-white/10",
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-white/75">{label}</p>
-      <p className="mt-2 text-xl font-bold text-[#7FE0C3]">{value}</p>
-    </div>
-  );
-}
 
 /**
  * Renders the contextual heading shown in the results filter row.

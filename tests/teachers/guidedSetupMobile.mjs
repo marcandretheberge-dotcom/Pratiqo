@@ -1,15 +1,17 @@
+import { createRequire } from "node:module";
+const load = createRequire(import.meta.url);
 /* Browser integration of real pages with synthetic, in-memory API boundaries. */
-const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const os = require('node:os');
-const http = require('node:http');
-const { build } = require('esbuild');
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
+import http from "node:http";
+import { build } from "esbuild";
 
 async function main() {
-  const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+  const { chromium } = load(process.env.PLAYWRIGHT_MODULE || 'playwright');
   const root = process.cwd();
-  const harness = await require('./guidedPublicationHarness.cjs').createHarness();
+  const harness = await (await import('./guidedPublicationHarness.mjs')).createHarness();
   const output = process.env.QA_OUTPUT_DIR || fs.mkdtempSync(path.join(os.tmpdir(), 'teacher-guided-qa-'));
   fs.mkdirSync(output, { recursive: true });
   const fixture = `

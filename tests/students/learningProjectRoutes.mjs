@@ -1,9 +1,11 @@
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const ts = require("typescript");
-require("tsx/cjs");
-const { NextResponse } = require("next/server");
+import { createRequire } from "node:module";
+const load = createRequire(import.meta.url);
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import ts from "typescript";
+load("tsx/cjs");
+const { NextResponse } = load("next/server");
 
 function loadRoute(file, dependencies) {
   const output = ts.transpileModule(fs.readFileSync(file, "utf8"), {
@@ -12,17 +14,17 @@ function loadRoute(file, dependencies) {
       target: ts.ScriptTarget.ES2022,
     },
   }).outputText;
-  const module = { exports: {} };
+  const loadedModule = { exports: {} };
   new Function("require", "module", "exports", output)(
     (name) => {
       if (name === "next/server") return { NextResponse };
       if (Object.hasOwn(dependencies, name)) return dependencies[name];
       throw new Error(`Unexpected route dependency: ${name}`);
     },
-    module,
-    module.exports,
+    loadedModule,
+    loadedModule.exports,
   );
-  return module.exports;
+  return loadedModule.exports;
 }
 
 (async () => {
@@ -97,7 +99,7 @@ function loadRoute(file, dependencies) {
     "@/lib/auth/supabaseRouteClient": {
       getSupabaseForRequest: async () => client,
     },
-    "@/lib/studentLearningProject": require(
+    "@/lib/studentLearningProject": load(
       path.resolve("lib/studentLearningProject.ts"),
     ),
   });
@@ -223,7 +225,7 @@ function loadRoute(file, dependencies) {
                 ),
               },
       },
-      "@/lib/admin/learningProjectDemand": require(
+      "@/lib/admin/learningProjectDemand": load(
         path.resolve("lib/admin/learningProjectDemand.ts"),
       ),
       "@/lib/learnerDemandSupply": {
@@ -259,7 +261,7 @@ function loadRoute(file, dependencies) {
           { data: { students: [], page: args.p_page, pageSize: 25, total: 0 }, error: null };
       } },
     } : { status: "error", response: NextResponse.json({ error: "denied" }, { status: access === "anonymous" ? 401 : 403 }) } },
-    "@/lib/admin/studentLearningDirectory": require(path.resolve("lib/admin/studentLearningDirectory.ts")),
+    "@/lib/admin/studentLearningDirectory": load(path.resolve("lib/admin/studentLearningDirectory.ts")),
   });
   for (const deniedRole of ["anonymous", "student", "teacher"]) {
     access = deniedRole;

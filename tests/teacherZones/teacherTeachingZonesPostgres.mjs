@@ -1,14 +1,15 @@
+import { fileURLToPath } from "node:url";
 // Integration test against an explicitly isolated, restored local container only.
-const {spawn,spawnSync}=require('node:child_process');
-const {readFileSync,writeFileSync}=require('node:fs');
-const path=require('node:path');
-const assert=require('node:assert/strict');
-const {build}=require('../../scripts/prepare_teaching_zones_install.cjs');
+import {spawn,spawnSync} from "node:child_process";
+import {readFileSync,writeFileSync} from "node:fs";
+import path from "node:path";
+import assert from "node:assert/strict";
+import {build} from "../../scripts/prepare_teaching_zones_install.mjs";
 const container=process.env.ZONES_TEST_CONTAINER;
 if(!container)throw Error('ZONES_TEST_CONTAINER required; no production connection supported');
 assert.equal(spawnSync('docker',['inspect',container,'--format','{{.HostConfig.NetworkMode}} {{json .HostConfig.PortBindings}}'],{encoding:'utf8'}).stdout.trim(),'none {}');
 const database='zones_fixed_'+Date.now();
-const root=path.resolve(__dirname,'../..');
+const root=path.resolve(fileURLToPath(new URL(".", import.meta.url)),'../..');
 const evidence={database,production:false,checks:[]};
 function sql(q,db=database){return new Promise((resolve,reject)=>{const p=spawn('docker',['exec','-i',container,'psql','-U','supabase_admin','-d',db,'-X','-qAt','-v','ON_ERROR_STOP=1']);let out='',err='';p.stdout.on('data',d=>out+=d);p.stderr.on('data',d=>err+=d);p.on('close',code=>code?reject(Error(err)):resolve(out.trim()));p.on('error',reject);p.stdin.end(q);});}
 const zone=n=>`INSERT INTO public.teacher_teaching_zones(teacher_id,label_public,city) VALUES('hardening-fixture','Zone ${n}','Fixture');`;

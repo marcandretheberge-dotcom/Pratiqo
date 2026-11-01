@@ -64,6 +64,8 @@ export function LandingTeacherListingCard({
       onClick={onOpen}
       onMouseEnter={() => onHoverChange?.(teacher.id)}
       onMouseLeave={() => onHoverChange?.(null)}
+      onFocus={() => onHoverChange?.(teacher.id)}
+      onBlur={() => onHoverChange?.(null)}
       className={cn(
         "flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#E8E6DF] bg-white p-4 text-left shadow-[0_10px_32px_rgba(44,44,42,0.055)]",
         PUBLIC_TEACHER_CARD_INTERACTIVE_CLASS,

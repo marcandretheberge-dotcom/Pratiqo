@@ -1,7 +1,7 @@
-const assert = require('node:assert/strict');
-const {build} = require('esbuild');
-const Module = require('node:module');
-const path = require('node:path');
+import assert from "node:assert/strict";
+import {build} from "esbuild";
+import Module from "node:module";
+import path from "node:path";
 async function main(){
   let updates=null;const filters=[];
   const before={url:process.env.NEXT_PUBLIC_SUPABASE_URL,key:process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY};
@@ -18,7 +18,7 @@ async function main(){
       b.onResolve({filter:/^(@supabase\/supabase-js|@\/lib\/supabaseAdmin)$/},a=>({path:a.path,namespace:'mock'}));
       b.onLoad({filter:/.*/,namespace:'mock'},a=>{const name=a.path.includes('supabase-js')?'createClient':'getSupabaseAdmin';return{contents:`export const ${name}=globalThis.__locationTest.${name}`};});
     }}]});
-    const filename=path.resolve('tests/teachers/location-runtime.cjs');const mod=new Module(filename,module);mod.filename=filename;mod.paths=module.paths;mod._compile(compiled.outputFiles[0].text,filename);
+    const filename=path.resolve('tests/teachers/location-runtime.cjs');const mod=new Module(filename);mod.filename=filename;mod.paths = Module._nodeModulePaths(path.dirname(filename));mod._compile(compiled.outputFiles[0].text,filename);
     const request=(timezone,token='valid')=>new Request('https://example.invalid/api/teacher/location/verify',{method:'POST',headers:token?{authorization:`Bearer ${token}`}:{},body:JSON.stringify({teacher_id:'victim',city:'Saint-Georges',region:'QC',country_code:'CA',lat:46,lng:-70,...(timezone!==undefined?{timezone}: {})})});
     assert.equal((await mod.exports.POST(request('America/Toronto',''))).status,401);
     assert.equal((await mod.exports.POST(request('Invalid/Zone'))).status,400);assert.equal(updates,null);
