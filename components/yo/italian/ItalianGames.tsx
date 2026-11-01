@@ -104,15 +104,19 @@ function TypeGame({ activity, locale, onAttempt, onHelp }: GameProps & { activit
   const [value, setValue] = useState("");
   const [feedback, setFeedback] = useState<boolean | null>(null);
   const [model, setModel] = useState(false);
+  const [heard, setHeard] = useState(false);
+  const [read, setRead] = useState(false);
+  const unlocked = !activity.listeningText || heard || read;
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  function check() { if (!value.trim() || feedback === true) return; const correct = matchesItalianAnswer(value, activity.accepted); setFeedback(correct); onAttempt(correct); }
+  function check() { if (!unlocked || !value.trim() || feedback === true) return; const correct = matchesItalianAnswer(value, activity.accepted); setFeedback(correct); onAttempt(correct); }
   return <form onSubmit={(event) => { event.preventDefault(); check(); }}>
+    {activity.listeningText ? <div className="mb-5"><ItalianModuleAudio text={activity.listeningText} locale={locale} label={C[locale].listen} onListen={() => setHeard(true)} /><p className="mt-2 text-xs">{read ? C[locale].written : heard ? C[locale].listened : C[locale].beforeListen}</p></div> : null}
     <label htmlFor={id} className="mb-2 block text-sm font-bold">{C[locale].answer}</label>
     <input ref={inputRef} id={id} lang="it" autoComplete="off" autoCorrect="off" spellCheck={false} maxLength={160} value={value} disabled={feedback === true} onChange={(event) => { setValue(event.target.value); setFeedback(null); }} className="min-h-16 w-full rounded-2xl border-2 border-[#d8cbb7] bg-white px-4 text-xl outline-none focus:border-[#245a46]" />
     <div className="mt-3 flex flex-wrap gap-2">{["à", "è", "é", "ì", "ò", "ù", "’"].map((character) => <button key={character} type="button" aria-label={`${C[locale].add} ${character}`} disabled={feedback === true} onClick={() => { const start = inputRef.current?.selectionStart ?? value.length; const end = inputRef.current?.selectionEnd ?? start; setValue((value.slice(0, start) + character + value.slice(end)).slice(0, 160)); setFeedback(null); requestAnimationFrame(() => { inputRef.current?.focus(); inputRef.current?.setSelectionRange(start + 1, start + 1); }); }} className="min-h-11 min-w-11 rounded-xl border border-[#e7dfd0] bg-white px-3 text-lg">{character}</button>)}</div>
     <p className="mt-2 text-xs text-[#6c604e]">{C[locale].accent}</p>
-    <div className="mt-5 flex flex-wrap items-center gap-3"><button className={italianButton} type="submit" disabled={!value.trim() || feedback === true}>{C[locale].check}</button><button type="button" className="min-h-11 rounded-xl px-3 text-sm underline" onClick={() => { if (!model) onHelp(); setModel(!model); }} aria-expanded={model}>{C[locale].model}</button></div>
+    <div className="mt-5 flex flex-wrap items-center gap-3"><button className={italianButton} type="submit" disabled={!unlocked || !value.trim() || feedback === true}>{C[locale].check}</button><button type="button" className="min-h-11 rounded-xl px-3 text-sm underline" onClick={() => { if (!model) { onHelp(); setRead(true); } setModel(!model); }} aria-expanded={model}>{activity.listeningText ? C[locale].transcript : C[locale].model}</button></div>
     {model ? <p lang="it" className="mt-4 rounded-xl bg-[#f4efe5] p-4 font-semibold">{activity.model}</p> : null}
     <Feedback correct={feedback} locale={locale}>{feedback ? activity.explanation[locale] : null}</Feedback>
   </form>;

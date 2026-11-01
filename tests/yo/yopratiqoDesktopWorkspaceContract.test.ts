@@ -6,8 +6,9 @@
  * surface is a real product workspace, not a phone shell stretched
  * to laptop width.
  *
- *   1. Catalog + Spanish hub + Course Home all declare a desktop
- *      sub-tree on `<YoAdaptiveShell>`.
+ *   1. The catalog uses a full-width shared workspace and locale-aware
+ *      direct language selector. Spanish hub + Course Home declare a
+ *      desktop sub-tree on an adaptive shell.
  *   2. Each desktop sub-tree declares an `<YoAppHeader>` with
  *      `appearance="desktop"` so the chrome is product-software-
  *      style, not mobile-app-style.
@@ -20,11 +21,8 @@
  *      every desktop breakpoint (the QA-reported "cramped, awkward
  *      text wrap" bug). Its secondary "what's next" content now
  *      renders inside the wider `center` column instead.
- *   4. The desktop centre uses a real grid (not a single narrow
- *      phone column with empty margins). For the catalog this is
- *      verified by ensuring the tile grid has `sm:grid-cols-2` +
- *      `xl:grid-cols-3` classes (wider than the mobile 1-up
- *      stack).
+ *   4. The catalog's direct selector has two desktop columns and
+ *      shrinkable mobile tracks, with no side rails squeezing its tiles.
  *   5. `<YoDesktopAppWorkspace>` itself emits the standard
  *      three-pane data-attributes (`yo-desktop-workspace-rail` =
  *      left / right, `yo-desktop-workspace-pane` = center) so
@@ -51,6 +49,9 @@ import { YoAdaptiveShell } from "@/components/yo/YoAdaptiveShell";
 import { YoAdaptiveStepShell } from "@/components/yo/YoAdaptiveStepShell";
 import { YoDesktopLearningWorkspace } from "@/components/yo/YoDesktopLearningWorkspace";
 import { YoAppHeader } from "@/components/yo/YoAppHeader";
+import { YoAppShell, YoAppShellScroller } from "@/components/yo/YoAppShell";
+import { YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
+import { YoLanguageQuickStart } from "@/components/yo/YoLanguageQuickStart";
 
 /**
  * Routes are migrating from the legacy `<YoAdaptiveShell>` to the
@@ -116,12 +117,33 @@ async function renderPage<T>(
 }
 
 // ─── 1. All three audited surfaces declare a desktop sub-tree ────
-test("catalog + Spanish hub + Course Home each declare a desktop sub-tree on the adaptive shell", async () => {
+test("direct catalog keeps shared chrome, scrolling and a full-width responsive language workspace", async () => {
+  for (const locale of ["fr", "en", "es"] as const) {
+    const tree = await YoLanguesPage({ searchParams: Promise.resolve({ lang: locale }) });
+    const shell = findByType(tree, YoAppShell);
+    assert.ok(shell);
+    const props = shell.props as { header: ReactNode; children: ReactNode };
+    const header = findByType(props.header, YoAppHeader);
+    assert.ok(header);
+    assert.equal((header.props as { locale: string }).locale, locale);
+    assert.ok(findByType(props.children, YoAppShellScroller));
+    const workspace = findByType(props.children, YoDesktopAppWorkspace);
+    assert.ok(workspace);
+    const workspaceProps = workspace.props as { center: ReactNode; centerMaxWidth: string; leftRail?: ReactNode; rightRail?: ReactNode };
+    assert.equal(workspaceProps.centerMaxWidth, "none");
+    assert.equal(workspaceProps.leftRail, undefined);
+    assert.equal(workspaceProps.rightRail, undefined);
+    const selector = findByType(workspaceProps.center, YoLanguageQuickStart);
+    assert.ok(selector);
+    assert.equal((selector.props as { locale: string }).locale, locale);
+  }
+});
+
+test("Spanish hub + Course Home each declare a desktop sub-tree on the adaptive shell", async () => {
   const surfaces: Array<{
     label: string;
     tree: ReactElement;
   }> = [
-    { label: "catalog", tree: (await renderPage(YoLanguesPage)) as ReactElement },
     { label: "Spanish hub", tree: (await renderPage(YoSpanishLandingPage)) as ReactElement },
     {
       label: "Course Home",
@@ -142,7 +164,6 @@ test("catalog + Spanish hub + Course Home each declare a desktop sub-tree on the
 // ─── 2. Each desktop sub-tree mounts an YoAppHeader appearance="desktop" ─
 test("each desktop sub-tree mounts <YoAppHeader appearance=\"desktop\">", async () => {
   for (const [label, tree] of [
-    ["catalog", (await renderPage(YoLanguesPage)) as ReactElement],
     ["Spanish hub", (await renderPage(YoSpanishLandingPage)) as ReactElement],
     [
       "Course Home",
@@ -181,7 +202,6 @@ test("each desktop sub-tree mounts <YoAppHeader appearance=\"desktop\">", async 
 // ─── 3. Three-pane workspace on every audited surface ────────────
 test("desktop sub-trees declare leftRail + center, with rightRail only where it does not squeeze the surface", async () => {
   for (const [label, tree, requiresRightRail] of [
-    ["catalog", (await renderPage(YoLanguesPage)) as ReactElement, false],
     ["Spanish hub", (await renderPage(YoSpanishLandingPage)) as ReactElement, false],
     [
       "Course Home",
@@ -202,28 +222,12 @@ test("desktop sub-trees declare leftRail + center, with rightRail only where it 
 });
 
 // ─── 4. Catalog desktop centre uses a wider grid (not stretched mobile) ─
-test("catalog desktop centre uses auto-fit min-width cards instead of a forced squeezed row", () => {
-  const src = read("app/yo/langues/page.tsx");
-  assert.match(
-    src,
-    /data-yo-langues-tiles-variant=["']desktop["']/,
-    "catalog must mark the desktop tile grid with a stable data attribute",
-  );
-  assert.match(
-    src,
-    /data-yo-langues-grid-min-card-width=["']280px["']/,
-    "catalog desktop tile grid must expose the minimum card width contract",
-  );
-  assert.match(
-    src,
-    /repeat\(auto-fit,minmax\(min\(100%,280px\),1fr\)\)/,
-    "catalog desktop tile grid must use auto-fit minmax cards",
-  );
-  assert.doesNotMatch(
-    src,
-    /data-yo-langues-tiles-variant=["']desktop["'][\s\S]{0,220}sm:grid-cols-2\s+xl:grid-cols-3/,
-    "catalog desktop tile grid must not force a squeezed 3-column row",
-  );
+test("catalog uses one shrinkable mobile column and two comfortable desktop columns", () => {
+  const src = read("components/yo/YoLanguageQuickStart.tsx");
+  assert.match(src, /<ul className="grid min-w-0 gap-3 md:grid-cols-2"/);
+  assert.match(src, /<li key=\{language.id\} className="min-w-0"/);
+  assert.match(src, /break-words/);
+  assert.doesNotMatch(src, /overflow-x-auto|xl:grid-cols-3/);
 });
 
 // ─── 5. YoDesktopAppWorkspace emits the standard rail / pane attrs ─
@@ -241,7 +245,6 @@ test("YoDesktopAppWorkspace ships stable data-yo-desktop-workspace-{rail,pane} a
 // ─── 6. Mobile + desktop headers are different elements ──────────
 test("mobile and desktop headers on each audited surface are different element instances", async () => {
   for (const [label, tree] of [
-    ["catalog", (await renderPage(YoLanguesPage)) as ReactElement],
     ["Spanish hub", (await renderPage(YoSpanishLandingPage)) as ReactElement],
     [
       "Course Home",

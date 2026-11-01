@@ -1,4 +1,5 @@
 "use client";
+import { YoLanguageQuickStart } from "./YoLanguageQuickStart";
 
 /**
  * YoStudentHubContent
@@ -451,6 +452,7 @@ export function YoStudentHubContent(): React.JSX.Element {
       className="mx-auto w-full max-w-6xl space-y-6 pb-12"
     >
       {brandedHeaderBlock}
+      <YoLanguageQuickStart locale={l} />
 
       {/* Mobile (<lg): button-driven step navigator. The branded
           header above stays visible so the user always knows

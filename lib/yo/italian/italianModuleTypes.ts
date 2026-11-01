@@ -54,6 +54,7 @@ export interface ItalianTypeActivity extends ItalianActivityBase {
   kind: "type";
   accepted: string[];
   model: string;
+  listeningText?: string;
 }
 
 export interface ItalianCafeActivity extends ItalianActivityBase {

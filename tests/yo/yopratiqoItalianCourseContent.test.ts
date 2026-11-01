@@ -14,6 +14,7 @@ const locales = ["fr", "en", "es"] as const;
 const lessons = italianCourseUnits.flatMap(unit => unit.lessons);
 const practice = lessons.flatMap(lesson => lesson.activities);
 const assessments = [...italianCourseUnits.map(unit => unit.quiz), ...courseAssessments];
+const languageAssessments = courseAssessments.filter(assessment => assessment.theme !== "culture");
 const questions = assessments.flatMap(assessment => assessment.questions);
 const activities: ItalianActivity[] = [...practice, ...questions];
 const norm = (value: string) => normalizeItalianAnswer(value);
@@ -95,15 +96,16 @@ test("twelve five-question unit quizzes and three eight-question cumulative asse
     assert.ok(unit.quiz.questions.some(question => question.kind === "type"), `${unit.id}: productive recall`);
     assert.ok(unit.quiz.questions.some(question => question.kind === "listen"), `${unit.id}: listening check`);
   }
-  assert.equal(courseAssessments.length, 3);
-  for (const [index, assessment] of courseAssessments.entries()) {
+  assert.equal(courseAssessments.length, 4);
+  assert.equal(languageAssessments.length, 3);
+  for (const [index, assessment] of languageAssessments.entries()) {
     assert.equal(assessment.questions.length, 8, assessment.id);
     assert.equal(assessment.passPercent, 80);
     assert.deepEqual(assessment.unitIds, italianCourseUnits.slice(0, [4, 8, 12][index]).map(unit => unit.id), assessment.id);
     assert.ok(assessment.questions.filter(question => question.kind === "listen").length >= 2, `${assessment.id}: listening transfer`);
     assert.ok(assessment.questions.filter(question => question.kind === "type").length >= 2, `${assessment.id}: written transfer`);
   }
-  assert.equal(questions.length, 84);
+  assert.equal(questions.length, 94);
 });
 
 test("cumulative assessment prerequisites occur in teaching material within the announced unit scope", () => {
@@ -114,7 +116,7 @@ test("cumulative assessment prerequisites occur in teaching material within the 
     [["polite orders", /\bvorrei\b/], ["plural existence", /\bci sono\b/], ["prices", /\bcosta(?:no)?\b/], ["tens", /\bcinquanta\b/], ["demonstrative agreement", /\bqueste\b/], ["colour agreement", /\bross[aoei]\b/], ["transport", /\bstazione\b/], ["a with city names", /\ba (?:roma|firenze|bologna)\b/]],
     [["preferences", /\bmi piace\b/], ["music vocabulary", /\bmusica\b/], ["invitations", /\b(?:vuoi|possiamo)\b/], ["booking", /\bprenotazione\b/], ["past with avere", /\bho (?:mangiato|visitato|comprato)\b/], ["weather", /\bpiove\b/], ["polite clarification", /può ripetere/], ["future plans", /\bdomani\b/]],
   ];
-  for (const [index, assessment] of courseAssessments.entries()) {
+  for (const [index, assessment] of languageAssessments.entries()) {
     const content = italianCourseUnits.filter(unit => assessment.unitIds.includes(unit.id)).flatMap(unit => unit.lessons)
       .map(lesson => strings({ vocabulary: lesson.vocabulary, grammar: lesson.grammar, reading: lesson.reading }).join("\n")).join("\n").normalize("NFC").toLocaleLowerCase("it-IT");
     for (const [concept, pattern] of required[index]) assert.match(content, pattern, `${assessment.id}: ${concept} must be taught before this checkpoint`);
@@ -195,7 +197,13 @@ test("typed models are accepted by the real evaluator while unrelated answers ar
     assert.equal(matchesItalianAnswer("questa non è la risposta attesa 987654321", activity.accepted), false, activity.id);
   }
   for (const lesson of lessons) for (const activity of lesson.activities) if (activity.kind === "type") {
-    assert.ok(taught(lesson).some(value => value.includes(norm(activity.model))), `${activity.id}: recall is prepared in its lesson`);
+    if (activity.listeningText) {
+      assert.equal(activity.model, activity.listeningText);
+      assert.ok(lesson.activities.some(item => item.kind === "listen" && item.stimulus === activity.listeningText), `${activity.id}: dictation reuses this lesson's listening task`);
+      assert.ok(activity.model.length <= 160, `${activity.id}: fits the answer input`);
+    } else {
+      assert.ok(taught(lesson).some(value => value.includes(norm(activity.model))), `${activity.id}: recall is prepared in its lesson`);
+    }
   }
 });
 
@@ -307,7 +315,7 @@ test("cultural source IDs resolve to explicit HTTPS primary references", () => {
     localized(source.supports, `${source.id}.supports`);
     const url = new URL(source.url);
     assert.equal(url.protocol, "https:");
-    assert.ok(["www.coe.int", "www.cla.uniud.it", "www.raiscuola.rai.it", "www.bolognawelcome.com"].includes(url.hostname), `${source.id}: source publisher`);
+    assert.ok(["www.coe.int", "www.cla.uniud.it", "www.raiscuola.rai.it", "www.bolognawelcome.com", "whc.unesco.org", "www.feelflorence.it", "www.veneziaunica.it", "colosseo.it"].includes(url.hostname), `${source.id}: source publisher`);
   }
 });
 
@@ -327,9 +335,9 @@ test("the compact catalog exactly describes the lessons, activities, assessments
     assert.deepEqual(entry.lessons, unit.lessons.map(lesson => ({ id: lesson.id, title: lesson.title, activityIds: lesson.activities.map(activity => activity.id) })));
     assert.strictEqual(getItalianCourseUnit(unit.id), unit);
   }
-  assert.equal(italianCourseCatalog.assessments.length, 15);
+  assert.equal(italianCourseCatalog.assessments.length, 16);
   for (const [index, assessment] of assessments.entries()) {
-    assert.deepEqual(italianCourseCatalog.assessments[index], { id: assessment.id, title: assessment.title, unitIds: assessment.unitIds, questionCount: assessment.questions.length, passPercent: assessment.passPercent });
+    assert.deepEqual(italianCourseCatalog.assessments[index], { id: assessment.id, title: assessment.title, unitIds: assessment.unitIds, questionCount: assessment.questions.length, passPercent: assessment.passPercent, theme: assessment.theme });
   }
   assert.equal(getItalianCourseUnit("unknown-unit"), undefined);
   assert.ok(!JSON.stringify(italianCourseCatalog).includes('"questions":'), "catalog does not ship answer keys");

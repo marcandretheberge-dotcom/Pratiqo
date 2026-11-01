@@ -34,6 +34,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { yopratiqoProductConfig } from "@/lib/yo/yopratiqoProductConfig";
 
 const REPO_ROOT = process.cwd();
 function read(relativePath: string): string {
@@ -100,7 +101,8 @@ const introCodes = {
   spanishGlobal: stripJsComments(introSrcs.spanishGlobal),
 } as const;
 
-const catalogSrc = read(CATALOG_PATH);
+const catalogPage = read(CATALOG_PATH);
+const catalogSrc = catalogPage + read("components/yo/YoLanguageQuickStart.tsx");
 const catalogCode = stripJsComments(catalogSrc);
 
 const ALL_CONVERTED_KEYS = [
@@ -165,12 +167,9 @@ test("English intro route is converted and the catalog claims it honestly", () =
     /<YoLessonDeck\b/,
     "English intro must mount the shared YoLessonDeck",
   );
-  // Catalog claims it is `available` and points to the deck route.
-  assert.match(
-    catalogSrc,
-    /id:\s*"english"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/anglais\/intro"/,
-    "catalog must keep the English card pointing at the deck route",
-  );
+  assert.match(catalogPage, /<YoLanguageQuickStart locale=\{locale\}/);
+  assert.equal(yopratiqoProductConfig.currentFreeIntroModules.find(language => language.slug === "anglais")?.isAccessibleForFree, true);
+  assert.match(catalogSrc, /anglais:\s*\{[^\n]+path:\s*"\/yo\/langues\/anglais\/intro"/);
 });
 
 // ─── 5. No converted intro uses YoBreadcrumb as primary nav ──────

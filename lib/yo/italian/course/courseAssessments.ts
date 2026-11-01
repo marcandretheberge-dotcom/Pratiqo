@@ -1,5 +1,6 @@
 import { choice, option, phrase, recall, t } from "./courseAuthoring";
 import type { CourseAssessment, LocaleText } from "./courseTypes";
+import { italianCultureFinal } from "./courseCulture";
 
 const feedback = (it: string): LocaleText => t(`Compare avec la formulation attendue : ${it}`, `Compare with the expected wording: ${it}`, `Compara con la formulación esperada: ${it}`);
 function q(id: string, prompt: LocaleText, answers: string[], correct: number, explanation: LocaleText, stimulus?: string) {
@@ -52,4 +53,5 @@ export const courseAssessments: CourseAssessment[] = [
       q("it1-final-q8", t("Choisis la phrase qui annonce clairement un projet pour demain.", "Choose the sentence that clearly states a plan for tomorrow.", "Elige la frase que anuncia claramente un plan para mañana."), ["Ieri sono andata al mercato.", "Di solito studio la sera.", "Domani vado a Bologna."], 2, t("Domani situe le présent vado dans un projet futur.", "Domani places the present vado in a future plan.", "Domani sitúa el presente vado en un plan futuro.")),
     ],
   },
+  italianCultureFinal,
 ];

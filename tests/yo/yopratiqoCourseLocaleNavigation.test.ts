@@ -54,6 +54,8 @@ const mocks = new Map<string, unknown>([
   ["@/lib/utils", { cn: (...values: unknown[]) => values.filter(Boolean).join(" ") }],
   ["@/lib/locale-context", { useLocale: () => ({ locale }) }],
   ["@/lib/seo/site", { SITE_URL: "https://www.pratiqo.ca" }],
+  ["@/components/companion/CompanionAvatar", { CompanionAvatar: empty }],
+  ["@/components/yo/YoLanguageBadge", { YoLanguageBadge: empty }],
   ["@/lib/yo/dominicanRepublicA1", { dominicanRepublicA1: {
     module: { destinationLabel: { fr: "République dominicaine", en: "Dominican Republic", es: "República Dominicana" } },
   } }],
@@ -90,9 +92,13 @@ function load(id: string): Record<string, unknown> {
   }).outputText;
   const loadedModule = { exports: {} as Record<string, unknown> };
   cache.set(id, loadedModule.exports);
-  const requireMock = (dependency: string) => mocks.has(dependency)
-    ? mocks.get(dependency)
-    : dependency.startsWith("@/") ? load(dependency) : nodeRequire(dependency);
+  const requireMock = (dependency: string) => {
+    const resolved = dependency.startsWith(".")
+      ? "@/" + path.relative(root, path.resolve(path.dirname(filename), dependency)).replace(/\\/g, "/")
+      : dependency;
+    return mocks.has(resolved) ? mocks.get(resolved)
+      : resolved.startsWith("@/") ? load(resolved) : nodeRequire(resolved);
+  };
   runInThisContext(`(function(require,module,exports){${js}\n})`, { filename })(
     requireMock, loadedModule, loadedModule.exports,
   );
@@ -118,6 +124,10 @@ function assertHref(container: HTMLElement, selector: string, expected: string) 
   }
 }
 function assertHub(container: HTMLElement, language: Locale, next: string) {
+  for (const route of [
+    "/yo/langues/italien/parcours", "/yo/langues/japonais/parcours",
+    "/yo/langues/espagnol/intro", "/yo/langues/francais-quebec/intro", "/yo/langues/anglais/intro",
+  ]) assertHref(container, `[data-testid="yo-language-quick-start"] a[href="${url(route, language)}"]`, url(route, language));
   assertHref(container, '[data-testid="yo-student-hub-continue-cta"]', url(next, language));
   assertHref(container, '[data-testid="yo-student-hub-course-home-link"]', url(course, language));
   modules.forEach((id, i) => assertHref(container,

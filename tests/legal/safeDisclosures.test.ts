@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
+import { assertItalianLearningSurface, italianLearningFiles } from "../helpers/italianLearningScope";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -1521,6 +1522,22 @@ test("accessibility legal page exists with cautious wording and support contact"
   assert.match(footerLinks, /\/legal\/accessibilite/);
 });
 
+test("reviewed Italian learning surfaces cannot add privileged behavior", () => {
+  for (const file of italianLearningFiles) assertItalianLearningSurface(file, read(file));
+  const file = "components/yo/italian/course/ItalianStudyJourney.tsx";
+  for (const source of [
+    'import Stripe from "stripe";',
+    'import { charge } from "@/lib/payments/charge";',
+    'import { useAuth } from "../../../AuthProvider";',
+    'fetch("/api/checkout");',
+    '"use server";',
+    'const module = import("@/lib/supabaseAdmin");',
+  ]) assert.throws(() => assertItalianLearningSurface(file, source));
+  for (const path of ["app/api/stripe/checkout/route.ts", "lib/payments/charge.ts", "supabase/migrations/example.sql", "components/yo/Unknown.tsx"]) {
+    assert.throws(() => assertItalianLearningSurface(path, ""));
+  }
+});
+
 test("safe-disclosure branch did not touch restricted systems", () => {
   const changed = changedFilesForBranch();
   if (!changed) return;
@@ -1546,6 +1563,10 @@ test("safe-disclosure branch did not touch restricted systems", () => {
 
   const violations: string[] = [];
   for (const file of changed) {
+    if (italianLearningFiles.has(file)) {
+      assertItalianLearningSurface(file, read(file));
+      continue;
+    }
     if (hasOnlyGuidedStripeReturnChange(file)) continue;
     if (allowedYoDisclosureFiles.has(file)) continue;
     if (allowedPricingDisplayFiles.has(file)) continue;
