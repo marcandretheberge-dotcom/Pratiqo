@@ -17,7 +17,7 @@ type AmbassadorStatus = "invited" | "active" | "paused" | "revoked";
 
 type AdminAmbassadorOverview = {
   ambassadorId: string;
-  teacherId: string;
+  teacherId: string | null;
   ambassadorUserId: string | null;
   teacherName: string | null;
   teacherEmail: string | null;
@@ -102,9 +102,10 @@ export default function AdminAmbassadorsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [ambassadors, setAmbassadors] = useState<AdminAmbassadorOverview[]>([]);
-  const [teacherId, setTeacherId] = useState(() => {
+  const [userIdentifier, setUserIdentifier] = useState(() => {
     if (typeof window === "undefined") return "";
-    return new URLSearchParams(window.location.search).get("teacherId") ?? "";
+    const params = new URLSearchParams(window.location.search);
+    return params.get("userId") ?? params.get("teacherId") ?? "";
   });
   const [preferredCode, setPreferredCode] = useState("");
   const [internalNote, setInternalNote] = useState("");
@@ -147,6 +148,7 @@ export default function AdminAmbassadorsPage() {
     return ambassadors.filter((row) =>
       [
         row.teacherId,
+        row.ambassadorUserId,
         row.teacherName,
         row.teacherEmail,
         row.primaryCode,
@@ -175,7 +177,7 @@ export default function AdminAmbassadorsPage() {
       await adminFetch("/api/admin/ambassadors", {
         method: "POST",
         body: JSON.stringify({
-          teacherId,
+          userIdentifier,
           preferredCode,
           internalNote,
         }),
@@ -252,20 +254,20 @@ export default function AdminAmbassadorsPage() {
           >
             <div className="flex items-center gap-2">
               <PlusCircle size={18} className="text-teal-700" aria-hidden />
-              <h2 className="text-lg font-bold text-[#2C2C2A]">Activer un professeur</h2>
+              <h2 className="text-lg font-bold text-[#2C2C2A]">Activer un ambassadeur</h2>
             </div>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">
-              Utilise l’identifiant stable <code className="font-mono">teachers.id</code>.
-              L’utilisateur doit déjà être un professeur Pratiqo.
+              Toute personne ayant déjà un compte Pratiqo peut devenir ambassadrice, même sans
+              profil professeur actif. Utilise son courriel, son UUID utilisateur ou son Teacher ID.
             </p>
             <label className="mt-4 block text-sm font-semibold text-slate-700">
-              Teacher ID
+              Compte Pratiqo
               <input
-                value={teacherId}
-                onChange={(event) => setTeacherId(event.target.value)}
+                value={userIdentifier}
+                onChange={(event) => setUserIdentifier(event.target.value)}
                 required
                 className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-teal-500"
-                placeholder="teacher_..."
+                placeholder="courriel@exemple.ca, UUID ou Teacher ID"
               />
             </label>
             <label className="mt-3 block text-sm font-semibold text-slate-700">
@@ -284,7 +286,7 @@ export default function AdminAmbassadorsPage() {
                 onChange={(event) => setInternalNote(event.target.value)}
                 rows={4}
                 className="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-teal-500"
-                placeholder="Pourquoi ce professeur est sélectionné..."
+                placeholder="Pourquoi cette personne est sélectionnée..."
               />
             </label>
             <button
@@ -334,7 +336,10 @@ export default function AdminAmbassadorsPage() {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="break-words text-base font-black text-[#2C2C2A]">
-                            {ambassador.teacherName ?? ambassador.teacherId}
+                            {ambassador.teacherName ??
+                              ambassador.teacherEmail ??
+                              ambassador.ambassadorUserId ??
+                              ambassador.ambassadorId}
                           </h3>
                           <span
                             className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusBadge(
@@ -345,7 +350,9 @@ export default function AdminAmbassadorsPage() {
                           </span>
                         </div>
                         <p className="mt-1 break-all font-mono text-xs text-slate-500">
-                          {ambassador.teacherId}
+                          {ambassador.teacherId
+                            ? `Prof: ${ambassador.teacherId}`
+                            : `Compte: ${ambassador.ambassadorUserId ?? "—"}`}
                         </p>
                         <p className="mt-2 text-sm text-slate-700">
                           {ambassador.primaryCode ? `/r/${ambassador.primaryCode}` : "Aucun lien"}

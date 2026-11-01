@@ -104,6 +104,7 @@ export function YoLanguageLandingPage({
   entryCta = INTRO_CTA,
   entryBadge = HERO_BADGE,
   languageLabelOverride,
+  practiceEntry,
 }: {
   locale: YoLocale;
   moduleConfig: YoPratiqoModuleConfig;
@@ -113,6 +114,7 @@ export function YoLanguageLandingPage({
   entryCta?: YoLocalizedString;
   entryBadge?: YoLocalizedString;
   languageLabelOverride?: YoLocalizedString;
+  practiceEntry?: { href: string; title: YoLocalizedString; body: YoLocalizedString; cta: YoLocalizedString; eyebrow?: YoLocalizedString };
 }) {
   const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
   const localizedIntroRoute =
@@ -120,7 +122,11 @@ export function YoLanguageLandingPage({
       ? (entryHref ?? moduleConfig.introRoute)
       : `${(entryHref ?? moduleConfig.introRoute)}?lang=${locale}`;
   const backToLanguesHref = `/yo/langues${langSuffix}`;
-  const localizedTeacherUrl = moduleConfig.teacherSearchUrl + (locale === "fr" ? "" : (moduleConfig.teacherSearchUrl.includes("?") ? "&" : "?") + "lang=" + locale);
+  const localizedTeacherUrl =
+    moduleConfig.teacherSearchUrl +
+    (locale === "fr"
+      ? ""
+      : (moduleConfig.teacherSearchUrl.includes("?") ? "&" : "?") + "lang=" + locale);
   const shouldInjectCourseSchema = canInjectYoPratiqoCourseSchema(moduleConfig);
   const courseSchema = shouldInjectCourseSchema
     ? buildYopratiqoCourseSchema({
@@ -253,7 +259,6 @@ export function YoLanguageLandingPage({
         moduleConfig={moduleConfig}
         title={content.teacherCardTitle}
         body={content.teacherCardBody}
-        href={localizedTeacherUrl}
       />
       <Link
         href={localizedTeacherUrl}
@@ -274,11 +279,21 @@ export function YoLanguageLandingPage({
     </section>
   );
 
+  const practiceCardBlock = practiceEntry ? (
+    <article className="rounded-3xl border border-[#d9b48b] bg-[#fff1df] p-5 shadow-sm sm:p-6">
+      <span className="text-[10px] font-black uppercase tracking-[.18em] text-[#a95c37]">{t(practiceEntry.eyebrow ?? lstr("Module pratique · A1", "Practice module · A1", "Módulo práctico · A1"), locale)}</span>
+      <h2 className="mt-2 font-serif text-2xl text-[#245a46]">{t(practiceEntry.title, locale)}</h2>
+      <p className="mt-3 text-sm leading-relaxed text-[#68553e]">{t(practiceEntry.body, locale)}</p>
+      <Link href={practiceEntry.href} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-2xl bg-[#245a46] px-5 py-3 text-sm font-bold text-white hover:bg-[#173d2e]"><Sparkles size={17} aria-hidden />{t(practiceEntry.cta, locale)}</Link>
+    </article>
+  ) : null;
+
   // ─── Mobile steps ─────────────────────────────────────────────
   const stepHero = (
     <div className="flex w-full flex-col gap-4 px-4 py-4">
       {heroBlock}
       {audienceBlock}
+      {practiceCardBlock}
     </div>
   );
   const stepIntroPreview = (
@@ -392,6 +407,7 @@ export function YoLanguageLandingPage({
           ),
           center: (
             <div className="flex flex-col gap-5">
+              {practiceCardBlock}
               {introCardBlock}
               {learnBlock}
               {whyBlock}

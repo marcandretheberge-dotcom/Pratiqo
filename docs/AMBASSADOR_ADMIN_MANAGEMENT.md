@@ -5,8 +5,10 @@ ambassador attribution and rewards foundation.
 
 ## Scope
 
-- Existing Pratiqo teachers can be activated as ambassadors without creating a
-  new account or teacher profile.
+- Any existing Pratiqo account can be activated as an ambassador.
+- A teacher profile is optional: teachers, learners and account-only community
+  ambassadors all use the same ambassador membership model.
+- Existing teacher ambassadors keep their teacher association automatically.
 - Ambassador membership is separate from Founding Teacher, Membre Pro,
   commissions, subscriptions and teacher search ranking.
 - Admins can activate, pause, reactivate or revoke membership.
@@ -14,6 +16,17 @@ ambassador attribution and rewards foundation.
 - Admins can mark eligible ambassador rewards as manually paid.
 - Marking a reward paid does not call Stripe, Stripe Connect or any automatic
   payout service.
+
+## Identity model
+
+- `ambassadors.user_id` is the required source-of-truth identity.
+- `ambassadors.teacher_id` is optional and is populated when the account also
+  has a teacher profile.
+- `ambassador_links.teacher_id` is optional compatibility/reporting metadata;
+  `ambassador_id` owns the link.
+- Admin activation accepts an account email, profile UUID, or legacy Teacher ID.
+- Someone with no Pratiqo account must create an account before activation.
+- Public self-service ambassador applications are intentionally deferred.
 
 ## Membership Gate
 
@@ -39,5 +52,6 @@ implementation.
 
 ## Operations Note
 
-Apply migration `095_ambassador_membership_admin.sql` before relying on the new
-admin screens or membership-gated `/r/[code]` behavior in production.
+Migration `095_ambassador_membership_admin.sql` remains the membership
+foundation. Apply `20261031180000_ambassador_user_identity.sql` before enabling
+account-only ambassadors in production.
