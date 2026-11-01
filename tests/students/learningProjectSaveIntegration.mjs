@@ -1,23 +1,25 @@
+import { createRequire } from "node:module";
+const load = createRequire(import.meta.url);
 // Real handlers + real PostgreSQL SQL/RLS, synthetic identity only. No network.
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const path = require("node:path");
-const ts = require("typescript");
-const { PGlite } = require("@electric-sql/pglite");
-require("tsx/cjs");
-const { NextResponse } = require("next/server");
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import ts from "typescript";
+import { PGlite } from "@electric-sql/pglite";
+load("tsx/cjs");
+const { NextResponse } = load("next/server");
 
 function loadRoute(file, dependencies) {
   const code = ts.transpileModule(fs.readFileSync(file, "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
-  const module = { exports: {} };
+  const loadedModule = { exports: {} };
   new Function("require", "module", "exports", code)(name => {
     if (name === "next/server") return { NextResponse };
     if (name in dependencies) return dependencies[name];
     throw new Error(`Unexpected dependency: ${name}`);
-  }, module, module.exports);
-  return module.exports;
+  }, loadedModule, loadedModule.exports);
+  return loadedModule.exports;
 }
 
 (async () => {
@@ -97,7 +99,7 @@ function loadRoute(file, dependencies) {
     process.env.NODE_ENV = "production"; process.env.VERCEL_ENV = "production";
     delete process.env.UPSTASH_REDIS_REST_URL; delete process.env.UPSTASH_REDIS_REST_TOKEN;
     // Reproduce the exact production failure with the real shared limiter.
-    const { rateLimitByIp, rateLimitGuardResponse } = require(path.resolve("lib/rateLimit.ts"));
+    const { rateLimitByIp, rateLimitGuardResponse } = load(path.resolve("lib/rateLimit.ts"));
     const denial = rateLimitGuardResponse(await rateLimitByIp(request(payload), "student-learning-project", {
       limit: 30, windowSeconds: 60, identifier: currentId,
     }));
@@ -105,7 +107,7 @@ function loadRoute(file, dependencies) {
     assert.equal(sqlWrites, 0);
     const route = loadRoute("app/api/student/learning-project/route.ts", {
       "@/lib/auth/supabaseRouteClient": { getSupabaseForRequest: async () => client },
-      "@/lib/studentLearningProject": require(path.resolve("lib/studentLearningProject.ts")),
+      "@/lib/studentLearningProject": load(path.resolve("lib/studentLearningProject.ts")),
     });
     await asUser(1);
     assert.equal((await route.PUT(request(payload))).status, 503, "before 136 the versioned RPC fails closed");

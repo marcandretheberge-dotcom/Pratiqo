@@ -42,8 +42,7 @@ function point(view: ReturnType<typeof render>) { const e = view.getByTestId("it
 for (const locale of ["fr", "en", "es"] as const) {
   test(`${locale}: learner opens help, unlocks two hints and an explanation, and returns to the lesson`, () => {
     const actions: string[] = [];
-    let view: ReturnType<typeof render>;
-    view = render(node({ locale, onAction: (action) => { if (action === "hint" && actions.length === 0) assert.equal(view.queryByText(props.hint[locale]), null); actions.push(action); } }));
+    const view: ReturnType<typeof render> = render(node({ locale, onAction: (action) => { if (action === "hint" && actions.length === 0) assert.equal(view.queryByText(props.hint[locale]), null); actions.push(action); } }));
     assert.equal(view.queryByRole("region"), null);
     assert.equal(view.queryByText(props.hint[locale]), null);
     fireEvent.click(view.getByRole("button", { name: labels[locale].open }));

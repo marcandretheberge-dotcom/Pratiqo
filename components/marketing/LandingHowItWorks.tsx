@@ -15,12 +15,11 @@ export function LandingHowItWorks({ className }: { className?: string }) {
     <section className={className}>
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6">
         <h2 className="text-center text-2xl font-bold tracking-tight text-[#1a1f1d] sm:text-3xl">{t("landingHowTitle")}</h2>
-        <p className="mx-auto mt-2 max-w-2xl text-center text-sm leading-relaxed text-neutral-700">{t("landingHowSubtitle")}</p>
-        <ul className="mt-10 grid gap-4 sm:grid-cols-3">
+        <ul className="mt-6 grid gap-6 sm:grid-cols-3">
           {steps.map(({ icon: Icon, title, body }) => (
             <li
               key={title}
-              className="rounded-3xl border border-[#E8E6DF] bg-white p-6 shadow-[0_6px_28px_rgba(44,44,42,0.05)]"
+              className="min-w-0 border-t border-[#E8E6DF] pt-4"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E9F6F1] text-teal-700">
                 <Icon size={22} strokeWidth={2} aria-hidden />

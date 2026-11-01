@@ -1,8 +1,10 @@
+import { createRequire } from "node:module";
+const load = createRequire(import.meta.url);
 // Run after next build. Loopback-only visual QA; no secrets or external requests.
-const http = require("node:http");
-const fs = require("node:fs");
-const path = require("node:path");
-const esbuild = require("esbuild");
+import http from "node:http";
+import fs from "node:fs";
+import path from "node:path";
+import esbuild from "esbuild";
 const root = process.cwd();
 const stub = `
 import React from 'react';
@@ -46,8 +48,8 @@ export default function Link({href,children,...props}){return <a href={typeof hr
   const css = fs.readdirSync(cssDir).filter(f=>f.endsWith(".css")).map(f=>fs.readFileSync(path.join(cssDir,f),"utf8")).join("\n");
   let project = null;
   let failNext = false;
-  require("tsx/cjs");
-  const {learningProjectSearchHref,parseLearningProject}=require(path.join(root,"lib/studentLearningProject.ts"));
+  load("tsx/cjs");
+  const {learningProjectSearchHref,parseLearningProject}=load(path.join(root,"lib/studentLearningProject.ts"));
   const overview = {
     totalAccounts:3,declaredAccounts:1,deferredAccounts:1,unansweredAccounts:1,
     groups:[{subject:"Piano",city:"",format:"online",audience:"child",account_count:1,updated_at:"2026-10-18T12:00:00Z",supply:"unavailable",matchingTeachers:null}],

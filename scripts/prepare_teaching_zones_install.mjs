@@ -1,8 +1,9 @@
+import { fileURLToPath, pathToFileURL } from "node:url";
 // Generates a reviewable bundle only. Never connects to a database.
-const fs = require('node:fs');
-const path = require('node:path');
-const crypto = require('node:crypto');
-const root = path.resolve(__dirname, '..');
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+const root = path.resolve(fileURLToPath(new URL(".", import.meta.url)), '..');
 // Git may check SQL out as CRLF on Windows. Hash/generate canonical LF SQL.
 const normalizeSql = sql => sql.replace(/\r\n/g, '\n').replace(/\r$/, '');
 function build() {
@@ -57,8 +58,8 @@ function buildSchema() {
   const original = normalizeSql(fs.readFileSync(path.join(root, 'supabase/migrations/128_teacher_teaching_zones.sql'), 'utf8'));
   return original.slice(0, original.indexOf('\nINSERT INTO public.teacher_teaching_zones ('));
 }
-module.exports = { build, plan, buildSchema };
-if (require.main === module) {
+export { build, plan, buildSchema };
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   if (!process.argv[2]) throw new Error('Explicit output path required');
   const sql = build();
   fs.writeFileSync(process.argv[2], sql, { flag: 'wx' });

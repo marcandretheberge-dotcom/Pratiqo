@@ -1,5 +1,5 @@
-const assert = require('node:assert/strict');
-const { createHarness } = require('./guidedPublicationHarness.cjs');
+import assert from "node:assert/strict";
+import { createHarness } from "./guidedPublicationHarness.mjs";
 async function main() {
   const h = await createHarness();
   const state = { teacher: { id: '11111111-1111-4111-8111-111111111111', user_id: '22222222-2222-4222-8222-222222222222', name: 'Synthetic teacher', bio: 'A sufficiently detailed synthetic biography.', country_code: 'CA', city: 'Saint-Georges', region: 'QC', price_per_lesson: 45, availability: [], timezone: 'America/Toronto', is_public: false, teaching_mode: 'online', schedule_mode: 'legacy_blocks', default_lesson_duration_minutes: 60 } };

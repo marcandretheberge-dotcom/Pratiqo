@@ -1,5 +1,7 @@
-const assert = require("node:assert/strict");
-const { JSDOM } = require("jsdom");
+import { createRequire } from "node:module";
+const load = createRequire(import.meta.url);
+import assert from "node:assert/strict";
+import { JSDOM } from "jsdom";
 const dom = new JSDOM('<div id="root"></div>', {
   url: "https://example.test/dashboard",
 });
@@ -15,17 +17,17 @@ Object.defineProperty(global, "navigator", {
   value: dom.window.navigator,
   configurable: true,
 });
-require("tsx/cjs");
-const React = require("react");
+load("tsx/cjs");
+const React = load("react");
 const {
   render,
   screen,
   fireEvent,
   waitFor,
   cleanup,
-} = require("@testing-library/react");
-const { LearningProjectCard } = require(
-  require("node:path").resolve("components/student/LearningProjectCard.tsx"),
+} = load("@testing-library/react");
+const { LearningProjectCard } = load(
+  load("node:path").resolve("components/student/LearningProjectCard.tsx"),
 );
 let stored = null,
   fail = false,

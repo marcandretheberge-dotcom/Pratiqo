@@ -1,9 +1,9 @@
 // Real publication/status handlers and calendar calculation; only auth/database are synthetic.
-const { build } = require('esbuild');
-const Module = require('node:module');
-const path = require('node:path');
-const { AsyncLocalStorage } = require('node:async_hooks');
-const assert = require('node:assert/strict');
+import { build } from "esbuild";
+import Module from "node:module";
+import path from "node:path";
+import { AsyncLocalStorage } from "node:async_hooks";
+import assert from "node:assert/strict";
 async function createHarness() {
   const storage = new AsyncLocalStorage();
   global.__guidedPublication = {
@@ -30,7 +30,7 @@ async function createHarness() {
     b.onResolve({ filter: /^(@supabase\/supabase-js|@\/lib\/supabaseAdmin|@\/lib\/email\/locale)$/ }, a => ({ path: a.path, namespace: 'fixture' }));
     b.onLoad({ filter: /.*/, namespace: 'fixture' }, a => ({ contents: a.path.endsWith('/locale') ? `export const resolveEmailLocaleForUser=async()=> 'fr';` : `export const ${a.path.includes('supabase-js') ? 'createClient' : 'getSupabaseAdmin'}=globalThis.__guidedPublication.${a.path.includes('supabase-js') ? 'createClient' : 'getSupabaseAdmin'};` }));
   } }] });
-  const filename = path.resolve('tests/teachers/publication-bundle.cjs'); const mod = new Module(filename, module); mod.filename = filename; mod.paths = module.paths; mod._compile(result.outputFiles[0].text, filename);
+  const filename = path.resolve('tests/teachers/publication-bundle.cjs'); const mod = new Module(filename); mod.filename = filename; mod.paths = Module._nodeModulePaths(path.dirname(filename)); mod._compile(result.outputFiles[0].text, filename);
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.invalid'; process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'synthetic';
   return {
     coarse: intervals => {
@@ -45,4 +45,4 @@ async function createHarness() {
     },
   };
 }
-module.exports = { createHarness };
+export { createHarness };

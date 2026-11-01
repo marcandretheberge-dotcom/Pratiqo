@@ -88,15 +88,15 @@ function load(id: string): Record<string, unknown> {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX,
       target: ts.ScriptTarget.ES2020, esModuleInterop: true },
   }).outputText;
-  const module = { exports: {} as Record<string, unknown> };
-  cache.set(id, module.exports);
+  const loadedModule = { exports: {} as Record<string, unknown> };
+  cache.set(id, loadedModule.exports);
   const requireMock = (dependency: string) => mocks.has(dependency)
     ? mocks.get(dependency)
     : dependency.startsWith("@/") ? load(dependency) : nodeRequire(dependency);
   runInThisContext(`(function(require,module,exports){${js}\n})`, { filename })(
-    requireMock, module, module.exports,
+    requireMock, loadedModule, loadedModule.exports,
   );
-  return module.exports;
+  return loadedModule.exports;
 }
 
 const Hub = load("@/components/yo/YoStudentHubContent").YoStudentHubContent as React.ComponentType;

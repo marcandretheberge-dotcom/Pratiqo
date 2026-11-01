@@ -159,9 +159,8 @@ test("accent controls insert at the caret and replace the selected text", () => 
 });
 
 test("showing a written model marks assistance before the answer is exposed", () => {
-  let view: ReturnType<typeof render>;
-  const instance = game(typing, { onHelp: () => assert.equal(view.queryByText(typing.model), null) });
-  view = instance.view;
+  const instance = game(typing, { onHelp: () => assert.equal(instance.view.queryByText(typing.model), null) });
+  const view = instance.view;
   fireEvent.click(view.getByRole("button", { name: "Voir un modèle" }));
   assert.equal(instance.helps(), 1);
   assert.equal(view.getByText(typing.model).getAttribute("lang"), "it");
@@ -233,9 +232,8 @@ test("listening keeps the stimulus out of accessible names and waits for real pl
 });
 
 test("missing audio cannot unlock listening assessment; transcript offers an assisted route", () => {
-  let view: ReturnType<typeof render>;
-  const instance = game(listening, { onHelp: () => assert.equal(view.queryByText(listening.stimulus!), null) });
-  view = instance.view;
+  const instance = game(listening, { onHelp: () => assert.equal(instance.view.queryByText(listening.stimulus!), null) });
+  const view = instance.view;
   fireEvent.click(optionButton(view, answerName(listening)));
   fireEvent.click(view.getByRole("button", { name: "Écouter : le message de l’exercice" }));
   act(() => FakeAudio.instances[0].dispatchEvent(new dom.window.Event("error")));

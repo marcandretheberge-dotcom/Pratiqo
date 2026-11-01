@@ -1,11 +1,14 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import reactHooks from "eslint-plugin-react-hooks";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    // These rules also apply to CJS tests, outside Next's scoped TS/JS config.
+    plugins: { "react-hooks": reactHooks },
     rules: {
       // React Compiler is not enabled for this app yet. Keep these compiler-readiness
       // findings visible during launch hardening without making the whole legacy UI
