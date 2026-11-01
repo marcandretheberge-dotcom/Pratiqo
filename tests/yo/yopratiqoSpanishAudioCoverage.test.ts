@@ -469,20 +469,20 @@ test("generator script dry-run logs the chosen accent profile", () => {
 });
 
 test("generator script forwards `instructions` for steerable TTS models", () => {
-  // We pass the resolved instructions through the request body when
-  // present and skip it otherwise. The static check ensures the
-  // wiring is not silently dropped.
-  assert.match(generatorSrc, /resolveItemPlan\(/);
+  // The hardened pipeline resolves one explicit speech request per item and
+  // attaches profile/item pronunciation guidance only for steerable models.
+  assert.match(generatorSrc, /resolveSpeechRequest\(/);
   assert.match(generatorSrc, /modelSupportsInstructions/);
   assert.match(
     generatorSrc,
-    /body\.instructions\s*=\s*plan\.instructions/,
+    /request\.instructions\s*=\s*appendPronunciationHint/,
   );
 });
 
-test("generator script reports `instructions=present|absent` in dry-run", () => {
-  assert.match(generatorSrc, /instructions=present/);
-  assert.match(generatorSrc, /instructions=absent/);
+test("generator dry-run reports model, voice and bounded input metadata", () => {
+  assert.match(generatorSrc, /model=\$\{request\.model\}/);
+  assert.match(generatorSrc, /voice=\$\{request\.voice\}/);
+  assert.match(generatorSrc, /inputCharacters=\$\{request\.input\.length\}/);
 });
 
 // ─────────────────────────────────────────────────────────────────────
