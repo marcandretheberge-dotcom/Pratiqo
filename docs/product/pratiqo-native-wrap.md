@@ -45,7 +45,8 @@ All payments, bookings and message routes are disabled in the isolated trial.
 
 1. Preserve the committed mobile lockfile; use `npm ci`.
 2. EAS project linked; verify free build quota and signing credentials before remote build.
-3. Public Supabase values configured in project-scoped EAS Preview only.
+3. Native OAuth requires a separately isolated Auth environment before its own QA;
+   the current EAS Preview intentionally contains no usable Supabase credentials.
 4. Add `pratiqo://auth/callback` to Supabase Auth redirects.
 5. Configure and test the Apple provider for iOS.
 6. Build Android + iOS preview binaries and complete physical-device QA.
@@ -58,7 +59,7 @@ All payments, bookings and message routes are disabled in the isolated trial.
 - Android application ID: `ca.pratiqo.app`
 - URL scheme: `pratiqo`
 
-## Preparation verified 2026-11-01
+## Historical preparation verified 2026-11-01 (superseded below)
 
 - EAS owner/slug: `markitos2222s-organization/pratiqo-mobile`.
 - EAS project ID: `b52003f2-c064-4aba-a272-2b949b62751e`.
@@ -145,6 +146,90 @@ The existing server authorization, consent and booking/payment logic is untouche
 - Existing ad-hoc signing includes the owner's registered iPhone. No certificate
   replacement, Apple subscription or store submission is required.
 - Physical install is a signed internal IPA, not Expo Go and not TestFlight.
+
+### Signed isolated iPhone build and runtime QA
+
+- Code commit: `358f9b00c145719c8537435857983c09cc3edbaa`.
+- Signed internal iOS build: `7bf15312-9c35-4b96-a59c-596032782389`, EAS
+  `FINISHED` at 2026-11-01 18:57 UTC. Existing ad-hoc provisioning includes the
+  owner's iPhone ending `3EDB801C`.
+- Installation: https://expo.dev/accounts/markitos2222s-organization/projects/pratiqo-mobile/builds/7bf15312-9c35-4b96-a59c-596032782389
+- Downloaded the actual IPA and inspected its bundled JavaScript and provisioning
+  profile: isolated origin present, production Supabase project reference absent,
+  intended registered iPhone present. This is stronger than a local export check,
+  but is not a claim that physical installation has already succeeded.
+- First remote attempt `e5df972a-5622-48a3-8c0b-6ceff7ae2d32` was deliberately
+  rejected by the config guard because EAS Preview still supplied production
+  public Supabase values despite the profile's inert values. Corrected the three
+  project-scoped EAS **Preview** variables to the inert sentinel; did not relax
+  the guard, change Production, or copy a server credential. The retry succeeded.
+- Free quota checked immediately before retry: iOS 1/15, Android 1/15, total
+  2/30, Free plan. No plan change, charged build, certificate replacement or
+  store submission was requested.
+- Tunnel automatically expires 2026-11-02 13:41 America/Toronto. It is not a
+  permanent backend; the PC and local Docker stack must stay running. A later
+  origin needs a newly authorized tunnel and matching isolated build.
+- Full HTTPS Next production rebuild passed with the local synthetic backend,
+  including TypeScript. The remote mobile workflow
+  https://github.com/marcandretheberge-dotcom/Pratiqo/actions/runs/41339081435
+  passed for the code commit. Vercel's Preview check also passed; its backend
+  was not used for testing and must not be assumed isolated.
+
+Actual browser tests, using real local Auth and real learner-project handlers:
+
+| Check | Result |
+| --- | --- |
+| Local synthetic email login | PASS |
+| Save French/online project and reload | PASS; persisted server response shown |
+| Project link carries exact subject and format to search | PASS; French/online has 0 fixture results, piano/online has 4 |
+| Interrupt unsaved Spanish edit by reload | PASS; entered subject restored |
+| Stop only this prototype's Next process, then save | PASS; explicit failure, fields preserved, no false success |
+| Restart same server and retry the same edit | PASS; Spanish project saved |
+| Final synthetic project reset through UI to piano/online | PASS |
+| Widths 375, 390, 430 | PASS; no horizontal overflow |
+| Legacy width 320 | Existing web layout overflows by 6px; not fixed by hiding content |
+| Gateway anonymous access and sensitive-route blocks | PASS; login required and 14 restricted requests return 403 |
+| Gateway real homepage/search/dashboard GET | PASS; HTTP 200 |
+
+The intentionally strict gateway blocks automatic YoPratiqo progress initialization
+writes; the browser logs `seedStudentProgress: insert failed`. This is a known
+restriction of this read-only-content trial, not a successful progress/audio test.
+No actual booking, payment, message, notification or production write was tested.
+
+Commands executed in this consolidation (local helpers are outside Git):
+
+```text
+node mobile-417-local/preflight.cjs                         PASS
+npx tsc --noEmit (apps/mobile)                            PASS
+npx eslint apps/mobile/App.tsx apps/mobile/src/*.ts apps/mobile/app.config.ts tests/app/nativeMobilePolicy.test.ts  PASS
+npm run test:mobile-wrap                                 PASS
+npm run test:auth                                        PASS
+node mobile-417-local/mobile.cjs compatibility            PASS
+expo-doctor (installed CLI)                              PASS 20/20
+node mobile-417-local/mobile.cjs export                   PASS
+node mobile-417-local/app.cjs build (HTTPS config)         PASS
+node mobile-417-local/gateway-qa.cjs                      PASS
+node mobile-417-local/install-artifact.cjs                PASS
+git diff --check HEAD^ HEAD                              PASS
+```
+
+No full unrelated business test suite was repeated. No migration was applied.
+The source code of learner-funnel, PR411, staffrelay and Denise was not changed.
+
+### Short physical iPhone scenario
+
+1. Open the installation link in Safari on the already registered iPhone and
+   select Install. This is a signed native app, not Expo Go; no SDK upgrade or
+   local root certificate is needed. Sign in to the existing Expo account only
+   if Expo asks. Do not purchase a subscription.
+2. Launch Pratiqo. It must show the isolated-test entry, not the live login.
+   Use the existing synthetic learner credentials supplied privately, never a
+   real account. Google/Apple/Stripe are intentionally unavailable.
+3. Open teacher search, edit the learning project, save, close/reopen the app
+   and confirm the project remains. Try an unsaved edit, background/resume and
+   verify typing/keyboard, scrolling, safe areas and Back gestures.
+4. Report any error or screenshot. Stop if live services appear. The environment
+   expires automatically; do not install the historical production-backed builds.
 
 ### Validation evidence
 

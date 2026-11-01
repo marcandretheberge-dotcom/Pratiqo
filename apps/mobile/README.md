@@ -32,6 +32,9 @@ Isolated Preview values:
 - `EXPO_PUBLIC_WEB_ORIGIN`: approved temporary HTTPS gateway origin.
 - No Supabase credentials are required by the native test binary. EAS Preview
   overrides all three public Supabase variables with an inert sentinel.
+  Set those project-scoped EAS Preview values as well as the profile values:
+  remote variables can otherwise reintroduce old public production settings.
+  The config guard refuses that build; never disable it to bypass the failure.
 - Before mounting its WebView, the app requires a fresh
   `/__sandbox/mobile-config` response proving the configured gateway reports
   local synthetic mode, no OAuth, no payments and no outbound messages.
