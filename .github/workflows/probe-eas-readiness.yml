@@ -1,0 +1,40 @@
+name: Probe EAS readiness
+
+on:
+  push:
+    branches:
+      - "feat/pratiqo-mobile-wrap-expo-20261031"
+    paths:
+      - ".github/workflows/probe-eas-readiness.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "22.13.0"
+          package-manager-cache: false
+      - name: Check Expo authentication and project link
+        working-directory: apps/mobile
+        shell: bash
+        run: |
+          if [ -z "${EXPO_TOKEN:-}" ]; then
+            echo "EAS_PROBE=NO_EXPO_TOKEN"
+            exit 0
+          fi
+          echo "EAS_PROBE=TOKEN_PRESENT"
+          npx --yes eas-cli@latest whoami
+          if npx --yes eas-cli@latest project:info; then
+            echo "EAS_PROJECT=LINKED"
+          else
+            echo "EAS_PROJECT=NOT_LINKED"
+          fi
