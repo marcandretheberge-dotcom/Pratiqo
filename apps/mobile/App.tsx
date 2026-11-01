@@ -2,6 +2,7 @@ import "react-native-url-polyfill/auto";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
+  ActivityIndicator,
   AppState,
   BackHandler,
   Platform,
@@ -13,47 +14,30 @@ import {
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { WebView, type WebViewMessageEvent, type WebViewNavigation } from "react-native-webview";
+import { WebView, type WebViewMessageEvent, type WebViewNavigation, type WebViewProps } from "react-native-webview";
 import type { Session } from "@supabase/supabase-js";
 
 import {
   AUTH_REDIRECT_URI,
-  isBlockedNativePurchase,
+  IS_ISOLATED,
+  WEB_ORIGIN,
   isPratiqoWebUrl,
+  navigation,
   webUrl,
 } from "./src/config";
 import { getMobileSupabase } from "./src/supabase";
+import { deepLinkTarget, oauthCode, parseBridgeMessage, validIsolatedConfig } from "./src/policy";
 
 WebBrowser.maybeCompleteAuthSession();
 
 type OAuthProvider = "google" | "apple";
 
-type BridgeMessage =
-  | { type: "bridge.ready"; version?: number }
-  | {
-      type: "auth.oauth";
-      provider: OAuthProvider;
-      intent?: "learner" | "teacher" | null;
-      forceAccountSelection?: boolean;
-    }
-  | { type: "auth.logout" }
-  | { type: "auth.web-session-error"; message?: string };
-
 const NAV_ITEMS = [
   { label: "Accueil", glyph: "⌂", path: "/" },
   { label: "Profs", glyph: "⌕", path: "/trouver-un-prof" },
-  { label: "Yo", glyph: "✦", path: "/yo" },
+  { label: "YoPratiqo", glyph: "✦", path: "/yo" },
   { label: "Compte", glyph: "●", path: "/connexion" },
 ] as const;
-
-function parseBridgeMessage(raw: string): BridgeMessage | null {
-  try {
-    const value = JSON.parse(raw) as BridgeMessage;
-    return value && typeof value.type === "string" ? value : null;
-  } catch {
-    return null;
-  }
-}
 
 function sessionScript(session: Session, intent?: "learner" | "teacher" | null): string {
   const detail = JSON.stringify({
@@ -82,33 +66,19 @@ function injectedBootstrap(): string {
   `;
 }
 
-function deepLinkToWeb(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol === "https:" && isPratiqoWebUrl(url)) return url;
-    if (parsed.protocol !== "pratiqo:") return null;
-    if (parsed.hostname === "auth") return null;
-    if (parsed.hostname === "open") {
-      const path = parsed.searchParams.get("path");
-      return path?.startsWith("/") ? webUrl(path) : webUrl("/");
-    }
-    const path = "/" + [parsed.hostname, parsed.pathname.replace(/^\//, "")].filter(Boolean).join("/");
-    return webUrl(path);
-  } catch {
-    return null;
-  }
-}
-
 function NativeShell() {
-  const webViewRef = useRef<WebView<{}>>(null);
+  const webViewRef = useRef<WebView<WebViewProps>>(null);
   const [uri, setUri] = useState(webUrl("/"));
   const [canGoBack, setCanGoBack] = useState(false);
   const [currentUrl, setCurrentUrl] = useState(uri);
   const [webFailed, setWebFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const currentPage = useRef(uri);
   const authBusy = useRef(false);
 
   const injectSession = useCallback(
     (session: Session, intent?: "learner" | "teacher" | null) => {
+      if (!isPratiqoWebUrl(currentPage.current)) return;
       webViewRef.current?.injectJavaScript(sessionScript(session, intent));
     },
     [],
@@ -143,30 +113,17 @@ function NativeShell() {
         const result = await WebBrowser.openAuthSessionAsync(data.url, AUTH_REDIRECT_URI);
         if (result.type !== "success" || !result.url) return;
 
-        const parsed = new URL(result.url);
-        const code = parsed.searchParams.get("code");
-        if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-          if (exchangeError) throw exchangeError;
-        } else {
-          const normalized = new URL(result.url.replace("#", "?"));
-          const accessToken = normalized.searchParams.get("access_token");
-          const refreshToken = normalized.searchParams.get("refresh_token");
-          if (!accessToken || !refreshToken) throw new Error("OAuth session missing");
-          const { error: setError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (setError) throw setError;
-        }
+        const code = oauthCode(result.url, AUTH_REDIRECT_URI);
+        if (!code) throw new Error("Invalid OAuth callback");
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) throw exchangeError;
 
         const {
           data: { session },
         } = await supabase.auth.getSession();
         if (!session) throw new Error("OAuth completed without a session");
         injectSession(session, intent);
-      } catch (error) {
-        console.error("[mobile] OAuth failed", error);
+      } catch {
         Alert.alert("Connexion impossible", "La connexion n’a pas pu être terminée. Réessaie.");
       } finally {
         authBusy.current = false;
@@ -177,7 +134,8 @@ function NativeShell() {
 
   const handleBridgeMessage = useCallback(
     async (event: WebViewMessageEvent) => {
-      const message = parseBridgeMessage(event.nativeEvent.data);
+      if (IS_ISOLATED) return;
+      const message = parseBridgeMessage(event.nativeEvent.data, event.nativeEvent.url, WEB_ORIGIN);
       if (!message) return;
 
       if (message.type === "bridge.ready") {
@@ -207,28 +165,21 @@ function NativeShell() {
     [injectSession, performOAuth],
   );
 
-  const openExternal = useCallback(async (url: string) => {
-    if (url.startsWith("mailto:") || url.startsWith("tel:")) {
-      await Linking.openURL(url);
-      return;
-    }
-    await WebBrowser.openBrowserAsync(url);
+  const openExternal = useCallback((url: string) => {
+    Alert.alert("Ouvrir le lien ?", "Ce lien s’ouvrira en dehors de Pratiqo.", [
+      { text: "Annuler", style: "cancel" },
+      { text: "Ouvrir", onPress: () => { void Linking.openURL(url).catch(() => Alert.alert("Lien indisponible")); } },
+    ]);
   }, []);
 
   const shouldStart = useCallback(
-    (request: { url: string }) => {
+    (request: { url: string; isTopFrame?: boolean }) => {
       const nextUrl = request.url;
-      if (isBlockedNativePurchase(nextUrl)) {
-        Alert.alert(
-          "Achat non disponible dans l’app",
-          "Cet achat numérique n’est pas offert dans l’app mobile pour le moment.",
-        );
-        return false;
-      }
-      if (isPratiqoWebUrl(nextUrl)) return true;
-      if (nextUrl.startsWith("about:blank")) return true;
-      if (nextUrl.startsWith("pratiqo:")) return false;
-      void openExternal(nextUrl);
+      const policy = navigation(nextUrl);
+      if (policy === "internal") return true;
+      if (request.isTopFrame === false) return false;
+      if (policy === "external" || policy === "contact") openExternal(nextUrl);
+      else Alert.alert("Indisponible dans cette bêta", "Ce parcours n’est pas disponible dans cet essai.");
       return false;
     },
     [openExternal],
@@ -236,6 +187,7 @@ function NativeShell() {
 
   const navigate = useCallback((path: string) => {
     const target = webUrl(path);
+    if (!target) return;
     setCurrentUrl(target);
     webViewRef.current?.injectJavaScript(
       `window.location.assign(${JSON.stringify(target)});true;`,
@@ -254,7 +206,7 @@ function NativeShell() {
   useEffect(() => {
     const handle = (url: string | null) => {
       if (!url) return;
-      const target = deepLinkToWeb(url);
+      const target = deepLinkTarget(url, WEB_ORIGIN, IS_ISOLATED);
       if (target) setUri(target);
     };
     void Linking.getInitialURL().then(handle);
@@ -272,46 +224,59 @@ function NativeShell() {
     return () => subscription.remove();
   }, []);
 
-  const bootstrap = useMemo(injectedBootstrap, []);
+  const bootstrap = useMemo(() => injectedBootstrap(), []);
 
   const navigationChanged = useCallback((nav: WebViewNavigation) => {
     setCanGoBack(nav.canGoBack);
     setCurrentUrl(nav.url);
-    setWebFailed(false);
+    currentPage.current = nav.url;
   }, []);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <View style={styles.container}>
-        <WebView<{}>
+        <WebView<WebViewProps>
           ref={webViewRef}
           source={{ uri }}
           style={styles.webView}
-          originWhitelist={["https://*", "pratiqo://*"]}
+          // Route every scheme through the policy; WebView must not auto-open rejected URLs.
+          originWhitelist={["*"]}
           injectedJavaScriptBeforeContentLoaded={bootstrap}
           onMessage={handleBridgeMessage}
           onShouldStartLoadWithRequest={shouldStart}
+          onOpenWindow={({ nativeEvent }) => {
+            if (shouldStart({ url: nativeEvent.targetUrl })) setUri(nativeEvent.targetUrl);
+          }}
           onNavigationStateChange={navigationChanged}
           onError={() => setWebFailed(true)}
-          onHttpError={({ nativeEvent }: { nativeEvent: { statusCode: number } }) => {
-            if (nativeEvent.statusCode >= 500) setWebFailed(true);
+          onLoadStart={() => setLoading(true)}
+          onLoadEnd={() => setLoading(false)}
+          onHttpError={({ nativeEvent }) => {
+            if (nativeEvent.url === currentPage.current && nativeEvent.statusCode >= 400) setWebFailed(true);
           }}
-          onContentProcessDidTerminate={() => webViewRef.current?.reload()}
+          onContentProcessDidTerminate={() => setWebFailed(true)}
+          onRenderProcessGone={() => setWebFailed(true)}
           sharedCookiesEnabled
-          thirdPartyCookiesEnabled
+          thirdPartyCookiesEnabled={false}
+          allowFileAccess={false}
+          allowFileAccessFromFileURLs={false}
+          allowUniversalAccessFromFileURLs={false}
+          mixedContentMode="never"
           domStorageEnabled
           javaScriptEnabled
           allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction
           pullToRefreshEnabled
-          setSupportMultipleWindows={false}
+          setSupportMultipleWindows
+          javaScriptCanOpenWindowsAutomatically={false}
           allowsBackForwardNavigationGestures
           applicationNameForUserAgent="PratiqoMobile/1.0"
         />
+        {loading && !webFailed ? <ActivityIndicator style={styles.progress} accessibilityLabel="Chargement" /> : null}
         {webFailed ? (
           <View style={styles.errorOverlay}>
             <Text style={styles.errorTitle}>Pratiqo est momentanément inaccessible.</Text>
-            <Pressable style={styles.retryButton} onPress={() => webViewRef.current?.reload()}>
+            <Pressable accessibilityRole="button" style={styles.retryButton} onPress={() => { setWebFailed(false); webViewRef.current?.reload(); }}>
               <Text style={styles.retryText}>Réessayer</Text>
             </Pressable>
           </View>
@@ -342,14 +307,40 @@ function NativeShell() {
 }
 
 export default function App() {
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    let mounted = true;
+    async function check() {
+      try {
+        if (!WEB_ORIGIN) throw new Error("Missing explicit origin");
+        if (IS_ISOLATED) {
+          const response = await fetch(`${WEB_ORIGIN}/__sandbox/mobile-config`, { signal: controller.signal, cache: "no-store" });
+          if (!response.ok || !validIsolatedConfig(await response.json(), WEB_ORIGIN)) throw new Error("Isolation not verified");
+        }
+        if (mounted) setReady(true);
+      } catch { if (mounted) setFailed(true); }
+      finally { clearTimeout(timer); }
+    }
+    void check();
+    return () => { mounted = false; clearTimeout(timer); controller.abort(); };
+  }, [attempt]);
   return (
     <SafeAreaProvider>
-      <NativeShell />
+      {ready ? <NativeShell /> : <SafeAreaView style={styles.gate}>
+        <Text style={styles.errorTitle}>{failed ? "Le prototype isolé n’est pas disponible." : "Vérification du prototype…"}</Text>
+        {failed ? <Pressable accessibilityRole="button" style={styles.retryButton} onPress={() => { setFailed(false); setAttempt(v => v + 1); }}><Text style={styles.retryText}>Réessayer</Text></Pressable> : <ActivityIndicator />}
+      </SafeAreaView>}
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  gate: { flex: 1, alignItems: "center", justifyContent: "center", padding: 28, gap: 20 },
+  progress: { position: "absolute", top: 12, right: 12 },
   safeArea: { flex: 1, backgroundColor: "#ffffff" },
   container: { flex: 1, backgroundColor: "#ffffff" },
   webView: { flex: 1, backgroundColor: "#ffffff" },

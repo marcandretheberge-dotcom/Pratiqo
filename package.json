@@ -92,7 +92,7 @@
     "generate:yo-japanese-foundations-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module japanese-foundations",
     "verify:yo-japanese-foundations-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module japanese-foundations --verify-only",
     "test:yo-japanese-recorded-audio": "node --import tsx tests/yo/yopratiqoJapaneseFoundationAudioManifest.test.ts && node --import tsx tests/yo/yopratiqoJapaneseRecordedAudio.test.ts && node --import tsx tests/yo/yopratiqoAudioGenerator.test.ts",
-    "test:mobile-wrap": "tsx tests/app/nativeMobileWrap.test.ts"
+    "test:mobile-wrap": "tsx tests/app/nativeMobileWrap.test.ts && tsx tests/app/nativeMobilePolicy.test.ts"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",

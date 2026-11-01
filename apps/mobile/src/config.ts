@@ -1,29 +1,20 @@
-export const WEB_ORIGIN = (process.env.EXPO_PUBLIC_WEB_ORIGIN || "https://www.pratiqo.ca").replace(/\/$/, "");
+import { internalTarget, navigationPolicy, resolveOrigin } from "./policy";
+
+export const IS_ISOLATED = process.env.EXPO_PUBLIC_NATIVE_MODE !== "production";
+export const WEB_ORIGIN = resolveOrigin(process.env.EXPO_PUBLIC_WEB_ORIGIN, process.env.EXPO_PUBLIC_NATIVE_MODE);
 export const AUTH_REDIRECT_URI = "pratiqo://auth/callback";
-
-export const BLOCKED_NATIVE_PURCHASE_PATHS = ["/upgrade", "/yo/checkout"] as const;
-
-export function isBlockedNativePurchase(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    if (!["pratiqo.ca", "www.pratiqo.ca"].includes(parsed.hostname)) return false;
-    return BLOCKED_NATIVE_PURCHASE_PATHS.some(
-      (prefix) => parsed.pathname === prefix || parsed.pathname.startsWith(prefix + "/"),
-    );
-  } catch {
-    return false;
-  }
-}
 
 export function isPratiqoWebUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return parsed.protocol === "https:" && ["pratiqo.ca", "www.pratiqo.ca"].includes(parsed.hostname);
+    return parsed.protocol === "https:" && parsed.origin === WEB_ORIGIN;
   } catch {
     return false;
   }
 }
 
 export function webUrl(path = "/"): string {
-  return new URL(path, WEB_ORIGIN).toString();
+  return internalTarget(path, WEB_ORIGIN, IS_ISOLATED) ?? "";
 }
+
+export const navigation = (url: string) => navigationPolicy(url, WEB_ORIGIN, IS_ISOLATED);
