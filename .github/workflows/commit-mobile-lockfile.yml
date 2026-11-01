@@ -1,0 +1,44 @@
+name: Commit mobile lockfile
+
+on:
+  push:
+    branches:
+      - "feat/pratiqo-mobile-wrap-expo-20261031"
+    paths:
+      - ".github/workflows/commit-mobile-lockfile.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "22.13.0"
+          package-manager-cache: false
+      - name: Resolve exact Expo dependency tree
+        working-directory: apps/mobile
+        run: npm install --no-audit --no-fund
+      - name: Verify expected lockfile
+        working-directory: apps/mobile
+        shell: bash
+        run: |
+          EXPECTED="23f70d4a19fc78d36da7f0be81f70046ba941a084619b4a2ea86e8f4f8550a00"
+          ACTUAL="$(sha256sum package-lock.json | awk '{print $1}')"
+          echo "lockfile sha256=$ACTUAL"
+          test "$ACTUAL" = "$EXPECTED"
+      - name: Commit lockfile
+        shell: bash
+        run: |
+          if git ls-files --error-unmatch apps/mobile/package-lock.json >/dev/null 2>&1; then
+            echo "Lockfile already tracked."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/mobile/package-lock.json
+          git commit -m "Commit reproducible Expo mobile lockfile"
+          git push origin HEAD:feat/pratiqo-mobile-wrap-expo-20261031
