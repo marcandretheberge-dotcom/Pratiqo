@@ -2,20 +2,21 @@
 
 ## Current delivery status
 
-The course player is wired to prerecorded MP3s in the existing `yopratiqo-audio` bucket. A manifest is a recording plan, not evidence that those recordings exist.
+The course player is wired to prerecorded MP3s in the existing `yopratiqo-audio` bucket.
 
-**Latest verification (2026-10-31 UTC, branch `feat/yopratiqo-japanese-foundations-20261030`, commit `b973b3ec`):** offline dry-run selected **206** unique `japanese-foundations` paths; public verify reported **0 verified / 206 failed** (HTTP 400 — objects absent). Bucket listing under `yo/ja/japanese-foundations/` is empty. Japanese introduction objects remain **36**. Full report: [audio/japanese-foundations-v1/GENERATION_REPORT.md](audio/japanese-foundations-v1/GENERATION_REPORT.md).
+**Publication verified (2026-11-01 UTC, branch `feat/yopratiqo-japanese-foundations-20261030`):** offline dry-run selected **206** unique `japanese-foundations` paths; live generation uploaded the library; public verify reported **206 verified / 0 failed**. Model `gpt-4o-mini-tts`, voice `alloy`, format `mp3` / `audio/mpeg`. Full report: [audio/japanese-foundations-v1/GENERATION_REPORT.md](audio/japanese-foundations-v1/GENERATION_REPORT.md).
 
-Environment in the Cloud Agent that ran the generator:
+Environment used for generation (presence only):
 
 - `NEXT_PUBLIC_SUPABASE_URL`: present (project `jwlbwmxoradmbuvqfkhe`).
-- `SUPABASE_SERVICE_ROLE_KEY`: present; Storage list works; `audio/mpeg` upload to `yopratiqo-audio` works (bucket MIME allowlist rejects non-audio).
-- `OPENAI_API_KEY`: **missing** from the process environment (and absent from Vercel project env names). This blocks Speech API generation. Edge Function secrets do not feed this Node script.
-- Planned TTS for this series (dry-run / defaults): model `gpt-4o-mini-tts`, voice `alloy`, format `mp3` / `audio/mpeg`; no `speed` request param; player slow mode remains 0.78×.
+- `SUPABASE_SERVICE_ROLE_KEY`: present.
+- `OPENAI_API_KEY`: present in the Node generator process (`.env.local` / Cursor secrets). Edge Function secrets alone do not feed this script.
+- `YOPRATIQO_AUDIO_BUCKET`: `yopratiqo-audio`.
+- TTS overrides unset → defaults `gpt-4o-mini-tts` / `alloy`; no `speed` request param; player slow mode remains 0.78×.
 
-**No foundation MP3 was generated or uploaded in this verification pass.** Production audio-complete release remains blocked on OpenAI key injection into the Cursor generator environment, then generate → verify → listening review.
+Japanese introduction objects remain **36** under `yo/ja/japanese-intro/` and were not overwritten.
 
-Neither storage policies nor authentication are changed. Existing introduction audio is preserved.
+Neither storage policies nor authentication are changed.
 
 ## Recording coverage
 
