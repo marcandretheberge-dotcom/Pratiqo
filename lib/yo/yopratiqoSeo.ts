@@ -34,7 +34,7 @@ export type YoPratiqoSeoCopy = {
 export type YoPratiqoSeoEntry = {
   route: string;
   defaultLocale: YoPratiqoSeoLocale;
-  copy: Record<YoPratiqoSeoLocale, YoPratiqoSeoCopy>;
+  copy: Record<YoPratiqoSeoLocale, YoPratiqoSeoCopy> & Partial<Record<"es", YoPratiqoSeoCopy>>;
   /**
    * Page taxonomy used by `buildYoPratiqoMetadata` to decide robots
    * `index/follow` (and by Course schema gating). Hub + landing pages
@@ -140,14 +140,19 @@ export const yopratiqoSeoEntries = {
     slug: "japonais",
     copy: {
       fr: {
-        title: "Japonais avec YoPratiqo — hiragana, culture et premiers mots",
+        title: "Japonais avec Yoppo | YoPratiqo — 8 modules",
         description:
-          "Découvrez le japonais avec une intro rassurante : hiragana, katakana, kanji, politesse, culture, audio et premières phrases utiles.",
+          "Un parcours de fondation en huit modules : dialogues guidés, 92 kana, 40 kanji en contexte, culture, écriture et révisions avec Yoppo.",
       },
       en: {
-        title: "Japanese with YoPratiqo — hiragana, culture and first words",
+        title: "Japanese with Yoppo | YoPratiqo — 8 modules",
         description:
-          "Discover Japanese with a reassuring intro: hiragana, katakana, kanji, politeness, culture, audio, and first useful phrases.",
+          "An eight-module foundation course: guided dialogues, 92 kana, 40 kanji in context, culture, writing and review with Yoppo.",
+      },
+      es: {
+        title: "Japonés con Yoppo | YoPratiqo — 8 módulos",
+        description:
+          "Un curso de fundamentos en ocho módulos: diálogos guiados, 92 kana, 40 kanji en contexto, cultura, escritura y repaso con Yoppo.",
       },
     },
   },
@@ -335,8 +340,9 @@ export function buildYoPratiqoMetadata(
   lang?: string | string[],
 ): Metadata {
   const entry: YoPratiqoSeoEntry = yopratiqoSeoEntries[routeId];
-  const locale = resolveYoPratiqoSeoLocale(lang, entry.defaultLocale);
-  const copy = entry.copy[locale];
+  const requested = (Array.isArray(lang) ? lang[0] : lang)?.trim().toLowerCase();
+  const locale = requested === "es" && entry.copy.es ? "es" : resolveYoPratiqoSeoLocale(lang, entry.defaultLocale);
+  const copy = entry.copy[locale] ?? entry.copy[entry.defaultLocale];
   const canonical = `${SITE_URL}${entry.route}`;
   const image = entry.image ?? DEFAULT_OG_IMAGE;
   const indexable = isYoPratiqoRouteIndexable(routeId);
@@ -353,7 +359,7 @@ export function buildYoPratiqoMetadata(
       siteName: "Pratiqo",
       type: "website",
       url: canonical,
-      locale: locale === "fr" ? "fr_CA" : "en_CA",
+      locale: locale === "fr" ? "fr_CA" : locale === "es" ? "es_ES" : "en_CA",
       images: [
         {
           url: image,

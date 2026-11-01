@@ -175,6 +175,20 @@ test("metadata helper emits canonical, OpenGraph, Twitter, and route-aware robot
   }
 });
 
+test("Spanish Japanese metadata matches its translated landing without changing other locale fallbacks", () => {
+  for (const language of ["es", ["es"], " ES "]) {
+    const metadata = buildYoPratiqoMetadata("japaneseLanding", language);
+    assert.equal(metadata.title, "Japonés con Yoppo | YoPratiqo — 8 módulos");
+    assert.equal(metadata.openGraph?.title, metadata.title);
+    assert.equal(metadata.twitter?.title, metadata.title);
+    assert.equal(metadata.openGraph?.description, metadata.description);
+    assert.equal(metadata.openGraph?.locale, "es_ES");
+    assert.equal(metadata.alternates?.canonical, `${SITE_URL}/yo/langues/japonais`);
+  }
+  assert.deepEqual(buildYoPratiqoMetadata("italianLanding", "es"), buildYoPratiqoMetadata("italianLanding", "fr"));
+  assert.deepEqual(buildYoPratiqoMetadata("japaneseIntro", "es"), buildYoPratiqoMetadata("japaneseIntro", "fr"));
+});
+
 test("intro pages stay noindex while introPageIndexingEnabled is off", () => {
   assert.equal(yopratiqoProductConfig.introPageIndexingEnabled, false);
   for (const introId of [

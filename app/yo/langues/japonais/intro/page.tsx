@@ -254,7 +254,7 @@ function JapaneseAudioChipList({
 export default async function YoJapaneseIntroPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
   const locale = getYoLocale(resolvedSearchParams.lang);
-  const langSuffix = locale === "en" ? "?lang=en" : "";
+  const langSuffix = locale === "fr" ? "" : "?lang=" + locale;
   const toggleHref = buildYoLocaleHref(
     "/yo/langues/japonais/intro",
     locale === "fr" ? "en" : "fr",
@@ -263,7 +263,7 @@ export default async function YoJapaneseIntroPage({ searchParams }: PageProps) {
   const meta = getYoLanguageIntroDeckMeta("japonais");
   const backHref = `${meta.backRoute}${langSuffix}`;
   const teacherHref = `/trouver-un-prof?q=${meta.teacherSearchQuery}${
-    locale === "en" ? "&lang=en" : ""
+    locale === "fr" ? "" : "&lang=" + locale
   }`;
 
   const {
@@ -723,6 +723,13 @@ export default async function YoJapaneseIntroPage({ searchParams }: PageProps) {
               {t(teacherBody, locale)}
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href={buildYoLocaleHref("/yo/langues/japonais/parcours", locale)}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-700 px-5 py-3 text-sm font-bold text-white"
+              >
+                <BookOpen className="size-4" aria-hidden />
+                {t(lstr("Continuer les 8 modules de japonais", "Continue the 8 Japanese modules", "Continuar los 8 módulos de japonés"), locale)}
+              </Link>
               <Link
                 href={teacherHref}
                 className="ds-btn-primary inline-flex items-center justify-center gap-2 text-center text-sm sm:text-base"

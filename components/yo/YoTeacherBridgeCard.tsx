@@ -5,18 +5,20 @@ import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import type { YoPratiqoModuleConfig } from "@/lib/yo/yopratiqoProductConfig";
 
-const CTA_LABEL = lstr("Trouver un professeur sur Pratiqo", "Find a teacher on Pratiqo");
+const CTA_LABEL = lstr("Trouver un professeur sur Pratiqo", "Find a teacher on Pratiqo", "Buscar un profesor en Pratiqo");
 
 export function YoTeacherBridgeCard({
   locale,
   moduleConfig,
   title,
   body,
+  href,
 }: {
   locale: YoLocale;
   moduleConfig: YoPratiqoModuleConfig;
   title: YoLocalizedString;
   body: YoLocalizedString;
+  href?: string;
 }) {
   return (
     <article className="relative overflow-hidden rounded-3xl border border-[#DDF4F1] bg-white p-6 shadow-[0_10px_30px_rgba(15,58,52,0.07)]">
@@ -37,7 +39,7 @@ export function YoTeacherBridgeCard({
           </p>
         </div>
         <Link
-          href={moduleConfig.teacherSearchUrl}
+          href={href ?? moduleConfig.teacherSearchUrl}
           className="inline-flex w-fit items-center justify-center gap-2 rounded-full border border-[#0F6E56]/18 bg-[#DDF4F1]/70 px-5 py-3 text-sm font-bold text-[#0F6E56] transition hover:bg-[#DDF4F1]"
         >
           <MessageCircle className="size-4" aria-hidden />

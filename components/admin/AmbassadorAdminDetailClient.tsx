@@ -23,7 +23,7 @@ type RewardStatus = "pending" | "earned" | "paid" | "void" | "reversed";
 type AmbassadorLink = {
   id: string;
   ambassadorId: string | null;
-  teacherId: string;
+  teacherId: string | null;
   code: string;
   destinationPath: string;
   campaign: string | null;
@@ -49,7 +49,7 @@ type AmbassadorReward = {
 
 type AmbassadorDetail = {
   ambassadorId: string;
-  teacherId: string;
+  teacherId: string | null;
   ambassadorUserId: string | null;
   teacherName: string | null;
   teacherEmail: string | null;
@@ -325,10 +325,16 @@ export function AmbassadorAdminDetailClient({ ambassadorId }: Props) {
                       Ambassadeur
                     </p>
                     <h1 className="mt-1 break-words text-2xl font-bold text-[#2C2C2A] sm:text-3xl">
-                      {ambassador.teacherName ?? ambassador.teacherId}
+                      {ambassador.teacherName ??
+                        ambassador.teacherEmail ??
+                        ambassador.ambassadorUserId ??
+                        ambassador.ambassadorId}
                     </h1>
                     <p className="mt-1 break-all text-sm text-slate-600">
-                      {ambassador.teacherEmail ?? "Email non disponible"} · {ambassador.teacherId}
+                      {ambassador.teacherEmail ?? "Email non disponible"} ·{" "}
+                      {ambassador.teacherId
+                        ? `Prof: ${ambassador.teacherId}`
+                        : `Compte: ${ambassador.ambassadorUserId ?? "—"}`}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <span
