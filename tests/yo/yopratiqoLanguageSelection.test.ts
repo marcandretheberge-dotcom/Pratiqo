@@ -417,7 +417,7 @@ test("Spanish, Quebec French, Italian, English, and Japanese are all available",
   );
   assert.match(
     pageSrc,
-    /id:\s*"japanese"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/japonais\/intro"/,
+    /id:\s*"japanese"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/japonais\/parcours"/,
   );
   // Defensive: NO `coming_soon` status string should appear in the
   // shipped data anymore (the literal can still appear in JSDoc /
@@ -507,7 +507,7 @@ test("the five open language hrefs point at routes that actually exist on disk",
     1,
   );
   assert.equal(
-    cardHrefs.filter((v) => v === '"/yo/langues/japonais/intro"').length,
+    cardHrefs.filter((v) => v === '"/yo/langues/japonais/parcours"').length,
     1,
   );
   // All five open routes must resolve to a real `page.tsx` on disk.
@@ -528,15 +528,15 @@ test("the five open language hrefs point at routes that actually exist on disk",
     "English intro page must exist",
   );
   assert.ok(
-    exists("app/yo/langues/japonais/intro/page.tsx"),
-    "Japanese intro page must exist",
+    exists("app/yo/langues/japonais/parcours/page.tsx"),
+    "Japanese foundations course page must exist",
   );
 });
 
 test("Japanese card carries the documented launch copy and badge", () => {
   // Japanese is the fifth available language. The card must use the
-  // "ja" badge and the brief's exact French/English copy so the hub
-  // page stays in sync with the marketing text.
+  // "ja" badge and the complete-foundations launch copy so the hub
+  // points learners into the new interactive course.
   assert.match(
     pageSrc,
     /id:\s*"japanese"[\s\S]*?badge:\s*"ja"/,
@@ -544,13 +544,13 @@ test("Japanese card carries the documented launch copy and badge", () => {
   );
   assert.match(
     pageSrc,
-    /Japonais pour voyager, comprendre la culture et découvrir les bases de l['’]écriture sans paniquer\. Nouveau\./,
-    "Japanese FR copy must match the brief verbatim",
+    /Vis ton premier séjour d’étude au Japon : kana, kanji, dialogues, culture et missions interactives avec Yoppo\./,
+    "Japanese FR copy must describe the complete foundations course",
   );
   assert.match(
     pageSrc,
-    /Japanese for travel, culture, and understanding the writing system without panic\. New\./,
-    "Japanese EN copy must match the brief verbatim",
+    /Experience your first study stay in Japan: kana, kanji, dialogues, culture and interactive missions with Yoppo\./,
+    "Japanese EN copy must describe the complete foundations course",
   );
 });
 

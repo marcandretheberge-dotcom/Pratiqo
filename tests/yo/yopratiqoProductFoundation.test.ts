@@ -121,13 +121,22 @@ test("YoPratiqo remains free-intro only with teacher bridge enabled", () => {
 });
 
 test("current YoPratiqo intro routes exist and match product config", () => {
-  const configuredPaths = new Set(
-    yopratiqoProductConfig.currentFreeIntroModules.map((moduleConfig) => moduleConfig.path),
-  );
-
   for (const page of INTRO_PAGES) {
+    const moduleConfig = yopratiqoProductConfig.currentFreeIntroModules.find(
+      (candidate) => candidate.id === page.id,
+    );
+    assert.ok(moduleConfig, `${page.id} must be configured`);
     assert.ok(exists(page.file), `${page.file} must exist`);
-    assert.ok(configuredPaths.has(page.path), `${page.path} must be configured`);
+    assert.equal(moduleConfig.introRoute, page.path, `${page.id} must retain its intro route`);
+    if (page.id === "japanese") {
+      assert.equal(moduleConfig.path, "/yo/langues/japonais/parcours");
+      assert.ok(
+        exists("app/yo/langues/japonais/parcours/page.tsx"),
+        "Japanese foundation course must exist on disk",
+      );
+    } else {
+      assert.equal(moduleConfig.path, page.path, `${page.id} must retain its intro entry point`);
+    }
   }
 });
 

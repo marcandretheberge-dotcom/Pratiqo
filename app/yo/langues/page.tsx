@@ -103,9 +103,9 @@ const SECTION_TITLE = lstr(
 );
 
 const SECTION_BODY = lstr(
-  "Cinq parcours d’introduction gratuits sont disponibles : espagnol, français du Québec, italien, anglais et japonais. Chaque langue commence par une intro premium ; la suite arrive quand chaque parcours est prêt à enseigner sérieusement.",
-  "Five free intro modules are now available: Spanish, Quebec French, Italian, English, and Japanese. Every language starts with a premium intro; the rest arrives when each course is ready to teach seriously.",
-  "Cinco rutas de introducción gratuitas están disponibles: español, francés de Quebec, italiano, inglés y japonés. Cada idioma empieza con una intro premium; el resto llega cuando cada ruta esté lista para enseñar en serio.",
+  "Cinq langues à explorer : espagnol, français du Québec, italien, anglais et japonais. Découvre les introductions et les parcours disponibles, dont huit modules de fondation en japonais avec Yoppo.",
+  "Five languages to explore: Spanish, Quebec French, Italian, English and Japanese. Discover the introductions and available courses, including eight Japanese foundation modules with Yoppo.",
+  "Cinco idiomas para explorar: español, francés de Quebec, italiano, inglés y japonés. Descubre las introducciones y los cursos disponibles, incluidos ocho módulos de fundamentos de japonés con Yoppo.",
 );
 
 const PROMISE_TITLE = lstr(
@@ -252,14 +252,14 @@ const LANGUAGES: LanguageCard[] = [
     id: "japanese",
     name: lstr("Japonais", "Japanese", "Japonés"),
     badge: "ja",
-    eyebrow: lstr("Découverte", "Discovery", "Descubrimiento"),
+    eyebrow: lstr("8 modules · Fondations", "8 modules · Foundations", "8 módulos · Fundamentos"),
     blurb: lstr(
-      "Japonais pour voyager, comprendre la culture et découvrir les bases de l’écriture sans paniquer. Nouveau.",
-      "Japanese for travel, culture, and understanding the writing system without panic. New.",
-      "Japonés para viajar, entender la cultura y descubrir las bases de la escritura sin pánico. Nuevo.",
+      "Vis ton premier séjour d’étude au Japon : kana, kanji, dialogues, culture et missions interactives avec Yoppo.",
+      "Experience your first study stay in Japan: kana, kanji, dialogues, culture and interactive missions with Yoppo.",
+      "Vive tu primera estancia de estudios en Japón: kana, kanji, diálogos, cultura y misiones interactivas con Yoppo.",
     ),
     status: "available",
-    href: "/yo/langues/japonais/intro",
+    href: "/yo/langues/japonais/parcours",
   },
 ];
 
