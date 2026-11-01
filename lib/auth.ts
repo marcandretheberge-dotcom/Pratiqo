@@ -6,6 +6,7 @@ import { setPendingTeacherOnboardingCookie, clearPendingTeacherOnboardingCookie 
 import type { PreAuthOnboardingIntent } from "@/lib/auth/preAuthOnboardingIntent";
 import { CONNEXION_PATH } from "@/lib/auth/preAuthOnboardingIntent";
 import { hasTeacherOnboardingIntent } from "@/lib/auth/teacherOnboardingIntent";
+import { postPratiqoNativeMessage } from "@/lib/mobile/nativeBridge";
 
 function setPendingIntentCookiesForAuth(
   redirectPath: string,
@@ -22,17 +23,34 @@ function setPendingIntentCookiesForAuth(
   }
 }
 
-export async function loginWithGoogle(
+type OAuthLoginOptions = {
+  intent?: PreAuthOnboardingIntent;
+  /** Public intent query value for OAuth redirect (e.g. `student` alias). */
+  intentQuery?: string;
+  role?: string;
+  referralCode?: string;
+  forceAccountSelection?: boolean;
+};
+
+async function loginWithOAuthProvider(
+  provider: "google" | "apple",
   redirectPath = "/dashboard",
-  options?: {
-    intent?: PreAuthOnboardingIntent;
-    /** Public intent query value for OAuth redirect (e.g. `student` alias). */
-    intentQuery?: string;
-    role?: string;
-    referralCode?: string;
-    forceAccountSelection?: boolean;
-  },
+  options?: OAuthLoginOptions,
 ) {
+  setPendingIntentCookiesForAuth(redirectPath, options?.intent, options?.role);
+  markOAuthReturnPending(options?.intent ?? null);
+
+  if (
+    postPratiqoNativeMessage({
+      type: "auth.oauth",
+      provider,
+      intent: options?.intent ?? null,
+      forceAccountSelection: options?.forceAccountSelection === true,
+    })
+  ) {
+    return;
+  }
+
   const supabase = getSupabaseClient();
   const origin = resolveOAuthRedirectOrigin();
   const callbackIntent = options?.intentQuery ?? options?.intent;
@@ -43,25 +61,38 @@ export async function loginWithGoogle(
     ref: options?.referralCode,
   });
 
-  setPendingIntentCookiesForAuth(redirectPath, options?.intent, options?.role);
-  markOAuthReturnPending(options?.intent ?? null);
-
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
+    provider,
     options: {
       redirectTo,
       skipBrowserRedirect: true,
-      ...(options?.forceAccountSelection ? { queryParams: { prompt: "select_account" } } : {}),
+      ...(provider === "google" && options?.forceAccountSelection
+        ? { queryParams: { prompt: "select_account" } }
+        : {}),
     },
   });
   if (error) {
-    console.error("Login failed", error);
+    console.error(`${provider} login failed`, error);
     throw error;
   }
   if (!data.url) {
-    throw new Error("Google OAuth URL was not returned.");
+    throw new Error(`${provider} OAuth URL was not returned.`);
   }
   window.location.assign(data.url);
+}
+
+export async function loginWithGoogle(
+  redirectPath = "/dashboard",
+  options?: OAuthLoginOptions,
+) {
+  return loginWithOAuthProvider("google", redirectPath, options);
+}
+
+export async function loginWithApple(
+  redirectPath = "/dashboard",
+  options?: OAuthLoginOptions,
+) {
+  return loginWithOAuthProvider("apple", redirectPath, options);
 }
 
 export async function logout(options?: { redirectTo?: string }) {
@@ -76,6 +107,8 @@ export async function logout(options?: { redirectTo?: string }) {
     console.error("Logout failed", error);
     throw error;
   }
+
+  postPratiqoNativeMessage({ type: "auth.logout" });
 
   if (typeof window !== "undefined") {
     window.location.assign(options?.redirectTo ?? CONNEXION_PATH);

@@ -8,7 +8,7 @@ import PratiqoLogo from "../../components/PratiqoLogo";
 import { LocaleSwitcher } from "../../components/LocaleSwitcher";
 import { useAuth } from "../../components/AuthProvider";
 import { AuthProfileSyncRetry } from "../../components/auth/AuthProfileSyncRetry";
-import { loginWithGoogle, logout } from "../../lib/auth";
+import { loginWithApple, loginWithGoogle, logout } from "../../lib/auth";
 import { resolvePostLoginDestination } from "../../lib/auth/authenticatedLoginDestination";
 import {
   clearPendingOnboardingIntentCookie,
@@ -28,15 +28,17 @@ import { AppLoadingFallback } from "../../components/AppLoadingFallback";
 import { SkeletonBar } from "@/components/loading/AppSkeletons";
 import { useLocale } from "../../lib/locale-context";
 import { cn } from "../../lib/utils";
+import { getPratiqoNativePlatform } from "@/lib/mobile/nativeBridge";
 
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, loading, profile, profileHydrated, profileSyncError, retryProfileSync } = useAuth();
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [legalAccepted, setLegalAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [nativePlatform, setNativePlatform] = useState<"ios" | "android" | null>(null);
 
   const intentParam = searchParams.get("intent");
   const roleParam = searchParams.get("role");
@@ -47,6 +49,10 @@ function LoginForm() {
   const oauthNext = preAuthIntent
     ? resolveLoginOAuthNextPath(roleParam, nextParam, intentParam ?? preAuthIntent)
     : null;
+
+  useEffect(() => {
+    setNativePlatform(getPratiqoNativePlatform());
+  }, []);
 
   useEffect(() => {
     if (loading || user || authError || preAuthIntent) return;
@@ -109,6 +115,24 @@ function LoginForm() {
       });
     } catch (e) {
       console.error("[login] Google auth failed", e);
+      setFormError(t("loginGenericAuthError"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    if (!preAuthIntent || !legalAccepted || busy || !oauthNext) return;
+    setBusy(true);
+    setFormError(null);
+    try {
+      await loginWithApple(oauthNext, {
+        intent: preAuthIntent,
+        intentQuery: intentParam === "student" ? "student" : preAuthIntent,
+        referralCode: refCode,
+      });
+    } catch (e) {
+      console.error("[login] Apple auth failed", e);
       setFormError(t("loginGenericAuthError"));
     } finally {
       setBusy(false);
@@ -276,6 +300,24 @@ function LoginForm() {
                 </Link>
                 .
               </p>
+
+              {nativePlatform === "ios" ? (
+                <button
+                  type="button"
+                  disabled={!legalAccepted || busy}
+                  onClick={() => void handleAppleLogin()}
+                  data-testid="login-apple-button"
+                  className="mb-3 flex h-[52px] min-h-[52px] w-full items-center justify-center rounded-2xl bg-black px-4 text-sm font-bold text-white transition disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  {busy
+                    ? t("loginWorking")
+                    : locale === "fr"
+                      ? "Continuer avec Apple"
+                      : locale === "es"
+                        ? "Continuar con Apple"
+                        : "Continue with Apple"}
+                </button>
+              ) : null}
 
               <button
                 type="button"

@@ -66,3 +66,11 @@ backups/
 
 # Resumable local TTS generation cache (MP3s and provenance)
 /.cache/yopratiqo-audio/
+
+apps/mobile/node_modules/
+apps/mobile/.expo/
+apps/mobile/.env
+apps/mobile/.env.local
+apps/mobile/dist/
+
+# Expo / EAS mobile wrapper

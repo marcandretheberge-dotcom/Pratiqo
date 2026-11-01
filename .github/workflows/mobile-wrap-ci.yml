@@ -1,0 +1,72 @@
+name: Mobile wrap checks
+
+on:
+  pull_request:
+    paths:
+      - "apps/mobile/**"
+      - "components/mobile/**"
+      - "lib/mobile/**"
+      - "lib/auth.ts"
+      - "app/login/page.tsx"
+      - "app/providers.tsx"
+      - "components/PwaServiceWorker.tsx"
+      - "components/app/InstallAppPrompt.tsx"
+      - "tests/app/nativeMobile*.test.ts"
+      - "tsconfig.json"
+      - "package.json"
+      - ".github/workflows/mobile-wrap-ci.yml"
+  push:
+    branches:
+      - "feat/pratiqo-mobile-wrap-*"
+    paths:
+      - "apps/mobile/**"
+      - "components/mobile/**"
+      - "lib/mobile/**"
+      - "lib/auth.ts"
+      - "app/login/page.tsx"
+      - "app/providers.tsx"
+      - "components/PwaServiceWorker.tsx"
+      - "components/app/InstallAppPrompt.tsx"
+      - "tests/app/nativeMobile*.test.ts"
+      - "tsconfig.json"
+      - "package.json"
+      - ".github/workflows/mobile-wrap-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  web-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "22.13.0"
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run test:mobile-wrap
+
+  expo:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "22.13.0"
+          package-manager-cache: false
+      - name: Install exact mobile dependency tree
+        run: npm ci --no-audit --no-fund
+      - name: Expo dependency compatibility
+        run: npx expo install --check
+      - name: Expo Doctor
+        run: npx expo-doctor
+      - name: Mobile TypeScript
+        run: npx tsc --noEmit
