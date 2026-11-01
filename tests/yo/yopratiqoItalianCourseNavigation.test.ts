@@ -6,7 +6,7 @@ import * as React from "react";
 import { ItalianCourseUnit } from "@/components/yo/italian/course/ItalianCourseUnit";
 import { CourseAssessmentPlayer } from "@/components/yo/italian/course/CourseAssessmentPlayer";
 import { italianCourseUnits, italianCourseCatalog, courseSources, courseAssessments } from "@/lib/yo/italian/course/courseData";
-import { ITALIAN_COURSE_PROGRESS_KEY, resetCourseProgress, type CourseProgress } from "@/lib/yo/italian/course/courseProgress";
+import { ITALIAN_COURSE_PROGRESS_KEY, emptyCourseProgress, recordCourseActivity, resetCourseProgress, type CourseProgress } from "@/lib/yo/italian/course/courseProgress";
 import type { CourseQuestion } from "@/lib/yo/italian/course/courseTypes";
 import type { YoLocale } from "@/lib/yo/types";
 
@@ -79,6 +79,8 @@ test("removing an activity deep link in the same lesson returns to study without
   flushFrames();
   assert.equal(view.getByRole("button", { name: "Découvrir" }).getAttribute("aria-pressed"), "true");
   assert.equal(view.getByRole("button", { name: "Jouer et pratiquer" }).getAttribute("aria-pressed"), "false");
+  assert.ok(view.getByText(lesson.goal.fr));
+  click(view.getByRole("button", { name: "3. La langue" }));
   assert.ok(view.getByText(lesson.grammar.body.fr));
   assert.equal(view.queryByRole("group", { name: "Expressions italiennes" }), null);
   assert.equal(saved().resume?.lessonId, lesson.id);
@@ -102,6 +104,26 @@ test("a project draft survives project to checkpoint to project navigation and s
   assertDraftNeverStored(draft);
   assert.deepEqual(saved().activities, {});
   assert.deepEqual(saved().assessments, {});
+});
+
+test("Yoppo reviews the actual due exercise in another lesson without scoring a visit", () => {
+  const dueLesson = unit.lessons[1];
+  const due = dueLesson.activities[0];
+  const progress = recordCourseActivity(emptyCourseProgress(), italianCourseCatalog, due.id, false, false, Date.now() - 1000);
+  window.localStorage.setItem(ITALIAN_COURSE_PROGRESS_KEY, JSON.stringify(progress));
+  const view = render(unitNode());
+  click(view.getByRole("button", { name: "Ouvrir Yoppo" }));
+  click(view.getByRole("button", { name: "Mes révisions (1)" }));
+  assert.equal(saved().resume?.lessonId, dueLesson.id);
+  assert.equal(saved().resume?.activityId, due.id);
+  assert.equal(view.getByRole("button", { name: "Jouer et pratiquer" }).getAttribute("aria-pressed"), "true");
+  assert.deepEqual(saved().activities, progress.activities);
+});
+
+test("unseen lessons are not presented as overdue review", () => {
+  const view = render(unitNode());
+  click(view.getByRole("button", { name: "Ouvrir Yoppo" }));
+  assert.equal(view.queryByRole("button", { name: /^Mes révisions/ }), null);
 });
 
 test("an explicit cross-tab course reset clears the in-memory project draft", () => {

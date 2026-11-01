@@ -34,5 +34,11 @@ export function lesson(spec: LessonSpec): CourseLesson {
     { ...base(`${spec.id}-pairs`, t("Les paires de Yoppo", "Yoppo’s pairs", "Las parejas de Yoppo"), t("Associe les expressions à leur sens.", "Match each expression to its meaning.", "Relaciona cada expresión con su significado."), t("Relis ensuite les expressions à voix haute.", "Then read the expressions aloud.", "Después lee las expresiones en voz alta.")), kind: "match", pairs: spec.vocabulary.slice(0, 4).map((p, i) => ({ id: `${spec.id}-p${i}`, it: p.it, meaning: p.meaning })) },
     { ...base(`${spec.id}-build`, t("L’atelier des phrases", "The sentence workshop", "El taller de frases"), t(`Reconstruis la formulation étudiée : « ${order.meaning.fr} ». Premier mot : ${tokens[0]}`, `Rebuild the studied wording: “${order.meaning.en}”. First word: ${tokens[0]}`, `Reconstruye la formulación estudiada: «${order.meaning.es}». Primera palabra: ${tokens[0]}`), t(`La phrase du modèle : ${order.it}`, `The model sentence: ${order.it}`, `La frase del modelo: ${order.it}`)), kind: "order", tokens, answer: tokens, it: order.it },
     comprehension, listening, recall(`${spec.id}-write`, recallPhrase, accepted), ...extra,
+    ...(listening.stimulus ? [{
+      ...base(`${spec.id}-dictation`, t("Écoute et écris", "Listen and write", "Escucha y escribe"),
+        t("Écris ce que tu entends. Tu peux réécouter ou ralentir le message.", "Write what you hear. You can replay or slow down the message.", "Escribe lo que escuchas. Puedes repetir o ralentizar el mensaje."),
+        t(`Le message : ${listening.stimulus}`, `The message: ${listening.stimulus}`, `El mensaje: ${listening.stimulus}`)),
+      kind: "type" as const, model: listening.stimulus, accepted: [listening.stimulus], listeningText: listening.stimulus,
+    }] : []),
   ] };
 }

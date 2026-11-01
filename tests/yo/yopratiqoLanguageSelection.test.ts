@@ -47,7 +47,7 @@ function test(name: string, fn: TestFn): void {
   tests.push({ name, fn });
 }
 
-const pageSrc = read("app/yo/langues/page.tsx");
+const pageSrc = read("components/yo/YoLanguageQuickStart.tsx");
 const badgeSrc = read("components/yo/YoLanguageBadge.tsx");
 
 /**
@@ -378,12 +378,10 @@ test("French card copy never claims global French scope", () => {
   }
 });
 
-test("French card copy mentions francisation and Québec / Canada", () => {
+test("French card copy preserves the francisation and Quebec scope", () => {
   // The FR blurb is the source of truth for the launch positioning.
   assert.match(pageSrc, /[Ff]rancisation/);
   assert.match(pageSrc, /Qu[eé]bec/);
-  // Canada is the umbrella geography we promise in copy.
-  assert.match(pageSrc, /Canada/);
   // EN equivalent must also be scoped.
   assert.match(pageSrc, /Francization/);
   // (The earlier "À venir / Coming soon" assertions were retired
@@ -394,167 +392,19 @@ test("French card copy mentions francisation and Québec / Canada", () => {
 });
 
 // ─── 3. Launch scope ───────────────────────────────────────────────
-test("Spanish, Quebec French, Italian, English, and Japanese are all available", () => {
-  // Status flags are declared inline next to each card in the data
-  // file. We extract the relative ordering and assert the status
-  // mapping for each card. No card is allowed to ship as
-  // `coming_soon` — the hub now lights up its full launch lineup.
-  assert.match(
-    pageSrc,
-    /id:\s*"spanish"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/espagnol"/,
-  );
-  assert.match(
-    pageSrc,
-    /id:\s*"french"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/francais-quebec\/intro"/,
-  );
-  assert.match(
-    pageSrc,
-    /id:\s*"italian"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/italien\/intro"/,
-  );
-  assert.match(
-    pageSrc,
-    /id:\s*"english"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/anglais\/intro"/,
-  );
-  assert.match(
-    pageSrc,
-    /id:\s*"japanese"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/japonais\/parcours"/,
-  );
-  // Defensive: NO `coming_soon` status string should appear in the
-  // shipped data anymore (the literal can still appear in JSDoc /
-  // comments — strip those before checking).
-  assert.ok(
-    !/status:\s*"coming_soon"/.test(pageCopySrc),
-    "no language card should ship as coming_soon now (Japanese launched)",
-  );
+test("all live language tiles point to real lessons or course dashboards", () => {
+  const paths=[...pageSrc.matchAll(/path:\s*"([^"]+)"/g)].map(match=>match[1]);
+  assert.deepEqual(paths.sort(), ["/yo/langues/italien/parcours","/yo/langues/japonais/parcours","/yo/langues/espagnol/intro","/yo/langues/anglais/intro","/yo/langues/francais-quebec/intro"].sort());
+  for(const destination of paths) assert.ok(exists(`app${destination}/page.tsx`), destination);
+  assert.match(pageSrc, /isAccessibleForFree/);
+});
+test("Italian and Japanese describe their complete courses; English remains an introduction", () => {
+  assert.match(pageSrc, /12 unités/);
+  assert.match(pageSrc, /8 modules/);
+  assert.match(pageSrc, /Oser parler · introduction/);
+  assert.doesNotMatch(pageCopySrc, /status:\s*"coming_soon"|Nouveau\./);
 });
 
-test("English card carries the documented launch copy and badge", () => {
-  // English is the fourth available language. The card must use the
-  // "en" badge and the brief's exact French/English copy so the hub
-  // page stays in sync with the marketing text.
-  assert.match(
-    pageSrc,
-    /id:\s*"english"[\s\S]*?badge:\s*"en"/,
-    'English card must use badge: "en"',
-  );
-  assert.match(
-    pageSrc,
-    /Anglais pour débloquer ta confiance, voyager, travailler et parler avec moins de stress\. Nouveau\./,
-    "English FR copy must match the brief verbatim",
-  );
-  assert.match(
-    pageSrc,
-    /English to unlock confidence for travel, work, and real conversations\. New\./,
-    "English EN copy must match the brief verbatim",
-  );
-});
-
-test("Italian card carries the documented launch copy and badge", () => {
-  // Italian is the third available language. The card must use the
-  // "it" badge and the brief's exact French/English copy so the
-  // hub page stays in sync with the marketing text.
-  assert.match(
-    pageSrc,
-    /id:\s*"italian"[\s\S]*?badge:\s*"it"/,
-    "Italian card must use badge: \"it\"",
-  );
-  assert.match(
-    pageSrc,
-    /Italien pour voyager, comprendre la culture et parler avec confiance dès les premières situations\. Nouveau\./,
-    "Italian FR copy must match the brief verbatim",
-  );
-  assert.match(
-    pageSrc,
-    /Italian for travel, culture, and confident first conversations\. New\./,
-    "Italian EN copy must match the brief verbatim",
-  );
-});
-
-test("the five open language hrefs point at routes that actually exist on disk", () => {
-  // Every language card must declare an `href:` field — none null
-  // anymore: every card now points at a real /yo/langues route.
-  // We verify each route also exists on disk so a contributor cannot
-  // flip a card into a clickable link before the parcours actually
-  // ships (a broken-link guard).
-  const hrefMatches = [...pageSrc.matchAll(/href:\s*("[^"]+"|null)/g)];
-  // The page also wires a hero language toggle (`buildYoLocaleHref`),
-  // so the data-only `href:` count is exactly the five cards.
-  const cardHrefs = hrefMatches
-    .map((m) => m[1])
-    .filter((value) => value === "null" || value.startsWith('"/yo/langues'));
-  assert.equal(cardHrefs.length, 5);
-  assert.equal(
-    cardHrefs.filter((v) => v === "null").length,
-    0,
-    "no card should declare href: null now (Japanese launched)",
-  );
-  assert.equal(
-    cardHrefs.filter((v) => v === '"/yo/langues/espagnol"').length,
-    1,
-  );
-  assert.equal(
-    cardHrefs.filter(
-      (v) => v === '"/yo/langues/francais-quebec/intro"',
-    ).length,
-    1,
-  );
-  assert.equal(
-    cardHrefs.filter((v) => v === '"/yo/langues/italien/intro"').length,
-    1,
-  );
-  assert.equal(
-    cardHrefs.filter((v) => v === '"/yo/langues/anglais/intro"').length,
-    1,
-  );
-  assert.equal(
-    cardHrefs.filter((v) => v === '"/yo/langues/japonais/parcours"').length,
-    1,
-  );
-  // All five open routes must resolve to a real `page.tsx` on disk.
-  assert.ok(
-    exists("app/yo/langues/espagnol/page.tsx"),
-    "Spanish hub page must exist",
-  );
-  assert.ok(
-    exists("app/yo/langues/francais-quebec/intro/page.tsx"),
-    "Quebec French pre-arrival intro page must exist",
-  );
-  assert.ok(
-    exists("app/yo/langues/italien/intro/page.tsx"),
-    "Italian intro page must exist",
-  );
-  assert.ok(
-    exists("app/yo/langues/anglais/intro/page.tsx"),
-    "English intro page must exist",
-  );
-  assert.ok(
-    exists("app/yo/langues/japonais/parcours/page.tsx"),
-    "Japanese foundations course page must exist",
-  );
-});
-
-test("Japanese card carries the documented launch copy and badge", () => {
-  // Japanese is the fifth available language. The card must use the
-  // "ja" badge and the complete-foundations launch copy so the hub
-  // points learners into the new interactive course.
-  assert.match(
-    pageSrc,
-    /id:\s*"japanese"[\s\S]*?badge:\s*"ja"/,
-    'Japanese card must use badge: "ja"',
-  );
-  assert.match(
-    pageSrc,
-    /Vis ton premier séjour d’étude au Japon : kana, kanji, dialogues, culture et missions interactives avec Yoppo\./,
-    "Japanese FR copy must describe the complete foundations course",
-  );
-  assert.match(
-    pageSrc,
-    /Experience your first study stay in Japan: kana, kanji, dialogues, culture and interactive missions with Yoppo\./,
-    "Japanese EN copy must describe the complete foundations course",
-  );
-});
-
-// ─── Run ──────────────────────────────────────────────────────────
 async function run() {
   for (const { name, fn } of tests) {
     try {

@@ -63,21 +63,16 @@ test("Dominican intro image cards are image-only or map cards with stable full-w
   );
 });
 
-test("language catalogue uses auto-fit cards with a comfortable minimum width and no horizontal scroller", () => {
-  const src = read("app/yo/langues/page.tsx");
-  const code = stripComments(src);
-
-  assert.match(code, /data-yo-langues-grid-min-card-width="280px"/);
-  assert.match(code, /repeat\(auto-fit,minmax\(min\(100%,280px\),1fr\)\)/);
-  assert.match(code, /centerMaxWidth:\s*"none"/);
-  assert.doesNotMatch(
-    code,
-    /data-yo-langues-tiles-variant="desktop"[\s\S]{0,260}overflow-x-auto/,
-  );
-  assert.doesNotMatch(
-    code,
-    /data-yo-langues-tiles-variant="desktop"[\s\S]{0,260}sm:grid-cols-2\s+xl:grid-cols-3/,
-  );
+test("language catalogue uses shrinkable single-column mobile cards and two desktop columns without horizontal scrolling", () => {
+  const page = stripComments(read("app/yo/langues/page.tsx"));
+  const cards = stripComments(read("components/yo/YoLanguageQuickStart.tsx"));
+  assert.match(page, /<YoLanguageQuickStart locale=\{locale\}/);
+  assert.match(page, /<YoAppShellScroller/);
+  assert.match(cards, /<ul className="grid min-w-0 gap-3 md:grid-cols-2"/);
+  assert.match(cards, /<li key=\{language.id\} className="min-w-0"/);
+  assert.match(cards, /min-w-0 flex-1/);
+  assert.match(cards, /break-words/);
+  assert.doesNotMatch(cards, /overflow-x-auto|min-w-\[(?:[3-9]\d{2}|\d{4})px\]/);
 });
 
 test("audio feedback pill is constrained to a content-width lane, not raw viewport right edge", () => {

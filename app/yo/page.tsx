@@ -37,10 +37,12 @@ import { YoAppHeroCard } from "@/components/yo/YoAppHeroCard";
 import { YoAppLandingShell } from "@/components/yo/YoAppLandingShell";
 import { YoAppValueStrip } from "@/components/yo/YoAppValueStrip";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
+import { YoLanguageQuickStart } from "@/components/yo/YoLanguageQuickStart";
+import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
 import { YoPublicCompanionOnboardingCard } from "@/components/yo/YoPublicCompanionOnboardingCard";
 import { SITE_URL } from "@/lib/seo/site";
 import { dominicanRepublicA1 } from "@/lib/yo/dominicanRepublicA1";
-import { buildYoLocaleHref, formatYoPrice, getYoLocale, t } from "@/lib/yo/localize";
+import { formatYoPrice, getYoLocale, t } from "@/lib/yo/localize";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -259,7 +261,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
   const locale = getYoLocale(resolvedSearchParams.lang);
   const yoModule = dominicanRepublicA1.module;
-  const langSuffix = locale === "en" ? "?lang=en" : "";
+  const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
   // Primary path: nudge users into the new IA tree.
   const languesHref = `/yo/langues${langSuffix}`;
   // Featured shortcut: keep the existing RD destination one click away,
@@ -269,33 +271,20 @@ export default async function YoHubPage({ searchParams }: PageProps) {
   // top-level families — Francisation is a sub-program of Langues, not
   // a fourth IA branch.
   const francisationHref = `/yo/langues/francais-quebec${langSuffix}`;
-  const toggleHref = buildYoLocaleHref("/yo", locale === "fr" ? "en" : "fr");
 
   return (
-    <div className="min-h-[100dvh] bg-[#F4EFE6] text-[#172642]">
-      {/*
-        * Sticky header keeps the existing left-aligned YoPratiqo
-        * brand mark + language toggle + "Voir les langues" CTA so
-        * the global navigation stays where signed-in students
-        * expect it. The palette is refreshed to the warm cream
-        * the new app-like shell uses, so the boundary between
-        * header and onboarding screen feels continuous.
-        */}
-      <header className="sticky top-0 z-50 border-b border-[#E7DFCF] bg-[#F4EFE6]/90 backdrop-blur-md">
+    <div className="min-h-[100dvh] bg-[#f5f8f7] text-[#172642]">
+      {/* The direct language list replaces the redundant mobile header shortcut. */}
+      <header className="sticky top-0 z-50 border-b border-emerald-100 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
           <Link href="/yo" aria-label="YoPratiqo" className="shrink-0">
             <YoPratiqoLogo size="sm" priority={false} />
           </Link>
           <nav aria-label="YoPratiqo" className="flex items-center gap-2">
-            <Link
-              href={toggleHref}
-              className="hidden rounded-full border border-[#E7DFCF] bg-white/70 px-3 py-1.5 text-xs font-bold text-[#172642] transition hover:bg-white sm:inline-flex"
-            >
-              {t(HUB_COPY.languageToggle, locale)}
-            </Link>
+            <YoLanguageSelector locale={locale} pathname="/yo" />
             <Link
               href={languesHref}
-              className="inline-flex items-center rounded-full border border-[#13A085]/30 bg-[#E3F1EB] px-4 py-2 text-sm font-bold text-[#172642] shadow-[0_1px_0_rgba(19,160,133,0.18)] transition hover:bg-[#d8ecdf]"
+              className="hidden items-center rounded-full border border-[#13A085]/30 bg-[#E3F1EB] px-4 py-2 text-sm font-bold text-[#172642] shadow-[0_1px_0_rgba(19,160,133,0.18)] transition hover:bg-[#d8ecdf] sm:inline-flex"
             >
               {t(HUB_COPY.navCtaLangues, locale)}
             </Link>
@@ -304,6 +293,17 @@ export default async function YoHubPage({ searchParams }: PageProps) {
       </header>
 
       <main>
+        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-10">
+          <h1 className="mb-4 text-sm font-semibold text-emerald-900">YoPratiqo</h1>
+          <YoLanguageQuickStart locale={locale} />
+          <Link href="/" className="mt-5 inline-flex min-h-11 items-center text-sm font-semibold text-emerald-900 underline underline-offset-4">
+            {{fr: "Retour à Pratiqo", en: "Back to Pratiqo", es: "Volver a Pratiqo"}[locale]}
+          </Link>
+        </div>
+        <details className="border-t border-emerald-100">
+          <summary className="mx-auto max-w-5xl cursor-pointer px-5 py-5 text-sm font-semibold text-emerald-900">
+            {{fr: "Découvrir YoPratiqo", en: "About YoPratiqo", es: "Descubrir YoPratiqo"}[locale]}
+          </summary>
         {/*
          * App-like onboarding screen. Below `lg`: mobile-first,
          * narrow column, warm cream background, premium serif
@@ -388,7 +388,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
             </div>
           }
         >
-          <YoAppHeroCard locale={locale} />
+          <YoAppHeroCard locale={locale} headingLevel="h2" />
           <YoAppValueStrip locale={locale} />
         </YoAppLandingShell>
 
@@ -551,6 +551,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
             </div>
           </div>
         </section>
+        </details>
       </main>
     </div>
   );

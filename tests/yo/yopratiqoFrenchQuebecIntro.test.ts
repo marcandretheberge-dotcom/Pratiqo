@@ -83,7 +83,8 @@ test("data file and page route both exist on disk", () => {
 });
 
 test("language hub links to the new Quebec French intro", () => {
-  assert.match(hubSrc, /\/yo\/langues\/francais-quebec\/intro/);
+  assert.match(hubSrc, /<YoLanguageQuickStart locale=\{locale\}/);
+  assert.match(read("components/yo/YoLanguageQuickStart.tsx"), /\/yo\/langues\/francais-quebec\/intro/);
 });
 
 // ─── 2. Module shape ───────────────────────────────────────────────

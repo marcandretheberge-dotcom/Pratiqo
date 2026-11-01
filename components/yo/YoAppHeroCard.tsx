@@ -112,11 +112,13 @@ const HREFS = {
 export type YoAppHeroCardProps = {
   locale: YoLocale;
   className?: string;
+  headingLevel?: "h1" | "h2";
 };
 
 export function YoAppHeroCard({
   locale,
   className,
+  headingLevel: Heading = "h1",
 }: YoAppHeroCardProps): React.JSX.Element {
   const l = safeLocale(locale);
   const copy = COPY[l];
@@ -166,12 +168,12 @@ export function YoAppHeroCard({
       </div>
 
       {/* 4. Editorial serif headline */}
-      <h1
+      <Heading
         data-testid="yo-app-hero-headline"
         className="font-yo-app-display text-3xl font-semibold leading-[1.12] tracking-tight text-[#172642] sm:text-[34px]"
       >
         {copy.headline}
-      </h1>
+      </Heading>
 
       {/* 5. Teal handwritten script accent — small, friendly, sits
          between the headline and the body so the page reads as a

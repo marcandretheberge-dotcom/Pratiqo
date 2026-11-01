@@ -32,7 +32,9 @@ import { YO_PRODUCT_FAMILIES } from "@/lib/yo/yopratiqoLandingContent";
 const REPO_ROOT = process.cwd();
 
 function read(relativePath: string): string {
-  return readFileSync(join(REPO_ROOT, relativePath), "utf8").replace(
+  const source = readFileSync(join(REPO_ROOT, relativePath), "utf8")
+    + (relativePath === "app/yo/langues/page.tsx" ? readFileSync(join(REPO_ROOT, "components/yo/YoLanguageQuickStart.tsx"), "utf8") : "");
+  return source.replace(
     /\r\n/g,
     "\n",
   );
