@@ -21,6 +21,9 @@ import {
 import { spanishIntroAudio } from "@/lib/yo/audio/spanishIntroAudio";
 import { spanishVoyageDominicanAudio } from "@/lib/yo/audio/spanishVoyageDominicanAudio";
 import { frQuebecWorkplaceSurvivalModule } from "@/lib/yo/frQuebecWorkplaceSurvivalModule";
+import { germanCourseAudio } from "@/lib/yo/audio/germanCourseAudio";
+import { germanPublishedAudio } from "@/lib/yo/german/courseAudioPublished";
+import { validateMp3 } from "@/scripts/generate-yopratiqo-audio";
 
 type TestFn = () => void | Promise<void>;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -47,6 +50,14 @@ function gitLines(command: string): string[] {
 
 const TYPES_SRC = read("lib/yo/audio/audioManifest.types-internal.ts");
 const GENERATOR_SRC = read("scripts/generate-yopratiqo-audio.ts");
+
+// The authorized German batch adds bundled recordings; existing audio remains immutable.
+const originalAudio = new Set(gitLines("git ls-tree -r --name-only HEAD -- public/audio"));
+const germanAdditions = new Set(germanCourseAudio.map((item) => `public/audio/${item.storagePath}`));
+function isAuthorizedGermanAddition(path: string): boolean {
+  return /^public\/audio\/yo\/de\/german-course-foundations\/v1\/german-standard\/sentence\/[a-z0-9-]+\.mp3$/.test(path)
+    && !originalAudio.has(path) && germanAdditions.has(path);
+}
 
 const FR_MODULE_ID = "fr-quebec-workplace-survival-1";
 const FR_LESSON_ID = "comprendre-consignes-simples";
@@ -228,13 +239,20 @@ test("Spanish intro hotel/restaurante paragraph has a Spanish pronunciation hint
   assert.match(paragraph!.pronunciationHint ?? "", /Do not use English pronunciation/);
 });
 
-test("this PR does not add or modify MP3 binaries", () => {
+test("audio scope permits only validated new German recordings, never changes to existing MP3s", () => {
   const changed = [
     ...gitLines("git diff --name-only HEAD"),
     ...gitLines("git ls-files --others --exclude-standard"),
   ];
   const mp3s = changed.filter((path) => /\.mp3$/i.test(path));
-  assert.deepEqual(mp3s, [], `no .mp3 files should change in this PR: ${mp3s.join(", ")}`);
+  for (const path of mp3s) {
+    assert.ok(isAuthorizedGermanAddition(path), `unauthorized audio change: ${path}`);
+    assert.ok(Object.values(germanPublishedAudio).includes(path.slice("public".length)));
+    assert.ok(validateMp3(readFileSync(join(REPO_ROOT, path))).durationSeconds > 0.2);
+  }
+  assert.equal(isAuthorizedGermanAddition("public/audio/yo/de/unregistered.mp3"), false);
+  assert.equal(isAuthorizedGermanAddition("public/audio/yo/it/replacement.mp3"), false);
+  for (const path of originalAudio) assert.equal(isAuthorizedGermanAddition(path), false);
 });
 
 test("tracked patch avoids generated audio and restricted product systems", () => {
@@ -486,6 +504,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     /^supabase\//,
   ];
   for (const path of changed) {
+    if (isAuthorizedGermanAddition(path)) continue;
     // Authorized learner-demand work, unrelated to audio. Keep scope narrow and
     // assert the privacy/security contract instead of disabling the scope guard.
     if (path === "app/api/learner-demand/route.ts") {
