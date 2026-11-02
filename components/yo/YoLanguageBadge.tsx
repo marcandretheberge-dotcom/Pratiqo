@@ -3,7 +3,8 @@
  *
  * Flag SVG artwork adapted from Wikimedia Commons public-domain / CC0 flag
  * files, including Flag of Italy.svg, Flag of Spain.svg, Flag of Quebec.svg,
- * Flag of the United Kingdom (3-5).svg, and Flag of Japan.svg. Inlined to
+ * Flag of the United Kingdom (3-5).svg, and Flag of Japan.svg. Germany and
+ * Brazil use compact inline geometry matching their national flag layouts. Inlined to
  * avoid production asset-path failures.
  *
  * `"do"` (Dominican Republic) is a country flag, not a language flag —
@@ -17,7 +18,7 @@
 import type { ReactElement } from "react";
 import { cn } from "@/lib/utils";
 
-export type YoLanguageBadgeId = "es" | "fr-ca" | "en" | "ja" | "it" | "do";
+export type YoLanguageBadgeId = "es" | "fr-ca" | "en" | "ja" | "it" | "de" | "pt-br" | "do";
 
 export interface YoLanguageBadgeProps {
   language: YoLanguageBadgeId;
@@ -111,6 +112,42 @@ function FlagItaly(): ReactElement {
   );
 }
 
+function FlagGermany(): ReactElement {
+  return (
+    <svg {...FLAG_SVG_PROPS} viewBox="0 0 5 3">
+      <rect width="5" height="1" y="0" fill="#000000" />
+      <rect width="5" height="1" y="1" fill="#DD0000" />
+      <rect width="5" height="1" y="2" fill="#FFCE00" />
+    </svg>
+  );
+}
+
+function FlagBrazil(): ReactElement {
+  return (
+    <svg {...FLAG_SVG_PROPS} viewBox="0 0 10 7">
+      <rect width="10" height="7" fill="#009C3B" />
+      <path d="M5 .7 9 3.5 5 6.3 1 3.5Z" fill="#FFDF00" />
+      <circle cx="5" cy="3.5" r="1.75" fill="#002776" />
+      <path
+        d="M3.45 3.05c1.45-.38 3.2-.15 4.05.55"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth=".27"
+        strokeLinecap="round"
+      />
+      <g fill="#FFFFFF">
+        <circle cx="4.15" cy="3.55" r=".09" />
+        <circle cx="4.55" cy="3.08" r=".08" />
+        <circle cx="4.85" cy="3.82" r=".08" />
+        <circle cx="5.22" cy="3.25" r=".08" />
+        <circle cx="5.55" cy="3.72" r=".09" />
+        <circle cx="5.85" cy="3.18" r=".07" />
+        <circle cx="6.2" cy="3.58" r=".08" />
+      </g>
+    </svg>
+  );
+}
+
 function FlagDominicanRepublic(): ReactElement {
   return (
     <svg {...FLAG_SVG_PROPS} viewBox="0 0 750 500">
@@ -125,6 +162,8 @@ const LANGUAGE_FLAGS: Record<YoLanguageBadgeId, () => ReactElement> = {
   en: FlagUnitedKingdom,
   ja: FlagJapan,
   it: FlagItaly,
+  de: FlagGermany,
+  "pt-br": FlagBrazil,
   do: FlagDominicanRepublic,
 };
 

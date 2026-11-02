@@ -35,12 +35,12 @@ export function YoLanguageQuickStart({ locale }: { locale: YoLocale }) {
         </Link></li>;
       })}
       <li className="min-w-0"><Link href={buildYoLocaleHref("/yo/langues/allemand/parcours", locale)} className="group flex min-h-24 min-w-0 items-center gap-3 rounded-lg border border-emerald-100 bg-white p-4 text-emerald-950 shadow-sm transition hover:border-emerald-600 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
-        <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-sm font-bold">DE</span>
+        <YoLanguageBadge language="de" ariaLabel={t(lstr("Allemagne", "Germany", "Alemania"), locale)} />
         <span className="min-w-0 flex-1"><span className="block break-words text-base font-bold">{t(lstr("Allemand", "German", "Alemán"), locale)}</span><span className="mt-1 block text-xs leading-relaxed text-gray-600">{t(lstr("Premiers pas avec Yoppo · 8 étapes", "First steps with Yoppo · 8 stops", "Primeros pasos con Yoppo · 8 etapas"), locale)}</span></span>
         <ArrowRight size={18} className="shrink-0 text-emerald-700" aria-hidden />
       </Link></li>
       <li className="min-w-0"><Link href={buildYoLocaleHref("/yo/langues/portugais-bresil/parcours", locale)} className="group flex min-h-24 min-w-0 items-center gap-3 rounded-lg border border-emerald-100 bg-white p-4 text-emerald-950 shadow-sm transition hover:border-emerald-600 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
-        <span aria-hidden className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-sm font-bold">BR</span>
+        <YoLanguageBadge language="pt-br" ariaLabel={t(lstr("Brésil", "Brazil", "Brasil"), locale)} />
         <span className="min-w-0 flex-1"><span className="block break-words text-base font-bold">{t(lstr("Portugais du Brésil", "Brazilian Portuguese", "Portugués de Brasil"), locale)}</span><span className="mt-1 block text-xs leading-relaxed text-gray-600">{t(lstr("Premières rencontres au Brésil · 8 étapes", "First encounters in Brazil · 8 stops", "Primeros encuentros en Brasil · 8 etapas"), locale)}</span></span>
         <ArrowRight size={18} className="shrink-0 text-emerald-700" aria-hidden />
       </Link></li>
