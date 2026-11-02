@@ -105,7 +105,7 @@ test("page no longer carries raw Unicode regional-indicator emoji on the languag
   );
 });
 
-test("page declares badge ids for the five launch languages", () => {
+test("page declares badge ids for the core launch languages", () => {
   for (const id of ['"es"', '"fr-ca"', '"en"', '"ja"', '"it"']) {
     assert.ok(
       pageSrc.includes(`badge: ${id}`),
@@ -124,7 +124,7 @@ test("YoLanguageBadge component renders accessible swatches without emoji", () =
   // five launch languages so the page's `badge:` field is type-safe.
   assert.match(
     badgeSrc,
-    /YoLanguageBadgeId\s*=\s*"es"\s*\|\s*"fr-ca"\s*\|\s*"en"\s*\|\s*"ja"\s*\|\s*"it"/,
+    /YoLanguageBadgeId\s*=\s*"es"\s*\|\s*"fr-ca"\s*\|\s*"en"\s*\|\s*"ja"\s*\|\s*"it"\s*\|\s*"de"\s*\|\s*"pt-br"/,
   );
 });
 
@@ -164,7 +164,7 @@ test("YoLanguageBadge does not reference external /images/yo/flags asset paths",
 test("YoLanguageBadge declares an inline-SVG renderer for every language id", () => {
   // Each badge id must appear as a key in the inline renderer map
   // so the type system rules out a missing flag at compile time.
-  for (const id of ["es:", '"fr-ca":', "en:", "ja:", "it:"]) {
+  for (const id of ["es:", '"fr-ca":', "en:", "ja:", "it:", "de:", '"pt-br":']) {
     assert.ok(
       badgeSrc.includes(id),
       `YoLanguageBadge must declare an entry for ${id}`,
@@ -182,7 +182,12 @@ test("YoLanguageBadge declares an inline-SVG renderer for every language id", ()
     "#C8102E", // UK red
     "#BC002D", // Japan red
     "#009246", // Italy green from Wikimedia "Flag of Italy.svg"
-    "#CE2B37", // Italy red  from Wikimedia "Flag of Italy.svg"
+    "#CE2B37", // Italy red  from Wikimedia "Flag of Italy.svg",
+    "#DD0000", // Germany red
+    "#FFCE00", // Germany gold
+    "#009C3B", // Brazil green
+    "#FFDF00", // Brazil yellow
+    "#002776", // Brazil blue
   ];
   for (const fill of expectedFlagFills) {
     assert.ok(
@@ -311,6 +316,24 @@ test("United Kingdom renderer embeds the Wikimedia 3-5 source structure", () => 
     /clip-path=\\"url\(#t\)\\"/,
     "UK source must reference the original source clipPath",
   );
+});
+
+test("German and Brazilian Portuguese cards use real YoLanguageBadge flags", () => {
+  assert.match(pageSrc, /<YoLanguageBadge language="de"/);
+  assert.match(pageSrc, /<YoLanguageBadge language="pt-br"/);
+  assert.doesNotMatch(pageSrc, />DE<\/span>/);
+  assert.doesNotMatch(pageSrc, />BR<\/span>/);
+});
+
+test("Germany and Brazil render distinctive inline national flag geometry", () => {
+  assert.match(badgeSrcCode, /function FlagGermany/);
+  assert.match(badgeSrcCode, /#000000/);
+  assert.match(badgeSrcCode, /#DD0000/);
+  assert.match(badgeSrcCode, /#FFCE00/);
+  assert.match(badgeSrcCode, /function FlagBrazil/);
+  assert.match(badgeSrcCode, /#009C3B/);
+  assert.match(badgeSrcCode, /#FFDF00/);
+  assert.match(badgeSrcCode, /#002776/);
 });
 
 test("language flags never embed <text> labels inside the flag", () => {
