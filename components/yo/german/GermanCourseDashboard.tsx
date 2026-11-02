@@ -1,15 +1,12 @@
 "use client";
+import { useCourseExperience } from "./CourseExperience";
 import Link from "next/link";
-import Image from "next/image";
+import { CourseCulturePhoto } from "../italian/course/CourseCulturePhoto";
 import { ArrowRight, BookOpen, Camera, RotateCcw } from "lucide-react";
 import type { CourseCatalog } from "@/lib/yo/italian/course/courseTypes";
 import type { YoLocale } from "@/lib/yo/types";
 import { useItalianCourseProgress } from "../italian/course/useItalianCourseProgress";
 import { getDueActivityIds } from "@/lib/yo/italian/course/courseProgress";
-import {
-  GERMAN_PROGRESS_KEY,
-  germanCourseHref,
-} from "@/lib/yo/german/courseLogic";
 import { t } from "@/lib/yo/german/courseAuthoring";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { GermanCourseShell, button, outline, copy } from "./GermanCourseShared";
@@ -23,39 +20,29 @@ export function GermanCourseDashboard({
   catalog: CourseCatalog;
   audioReady?: boolean;
 }) {
-  const state = useItalianCourseProgress(catalog, GERMAN_PROGRESS_KEY),
+  const experience = useCourseExperience();
+  const state = useItalianCourseProgress(catalog, experience.progressKey),
     c = copy[locale];
   const due = getDueActivityIds(state.progress, catalog);
   const dueUnit = catalog.units.find((u) => u.activityIds.includes(due[0]));
   const resume = state.progress.resume;
+  const photo = catalog.units.find(unit => unit.photo)?.photo;
   const resumeHref = resume
-    ? `${germanCourseHref(locale, resume.unitId)}&lesson=${resume.lessonId}${resume.activityId ? `&activity=${resume.activityId}` : ""}`
-    : germanCourseHref(locale, "u01");
+    ? `${experience.href(locale, resume.unitId)}&lesson=${resume.lessonId}${resume.activityId ? `&activity=${resume.activityId}` : ""}`
+    : experience.href(locale, "u01");
   return (
     <GermanCourseShell locale={locale}>
       <section className="grid gap-5 border-b border-emerald-100 pb-7 md:grid-cols-[minmax(0,1fr)_280px]">
         <div>
           <p className="text-xs font-bold text-emerald-800">
-            DEUTSCH ·{" "}
+            {experience.name.toUpperCase()} ·{" "}
             {t("PREMIERS PAS", "FIRST STEPS", "PRIMEROS PASOS")[locale]}
           </p>
           <h1 className="mt-3 font-serif text-4xl text-emerald-950 sm:text-5xl">
-            {
-              t(
-                "L’allemand, dans la vraie vie.",
-                "German, in real life.",
-                "Alemán, en la vida real.",
-              )[locale]
-            }
+            {experience.title[locale]}
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-600">
-            {
-              t(
-                "Une rencontre, un café, un train à prendre. Avec Yoppo, trouve les mots pour faire le prochain pas.",
-                "A meeting, a coffee, a train to catch. With Yoppo, find the words for your next step.",
-                "Un encuentro, un café, un tren por tomar. Con Yoppo, encuentra las palabras para dar el siguiente paso.",
-              )[locale]
-            }
+            {experience.description[locale]}
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Link href={resumeHref} className={button}>
@@ -65,7 +52,7 @@ export function GermanCourseDashboard({
             {dueUnit ? (
               <Link
                 className={outline}
-                href={`${germanCourseHref(locale, dueUnit.id)}&lesson=${dueUnit.lessons.find((l) => l.activityIds.includes(due[0]))?.id}&activity=${due[0]}`}
+                href={`${experience.href(locale, dueUnit.id)}&lesson=${dueUnit.lessons.find((l) => l.activityIds.includes(due[0]))?.id}&activity=${due[0]}`}
               >
                 <RotateCcw size={16} aria-hidden />
                 {c.review} · {due.length}
@@ -84,36 +71,7 @@ export function GermanCourseDashboard({
           </p>
         </div>
         <div className="min-w-0 self-center">
-          <Image
-            src="/images/yo/german/berlin.webp"
-            alt={
-              t(
-                "Porte de Brandebourg à Berlin",
-                "Brandenburg Gate in Berlin",
-                "Puerta de Brandeburgo en Berlín",
-              )[locale]
-            }
-            width={1200}
-            height={800}
-            sizes="(max-width:768px) 100vw, 280px"
-            className="h-auto w-full rounded-lg"
-          />
-          <p className="mt-2 text-xs text-gray-600">
-            Pierre-Selim Huard ·{" "}
-            <a
-              href="https://commons.wikimedia.org/?curid=40351258"
-              className="underline"
-            >
-              {c.source}
-            </a>{" "}
-            ·{" "}
-            <a
-              href="https://creativecommons.org/licenses/by/4.0/"
-              className="underline"
-            >
-              CC BY 4.0
-            </a>
-          </p>
+          {photo ? <CourseCulturePhoto photo={photo} locale={locale} /> : null}
         </div>
       </section>
       {!audioReady ? (
@@ -141,7 +99,7 @@ export function GermanCourseDashboard({
             return (
               <li key={unit.id} className="min-w-0">
                 <Link
-                  href={germanCourseHref(locale, unit.id)}
+                  href={experience.href(locale, unit.id)}
                   className="block h-full rounded-lg border border-gray-200 bg-white p-5 transition hover:border-emerald-600 focus-visible:outline-2 focus-visible:outline-emerald-700"
                 >
                   <span className="text-xs font-bold text-emerald-700">
@@ -173,11 +131,11 @@ export function GermanCourseDashboard({
       </section>
       <section className="mt-8 grid gap-4 border-t border-gray-200 pt-6 sm:grid-cols-2">
         {catalog.assessments
-          .filter((a) => a.id === "de1-final" || a.theme === "culture")
+          .filter((a) => a.id === experience.finalId || a.theme === "culture")
           .map((a) => (
             <Link
               key={a.id}
-              href={germanCourseHref(
+              href={experience.href(
                 locale,
                 a.theme === "culture" ? "culture" : "final",
               )}

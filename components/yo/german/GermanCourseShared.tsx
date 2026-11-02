@@ -1,9 +1,9 @@
 "use client";
+import { useCourseExperience } from "./CourseExperience";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import type { YoLocale } from "@/lib/yo/types";
-import { germanCourseHref } from "@/lib/yo/german/courseLogic";
 import { t } from "@/lib/yo/german/courseAuthoring";
 export const button =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-950 disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800";
@@ -30,13 +30,13 @@ export const copy = {
     resume: "Reprendre",
     start: "Commencer",
     reset: "Effacer ma progression",
-    confirm: "Effacer la progression allemande sur cet appareil ?",
+    confirm: "Effacer la progression de ce parcours sur cet appareil ?",
     language: "Langue de l’interface",
     source: "Source",
     done: "Activités réussies",
     self: "Autoévaluation, pas une note de prononciation.",
     audio:
-      "Les enregistrements allemands sont en préparation. La version écrite reste accessible et les exercices d’écoute sont signalés avec aide.",
+      "Les enregistrements de ce parcours sont en préparation. La version écrite reste accessible et les exercices d’écoute sont signalés avec aide.",
   },
   en: {
     course: "The course",
@@ -57,13 +57,13 @@ export const copy = {
     resume: "Resume",
     start: "Start",
     reset: "Clear my progress",
-    confirm: "Clear German progress on this device?",
+    confirm: "Clear this course’s progress on this device?",
     language: "Interface language",
     source: "Source",
     done: "Activities completed",
     self: "Self-assessment, not a pronunciation score.",
     audio:
-      "German recordings are being prepared. Written practice remains available; listening tasks completed with a transcript are marked assisted.",
+      "Recordings for this course are being prepared. Written practice remains available; listening tasks completed with a transcript are marked assisted.",
   },
   es: {
     course: "El recorrido",
@@ -84,13 +84,13 @@ export const copy = {
     resume: "Retomar",
     start: "Empezar",
     reset: "Borrar mi progreso",
-    confirm: "¿Borrar el progreso de alemán en este dispositivo?",
+    confirm: "¿Borrar el progreso de este recorrido en este dispositivo?",
     language: "Idioma de la interfaz",
     source: "Fuente",
     done: "Actividades superadas",
     self: "Autoevaluación, no una nota de pronunciación.",
     audio:
-      "Las grabaciones alemanas están en preparación. La práctica escrita sigue disponible; la escucha con transcripción se registra con ayuda.",
+      "Las grabaciones de este recorrido están en preparación. La práctica escrita sigue disponible; la escucha con transcripción se registra con ayuda.",
   },
 };
 export function GermanCourseShell({
@@ -102,6 +102,7 @@ export function GermanCourseShell({
   unit?: string;
   children: ReactNode;
 }) {
+  const experience = useCourseExperience();
   return (
     <div
       lang={locale}
@@ -111,18 +112,18 @@ export function GermanCourseShell({
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-8">
           <Link
             href={
-              unit ? germanCourseHref(locale) : `/yo/langues?lang=${locale}`
+              unit ? experience.href(locale) : `/yo/langues?lang=${locale}`
             }
             className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-emerald-900"
           >
             <ArrowLeft size={17} aria-hidden />
-            YoPratiqo · Deutsch
+            YoPratiqo · {experience.name}
           </Link>
           <nav aria-label={copy[locale].language} className="flex gap-1">
             {(["fr", "en", "es"] as const).map((lang) => (
               <Link
                 key={lang}
-                href={germanCourseHref(lang, unit)}
+                href={experience.href(lang, unit)}
                 hrefLang={lang}
                 aria-current={locale === lang ? "page" : undefined}
                 className={`flex min-h-11 min-w-11 items-center justify-center rounded-lg text-xs font-bold ${locale === lang ? "bg-emerald-800 text-white" : "text-gray-700 hover:bg-emerald-50"}`}

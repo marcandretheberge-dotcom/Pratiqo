@@ -1,4 +1,5 @@
 "use client";
+import { useCourseExperience } from "./CourseExperience";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import type { CourseAssessment } from "@/lib/yo/italian/course/courseTypes";
@@ -7,7 +8,6 @@ import { ItalianGame } from "../italian/ItalianGames";
 import { ITALIAN_MODULE_AUDIO_STOP_EVENT } from "../italian/ItalianModuleAudio";
 import { CourseCulturePhoto } from "../italian/course/CourseCulturePhoto";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
-import { germanCourseHref } from "@/lib/yo/german/courseLogic";
 import { t } from "@/lib/yo/german/courseAuthoring";
 import { button, outline, copy } from "./GermanCourseShared";
 
@@ -25,6 +25,7 @@ export function GermanAssessment({
     assisted: boolean,
   ) => void;
 }) {
+  const experience = useCourseExperience();
   const [started, setStarted] = useState(false),
     [index, setIndex] = useState(0),
     [first, setFirst] = useState<boolean | null>(null),
@@ -138,13 +139,13 @@ export function GermanAssessment({
           <button type="button" className={button} onClick={restart}>
             {c.replay}
           </button>
-          <Link className={outline} href={germanCourseHref(locale)}>
+          <Link className={outline} href={experience.href(locale)}>
             {c.course}
           </Link>
-          {assessment.id === "de1-final" ? (
+          {assessment.id === experience.finalId ? (
             <Link
               className={outline}
-              href={germanCourseHref(locale, "culture")}
+              href={experience.href(locale, "culture")}
             >
               {
                 t(
@@ -210,14 +211,14 @@ export function GermanAssessment({
                 </p>
               ) : null}
               {question.kind === "type" ? (
-                <p className="mt-2 font-bold" lang="de">
+                <p className="mt-2 font-bold" lang={experience.language}>
                   {question.model}
                 </p>
               ) : null}
               {question.taughtInUnitId ? (
                 <Link
                   className="mt-3 inline-flex min-h-11 items-center text-sm text-emerald-800 underline"
-                  href={germanCourseHref(locale, question.taughtInUnitId)}
+                  href={experience.href(locale, question.taughtInUnitId)}
                 >
                   {c.review}
                 </Link>

@@ -1,4 +1,5 @@
 "use client";
+import { useCourseExperience } from "./CourseExperience";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -14,10 +15,6 @@ import type {
   CourseUnit,
 } from "@/lib/yo/italian/course/courseTypes";
 import type { YoLocale } from "@/lib/yo/types";
-import {
-  GERMAN_PROGRESS_KEY,
-  germanCourseHref,
-} from "@/lib/yo/german/courseLogic";
 import { t } from "@/lib/yo/german/courseAuthoring";
 import { getDueActivityIds } from "@/lib/yo/italian/course/courseProgress";
 import { ItalianAudioProvider } from "../italian/ItalianAudioProvider";
@@ -41,6 +38,7 @@ function RecallCards({
   locale: YoLocale;
   onHelp: () => void;
 }) {
+  const experience = useCourseExperience();
   const [index, setIndex] = useState(0),
     [revealed, setRevealed] = useState(false),
     [reverse, setReverse] = useState(false),
@@ -94,13 +92,13 @@ function RecallCards({
         >
           <RotateCcw size={16} aria-hidden />
           {reverse
-            ? "Deutsch → " + locale.toUpperCase()
-            : locale.toUpperCase() + " → Deutsch"}
+            ? experience.name + " → " + locale.toUpperCase()
+            : locale.toUpperCase() + " → " + experience.name}
         </button>
       </div>
       <div className="flex min-h-48 flex-col justify-center rounded-lg border border-emerald-200 bg-white p-6">
         <p
-          lang={reverse ? "de" : locale}
+          lang={reverse ? experience.language : locale}
           className="text-2xl font-semibold leading-relaxed"
         >
           {reverse ? word.it : word.meaning[locale]}
@@ -108,7 +106,7 @@ function RecallCards({
         {revealed ? (
           <div className="mt-5 border-t border-gray-200 pt-4">
             <p
-              lang={reverse ? locale : "de"}
+              lang={reverse ? locale : experience.language}
               className="text-xl text-emerald-900"
             >
               {reverse ? word.meaning[locale] : word.it}
@@ -155,7 +153,8 @@ function Workshop({
   done: boolean;
   onDone: (done: boolean) => void;
 }) {
-  const key = `yopratiqo:german-draft:${unit.production.id}:v1`,
+  const experience = useCourseExperience();
+  const key = `yopratiqo:${experience.draftPrefix}-draft:${unit.production.id}:v1`,
     [draft, setDraft] = useState(""),
     [ready, setReady] = useState(false),
     [stored, setStored] = useState(true),
@@ -183,7 +182,6 @@ function Workshop({
   }
   return (
     <section className="max-w-2xl">
-      <h2 className="text-2xl font-bold">{unit.production.title[locale]}</h2>
       <p className="mt-4 text-sm leading-relaxed">
         {unit.production.prompt[locale]}
       </p>
@@ -192,7 +190,7 @@ function Workshop({
       </label>
       <textarea
         id="german-draft"
-        lang="de"
+        lang={experience.language}
         rows={7}
         maxLength={4000}
         disabled={!ready}
@@ -244,7 +242,7 @@ function Workshop({
       </div>
       {model ? (
         <p
-          lang="de"
+          lang={experience.language}
           className="mt-4 whitespace-pre-line rounded-lg bg-emerald-50 p-4"
         >
           {unit.production.model}
@@ -295,7 +293,8 @@ type UnitProps = {
   initialActivityId?: string;
 };
 export function GermanCourseUnit(props: UnitProps) {
-  const state = useItalianCourseProgress(props.catalog, GERMAN_PROGRESS_KEY);
+  const experience = useCourseExperience();
+  const state = useItalianCourseProgress(props.catalog, experience.progressKey);
   return (
     <GermanUnitSession
       key={props.unit.id + "-" + state.progress.resetAt}
@@ -313,6 +312,7 @@ function GermanUnitSession({
   initialActivityId,
   state,
 }: UnitProps & { state: ReturnType<typeof useItalianCourseProgress> }) {
+  const experience = useCourseExperience();
   const c = copy[locale];
   const initialLesson = Math.max(
     0,
@@ -420,12 +420,12 @@ function GermanUnitSession({
     t("À voix haute", "Out loud", "En voz alta"),
   ];
   return (
-    <ItalianAudioProvider paths={audioPaths} language="de">
+    <ItalianAudioProvider paths={audioPaths} language={experience.language}>
       <GermanCourseShell locale={locale} unit={unit.id}>
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold text-emerald-800">
-              DEUTSCH · {String(unit.number).padStart(2, "0")}
+              {experience.name.toLocaleUpperCase()} · {String(unit.number).padStart(2, "0")}
             </p>
             <h1 className="mt-2 font-serif text-4xl text-emerald-950">
               {unit.title[locale]}
@@ -562,7 +562,7 @@ function GermanUnitSession({
                         <p className="mt-3 text-sm font-bold text-emerald-800">
                           {unit.cultureStop.observation[locale]}
                         </p>
-                        <p lang="de" className="mt-4 text-lg">
+                        <p lang={experience.language} className="mt-4 text-lg">
                           {unit.cultureStop.phrase.it}
                         </p>
                         <ItalianModuleAudio
@@ -599,7 +599,7 @@ function GermanUnitSession({
                         key={word.it}
                         className="mt-4 border-l-4 border-emerald-300 bg-white p-4"
                       >
-                        <p lang="de" className="text-xl font-semibold">
+                        <p lang={experience.language} className="text-xl font-semibold">
                           {word.it}
                         </p>
                         <p className="mt-2 text-sm text-gray-600">
@@ -622,7 +622,7 @@ function GermanUnitSession({
                         key={text}
                         className="mt-4 border-b border-gray-200 py-3"
                       >
-                        <p lang="de" className="mb-3 text-xl">
+                        <p lang={experience.language} className="mb-3 text-xl">
                           {text}
                         </p>
                         <ItalianModuleAudio text={text} locale={locale} />
@@ -632,7 +632,7 @@ function GermanUnitSession({
                 ) : null}
                 {study === 4 ? (
                   <div>
-                    <p lang="de" className="text-xl leading-9">
+                    <p lang={experience.language} className="text-xl leading-9">
                       {lesson.reading.it}
                     </p>
                     <div className="mt-4">
@@ -711,7 +711,7 @@ function GermanUnitSession({
                 </p>
                 {activity.id === lesson.readingActivityId ? (
                   <p
-                    lang="de"
+                    lang={experience.language}
                     className="mb-5 rounded-lg border border-emerald-200 bg-white p-5 text-lg leading-8"
                   >
                     {lesson.reading.it}
@@ -798,7 +798,7 @@ function GermanUnitSession({
                 }
               />
             ) : null}
-            <Link className={`${outline} mt-8`} href={germanCourseHref(locale)}>
+            <Link className={`${outline} mt-8`} href={experience.href(locale)}>
               <ArrowLeft size={16} aria-hidden />
               {c.course}
             </Link>

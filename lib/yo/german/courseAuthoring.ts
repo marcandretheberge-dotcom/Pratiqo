@@ -27,7 +27,7 @@ export interface GermanLessonSpec {
 }
 /** 'it' is the existing exercise engine's text slot, not a language identifier.
  * German rendering/audio/answer checking are selected by the course provider. */
-export function germanLesson(spec: GermanLessonSpec): CourseLesson {
+export function germanLesson(spec: GermanLessonSpec, language: "de" | "pt-BR" = "de"): CourseLesson {
   const { id, words } = spec;
   const explanation = t(
     `Le texte indique : ${spec.answers[0]}.`,
@@ -118,9 +118,9 @@ export function germanLesson(spec: GermanLessonSpec): CourseLesson {
         `${id}-write`,
         t("Retrouve les mots", "Recall the words", "Recuerda las palabras"),
         t(
-          `Écris en allemand : ${recall.meaning.fr}`,
-          `Write in German: ${recall.meaning.en}`,
-          `Escribe en alemán: ${recall.meaning.es}`,
+          `Écris en ${language === "de" ? "allemand" : "portugais du Brésil"} : ${recall.meaning.fr}`,
+          `Write in ${language === "de" ? "German" : "Brazilian Portuguese"}: ${recall.meaning.en}`,
+          `Escribe en ${language === "de" ? "alemán" : "portugués de Brasil"}: ${recall.meaning.es}`,
         ),
         spec.grammar,
       ),
