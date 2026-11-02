@@ -75,6 +75,7 @@ export type YoAudioAccentProfileId =
   | "quebec_french"
   | "italian_standard"
   | "canadian_english"
+  | "german_standard"
   | "japanese_standard";
 
 export interface YoAudioAccentProfile {
@@ -193,6 +194,14 @@ const PROFILES: Record<YoAudioAccentProfileId, YoAudioAccentProfile> = {
       "Speak in clear, friendly Canadian English for French-speaking beginner/intermediate learners. Use a natural but slightly slower pace. Keep pronunciation understandable and confidence-building. Do not exaggerate the accent.",
     defaultVoice: "alloy",
     bcp47Hint: "en-CA",
+  },
+  german_standard: {
+    id: "german_standard",
+    pathSlug: "german-standard",
+    label: "Standard German",
+    ttsInstructions: "Read the supplied German exactly once in clear standard German from Germany. Use a calm natural pace for beginners. Preserve umlauts, vowel length, ich/ach sounds and word stress. Do not translate, answer questions, add commentary or exaggerate a regional accent.",
+    defaultVoice: "alloy",
+    bcp47Hint: "de-DE",
   },
   japanese_standard: {
     id: "japanese_standard",

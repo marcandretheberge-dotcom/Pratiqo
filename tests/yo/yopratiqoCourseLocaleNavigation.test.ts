@@ -125,7 +125,7 @@ function assertHref(container: HTMLElement, selector: string, expected: string) 
 }
 function assertHub(container: HTMLElement, language: Locale, next: string) {
   for (const route of [
-    "/yo/langues/italien/parcours", "/yo/langues/japonais/parcours",
+    "/yo/langues/italien/parcours", "/yo/langues/japonais/parcours", "/yo/langues/allemand/parcours",
     "/yo/langues/espagnol/intro", "/yo/langues/francais-quebec/intro", "/yo/langues/anglais/intro",
   ]) assertHref(container, `[data-testid="yo-language-quick-start"] a[href="${url(route, language)}"]`, url(route, language));
   assertHref(container, '[data-testid="yo-student-hub-continue-cta"]', url(next, language));

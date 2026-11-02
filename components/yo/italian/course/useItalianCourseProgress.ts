@@ -4,11 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { CourseCatalog } from "@/lib/yo/italian/course/courseTypes";
 import { emptyCourseProgress, ITALIAN_COURSE_PROGRESS_KEY, markCourseProduction, mergeCourseProgress, parseCourseProgress, recordCourseActivity, recordCourseAssessment, resetCourseProgress, serializeCourseProgress, setCourseResume, type CourseProgress } from "@/lib/yo/italian/course/courseProgress";
 
-export function useItalianCourseProgress(catalog: CourseCatalog) {
+export function useItalianCourseProgress(catalog: CourseCatalog, storageKey = ITALIAN_COURSE_PROGRESS_KEY) {
   const [progress, setProgress] = useState(emptyCourseProgress);
   const [ready, setReady] = useState(false);
   const [storageAvailable, setStorageAvailable] = useState(true);
   const latest = useRef(progress);
+  const previousKey = useRef(storageKey);
 
   const apply = useCallback((next: CourseProgress) => {
     if (serializeCourseProgress(next) === serializeCourseProgress(latest.current)) return;
@@ -18,23 +19,24 @@ export function useItalianCourseProgress(catalog: CourseCatalog) {
 
   const persist = useCallback((next: CourseProgress) => {
     apply(next);
-    try { window.localStorage.setItem(ITALIAN_COURSE_PROGRESS_KEY, serializeCourseProgress(next)); setStorageAvailable(true); }
+    try { window.localStorage.setItem(storageKey, serializeCourseProgress(next)); setStorageAvailable(true); }
     catch { setStorageAvailable(false); }
-  }, [apply]);
+  }, [apply, storageKey]);
 
   useEffect(() => {
     // Catalog changes only prune invalid identifiers; they must not erase memory-only work.
-    const memory = parseCourseProgress(serializeCourseProgress(latest.current), catalog);
-    try { apply(mergeCourseProgress(memory, parseCourseProgress(window.localStorage.getItem(ITALIAN_COURSE_PROGRESS_KEY), catalog))); }
+    const memory = previousKey.current === storageKey ? parseCourseProgress(serializeCourseProgress(latest.current), catalog) : emptyCourseProgress();
+    previousKey.current = storageKey;
+    try { apply(mergeCourseProgress(memory, parseCourseProgress(window.localStorage.getItem(storageKey), catalog))); }
     catch { apply(memory); setStorageAvailable(false); }
     setReady(true);
 
     const sync = (event: StorageEvent) => {
-      if (event.key !== ITALIAN_COURSE_PROGRESS_KEY || event.newValue === null) return;
+      if (event.key !== storageKey || event.newValue === null) return;
       let merged = mergeCourseProgress(latest.current, parseCourseProgress(event.newValue, catalog));
       let stored: string | null;
       try {
-        stored = window.localStorage.getItem(ITALIAN_COURSE_PROGRESS_KEY);
+        stored = window.localStorage.getItem(storageKey);
         // Events may arrive after another write: include the current disk value as well.
         merged = mergeCourseProgress(merged, parseCourseProgress(stored, catalog));
       } catch { apply(merged); setStorageAvailable(false); return; }
@@ -44,17 +46,17 @@ export function useItalianCourseProgress(catalog: CourseCatalog) {
     };
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
-  }, [catalog, apply, persist]);
+  }, [catalog, apply, persist, storageKey]);
 
   const update = useCallback((change: (current: CourseProgress) => CourseProgress) => {
     let base = latest.current;
-    try { base = mergeCourseProgress(base, parseCourseProgress(window.localStorage.getItem(ITALIAN_COURSE_PROGRESS_KEY), catalog)); }
+    try { base = mergeCourseProgress(base, parseCourseProgress(window.localStorage.getItem(storageKey), catalog)); }
     catch { setStorageAvailable(false); }
     const next = change(base);
     if (next === base) { apply(base); return; }
     // No storage side effects inside a React state updater: actions persist immediately once.
     persist(next);
-  }, [catalog, apply, persist]);
+  }, [catalog, apply, persist, storageKey]);
 
   const recordActivity = useCallback((id: string, correct: boolean, assisted: boolean) => update(base => recordCourseActivity(base, catalog, id, correct, assisted)), [catalog, update]);
   const recordAssessment = useCallback((id: string, correct: number, total: number, assisted: boolean) => update(base => recordCourseAssessment(base, catalog, id, correct, total, assisted)), [catalog, update]);

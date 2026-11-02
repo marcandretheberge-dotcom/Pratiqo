@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEv
 import { createPortal } from "react-dom";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, EyeOff, Lightbulb, Minus, RotateCcw, Sparkles } from "lucide-react";
 
+import { useCourseLanguage } from "./ItalianAudioProvider";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { CompanionVisualState } from "@/lib/companion/companionVisuals";
 import type { YoLocale } from "@/lib/yo/types";
@@ -115,7 +116,8 @@ export function ItalianYoppoCoach({
   locale, contextId, message, hint, hint2, explanation, visualState = "idle", example, exampleAudio, onAction,
   canRetry = false, reviewCount = 0, completedCount = 0, totalCount = 0,
 }: ItalianYoppoCoachProps) {
-  const copy = COPY[locale];
+  const language = useCourseLanguage();
+  const copy = language === "de" ? { ...COPY[locale], subtitle: { fr: "Yoppo · ton compagnon allemand", en: "Yoppo · your German companion", es: "Yoppo · tu compañero de alemán" }[locale] } : COPY[locale];
   const panelId = useId();
   const headingId = useId();
   const instructionsId = useId();
@@ -282,7 +284,7 @@ export function ItalianYoppoCoach({
         {validTotal > 0 ? <div className="space-y-1.5"><div className="flex items-center justify-between gap-2 text-xs"><span>{copy.progress}</span><strong>{validCompleted} / {validTotal}</strong></div><progress aria-label={copy.progress} max={validTotal} value={validCompleted} className="h-2 w-full overflow-hidden rounded-full accent-[#426C48]" /></div> : null}
         <div role="status" aria-live="polite" aria-atomic="true" className="text-sm leading-relaxed">
           {activeSupport ? <div className="space-y-2 rounded-xl border border-[#D7DFCD] bg-[#F0F3E6] p-3"><p className="font-bold">{supportTitle}</p>{activeSupport.kind === "example" && example
-            ? <><p lang="it" className="text-lg font-semibold">{example.it}</p><p><span className="sr-only">{copy.meaning}: </span>{example.meaning[locale]}</p></>
+            ? <><p lang={language} className="text-lg font-semibold">{example.it}</p><p><span className="sr-only">{copy.meaning}: </span>{example.meaning[locale]}</p></>
             : <p>{activeSupport.kind === "hint" ? (activeSupport.level === 2 && hint2 ? hint2[locale] : hint[locale]) : explanation[locale]}</p>}</div>
             : <p>{message[locale]}</p>}
         </div>

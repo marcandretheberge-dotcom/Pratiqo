@@ -66,3 +66,4 @@ backups/
 
 # Resumable local TTS generation cache (MP3s and provenance)
 /.cache/yopratiqo-audio/
+/.cache/german-local-audio/
