@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:yo-portuguese": "node --import tsx tests/yo/yopratiqoPortugueseCourse.test.ts && node --import tsx tests/yo/yopratiqoPortuguesePlayer.test.ts",
     "test:yo-german": "node --import tsx tests/yo/yopratiqoGermanCourseContent.test.ts && node --import tsx tests/yo/yopratiqoGermanCoursePlayer.test.ts && node --import tsx tests/yo/yopratiqoGermanAudio.test.ts",
     "test:homepage": "node tests/marketing/homepageClarity.mjs && node tests/marketing/homepageMap.mjs && tsx tests/marketing/homepageMapArea.test.ts",
     "test:teacher-guided": "tsx tests/teachers/guidedSetup.test.ts && tsx tests/teachers/setupDraft.test.ts && node tests/teachers/guidedSetupRoute.mjs && node tests/teachers/guidedSetupLocation.mjs && node tests/teachers/guidedPublication.test.mjs",

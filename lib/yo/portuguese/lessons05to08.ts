@@ -1,0 +1,627 @@
+import { lesson as l, t } from "./courseAuthoring";
+export const lessons05to08 = [
+  l(
+    "u05-l1",
+    t("Arriver à la pousada", "Arrive at the guesthouse", "Llegar a la posada"),
+    t(
+      "Tenho exprime ce que j’ai. Uma reserva est une réservation; em nome de indique le nom. Une pousada est un hébergement, sans garantie de catégorie ou de prix.",
+      "Tenho expresses what I have. Uma reserva is a reservation; em nome de gives the name. A pousada is guest accommodation, not a guaranteed category or price.",
+      "Tenho expresa lo que tengo. Uma reserva es una reserva; em nome de indica el nombre. Una pousada es un alojamiento, no una garantía de categoría o precio.",
+    ),
+    t(
+      "Dans tenho, nh se prononce comme le gn français de montagne. Écoute puis garde ce son lié à la voyelle.",
+      "In tenho, nh resembles the ny sound in canyon. Listen and keep it connected to the vowel.",
+      "En tenho, nh se parece a la ñ española. Escúchalo unido a la vocal.",
+    ),
+    [
+      [
+        "Tenho uma reserva.",
+        "J’ai une réservation.",
+        "I have a reservation.",
+        "Tengo una reserva.",
+      ],
+      [
+        "Em nome de Ana.",
+        "Au nom d’Ana.",
+        "In Ana’s name.",
+        "A nombre de Ana.",
+      ],
+      [
+        "Por duas noites.",
+        "Pour deux nuits.",
+        "For two nights.",
+        "Por dos noches.",
+      ],
+      [
+        "Onde fica o quarto?",
+        "Où est la chambre ?",
+        "Where is the room?",
+        "¿Dónde está la habitación?",
+      ],
+    ],
+    [
+      "Boa tarde! Tenho uma reserva em nome de Ana, por duas noites.",
+      "Bonjour ! J’ai une réservation au nom d’Ana, pour deux nuits.",
+      "Good afternoon! I have a reservation in Ana’s name for two nights.",
+      "¡Buenas tardes! Tengo una reserva a nombre de Ana, por dos noches.",
+    ],
+    t(
+      "Combien de nuits sont prévues ?",
+      "How many nights are planned?",
+      "¿Cuántas noches están previstas?",
+    ),
+    ["Duas", "Uma", "Três"],
+  ),
+  l(
+    "u05-l2",
+    t("Les questions pratiques", "Practical questions", "Preguntas prácticas"),
+    t(
+      "Qual é…? demande une information précise. Às sete indique une heure. Café da manhã désigne le petit-déjeuner, pas seulement une boisson.",
+      "Qual é…? asks for specific information. Às sete gives a time. Café da manhã means breakfast, not just a drink.",
+      "Qual é…? pide un dato concreto. Às sete indica una hora. Café da manhã significa desayuno, no solo una bebida.",
+    ),
+    t(
+      "La senha est le mot de passe. Repère nh dans senha et manhã; leur rythme et leur fin ne sont pas identiques.",
+      "Senha means password. Notice nh in senha and manhã; their rhythm and endings differ.",
+      "Senha significa contraseña. Reconoce nh en senha y manhã; su ritmo y sus finales difieren.",
+    ),
+    [
+      [
+        "Qual é a senha do wi-fi?",
+        "Quel est le mot de passe du wi-fi ?",
+        "What is the wi-fi password?",
+        "¿Cuál es la contraseña del wifi?",
+      ],
+      [
+        "O café da manhã começa às sete.",
+        "Le petit-déjeuner commence à sept heures.",
+        "Breakfast starts at seven.",
+        "El desayuno empieza a las siete.",
+      ],
+      [
+        "Até que horas?",
+        "Jusqu’à quelle heure ?",
+        "Until what time?",
+        "¿Hasta qué hora?",
+      ],
+      [
+        "Onde posso deixar a mala?",
+        "Où puis-je laisser la valise ?",
+        "Where can I leave the suitcase?",
+        "¿Dónde puedo dejar la maleta?",
+      ],
+    ],
+    [
+      "O café da manhã começa às sete e termina às dez. A senha do wi-fi está na recepção.",
+      "Le petit-déjeuner commence à sept heures et finit à dix. Le mot de passe du wi-fi est à la réception.",
+      "Breakfast starts at seven and ends at ten. The wi-fi password is at reception.",
+      "El desayuno empieza a las siete y termina a las diez. La contraseña del wifi está en recepción.",
+    ],
+    t(
+      "Où est le mot de passe ?",
+      "Where is the password?",
+      "¿Dónde está la contraseña?",
+    ),
+    ["Na recepção", "Na mala", "No café"],
+  ),
+  l(
+    "u05-l3",
+    t("Signaler un problème", "Report a problem", "Avisar de un problema"),
+    t(
+      "Não fonctionne avant le verbe : não funciona. Preciso de introduit un besoin avec un nom : preciso de ajuda. Reste précis plutôt que de seulement dire ruim.",
+      "Não comes before the verb: não funciona. Preciso de introduces a need with a noun: preciso de ajuda. Be specific rather than just saying ruim.",
+      "Não va antes del verbo: não funciona. Preciso de introduce una necesidad con un nombre: preciso de ajuda. Sé preciso en vez de decir solo ruim.",
+    ),
+    t(
+      "Ajuda contient le même j que queijo. Dans chuveiro, ch se prononce comme ch en français, pas comme tch.",
+      "Ajuda has the same j as queijo. In chuveiro, ch sounds like English sh, not ch in chair.",
+      "Ajuda lleva la misma j que queijo. En chuveiro, ch suena como sh, no como la ch española.",
+    ),
+    [
+      [
+        "O chuveiro não funciona.",
+        "La douche ne fonctionne pas.",
+        "The shower does not work.",
+        "La ducha no funciona.",
+      ],
+      [
+        "Preciso de ajuda.",
+        "J’ai besoin d’aide.",
+        "I need help.",
+        "Necesito ayuda.",
+      ],
+      [
+        "Pode verificar, por favor?",
+        "Pouvez-vous vérifier, s’il vous plaît ?",
+        "Can you check, please?",
+        "¿Puede comprobarlo, por favor?",
+      ],
+      [
+        "Agora está funcionando.",
+        "Maintenant, ça fonctionne.",
+        "It is working now.",
+        "Ahora funciona.",
+      ],
+    ],
+    [
+      "Preciso de ajuda. O chuveiro não funciona. Pode verificar, por favor?",
+      "J’ai besoin d’aide. La douche ne fonctionne pas. Pouvez-vous vérifier, s’il vous plaît ?",
+      "I need help. The shower does not work. Can you check, please?",
+      "Necesito ayuda. La ducha no funciona. ¿Puede comprobarlo, por favor?",
+    ],
+    t(
+      "Quel est le problème ?",
+      "What is the problem?",
+      "¿Cuál es el problema?",
+    ),
+    ["O chuveiro", "A passagem", "O café"],
+  ),
+  l(
+    "u06-l1",
+    t("Choisir une sortie", "Choose an outing", "Elegir una salida"),
+    t(
+      "Quero + infinitif exprime un souhait; vamos + infinitif propose une activité. Você prefere…? invite l’autre à choisir.",
+      "Quero + infinitive expresses a wish; vamos + infinitive suggests an activity. Você prefere…? invites a choice.",
+      "Quero + infinitivo expresa un deseo; vamos + infinitivo propone una actividad. Você prefere…? invita a elegir.",
+    ),
+    t(
+      "Dans quero, qu se prononce k, sans u séparé. Compare quero et queijo : les voyelles ne sont pas identiques.",
+      "In quero, qu sounds like k, without a separate u. Compare the vowels of quero and queijo.",
+      "En quero, qu suena como k, sin u separada. Compara las vocales de quero y queijo.",
+    ),
+    [
+      [
+        "Quero visitar o museu.",
+        "Je veux visiter le musée.",
+        "I want to visit the museum.",
+        "Quiero visitar el museo.",
+      ],
+      [
+        "Vamos passear?",
+        "On va se promener ?",
+        "Shall we go for a walk?",
+        "¿Vamos a pasear?",
+      ],
+      [
+        "Você prefere a praia?",
+        "Tu préfères la plage ?",
+        "Do you prefer the beach?",
+        "¿Prefieres la playa?",
+      ],
+      ["Boa ideia!", "Bonne idée !", "Good idea!", "¡Buena idea!"],
+    ],
+    [
+      "Hoje quero visitar o museu. Amanhã podemos passear na praia.",
+      "Aujourd’hui, je veux visiter le musée. Demain, on peut se promener à la plage.",
+      "Today I want to visit the museum. Tomorrow we can walk on the beach.",
+      "Hoy quiero visitar el museo. Mañana podemos pasear por la playa.",
+    ],
+    t(
+      "Quelle sortie est prévue aujourd’hui ?",
+      "What outing is planned today?",
+      "¿Qué salida está prevista hoy?",
+    ),
+    ["O museu", "A praia", "O aeroporto"],
+  ),
+  l(
+    "u06-l2",
+    t("Changer de plan", "Change plans", "Cambiar de plan"),
+    t(
+      "Está chovendo décrit ce qui se passe maintenant. Podemos…? propose une alternative. Amanhã reste demain même si le plan change.",
+      "Está chovendo describes what is happening now. Podemos…? proposes an alternative. Amanhã still means tomorrow when plans change.",
+      "Está chovendo describe lo que ocurre ahora. Podemos…? propone una alternativa. Amanhã sigue siendo mañana aunque cambie el plan.",
+    ),
+    t(
+      "Chuva commence par le son ch français. Não et amanhã ont des voyelles nasales différentes : écoute-les séparément.",
+      "Chuva begins with English sh. Não and amanhã have different nasal vowels: listen separately.",
+      "Chuva empieza con el sonido sh. Não y amanhã tienen vocales nasales distintas: escúchalas por separado.",
+    ),
+    [
+      ["Está chovendo.", "Il pleut.", "It is raining.", "Está lloviendo."],
+      [
+        "Podemos ir amanhã?",
+        "Peut-on y aller demain ?",
+        "Can we go tomorrow?",
+        "¿Podemos ir mañana?",
+      ],
+      [
+        "Prefiro ficar aqui.",
+        "Je préfère rester ici.",
+        "I prefer to stay here.",
+        "Prefiero quedarme aquí.",
+      ],
+      [
+        "Vamos mudar o plano.",
+        "Changeons de plan.",
+        "Let us change the plan.",
+        "Cambiemos el plan.",
+      ],
+    ],
+    [
+      "Está chovendo. Prefiro ficar aqui hoje. Podemos ir ao parque amanhã?",
+      "Il pleut. Je préfère rester ici aujourd’hui. Peut-on aller au parc demain ?",
+      "It is raining. I prefer to stay here today. Can we go to the park tomorrow?",
+      "Está lloviendo. Prefiero quedarme aquí hoy. ¿Podemos ir al parque mañana?",
+    ],
+    t(
+      "Pourquoi change-t-on de plan ?",
+      "Why do the plans change?",
+      "¿Por qué cambian los planes?",
+    ),
+    ["Está chovendo", "O ônibus chegou", "O museu abriu"],
+  ),
+  l(
+    "u06-l3",
+    t(
+      "Inviter sans insister",
+      "Invite without pressure",
+      "Invitar sin insistir",
+    ),
+    t(
+      "Você quer…? invite. Não posso n’est pas nécessairement un refus définitif. Obrigado pelo convite remercie pour l’invitation; obrigada convient à une locutrice.",
+      "Você quer…? invites. Não posso is not necessarily a permanent refusal. Obrigado pelo convite thanks someone for inviting you; obrigada suits a female speaker.",
+      "Você quer…? invita. Não posso no es necesariamente un rechazo definitivo. Obrigado pelo convite agradece la invitación; obrigada corresponde a una hablante.",
+    ),
+    t(
+      "Dans posso, ss note un s sourd. Dans casa, un s entre voyelles sonne généralement z. Compare sans accélérer.",
+      "In posso, ss is a voiceless s. In casa, s between vowels usually sounds like z. Compare slowly.",
+      "En posso, ss es una s sorda. En casa, la s entre vocales suele sonar como z sonora. Compara despacio.",
+    ),
+    [
+      [
+        "Você quer almoçar comigo?",
+        "Tu veux déjeuner avec moi ?",
+        "Would you like to have lunch with me?",
+        "¿Quieres almorzar conmigo?",
+      ],
+      [
+        "Hoje não posso, mas amanhã sim.",
+        "Aujourd’hui, je ne peux pas, mais demain oui.",
+        "I cannot today, but I can tomorrow.",
+        "Hoy no puedo, pero mañana sí.",
+      ],
+      [
+        "Obrigado pelo convite.",
+        "Merci pour l’invitation. (dit par un homme)",
+        "Thank you for the invitation. (said by a man)",
+        "Gracias por la invitación. (dicho por un hombre)",
+      ],
+      ["Sem problema.", "Pas de problème.", "No problem.", "No hay problema."],
+    ],
+    [
+      "Você quer almoçar comigo? Hoje não posso, mas amanhã sim. Sem problema!",
+      "Tu veux déjeuner avec moi ? Aujourd’hui, je ne peux pas, mais demain oui. Pas de problème !",
+      "Would you like to have lunch with me? I cannot today, but I can tomorrow. No problem!",
+      "¿Quieres almorzar conmigo? Hoy no puedo, pero mañana sí. ¡No hay problema!",
+    ],
+    t(
+      "Quand l’invitation serait-elle possible ?",
+      "When would the invitation work?",
+      "¿Cuándo sería posible la invitación?",
+    ),
+    ["Amanhã", "Hoje", "Nunca"],
+  ),
+  l(
+    "u07-l1",
+    t(
+      "Se présenter au travail",
+      "Introduce yourself at work",
+      "Presentarse en el trabajo",
+    ),
+    t(
+      "Trabalho com indique un domaine ou une activité. Sou professeur/professeure : sou professor/professora. Com você, on dit trabalha, pas trabalho.",
+      "Trabalho com introduces a field or activity. Sou professor/professora means I am a teacher. With você, use trabalha, not trabalho.",
+      "Trabalho com introduce un campo o actividad. Sou professor/professora significa soy profesor/profesora. Con você se usa trabalha, no trabalho.",
+    ),
+    t(
+      "Dans trabalho, lh relie la consonne à la voyelle suivante. Il ne s’agit pas d’un l suivi d’un h prononcé.",
+      "In trabalho, lh is a connected palatal consonant, not l followed by a pronounced h.",
+      "En trabalho, lh es una consonante palatal unida, no una l seguida de h pronunciada.",
+    ),
+    [
+      [
+        "Trabalho com educação.",
+        "Je travaille dans l’éducation.",
+        "I work in education.",
+        "Trabajo en educación.",
+      ],
+      [
+        "Sou professora.",
+        "Je suis professeure.",
+        "I am a teacher. (female)",
+        "Soy profesora.",
+      ],
+      [
+        "Em que você trabalha?",
+        "Dans quoi travailles-tu ?",
+        "What do you do for work?",
+        "¿En qué trabajas?",
+      ],
+      [
+        "Estou aqui para aprender.",
+        "Je suis ici pour apprendre.",
+        "I am here to learn.",
+        "Estoy aquí para aprender.",
+      ],
+    ],
+    [
+      "Sou professora e trabalho com educação. Estou aqui para aprender português.",
+      "Je suis professeure et je travaille dans l’éducation. Je suis ici pour apprendre le portugais.",
+      "I am a teacher and work in education. I am here to learn Portuguese.",
+      "Soy profesora y trabajo en educación. Estoy aquí para aprender portugués.",
+    ],
+    t("Quel est son domaine ?", "What is her field?", "¿Cuál es su campo?"),
+    ["Educação", "Medicina", "Construção"],
+  ),
+  l(
+    "u07-l2",
+    t(
+      "Comprendre une consigne",
+      "Understand instructions",
+      "Entender una instrucción",
+    ),
+    t(
+      "Pode me mostrar? demande une démonstration. Primeiro et depois ordonnent les étapes. Por favor reste utile pour demander une précision.",
+      "Pode me mostrar? asks for a demonstration. Primeiro and depois order the steps. Por favor helps keep clarification polite.",
+      "Pode me mostrar? pide una demostración. Primeiro y depois ordenan los pasos. Por favor mantiene cortés la petición.",
+    ),
+    t(
+      "Dans depois, la syllabe forte est pois. Répète primeiro… depois… en marquant une pause entre les étapes.",
+      "Depois stresses pois. Repeat primeiro… depois… with a pause between steps.",
+      "Depois acentúa pois. Repite primeiro… depois… dejando una pausa entre pasos.",
+    ),
+    [
+      [
+        "Pode me mostrar?",
+        "Peux-tu me montrer ?",
+        "Can you show me?",
+        "¿Puedes mostrarme?",
+      ],
+      [
+        "Primeiro, leia o texto.",
+        "D’abord, lis le texte.",
+        "First, read the text.",
+        "Primero, lee el texto.",
+      ],
+      [
+        "Depois, escreva uma frase.",
+        "Ensuite, écris une phrase.",
+        "Then, write a sentence.",
+        "Después, escribe una frase.",
+      ],
+      [
+        "Tenho uma dúvida.",
+        "J’ai une question.",
+        "I have a question.",
+        "Tengo una duda.",
+      ],
+    ],
+    [
+      "Primeiro, leia o texto. Depois, escreva uma frase. Se precisar, peça ajuda.",
+      "D’abord, lis le texte. Ensuite, écris une phrase. Si nécessaire, demande de l’aide.",
+      "First, read the text. Then, write a sentence. If needed, ask for help.",
+      "Primero, lee el texto. Después, escribe una frase. Si hace falta, pide ayuda.",
+    ],
+    t(
+      "Quelle est la première étape ?",
+      "What is the first step?",
+      "¿Cuál es el primer paso?",
+    ),
+    ["Ler o texto", "Escrever uma frase", "Sair"],
+  ),
+  l(
+    "u07-l3",
+    t(
+      "Écrire un message bref",
+      "Write a short message",
+      "Escribir un mensaje breve",
+    ),
+    t(
+      "Vou + infinitif annonce ton intention : vou enviar. Pode confirmar? demande une confirmation. Un message utile précise l’action et le moment.",
+      "Vou + infinitive announces an intention: vou enviar. Pode confirmar? asks for confirmation. A useful message includes the action and time.",
+      "Vou + infinitivo anuncia una intención: vou enviar. Pode confirmar? pide confirmación. Un mensaje útil precisa la acción y el momento.",
+    ),
+    t(
+      "Dans reunião, la dernière partie est nasale. Segmente re-u-ni-ão lentement, puis retrouve le rythme du modèle.",
+      "The ending of reunião is nasal. Break it into re-u-ni-ão slowly, then recover the model’s rhythm.",
+      "El final de reunião es nasal. Separa re-u-ni-ão despacio y luego recupera el ritmo del modelo.",
+    ),
+    [
+      [
+        "Vou enviar o documento hoje.",
+        "Je vais envoyer le document aujourd’hui.",
+        "I will send the document today.",
+        "Voy a enviar el documento hoy.",
+      ],
+      [
+        "Pode confirmar a reunião?",
+        "Peux-tu confirmer la réunion ?",
+        "Can you confirm the meeting?",
+        "¿Puedes confirmar la reunión?",
+      ],
+      ["Até amanhã!", "À demain !", "See you tomorrow!", "¡Hasta mañana!"],
+      [
+        "Recebi a mensagem.",
+        "J’ai reçu le message.",
+        "I received the message.",
+        "Recibí el mensaje.",
+      ],
+    ],
+    [
+      "Olá! Recebi a mensagem. Vou enviar o documento hoje. Até amanhã!",
+      "Salut ! J’ai reçu le message. Je vais envoyer le document aujourd’hui. À demain !",
+      "Hi! I received the message. I will send the document today. See you tomorrow!",
+      "¡Hola! Recibí el mensaje. Voy a enviar el documento hoy. ¡Hasta mañana!",
+    ],
+    t(
+      "Quand sera envoyé le document ?",
+      "When will the document be sent?",
+      "¿Cuándo se enviará el documento?",
+    ),
+    ["Hoje", "Amanhã", "Na próxima semana"],
+  ),
+  l(
+    "u08-l1",
+    t(
+      "Explorer avec attention",
+      "Explore thoughtfully",
+      "Explorar con atención",
+    ),
+    t(
+      "Podemos + infinitif permet aussi de demander la permission. Fotografar signifie prendre des photos. Une autorisation se demande, elle ne se suppose pas.",
+      "Podemos + infinitive can ask permission. Fotografar means to take photos. Ask for permission; do not assume it.",
+      "Podemos + infinitivo también pide permiso. Fotografar significa tomar fotos. El permiso se pide, no se supone.",
+    ),
+    t(
+      "Dans aqui, qu note k; la syllabe forte est qui. Compare aqui et ali pour distinguer ici et là.",
+      "In aqui, qu is k and qui is stressed. Compare aqui and ali to distinguish here and there.",
+      "En aqui, qu es k y qui es tónica. Compara aqui y ali para distinguir aquí y allí.",
+    ),
+    [
+      [
+        "Podemos fotografar aqui?",
+        "Peut-on photographier ici ?",
+        "May we take photos here?",
+        "¿Podemos tomar fotos aquí?",
+      ],
+      [
+        "Vamos seguir a trilha.",
+        "Suivons le sentier.",
+        "Let us follow the trail.",
+        "Sigamos el sendero.",
+      ],
+      [
+        "É importante respeitar o lugar.",
+        "Il est important de respecter le lieu.",
+        "It is important to respect the place.",
+        "Es importante respetar el lugar.",
+      ],
+      [
+        "Prefiro observar.",
+        "Je préfère observer.",
+        "I prefer to observe.",
+        "Prefiero observar.",
+      ],
+    ],
+    [
+      "Vamos seguir a trilha. Antes de fotografar, podemos perguntar. É importante respeitar o lugar.",
+      "Suivons le sentier. Avant de photographier, on peut demander. Il est important de respecter le lieu.",
+      "Let us follow the trail. Before taking photos, we can ask. It is important to respect the place.",
+      "Sigamos el sendero. Antes de fotografiar, podemos preguntar. Es importante respetar el lugar.",
+    ],
+    t(
+      "Que faire avant de photographier ?",
+      "What should we do before taking photos?",
+      "¿Qué hacer antes de fotografiar?",
+    ),
+    ["Perguntar", "Sair da trilha", "Correr"],
+  ),
+  l(
+    "u08-l2",
+    t("Raconter une journée", "Describe a day", "Contar un día"),
+    t(
+      "Ontem situe hier. Visitei et gostei sont des formes passées à la première personne. Gostar utilise de : gostei do passeio.",
+      "Ontem means yesterday. Visitei and gostei are first-person past forms. Gostar uses de: gostei do passeio.",
+      "Ontem significa ayer. Visitei y gostei son formas de pasado en primera persona. Gostar lleva de: gostei do passeio.",
+    ),
+    t(
+      "Les finales ei de visitei et gostei se prononcent en un mouvement lié. Ne les transforme pas en deux syllabes séparées.",
+      "The ei endings of visitei and gostei form a connected sound. Do not turn them into two separate syllables.",
+      "Las terminaciones ei de visitei y gostei forman un sonido unido. No las conviertas en dos sílabas separadas.",
+    ),
+    [
+      [
+        "Ontem visitei o centro.",
+        "Hier, j’ai visité le centre.",
+        "Yesterday I visited the centre.",
+        "Ayer visité el centro.",
+      ],
+      [
+        "Gostei muito do passeio.",
+        "J’ai beaucoup aimé la promenade.",
+        "I really enjoyed the walk.",
+        "Me gustó mucho el paseo.",
+      ],
+      [
+        "Depois, tomei um café.",
+        "Ensuite, j’ai pris un café.",
+        "Then I had a coffee.",
+        "Después tomé un café.",
+      ],
+      [
+        "Quero voltar.",
+        "Je veux revenir.",
+        "I want to come back.",
+        "Quiero volver.",
+      ],
+    ],
+    [
+      "Ontem visitei o centro. Depois, tomei um café. Gostei muito do passeio e quero voltar.",
+      "Hier, j’ai visité le centre. Ensuite, j’ai pris un café. J’ai beaucoup aimé la promenade et je veux revenir.",
+      "Yesterday I visited the centre. Then I had a coffee. I really enjoyed the walk and want to come back.",
+      "Ayer visité el centro. Después tomé un café. Me gustó mucho el paseo y quiero volver.",
+    ],
+    t(
+      "Qu’a fait la personne après la visite ?",
+      "What did the person do after the visit?",
+      "¿Qué hizo la persona después de la visita?",
+    ),
+    ["Tomou um café", "Pegou um avião", "Trabalhou"],
+  ),
+  l(
+    "u08-l3",
+    t(
+      "Ta prochaine conversation",
+      "Your next conversation",
+      "Tu próxima conversación",
+    ),
+    t(
+      "Preciso + infinitif indique une action nécessaire : preciso praticar. Vamos + infinitif transforme un objectif en proposition. Choisis une petite action réalisable.",
+      "Preciso + infinitive indicates a needed action: preciso praticar. Vamos + infinitive turns a goal into a suggestion. Choose a small achievable action.",
+      "Preciso + infinitivo indica una acción necesaria: preciso praticar. Vamos + infinitivo convierte un objetivo en propuesta. Elige una acción pequeña y posible.",
+    ),
+    t(
+      "Relis une phrase entière avec une pause naturelle. Une hésitation n’est pas un échec : utilise pode repetir pour garder la conversation ouverte.",
+      "Read a full sentence with a natural pause. Hesitation is not failure: use pode repetir to keep the conversation open.",
+      "Lee una frase completa con una pausa natural. Dudar no es fallar: usa pode repetir para mantener la conversación.",
+    ),
+    [
+      [
+        "Preciso praticar um pouco todos os dias.",
+        "J’ai besoin de pratiquer un peu chaque jour.",
+        "I need to practise a little every day.",
+        "Necesito practicar un poco cada día.",
+      ],
+      [
+        "Vamos conversar em português?",
+        "On discute en portugais ?",
+        "Shall we talk in Portuguese?",
+        "¿Hablamos en portugués?",
+      ],
+      [
+        "Ainda estou aprendendo.",
+        "J’apprends encore.",
+        "I am still learning.",
+        "Todavía estoy aprendiendo.",
+      ],
+      [
+        "Até a próxima!",
+        "À la prochaine !",
+        "See you next time!",
+        "¡Hasta la próxima!",
+      ],
+    ],
+    [
+      "Ainda estou aprendendo. Preciso praticar um pouco todos os dias. Vamos conversar em português?",
+      "J’apprends encore. J’ai besoin de pratiquer un peu chaque jour. On discute en portugais ?",
+      "I am still learning. I need to practise a little every day. Shall we talk in Portuguese?",
+      "Todavía estoy aprendiendo. Necesito practicar un poco cada día. ¿Hablamos en portugués?",
+    ],
+    t(
+      "Quelle habitude est proposée ?",
+      "What habit is proposed?",
+      "¿Qué hábito se propone?",
+    ),
+    ["Praticar todos os dias", "Esperar sem praticar", "Falar só uma vez"],
+  ),
+];

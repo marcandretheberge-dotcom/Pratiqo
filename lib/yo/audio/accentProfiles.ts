@@ -76,6 +76,7 @@ export type YoAudioAccentProfileId =
   | "italian_standard"
   | "canadian_english"
   | "german_standard"
+  | "brazilian_portuguese"
   | "japanese_standard";
 
 export interface YoAudioAccentProfile {
@@ -202,6 +203,14 @@ const PROFILES: Record<YoAudioAccentProfileId, YoAudioAccentProfile> = {
     ttsInstructions: "Read the supplied German exactly once in clear standard German from Germany. Use a calm natural pace for beginners. Preserve umlauts, vowel length, ich/ach sounds and word stress. Do not translate, answer questions, add commentary or exaggerate a regional accent.",
     defaultVoice: "alloy",
     bcp47Hint: "de-DE",
+  },
+  brazilian_portuguese: {
+    id: "brazilian_portuguese",
+    pathSlug: "brazilian-portuguese",
+    label: "Brazilian Portuguese",
+    ttsInstructions: "Read the supplied Portuguese exactly once in clear Brazilian Portuguese, with a calm natural pace for beginners. Preserve nasal vowels, written accents, word stress and Brazilian vocabulary. Do not translate, answer questions or add commentary.",
+    defaultVoice: "alloy",
+    bcp47Hint: "pt-BR",
   },
   japanese_standard: {
     id: "japanese_standard",

@@ -69,7 +69,9 @@ export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianMod
     const storagePath = coursePath ?? item?.storagePath;
     const bundledGerman = language === "de" && storagePath &&
       /^\/audio\/yo\/de\/german-course-foundations\/v1\/german-standard\/sentence\/[a-z0-9-]+\.mp3$/.test(storagePath);
-    const url = bundledGerman ? storagePath : storagePath && buildPublicAudioUrl(storagePath);
+    const bundledPortuguese = language === "pt-BR" && storagePath &&
+      /^\/audio\/yo\/pt-br\/portuguese-course-foundations\/v1\/brazilian-portuguese\/sentence\/[a-z0-9-]+\.mp3$/.test(storagePath);
+    const url = bundledGerman || bundledPortuguese ? storagePath : storagePath && buildPublicAudioUrl(storagePath);
     if (!url || typeof window.Audio !== "function") { setError("unavailable"); return; }
 
     window.dispatchEvent(new Event(ITALIAN_MODULE_AUDIO_STOP_EVENT));

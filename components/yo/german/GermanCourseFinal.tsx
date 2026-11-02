@@ -1,10 +1,10 @@
 "use client";
+import { useCourseExperience } from "./CourseExperience";
 import type {
   CourseAssessment,
   CourseCatalog,
 } from "@/lib/yo/italian/course/courseTypes";
 import type { YoLocale } from "@/lib/yo/types";
-import { GERMAN_PROGRESS_KEY } from "@/lib/yo/german/courseLogic";
 import { ItalianAudioProvider } from "../italian/ItalianAudioProvider";
 import { useItalianCourseProgress } from "../italian/course/useItalianCourseProgress";
 import { GermanCourseShell, copy } from "./GermanCourseShared";
@@ -20,9 +20,10 @@ export function GermanCourseFinal({
   locale: YoLocale;
   audioPaths: Record<string, string>;
 }) {
-  const state = useItalianCourseProgress(catalog, GERMAN_PROGRESS_KEY);
+  const experience = useCourseExperience();
+  const state = useItalianCourseProgress(catalog, experience.progressKey);
   return (
-    <ItalianAudioProvider paths={audioPaths} language="de">
+    <ItalianAudioProvider paths={audioPaths} language={experience.language}>
       <GermanCourseShell
         locale={locale}
         unit={assessment.theme === "culture" ? "culture" : "final"}

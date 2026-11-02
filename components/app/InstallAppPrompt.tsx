@@ -34,6 +34,7 @@ const SENSITIVE_PREFIXES = [
   "/yo/checkout",
   // Keep the learning controls and Yoppo unobstructed on small screens.
   "/yo/langues/allemand/parcours",
+  "/yo/langues/portugais-bresil/parcours",
 ];
 
 function isStandaloneDisplay(): boolean {
