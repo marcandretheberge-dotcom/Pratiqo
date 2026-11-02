@@ -1,0 +1,28 @@
+name: Yo language flag QA
+
+on:
+  push:
+    branches:
+      - "fix/yopratiqo-german-portuguese-flags-20261101"
+    paths:
+      - ".github/workflows/yo-language-flag-qa.yml"
+      - "components/yo/YoLanguageBadge.tsx"
+      - "components/yo/YoLanguageQuickStart.tsx"
+      - "tests/yo/yopratiqoLanguageSelection.test.ts"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "22.13.0"
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run test:yo-languages
