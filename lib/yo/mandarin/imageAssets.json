@@ -1,0 +1,90 @@
+{
+  "park": {
+    "src": "/images/yo/mandarin/park.webp",
+    "width": 1200,
+    "height": 900,
+    "credit": "EditQ",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "source": "https://commons.wikimedia.org/wiki/File:Chaoyang_Park,_Beijing_12.jpg",
+    "acquired": "2026-11-03",
+    "adaptation": "Resized and encoded as WebP; no content altered."
+  },
+  "market": {
+    "src": "/images/yo/mandarin/market.webp",
+    "width": 1200,
+    "height": 900,
+    "credit": "User:Vmenkov",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Wuhan_-_HUST_-_fruit_market_4148.jpg",
+    "acquired": "2026-11-03",
+    "adaptation": "Resized and encoded as WebP; no content altered."
+  },
+  "cafe": {
+    "src": "/images/yo/mandarin/cafe.webp",
+    "width": 1200,
+    "height": 738,
+    "credit": "Original:  Liming Huang\nDerivative work:  Radomianin",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Slow_Life_in_A_Tea_House_01_edited.jpg",
+    "acquired": "2026-11-03",
+    "adaptation": "Resized and encoded as WebP; no content altered."
+  },
+  "station": {
+    "src": "/images/yo/mandarin/station.webp",
+    "width": 1171,
+    "height": 891,
+    "credit": "Beijing_West_train_station_01.jpg: 金娜 Kim S\nderivative work: MrPanyGoff",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Beijing_West_train_station_01_edit.jpg",
+    "acquired": "2026-11-03",
+    "adaptation": "Resized and encoded as WebP; no content altered."
+  },
+  "street": {
+    "src": "/images/yo/mandarin/street.webp",
+    "width": 1200,
+    "height": 800,
+    "credit": "Daderot",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "source": "https://commons.wikimedia.org/wiki/File:Shangye_Street_-_Chengdu,_China_-_DSC05295.jpg",
+    "acquired": "2026-11-03",
+    "adaptation": "Resized and encoded as WebP; no content altered."
+  },
+  "tea": {
+    "src": "/images/yo/mandarin/tea.webp",
+    "width": 1200,
+    "height": 1600,
+    "credit": "Darakshanehaluddin",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "source": "https://commons.wikimedia.org/wiki/File:Cup_of_tea_image.jpg",
+    "acquired": "2026-11-03",
+    "adaptation": "Resized and encoded as WebP; no content altered."
+  },
+  "apple": {
+    "src": "/images/yo/mandarin/apple.webp",
+    "width": 1200,
+    "height": 1088,
+    "credit": "Abhijit Tembhekar from Mumbai, India",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Red_Apple.jpg",
+    "acquired": "2026-11-03",
+    "adaptation": "Resized and encoded as WebP; no content altered."
+  },
+  "noodles": {
+    "src": "/images/yo/mandarin/noodles.webp",
+    "width": 1200,
+    "height": 900,
+    "credit": "御輿大命",
+    "license": "CC0",
+    "licenseUrl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "source": "https://commons.wikimedia.org/wiki/File:Taiwanese_beef_noodles.jpg",
+    "acquired": "2026-11-03",
+    "adaptation": "Resized and encoded as WebP; no content altered."
+  }
+}
