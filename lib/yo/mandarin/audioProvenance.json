@@ -1,0 +1,1552 @@
+{
+  "你好！": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "你好！",
+    "transcript": "你好！",
+    "requestHash": "fb92b1a1d7c0d81a2b79d7cb5ae92bd5ab5cd9c2600f0be65f4a7b8fb43df83f",
+    "sha256": "3a2cfecc972de929a51fc7b7ec11e37f715cacd920ee8166d746450b1b71a07a",
+    "seconds": 0.8640000000000004,
+    "generatedAt": "2026-11-03T11:49:28.488Z"
+  },
+  "我叫安娜。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我叫安娜。",
+    "transcript": "我叫安娜。",
+    "requestHash": "9b8b3524fa7582904962468427d646b426021a37265d7bce5273671f857b950b",
+    "sha256": "b14535be26f0023feddfdba14de53d4728175b2171b5be11ffd3b5204b2c5c6e",
+    "seconds": 1.9680000000000013,
+    "generatedAt": "2026-11-03T11:49:30.002Z"
+  },
+  "我叫林。你是学生吗？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我叫林。你是学生吗？",
+    "transcript": "我叫林。你是学生吗？",
+    "requestHash": "453a1c2a86761dcff77b9a6cf55966da38b2038a6a08bcabb90cf75505ba0786",
+    "sha256": "aff764b7e7807ce63f9a63a5561a0347fe42012798f223c53c0dad93cd309ee9",
+    "seconds": 2.856000000000002,
+    "generatedAt": "2026-11-03T11:49:32.099Z"
+  },
+  "是，我是学生。你呢？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "是，我是学生。你呢？",
+    "transcript": "是，我是学生。你呢？",
+    "requestHash": "4a455b08de89608822f221327f4fe5809d8412f8ccff5c363b93dd486d047aa0",
+    "sha256": "d1bf7968753b4cc4942dcfccfc1065efb5445f39daab8fe9788f0c6ad1d70252",
+    "seconds": 3.000000000000002,
+    "generatedAt": "2026-11-03T11:49:33.915Z"
+  },
+  "我是老师。很高兴认识你。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我是老师。很高兴认识你。",
+    "transcript": "我是老师。很高兴认识你。",
+    "requestHash": "3ed1666e4f611d17e047dd96fc1141a2db17f745e87651e9560cb46c10de6ca4",
+    "sha256": "7c64f08e67200643d2635001afd50ba07b41ae4472da59442876732519b1972a",
+    "seconds": 3.2160000000000024,
+    "generatedAt": "2026-11-03T11:49:35.540Z"
+  },
+  "我也很高兴。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我也很高兴。",
+    "transcript": "我也很高兴。",
+    "requestHash": "055a0987c03ad18beff91f611561f181df24aeb69e9588e3674af455766d89f5",
+    "sha256": "b0ef19dfca2c9c288b7a59a648200e44ada9fd964f8ab473c8cff39f7a0ff4f7",
+    "seconds": 1.8000000000000012,
+    "generatedAt": "2026-11-03T11:49:36.853Z"
+  },
+  "我": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我",
+    "transcript": "我",
+    "requestHash": "669b438a7fa99596f39abf84f46b1ac3b5c08517dcdf843dfcecf561f7d195ed",
+    "sha256": "8ea86870738e928f33fa39a5ca2444f5cc43221b09d4f111588869ad626ffe5e",
+    "seconds": 1.0080000000000005,
+    "generatedAt": "2026-11-03T11:49:37.971Z"
+  },
+  "你": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "你",
+    "transcript": "你",
+    "requestHash": "73539b44dd1f0daf94eda25f3e03b6131e464ca50f8f9b725683c61f95857e40",
+    "sha256": "74f569b9ce5c5a39e367d5c3dc590f34e65b6ba3242e85f9bbf44ee1cc130733",
+    "seconds": 1.1520000000000006,
+    "generatedAt": "2026-11-03T11:49:39.153Z"
+  },
+  "学生": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "学生",
+    "transcript": "学生",
+    "requestHash": "d4f52d466342b0e492c477a725e7a7d29161facfdb483d6b0b41ce3552c5823a",
+    "sha256": "7e1414899864854a3062c26e8fe1c80d1141924f452b7b83e97970e163fd7519",
+    "seconds": 1.1520000000000006,
+    "generatedAt": "2026-11-03T11:49:40.164Z"
+  },
+  "老师": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "老师",
+    "transcript": "老师",
+    "requestHash": "34b9bf730e015a42ad5524a1503d35d97b4924b507f8ae6b0ec24d5fb5b32e9f",
+    "sha256": "d9ecde8714a1c2ded596cda5a94fdcf3f440a8f9b19e8b5c8c5cdfd8543b58ce",
+    "seconds": 0.9600000000000005,
+    "generatedAt": "2026-11-03T11:49:41.335Z"
+  },
+  "谢谢！": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "谢谢！",
+    "transcript": "谢谢！",
+    "requestHash": "5e0ae2b243811ce5104cff56e3ba64ea4a2c4966c4cfdd36e5831c5b4b0c2adf",
+    "sha256": "31744cfd325130d91ebf8ee2f5ba9f4d294db1e901fa0ca515b24e0aaabfbff4",
+    "seconds": 1.0080000000000005,
+    "generatedAt": "2026-11-03T11:49:42.558Z"
+  },
+  "再见": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "再见",
+    "transcript": "再见",
+    "requestHash": "d7589ac5a54bd106a5da63c4a230c29d556c4676ab01dc35cd055919c2b96e4b",
+    "sha256": "7a33aea72bb88898a8ddbc443ffbecdad0f4a585a8ede263e8ab4333ba9393bb",
+    "seconds": 1.3200000000000007,
+    "generatedAt": "2026-11-03T11:49:44.059Z"
+  },
+  "你是学生吗？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "你是学生吗？",
+    "transcript": "你是学生吗？",
+    "requestHash": "4c029cd47bc764324762c77b865f346691e1abbe9bc7f243acd5d7df956b74c5",
+    "sha256": "97f0bbb7ef291c30a35c9d061dab8bad8223d73292181a94e9beacbaf8386770",
+    "seconds": 1.4640000000000009,
+    "generatedAt": "2026-11-03T11:49:45.006Z"
+  },
+  "是，我是学生。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "是，我是学生。",
+    "transcript": "是，我是学生。",
+    "requestHash": "067b14568b8ec0a25389398bd7c66a6211d7b8ce232dd2905e1302898c20901c",
+    "sha256": "6207a2b12ff8fda32686020aea53820a6593ca070c5f63793be533c55bdc9328",
+    "seconds": 2.3040000000000016,
+    "generatedAt": "2026-11-03T11:49:46.368Z"
+  },
+  "我是老师。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我是老师。",
+    "transcript": "我是老师。",
+    "requestHash": "3d7a8b7f5d9753f24cb8d1d4f2753d68423c41340bf12e63640954545cab19a3",
+    "sha256": "f17fff63946013514c4aa709b029b92e121ef0aa2e3e71f858700da2436e699e",
+    "seconds": 1.704000000000001,
+    "generatedAt": "2026-11-03T11:49:47.879Z"
+  },
+  "书": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "书",
+    "transcript": "书",
+    "requestHash": "56c61cb0254777590a98486b7598673801eb5ec2233259d9dca41f10e2af4c25",
+    "sha256": "06209b89c05ed4688782cb407097602246d8dacc5e0510e859bd3a86d51212b2",
+    "seconds": 1.0080000000000005,
+    "generatedAt": "2026-11-03T11:49:48.776Z"
+  },
+  "你好！苹果多少钱？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "你好！苹果多少钱？",
+    "transcript": "你好！苹果多少钱？",
+    "requestHash": "3a76a5a6c16b573a5efe3ebd42e9cbee5baa37d4d71821687dca9470e5facd6d",
+    "sha256": "0044b40b257ced2eaf419233bb70b281f7b5d695b870f21bea697f47284aa732",
+    "seconds": 2.808000000000002,
+    "generatedAt": "2026-11-03T11:49:50.400Z"
+  },
+  "一个三块。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "一个三块。",
+    "transcript": "一个三块。",
+    "requestHash": "31569a169cc9a830a567d9f82f8f7ad139febc3e2420b62c27b4089ee4777345",
+    "sha256": "e69c492abfad26f0c349b19196600ab907e06daadbc7a5bd937a9268dca53eba",
+    "seconds": 2.2080000000000015,
+    "generatedAt": "2026-11-03T11:49:51.993Z"
+  },
+  "我要两个。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我要两个。",
+    "transcript": "我要两个。",
+    "requestHash": "a0314cb753aa0a570b1aaf72466428f06fb67d9d49e9a3e52b6474b42ad2ac3c",
+    "sha256": "b0948a51d4ba2cc33d3f99116ae1e38b4f0b78764b899a931dc11a8a36ddedc4",
+    "seconds": 1.2480000000000007,
+    "generatedAt": "2026-11-03T11:49:53.050Z"
+  },
+  "一共六块。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "一共六块。",
+    "transcript": "一共六块。",
+    "requestHash": "5f5d077d601d171d1ece0873d88d672721f292f1f794242854e1e731110e3fca",
+    "sha256": "41a204b65a20f3a549eeeed8fa365fcea0422854592fbbc1ce396f0ded6d99c6",
+    "seconds": 2.0160000000000013,
+    "generatedAt": "2026-11-03T11:49:54.209Z"
+  },
+  "不客气。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "不客气。",
+    "transcript": "不客气。",
+    "requestHash": "630d7aa70737787916ddd57ba0f12fc175a37252a649466c66f0f2acf1365327",
+    "sha256": "286fbeaa225c5c10ac6f7bb810631c656456241e75c94bd0967f8b60170c3938",
+    "seconds": 1.2480000000000007,
+    "generatedAt": "2026-11-03T11:49:55.162Z"
+  },
+  "苹果": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "苹果",
+    "transcript": "苹果",
+    "requestHash": "1e2da5aa11c68500fd120f7238b5787b8768f7ec91b2301711bd634739398c34",
+    "sha256": "a187137c5a75b965fbdfe14ca9bad532e5598538bfca6ba26c78eaab221b2734",
+    "seconds": 1.4160000000000008,
+    "generatedAt": "2026-11-03T11:49:56.417Z"
+  },
+  "一个": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "一个",
+    "transcript": "一个",
+    "requestHash": "5207a6ada9f7f7ee3485c5124933d56ed9795adc15f34e3d4e667ec2725bb86a",
+    "sha256": "41b00009a8e62dd036a21374e9552a71f57e88d78798947b5a45997d33c3013c",
+    "seconds": 1.1520000000000006,
+    "generatedAt": "2026-11-03T11:49:57.888Z"
+  },
+  "两个": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "两个",
+    "transcript": "两个",
+    "requestHash": "fec89f73079ce88ae8a994aade846a38da283fc799f1254958b7015df74ed30f",
+    "sha256": "00310ad1758a9d4ded05cd2eeabc6951bdc9151dd73472a0594649f41a9b99d5",
+    "seconds": 1.2480000000000007,
+    "generatedAt": "2026-11-03T11:49:58.920Z"
+  },
+  "多少钱": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "多少钱",
+    "transcript": "多少钱",
+    "requestHash": "2d213ee9d81bdd7a00dac5a7ec4f7a7897dfd75309fd076515d514ec47c86317",
+    "sha256": "878b345614ca65fa69e0fdd720bc15501ce0e7e69f63fc5546422c52274fe269",
+    "seconds": 1.4160000000000008,
+    "generatedAt": "2026-11-03T11:49:59.871Z"
+  },
+  "一二三四五": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "一二三四五",
+    "transcript": "一二三四五",
+    "requestHash": "6ea5c186ef6000ba7a892a3bb1a21a8db8f1def98f5f80cd903bc154b861eb38",
+    "sha256": "72063cc8053d1e78d96509f1c3cbdae753fa5ad23f27f3e211265ca0be2da4d6",
+    "seconds": 4.416000000000003,
+    "generatedAt": "2026-11-03T11:50:02.201Z"
+  },
+  "六七八九十": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "六七八九十",
+    "transcript": "六七八九十",
+    "requestHash": "9a211affe5a2d461562b92b61d06dbc62b85d5d02986003fe62fa688428587e3",
+    "sha256": "320e4ec7c691648d68a6eaeaf69d81490a2458194c82ae8a875c6ff56cd5a46f",
+    "seconds": 4.248000000000003,
+    "generatedAt": "2026-11-03T11:50:03.897Z"
+  },
+  "块": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "块",
+    "transcript": "块",
+    "requestHash": "9005555ad1d8e30df4ad1d4926b87e35b4a52a7b70ba1d1c4dfc0fb4909a2a78",
+    "sha256": "7378ea6cd878417a65d4a39e63d19f73f67f258634ee4eb3ca1bf2e046eead01",
+    "seconds": 0.9120000000000005,
+    "generatedAt": "2026-11-03T11:50:04.982Z"
+  },
+  "买": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "买",
+    "transcript": "买",
+    "requestHash": "069498cbfa38b5529b323523a268f0be5f213a8e1357d2630851e2448b5a371c",
+    "sha256": "009c86aa816879f7cd9aa158d5e9e9088cc897fd7faec4ed7d1cde6324b8a6b4",
+    "seconds": 1.0560000000000005,
+    "generatedAt": "2026-11-03T11:50:06.039Z"
+  },
+  "两个苹果": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "两个苹果",
+    "transcript": "两个苹果",
+    "requestHash": "5c7e14d6ceeaaebb0bc7e40b4afb4436546c011622357e96e1646a629679e5d6",
+    "sha256": "7073e74963dafd40cbc3868b8c6691abfa496655a1615ceae1126094659c7015",
+    "seconds": 1.704000000000001,
+    "generatedAt": "2026-11-03T11:50:07.339Z"
+  },
+  "这个多少钱？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "这个多少钱？",
+    "transcript": "这个多少钱？",
+    "requestHash": "a7b528d419fd795f1694a38d7ab0bc3b2b3e3125ec277584dc6d6e2e2af88450",
+    "sha256": "4f814c6299afacb6916869d6bc9257203b82bd8b91d6ffde2841c3b76a0a160f",
+    "seconds": 1.704000000000001,
+    "generatedAt": "2026-11-03T11:50:08.439Z"
+  },
+  "我要两个苹果。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我要两个苹果。",
+    "transcript": "我要两个苹果。",
+    "requestHash": "fbe044e04c21eae8ed34aaa74d1d9fffa68cd4b66412e207080bbf7384cec368",
+    "sha256": "37eccf59a8448b013919a4ddac9d2a4dfca2a51bbbee4ab7e7c73a0ce0162470",
+    "seconds": 1.8480000000000012,
+    "generatedAt": "2026-11-03T11:50:09.533Z"
+  },
+  "六块。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "六块。",
+    "transcript": "六块。",
+    "requestHash": "4a7dfe7f90e437bea61b13f1a1683f53923e1d723063507a47e9cea0172a9afc",
+    "sha256": "79bf869e10cd783f4c69a73ab8ebef1a781b052fd3f6750118ca1c5c99fbc350",
+    "seconds": 1.3200000000000007,
+    "generatedAt": "2026-11-03T11:50:10.915Z"
+  },
+  "三块。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "三块。",
+    "transcript": "三块。",
+    "requestHash": "e8eaf2ce20577cd7cc6d1b04e65ed2ce7f2461e3546174cdf1df95c01e05212a",
+    "sha256": "8a63411316c4cccd7ae5e4c88f975911d787209690fb8169cb61af83fdc5c98c",
+    "seconds": 1.2480000000000007,
+    "generatedAt": "2026-11-03T11:50:11.885Z"
+  },
+  "多少钱？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "多少钱？",
+    "transcript": "多少钱？",
+    "requestHash": "f8b43ba8e0052edfd91635e783a4bb717491f443f3918620e41cff3c7f8b9e95",
+    "sha256": "06a5dab7d94372286026351b2186b17f3c62a143ad1e828c1367c44ec4585101",
+    "seconds": 1.3200000000000007,
+    "generatedAt": "2026-11-03T11:50:13.454Z"
+  },
+  "麻": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "麻",
+    "transcript": "麻",
+    "requestHash": "8be4a0e604b99b81956290d30b911e93c2da1c7d1fd11513f1cd662338f548b1",
+    "sha256": "69c75c33b8553cdb5388dd627622c364f61dba58b1819b90f0f0845b8a559903",
+    "seconds": 0.8160000000000004,
+    "generatedAt": "2026-11-03T11:50:14.454Z"
+  },
+  "你想喝什么？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "你想喝什么？",
+    "transcript": "你想喝什么？",
+    "requestHash": "90d9c9ac610083dbcf4f286181c4422bf9881a25cd3efda612599bc2d0606184",
+    "sha256": "1fff9ee0727cdc53ec63f261ee8d28c592b1128a62888a0b996cd98b98a3d066",
+    "seconds": 1.7520000000000011,
+    "generatedAt": "2026-11-03T11:50:15.641Z"
+  },
+  "请给我一杯茶。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "请给我一杯茶。",
+    "transcript": "请给我一杯茶。",
+    "requestHash": "617d9abb65033874f6396d0bca0b13f9b58433f85fc516eb5442a59d64291d8f",
+    "sha256": "fa83e89b64a76f12ba7f7ee19e7a764da67655120d226569d5d9ecccf0f601cc",
+    "seconds": 2.520000000000002,
+    "generatedAt": "2026-11-03T11:50:17.210Z"
+  },
+  "要糖吗？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "要糖吗？",
+    "transcript": "要糖吗？",
+    "requestHash": "9ebc8605a40c327d8e5a787fa7f12935eed07635ead3c4bb720238e1e696cec0",
+    "sha256": "60d777bf39d0f765a944526c0584790df9a66672cf0aaa108343b691e9cf4bc6",
+    "seconds": 1.3200000000000007,
+    "generatedAt": "2026-11-03T11:50:18.417Z"
+  },
+  "不要糖，谢谢。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "不要糖，谢谢。",
+    "transcript": "不要糖，谢谢。",
+    "requestHash": "1554b1fed578577ba7f62f991a2513377f6427dbba9283f6a98988ab5b0c20f8",
+    "sha256": "96bb244247a6079f292ec46bc6162fe34f053392e536ce05186e09c69f2cd10e",
+    "seconds": 1.9200000000000013,
+    "generatedAt": "2026-11-03T11:50:19.717Z"
+  },
+  "还要什么？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "还要什么？",
+    "transcript": "还要什么？",
+    "requestHash": "073b18ac10a004ffa4deb0e87a81b2267a35abbae9dda94db852129f263ef5c8",
+    "sha256": "ee5bf53c49a58d6f983e92331ee98ee336727334044e7b7805af3cce7f10ee2f",
+    "seconds": 1.2480000000000007,
+    "generatedAt": "2026-11-03T11:50:21.013Z"
+  },
+  "一碗面条。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "一碗面条。",
+    "transcript": "一碗面条。",
+    "requestHash": "84400bdc481219210f920104ab02bc8bb4adfb62e84f36a522853c29ba845719",
+    "sha256": "7f46b435b0c1583c98545353fad647ce18545bd629eab8371003ccde29470754",
+    "seconds": 1.8000000000000012,
+    "generatedAt": "2026-11-03T11:50:22.068Z"
+  },
+  "茶": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "茶",
+    "transcript": "茶",
+    "requestHash": "8de1de3ad3d7f52cbc9b49df36593caa1bf2c68f291989f4baf3e2349c1ea722",
+    "sha256": "96901d483ccb62f61597088f21b06a697a4e21bc04bee30b115d2e0ded197827",
+    "seconds": 1.0080000000000005,
+    "generatedAt": "2026-11-03T11:50:23.114Z"
+  },
+  "水": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "水",
+    "transcript": "水",
+    "requestHash": "0ec91bbafdadeeea414315e623fd4d209e643ea96af172994be8dc30ec48afa3",
+    "sha256": "9d983fd32f0420f4479015d3ba126c5d30ace4a03b1e6c580ecc2f4b3a127130",
+    "seconds": 1.0080000000000005,
+    "generatedAt": "2026-11-03T11:50:24.355Z"
+  },
+  "咖啡": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "咖啡",
+    "transcript": "咖啡",
+    "requestHash": "a0715a955730fabde41e178e3204824d1a6953368884f8493b3392f7a081f37f",
+    "sha256": "5e77b470928501c829087cd0e510d9b22e2c268ca3dce19b69efd8e4e6e2aa77",
+    "seconds": 1.0080000000000005,
+    "generatedAt": "2026-11-03T11:50:25.415Z"
+  },
+  "面条": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "面条",
+    "transcript": "面条",
+    "requestHash": "5a0826461da4fe4ce77263f77426a05d9d05d076885ec9469bd5e26c3b33005b",
+    "sha256": "03923a28a705d65393a510011ebe67bd653f25b152088d5600699db6b30f8490",
+    "seconds": 1.560000000000001,
+    "generatedAt": "2026-11-03T11:50:26.509Z"
+  },
+  "杯": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "杯",
+    "transcript": "杯",
+    "requestHash": "ed0e8f257a858ac750c226ce7da385445d9124211b355d03161e971d32c0c801",
+    "sha256": "5f3a595837fb60c1fbb7ea1f2b3dbb366f5e1c680530a6dabb5814d61b34b118",
+    "seconds": 0.7680000000000003,
+    "generatedAt": "2026-11-03T11:50:27.927Z"
+  },
+  "碗": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "碗",
+    "transcript": "碗",
+    "requestHash": "ded8f214744f3189d145a3825c312070c9521cc308e8dcc21df72826b07d310f",
+    "sha256": "257cd91ca95dac2fd37ef01f6fca92f1855a26b6f48fefef2f797c62d9246f84",
+    "seconds": 0.8640000000000004,
+    "generatedAt": "2026-11-03T11:50:28.855Z"
+  },
+  "糖": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "糖",
+    "transcript": "糖",
+    "requestHash": "cdc370cb26471fe7c327b4f1842e75394563802160f4e5f5e247c3f5bfd9df81",
+    "sha256": "8412c109694d958f72d1cc995aa1e9a66a0e3e7c2ab5edcd5b8782c927399cab",
+    "seconds": 1.1040000000000005,
+    "generatedAt": "2026-11-03T11:50:29.885Z"
+  },
+  "喝": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "喝",
+    "transcript": "喝",
+    "requestHash": "12f802fada5ddd3a49865490014005bde36f5f6b0f420dc17453aa5d8b1aaa1a",
+    "sha256": "907a70215a42e4e44a677b9415de73bf37efc0fac6215f36eaaa2bdafe7748c7",
+    "seconds": 0.9600000000000005,
+    "generatedAt": "2026-11-03T11:50:31.321Z"
+  },
+  "请给我一杯水。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "请给我一杯水。",
+    "transcript": "请给我一杯水。",
+    "requestHash": "ac5e7603a074622faa93ce287f8c9878338622c791c716f6bca832c8dc381069",
+    "sha256": "29ec905f951842be2b4dd1e40b759ee91ece4d4cf7078e69e9e49e40eeb95022",
+    "seconds": 2.568000000000002,
+    "generatedAt": "2026-11-03T11:50:32.545Z"
+  },
+  "你喝什么？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "你喝什么？",
+    "transcript": "你喝什么？",
+    "requestHash": "bf1498bdb4ffa91177896fc3d71199d0806b1ae177bb2f41d3231abc88bc89cf",
+    "sha256": "41fa891093e35b48a37ca8e316549727da6a967093cf72fb0db28501fe3274ac",
+    "seconds": 1.2000000000000006,
+    "generatedAt": "2026-11-03T11:50:33.686Z"
+  },
+  "我要糖。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我要糖。",
+    "transcript": "我要糖。",
+    "requestHash": "074ad7ff717ecc51123ae9fecce48241b93d6dd0b7af48539d1522407f44dbb3",
+    "sha256": "e502598c8194bc9697d0399b5556175abcbf223feab8de74d95da63e59d734a6",
+    "seconds": 1.4160000000000008,
+    "generatedAt": "2026-11-03T11:50:34.832Z"
+  },
+  "一杯茶。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "一杯茶。",
+    "transcript": "一杯茶。",
+    "requestHash": "4e56d2c52ede52eac4eae5e5f07ce400916a7a7acbcc1f882caa0409be99c4c6",
+    "sha256": "104f607a3f2e7218a3de28908d6db2fe6e516df730d95ad2cd19ee95fd51114b",
+    "seconds": 1.8480000000000012,
+    "generatedAt": "2026-11-03T11:50:36.021Z"
+  },
+  "马": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "马",
+    "transcript": "马",
+    "requestHash": "3f7315d3e855aaf509a3257e44d70f8d0356b68720f31eea8f69b1c010fe1d03",
+    "sha256": "386a3a229bc6a666ee764aef5fe8ed25eeefb76d095981b0dc1ba864471a057f",
+    "seconds": 0.9600000000000005,
+    "generatedAt": "2026-11-03T11:50:37.260Z"
+  },
+  "我要一杯茶。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我要一杯茶。",
+    "transcript": "我要一杯茶。",
+    "requestHash": "3bb2855604b85edac03732d9520e9279cd6549ac2b086dcb9f658ef5ba642972",
+    "sha256": "3214fe6b5ef9bbee33994e273c0803d91f84a0205efd0aca1917f92b99664fe2",
+    "seconds": 1.8480000000000012,
+    "generatedAt": "2026-11-03T11:50:38.338Z"
+  },
+  "这是我妈妈。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "这是我妈妈。",
+    "transcript": "这是我妈妈。",
+    "requestHash": "ad0afe70c8c06c8a0b8d2b6a85545d83ce88bdff809bb87dc71f070d3c9936f1",
+    "sha256": "f4e8821a3b1c05b87afeb75bd3171807d797cf7a59156e9922d82337532fe160",
+    "seconds": 1.9680000000000013,
+    "generatedAt": "2026-11-03T11:50:39.728Z"
+  },
+  "您好！": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "您好！",
+    "transcript": "您好！",
+    "requestHash": "3817524a8c0e065cb7d6c17362a924894f6ea7e85ea864375df8dab061c019b4",
+    "sha256": "b457275bcb437e32e9f6e514947a10f2eba409ad72e0d656155e4022b79c2ad5",
+    "seconds": 0.9120000000000005,
+    "generatedAt": "2026-11-03T11:50:41.014Z"
+  },
+  "那是我哥哥。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "那是我哥哥。",
+    "transcript": "那是我哥哥。",
+    "requestHash": "05edd8259120b863a7897a697367a0cca2ec46fb857fb781c76c4e286a7795f9",
+    "sha256": "98197058426ddf2e219ed6e6a138ca273e3daf9443aa482ba7566cf85826b06c",
+    "seconds": 1.560000000000001,
+    "generatedAt": "2026-11-03T11:50:42.285Z"
+  },
+  "你有妹妹吗？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "你有妹妹吗？",
+    "transcript": "你有妹妹吗？",
+    "requestHash": "b05d74251bb4a9c77d9312b9bd52c25ca9c1d523e72bd93f78f239f2ab279dfe",
+    "sha256": "83049b7887c20acb02a585226fdc0b69ae731c43cede2fe8f93a16c02de1e7b2",
+    "seconds": 1.608000000000001,
+    "generatedAt": "2026-11-03T11:50:43.844Z"
+  },
+  "没有。你呢？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "没有。你呢？",
+    "transcript": "没有。你呢？",
+    "requestHash": "0489a9f1b6d54bb1a3f77a65a7a7f441bd723ec17ccb1076d86b776994dfb4f2",
+    "sha256": "f214ae0f415a7900a455091d894c06f575fb28e4e8f3892f7d259532d76102b8",
+    "seconds": 1.704000000000001,
+    "generatedAt": "2026-11-03T11:50:44.930Z"
+  },
+  "我有一个弟弟。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我有一个弟弟。",
+    "transcript": "我有一个弟弟。",
+    "requestHash": "5c65d4ec88701dbb0d68b6ad1af5b08a7d7c0ec4de6f94c08c68f0d405b35474",
+    "sha256": "695138f3c7b50c792fd70939dfcbfaa84b3532ba2ce15f0af9e44f1bb81202c2",
+    "seconds": 1.7520000000000011,
+    "generatedAt": "2026-11-03T11:50:46.150Z"
+  },
+  "妈妈": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "妈妈",
+    "transcript": "妈妈",
+    "requestHash": "732fb5d337bcd4f8146c73922649731727ef7d103c55b0f9589de0ab94505a05",
+    "sha256": "dd0123832778b4171f6006dad0ffe053acc399f8ed1442349d599d443b0d30e9",
+    "seconds": 0.9120000000000005,
+    "generatedAt": "2026-11-03T11:50:47.290Z"
+  },
+  "爸爸": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "爸爸",
+    "transcript": "爸爸",
+    "requestHash": "344165efde13ccac1eef1211af231a676c7b5e7a6359c30aa72def3bed40c6b5",
+    "sha256": "136350330d123449454d12a69dfb31976cd93e3618898b42f67d329d4480ce42",
+    "seconds": 0.7680000000000003,
+    "generatedAt": "2026-11-03T11:50:48.657Z"
+  },
+  "哥哥": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "哥哥",
+    "transcript": "哥哥",
+    "requestHash": "0243af9acfe459d96a3e95785c1eaf1a4661655f0b4e9642a889e84de4ba63c9",
+    "sha256": "f10416ea048cb6cd187d0fd07cd868117934fbfdc6587b145481ddb8d4ce9504",
+    "seconds": 1.2480000000000007,
+    "generatedAt": "2026-11-03T11:50:50.449Z"
+  },
+  "妹妹": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "妹妹",
+    "transcript": "妹妹",
+    "requestHash": "64ad3b4ad08db9e29a05484ac06c20eff06a2f1112c8036748aa8189d0c3a052",
+    "sha256": "63f31076c2e34953452a6a626a4684d98a4b22722e51c635e2c33c5ce00e6b60",
+    "seconds": 1.0080000000000005,
+    "generatedAt": "2026-11-03T11:50:51.593Z"
+  },
+  "弟弟": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "弟弟",
+    "transcript": "弟弟",
+    "requestHash": "0f201f00598ae33e8282c21d8bde04007036cf47973b09ebd3781353b861a378",
+    "sha256": "1309f776b8b65730de32e4eb7fbec13b909b3580943e0ad378fb07b5af186012",
+    "seconds": 0.7680000000000003,
+    "generatedAt": "2026-11-03T11:50:52.572Z"
+  },
+  "朋友": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "朋友",
+    "transcript": "朋友",
+    "requestHash": "6c94d68150836ef3c3949479c09134249eedce41aedaffd3d3aaf0d143c191ce",
+    "sha256": "ea8873669fcbfbe4b81d8a0b26eb22ffda2656d0cf25ad05c518274c2825809e",
+    "seconds": 1.0560000000000005,
+    "generatedAt": "2026-11-03T11:50:54.157Z"
+  },
+  "有": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "有",
+    "transcript": "有",
+    "requestHash": "0a9b102b38e21579dede6fecba4aeb3d0f5cf5a380055b03466f7b5e574edb2d",
+    "sha256": "da5e3702da15da05cc1509eaf94057c197f792d9c21ea7baf315758efbcd3771",
+    "seconds": 1.1040000000000005,
+    "generatedAt": "2026-11-03T11:50:55.412Z"
+  },
+  "没有": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "没有",
+    "transcript": "没有",
+    "requestHash": "d2df8bc2a81049e08a73a41e2e9d66252f8430cdd32b0e72a61a10796ea43938",
+    "sha256": "4e3e3e8d07bdfb3de6220ff786cf42fab9da5e12c240a523aa76e167396bb906",
+    "seconds": 1.0080000000000005,
+    "generatedAt": "2026-11-03T11:50:56.783Z"
+  },
+  "她是我的朋友。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "她是我的朋友。",
+    "transcript": "她是我的朋友。",
+    "requestHash": "f9082cbc84b3d5707127dc8b343e031f73844cfb97db97e387bae6eddf901ee1",
+    "sha256": "07d2bbfbecf5fa28a1f5e5d82b3089b404ee608d28da788e66678506ff158831",
+    "seconds": 1.9680000000000013,
+    "generatedAt": "2026-11-03T11:50:58.077Z"
+  },
+  "我没有妹妹。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我没有妹妹。",
+    "transcript": "我没有妹妹。",
+    "requestHash": "0e883186c0394eb00248da2b009a866e3f4783635c02f582e57ae26fd39bea26",
+    "sha256": "b0054f1e509939289f1b731fff622d607896d678d5b49299f2336f2a56364d20",
+    "seconds": 2.616000000000002,
+    "generatedAt": "2026-11-03T11:50:59.549Z"
+  },
+  "我有妹妹。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我有妹妹。",
+    "transcript": "我有妹妹。",
+    "requestHash": "356cb50ef213ba36d933563bce10a645994d0cf555bd5c4f0a12085ad64ea25a",
+    "sha256": "d4717f1205b59ad201a2923e9ec74713ff4cfedb9a9b1069e631e6f38d752f24",
+    "seconds": 1.656000000000001,
+    "generatedAt": "2026-11-03T11:51:00.873Z"
+  },
+  "这是我的朋友。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "这是我的朋友。",
+    "transcript": "这是我的朋友。",
+    "requestHash": "7eeb5e6427cb53fab7c38ff30b314b519d2c7a1e3a02f6a221a1ee81894dcd00",
+    "sha256": "f227df986d7b2a30ab9db1eec42d1a2ebea498e46996a5340946f9ea8a6cf443",
+    "seconds": 1.8480000000000012,
+    "generatedAt": "2026-11-03T11:51:02.451Z"
+  },
+  "骂": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "骂",
+    "transcript": "骂",
+    "requestHash": "07737c49b7d4fd62c1212d600b0222503b744aa923463248364b5f0c124b5911",
+    "sha256": "c616fe9a832b4eebce234e0b5d2b8088196c4535b61e90cf7b4a54378cfd24c0",
+    "seconds": 0.8160000000000004,
+    "generatedAt": "2026-11-03T11:51:03.635Z"
+  },
+  "请问，公园在哪里？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "请问，公园在哪里？",
+    "transcript": "请问，公园在哪里？",
+    "requestHash": "cd0229d24187ad70cde9c512a092feb86ef084ef35a1f217e68b9ce77950ebfc",
+    "sha256": "58a308b433e60a1243e26d341698ac467e7d215614ad3ccb4bbe724186a59d35",
+    "seconds": 2.520000000000002,
+    "generatedAt": "2026-11-03T11:51:05.390Z"
+  },
+  "一直走，然后向左转。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "一直走，然后向左转。",
+    "transcript": "一直走，然后向左转。",
+    "requestHash": "8089f167109cb80c0f262117356cba7fb91258059df316bd38ba98ecaa48fe88",
+    "sha256": "d6b6d5422ed5c2b9fcf04c2f2c5308bb12697dd05f300e40dbf346cffc8db849",
+    "seconds": 2.712000000000002,
+    "generatedAt": "2026-11-03T11:51:06.680Z"
+  },
+  "远吗？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "远吗？",
+    "transcript": "远吗？",
+    "requestHash": "955cc01d5bf98426a974657b4ed77089b058070e62c7e4d1c6e2e67983b78ecc",
+    "sha256": "ae773a8ac6cfcd350a19d2366b3bb6190c6ac39e962ad3b02a215dabcd799f6b",
+    "seconds": 1.0080000000000005,
+    "generatedAt": "2026-11-03T11:51:07.920Z"
+  },
+  "不远。可以走路。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "不远。可以走路。",
+    "transcript": "不远。可以走路。",
+    "requestHash": "8ec189df465c39d627d7ade4fcdda3b46d49fdf3e0a9763fe5174a7bba3264d7",
+    "sha256": "09fd4593a9311915c3580ade5accf484d62d98637585137191b8bb46b27683be",
+    "seconds": 3.2640000000000025,
+    "generatedAt": "2026-11-03T11:51:09.401Z"
+  },
+  "地铁站在哪里？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "地铁站在哪里？",
+    "transcript": "地铁站在哪里？",
+    "requestHash": "cd873944ed2bf558de14726c890453f747e7b64474d98fcc9720e7eacbe26fb1",
+    "sha256": "dc587fb4bdec5e03556e65d17f699949d4300149aaaf475e9c8002ce375f3992",
+    "seconds": 2.3040000000000016,
+    "generatedAt": "2026-11-03T11:51:10.641Z"
+  },
+  "在右边。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "在右边。",
+    "transcript": "在右边。",
+    "requestHash": "89d84f311dcd2a45db8b7766a6a82477f5f2a06552aaae75da8c029c777ae5bd",
+    "sha256": "34c372af664c2fa20b11d245dc53ce557cafee8aca4d9597f85b863289105f0d",
+    "seconds": 1.2480000000000007,
+    "generatedAt": "2026-11-03T11:51:11.835Z"
+  },
+  "公园": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "公园",
+    "transcript": "公园",
+    "requestHash": "3201bf33515756068d26d5b630e2ee25e75a235a15c89a89e8b42808b12843ed",
+    "sha256": "68abd038870a0b61d360336c952e06dc6174c7d40484c7a980138097fb6a3e6f",
+    "seconds": 1.4160000000000008,
+    "generatedAt": "2026-11-03T11:51:12.919Z"
+  },
+  "车站": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "车站",
+    "transcript": "车站",
+    "requestHash": "58bf031f6ce9e31e552894b32793d23f224b98445dc87a8858150e6e9dc7a77c",
+    "sha256": "2022c1351de2f19cab67a5c25b0332d2f62ca2f49e39c4c81a704908ffc4b27b",
+    "seconds": 1.0560000000000005,
+    "generatedAt": "2026-11-03T11:51:14.217Z"
+  },
+  "左边": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "左边",
+    "transcript": "左边",
+    "requestHash": "bb651d0e6e70733c287763aed134b092af59f0bcde008e543cf81f716bd96411",
+    "sha256": "4a5494fd50f54767eab98aee5f71e6194df7e087c2b50ff27add4f133127212e",
+    "seconds": 1.3200000000000007,
+    "generatedAt": "2026-11-03T11:51:15.164Z"
+  },
+  "右边": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "右边",
+    "transcript": "右边",
+    "requestHash": "b2bc6ca7ca7fdc39d7d79647c9766e027e17e3eb22b5c3b7fbc6674850870902",
+    "sha256": "91eb6b5dcdc0c5cfd7843284ae8c6ae9e516a020f3d28a0173a1ea8abff31d5d",
+    "seconds": 1.0080000000000005,
+    "generatedAt": "2026-11-03T11:51:16.389Z"
+  },
+  "地铁": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "地铁",
+    "transcript": "地铁",
+    "requestHash": "53ae14966b80311aa51f884d68b840b75394c7e6184d29dbe6586fa017515c52",
+    "sha256": "1ee59dd30c2d6a527bd7695c732e1498bf2b912cd538966283131087ef5d9058",
+    "seconds": 1.1520000000000006,
+    "generatedAt": "2026-11-03T11:51:17.669Z"
+  },
+  "走路": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "走路",
+    "transcript": "走路",
+    "requestHash": "88dc49a21dec8da92c8c5028f2830e53cfd1130b7a74a27eb9a9ed5515dc2753",
+    "sha256": "a61057c6523e2b2110aa5f9e31ca048b307a97529e87897d2c1352d2761adbf2",
+    "seconds": 1.0560000000000005,
+    "generatedAt": "2026-11-03T11:51:18.679Z"
+  },
+  "在哪里": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "在哪里",
+    "transcript": "在哪里",
+    "requestHash": "54261e9efaf999cd1e520c84786cd03235058b9dac725defa796a01e20c7d075",
+    "sha256": "bf24f86fd04888a0b79f5e9f497294a527a2da400757046a80582214f0aaa3cb",
+    "seconds": 1.0080000000000005,
+    "generatedAt": "2026-11-03T11:51:20.053Z"
+  },
+  "一直走": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "一直走",
+    "transcript": "一直走",
+    "requestHash": "a44b5ab241b46e3c420296cce27e5207a33b354088cede7ed9667c79ebbadcf0",
+    "sha256": "1e8c259cec3fbeb4863976c85cb05489828d9d98df09e926983a7b1592ff9d3f",
+    "seconds": 1.8000000000000012,
+    "generatedAt": "2026-11-03T11:51:21.492Z"
+  },
+  "公园在左边。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "公园在左边。",
+    "transcript": "公园在左边。",
+    "requestHash": "9781dd51b20e7741b6e600adba95c06ad231f613fbedf4a426ed0efae1c87805",
+    "sha256": "779b6ec3365242955f193693349e4e8eacc241084fcb9533838c3240b443c098",
+    "seconds": 2.856000000000002,
+    "generatedAt": "2026-11-03T11:51:22.870Z"
+  },
+  "可以坐地铁。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "可以坐地铁。",
+    "transcript": "可以坐地铁。",
+    "requestHash": "baec6fe6ce35c9e2c50043ccceeb86a3baed86b6aa1203ec331f808bc0cc93b2",
+    "sha256": "889be7de371505638776c4dc4aa94f32a77476443624fa1daa702f42518e830a",
+    "seconds": 2.0640000000000014,
+    "generatedAt": "2026-11-03T11:51:23.996Z"
+  },
+  "在左边。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "在左边。",
+    "transcript": "在左边。",
+    "requestHash": "a423d760a9ef0107665af85571e45cfbc31627ec9a38ef5bd3ba56c3500204cf",
+    "sha256": "3827d509f50ba7e21f6e2a374fd1f48ab4d5fcf6c520ffe0236d8e362ede872f",
+    "seconds": 1.4160000000000008,
+    "generatedAt": "2026-11-03T11:51:24.972Z"
+  },
+  "车站在哪里？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "车站在哪里？",
+    "transcript": "车站在哪里？",
+    "requestHash": "c658b5af745f6b19fa42be1f4338b9a5cabd081cabfd618ecbef3cfd3b298af2",
+    "sha256": "b16e68be2eebbca10d679b7042f60a017439111bc7f4884b3a42272446e2a5d1",
+    "seconds": 2.1600000000000015,
+    "generatedAt": "2026-11-03T11:51:26.204Z"
+  },
+  "车站多少钱？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "车站多少钱？",
+    "transcript": "车站多少钱？",
+    "requestHash": "d5d6e35c59bc629a63e0a86a6b9d316accd732724c05111048b7accb0a8f203d",
+    "sha256": "90180db6d9f9dd2b7b705b1e1c32c0e00847de781ae8851a440396d5c3bcd606",
+    "seconds": 2.2080000000000015,
+    "generatedAt": "2026-11-03T11:51:27.740Z"
+  },
+  "咖啡馆": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "咖啡馆",
+    "transcript": "咖啡馆",
+    "requestHash": "31289fa1843f9a156396c13f71ac88447a7ed02087953178cf5c04fc2a0fe6ff",
+    "sha256": "28057bda0309be9e40583a5cac66d9ed55825f744807c90479015c2af26caa07",
+    "seconds": 1.3200000000000007,
+    "generatedAt": "2026-11-03T11:51:28.795Z"
+  },
+  "明天你有时间吗？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "明天你有时间吗？",
+    "transcript": "明天你有时间吗？",
+    "requestHash": "681d25bbc1d196cbcc1352de8dc7f8957c8aeaa5287c6880fd2ba69fbf5fadbe",
+    "sha256": "a94d3c3f0ef854c4253c5b56964f9707fbd5366a075acbd786752297e3ec83d8",
+    "seconds": 2.4480000000000017,
+    "generatedAt": "2026-11-03T11:51:30.267Z"
+  },
+  "有。几点见？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "有。几点见？",
+    "transcript": "有。几点见？",
+    "requestHash": "8e59fdc2ea79bbe011ff82f4e2eec6e18bf0d436fb0aaf77a03490d32159ad68",
+    "sha256": "90216df1574abc8703b3b86c9dbe0a6abcd082f22968427d4d58070781238e29",
+    "seconds": 2.0640000000000014,
+    "generatedAt": "2026-11-03T11:51:32.325Z"
+  },
+  "下午三点半，可以吗？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "下午三点半，可以吗？",
+    "transcript": "下午三点半，可以吗？",
+    "requestHash": "3ff906765a1821301c6be785982e1d95021a4664dfe5db0334f316e0c61b7a44",
+    "sha256": "36440104cef1af3d1e62836ad7479e98448162fad4850fab2b8d26f4545dbc80",
+    "seconds": 2.712000000000002,
+    "generatedAt": "2026-11-03T11:51:33.761Z"
+  },
+  "可以。在哪里见？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "可以。在哪里见？",
+    "transcript": "可以。在哪里见？",
+    "requestHash": "3ebfd8c9ed425e406acb9b9a68ca0ff4baa2c52fe7b5b9f38fc4f9a0c88e44fa",
+    "sha256": "75535daabe827c7ec97d5cbea4417e4fdbf813055432afedcf95d6f41a64dc2a",
+    "seconds": 2.4000000000000017,
+    "generatedAt": "2026-11-03T11:51:35.449Z"
+  },
+  "在公园见。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "在公园见。",
+    "transcript": "在公园见。",
+    "requestHash": "1ac0b657a7422da961c32f1458d4b61fa53e5b24a19ab70d625ebf93ca57c40e",
+    "sha256": "8ccfd7fa6a280f4bc93b86a7fe4113a75b3f04d68957940a455b36310ff70f10",
+    "seconds": 1.512000000000001,
+    "generatedAt": "2026-11-03T11:51:36.842Z"
+  },
+  "好，明天见！": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "好，明天见！",
+    "transcript": "好，明天见！",
+    "requestHash": "bd3b6ff2787f3cd649bad135174a66833c4fc6b6689fec5013d2e2de2d2f233c",
+    "sha256": "9df52cee8cf370847ac443a49562cb6a16638a412b066167d90de0d0fa523b03",
+    "seconds": 2.3520000000000016,
+    "generatedAt": "2026-11-03T11:51:38.081Z"
+  },
+  "明天": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "明天",
+    "transcript": "明天",
+    "requestHash": "490f5894a2937743e5aa1339e59c8e8c4965176c6b5947361d5b0065eeea4486",
+    "sha256": "06a5bc089c79d83f6a721529557b559124898fe2caac9ad6d0fba68f9cd79c34",
+    "seconds": 1.2000000000000006,
+    "generatedAt": "2026-11-03T11:51:39.116Z"
+  },
+  "今天": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "今天",
+    "transcript": "今天",
+    "requestHash": "bcd9b9cb67745743b69ef420fa329d5a188a244ab0bb473e666764f822baa11b",
+    "sha256": "dfc25715dd6a3fc1db3c27107b8247b80f512e39c0815a5f1cf9840ff2df79b5",
+    "seconds": 1.2000000000000006,
+    "generatedAt": "2026-11-03T11:51:40.327Z"
+  },
+  "上午": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "上午",
+    "transcript": "上午",
+    "requestHash": "47e23b66c6310f17ef4ea681e87c525d4c10b4de8bd54250aeff63f9846e450b",
+    "sha256": "9f5ad13c60c22bb4f912b634ae4097488dfbd604e57241f0596ca86279f4e9fd",
+    "seconds": 0.9600000000000005,
+    "generatedAt": "2026-11-03T11:51:41.276Z"
+  },
+  "下午": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "下午",
+    "transcript": "下午",
+    "requestHash": "b69117ad078657e280098645f95c23147ae14d74ba05790165b04f0934942e17",
+    "sha256": "828bf59554dc280dd67fe743f31a8bcefcc1bfe2597267ec690a41ea74d7e42d",
+    "seconds": 1.2000000000000006,
+    "generatedAt": "2026-11-03T11:51:42.795Z"
+  },
+  "三点半": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "三点半",
+    "transcript": "三点半",
+    "requestHash": "794f9a02bf0eced24d35b4a947ae3fec70798444b51cbdb44452fa5ce419a181",
+    "sha256": "7e42f0a4a685babe97370914b0bcbe6d168f2544f3ebdde7e119c85492597ed7",
+    "seconds": 1.560000000000001,
+    "generatedAt": "2026-11-03T11:51:44.325Z"
+  },
+  "星期一": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "星期一",
+    "transcript": "星期一",
+    "requestHash": "688d425a88d898a86bb0c2869ee26afc9e8044630c6062daa884b21729e7c1dc",
+    "sha256": "f25abc4af6e360a5242c5feedc1b6682b904f884c772dad330ae55a75685131e",
+    "seconds": 1.3200000000000007,
+    "generatedAt": "2026-11-03T11:51:45.679Z"
+  },
+  "月": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "月",
+    "transcript": "月",
+    "requestHash": "dd59011985dadd795cf8b1cb6711d24d7e4db60731f6b7d4ab781e3942375877",
+    "sha256": "d9ebb9e338a98adf82d2cb67cc8f77f31a5340ee235e5c7146ca2cd65b0e453f",
+    "seconds": 0.8640000000000004,
+    "generatedAt": "2026-11-03T11:51:46.769Z"
+  },
+  "号": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "号",
+    "transcript": "号",
+    "requestHash": "8ff00ecb19a09ec96f6588a10abb22a4f934a4d9935e81b483c05c75fbad8755",
+    "sha256": "54648042b7e992b3c8b699540019c6e2ba0f71ec50dfaa867a4cb9c5e9b7f393",
+    "seconds": 0.9600000000000005,
+    "generatedAt": "2026-11-03T11:51:48.068Z"
+  },
+  "我明天去公园。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我明天去公园。",
+    "transcript": "我明天去公园。",
+    "requestHash": "2b5ebe9e1962f3e666380aa04d53480644259bc631ca92e3c4ad3648cc488ef8",
+    "sha256": "099c704e424fa608b1de5331886c17672780e1fc95d79e638124cb8aca1632a1",
+    "seconds": 1.9200000000000013,
+    "generatedAt": "2026-11-03T11:51:49.165Z"
+  },
+  "五月三号": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "五月三号",
+    "transcript": "五月三号",
+    "requestHash": "c90746fec6883b473b07d91f09cf7513af8f46764bd8f15ae6dc3501ac9b63ea",
+    "sha256": "e55a10269b1c8a9ed56d16c81e1d87140f123db8d2833c2c0a84eecabb0f1031",
+    "seconds": 2.0160000000000013,
+    "generatedAt": "2026-11-03T11:51:50.444Z"
+  },
+  "下午三点半。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "下午三点半。",
+    "transcript": "下午三点半。",
+    "requestHash": "69654f479171519b997bfbd9636e0dbd91e482a9ab8c9c48de588d37342c052f",
+    "sha256": "fff7a798abc3a8f823d6f1deda456d92df41aaa511e9bf3a9d344e0510f87f31",
+    "seconds": 2.0160000000000013,
+    "generatedAt": "2026-11-03T11:51:51.794Z"
+  },
+  "上午三点半。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "上午三点半。",
+    "transcript": "上午三点半。",
+    "requestHash": "efe0d4c93c444cb4191ce0eab059afcbc101d590335a3b6cd0ed4861933637d0",
+    "sha256": "0be959e336d0cc7e4123525f95a800f79af201ed73e5fc3410c90d810be45791",
+    "seconds": 1.7520000000000011,
+    "generatedAt": "2026-11-03T11:51:53.061Z"
+  },
+  "明天见！": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "明天见！",
+    "transcript": "明天见！",
+    "requestHash": "64091c2480dfffbc161895fa21c1f7fc064d0594849e86d6d052cbc89858d7ff",
+    "sha256": "c80c0aca282efe2251a7e67d11fdec56ec93066547f087926fe4caa97de45fe3",
+    "seconds": 1.3680000000000008,
+    "generatedAt": "2026-11-03T11:51:54.081Z"
+  },
+  "今天见！": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "今天见！",
+    "transcript": "今天见！",
+    "requestHash": "1e2042eff614cc74e5d5a9fc1882d3aa303cc9dd6f33cb42b95df1393f9b2c67",
+    "sha256": "888fd39e8b27b19788b232e95df6071a43b26d0f7d9beb4f99e32850f251bffc",
+    "seconds": 1.3680000000000008,
+    "generatedAt": "2026-11-03T11:51:55.746Z"
+  },
+  "你喜欢这本书吗？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "你喜欢这本书吗？",
+    "transcript": "你喜欢这本书吗？",
+    "requestHash": "6eaf86deee2850b341b53ea947ecc1190a15bc80f2c1c738a834674eda194eb7",
+    "sha256": "a4cc230c9204d1eb8c3b1e4fae5a818abfa152210edee5e9d17b92d6eee8b693",
+    "seconds": 2.3520000000000016,
+    "generatedAt": "2026-11-03T11:51:57.098Z"
+  },
+  "喜欢。我可以看看吗？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "喜欢。我可以看看吗？",
+    "transcript": "喜欢。我可以看看吗？",
+    "requestHash": "c45f47a4c90ea3e6d7d8ddfe18e683fc2c7169bbf57cab0d8fb10066c00db371",
+    "sha256": "dc3c0374403f9dfc6470bc72533db00edacc4e87403854f96099c55694da780b",
+    "seconds": 3.1680000000000024,
+    "generatedAt": "2026-11-03T11:51:58.457Z"
+  },
+  "可以。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "可以。",
+    "transcript": "可以。",
+    "requestHash": "61e2004df728559b2c7939371ef488ce68e7d9365d3d1202cb8cb8f3674cfea5",
+    "sha256": "478f2e446ffc4ae5611e41f5877c3115c842b04c44e4afbd7512846b5c14ac88",
+    "seconds": 0.9120000000000005,
+    "generatedAt": "2026-11-03T11:51:59.404Z"
+  },
+  "那本书多少钱？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "那本书多少钱？",
+    "transcript": "那本书多少钱？",
+    "requestHash": "298afc447a3b3318b09250b3042d75e4f6f8396caec81f6db846e3f81c2c6555",
+    "sha256": "fa40b74067ddb955e4dd26f04acc2b7d2b673c10bff98eb8cf20e174351fa93e",
+    "seconds": 2.3040000000000016,
+    "generatedAt": "2026-11-03T11:52:00.635Z"
+  },
+  "二十块。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "二十块。",
+    "transcript": "二十块。",
+    "requestHash": "f57cfbed1bf2d5ccfc2b3e362325be2237f004933d38961d78244dfc3b370943",
+    "sha256": "c11048506ca57196e05ed580540711199a011e2753864877ea7e1d459ce102cb",
+    "seconds": 1.2480000000000007,
+    "generatedAt": "2026-11-03T11:52:02.006Z"
+  },
+  "我要那本，谢谢。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我要那本，谢谢。",
+    "transcript": "我要那本，谢谢。",
+    "requestHash": "84bfcc4fbdcf24324d43fb05095cdea9414a4d6056623623a4a88f0572d57175",
+    "sha256": "dfe09188baea59130cb32cc95d9b20faa164c47de6b067fd28df5e259208686f",
+    "seconds": 2.952000000000002,
+    "generatedAt": "2026-11-03T11:52:03.711Z"
+  },
+  "本": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "本",
+    "transcript": "本",
+    "requestHash": "eeb99c090c7dc22f5c467e46f293395847be566cef92b84fc4334e98984b9a07",
+    "sha256": "36239cf41a6d534e8366a5469bbcebb79726e5cb04dc11d45617e8dd2d630e5a",
+    "seconds": 1.0560000000000005,
+    "generatedAt": "2026-11-03T11:52:04.889Z"
+  },
+  "这": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "这",
+    "transcript": "这",
+    "requestHash": "f7660d90b0537d94f0ad55af35e50775534638e251a43f2f39f0461cab18a999",
+    "sha256": "b2a2099d3b45107f32699a17b041cc35e4dceaddf781cc39ff10aa3e0d5f8e84",
+    "seconds": 0.9120000000000005,
+    "generatedAt": "2026-11-03T11:52:06.739Z"
+  },
+  "那": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "那",
+    "transcript": "那",
+    "requestHash": "fa31ee39dd8c8b0453af67935909534670833108ec1fc40cf7c68d59874bd8b0",
+    "sha256": "73051f75f853f2b95138eb0b941078fe6224c2c718349a3f7a3a0c823fce05bf",
+    "seconds": 0.9120000000000005,
+    "generatedAt": "2026-11-03T11:52:08.517Z"
+  },
+  "喜欢": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "喜欢",
+    "transcript": "喜欢",
+    "requestHash": "fee4c67f0dea48c53773103353414bde746722fa63d26aa37f22990dec4f44ec",
+    "sha256": "a1b3f15482650c80ebd52d972d8c88e796823911b4b976cb8a3778d22a882662",
+    "seconds": 1.0560000000000005,
+    "generatedAt": "2026-11-03T11:52:09.760Z"
+  },
+  "看看": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "看看",
+    "transcript": "看看",
+    "requestHash": "5eca14edcdb82ed7e1a1463c547328d0f81cfd9393cdfcc99bc1bd3c62699f5d",
+    "sha256": "cc3322ef2731a1a67a3c84da5eb42fac5edc3a96becec5082b36508be3bd199d",
+    "seconds": 0.9120000000000005,
+    "generatedAt": "2026-11-03T11:52:11.035Z"
+  },
+  "二十": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "二十",
+    "transcript": "二十",
+    "requestHash": "96edb22d23e719894e8d779f9780dba594e3b12a4b52b9b09f28c33382d31de9",
+    "sha256": "1c03cf72cc99749ca754aefff5d2d0a279a0cc5751c8ab10c169eec7af0eb9cb",
+    "seconds": 1.1520000000000006,
+    "generatedAt": "2026-11-03T11:52:12.431Z"
+  },
+  "可以": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "可以",
+    "transcript": "可以",
+    "requestHash": "31cd202d20886e9d18bd39ba85baf20b63efde8f72dbace233feac47026a7e9a",
+    "sha256": "3f2900c0104a6b942ba45676ab07f5c6ce42e08a34e3fa84c3777ef10d2f9f2a",
+    "seconds": 1.0560000000000005,
+    "generatedAt": "2026-11-03T11:52:14.388Z"
+  },
+  "我喜欢这本书。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我喜欢这本书。",
+    "transcript": "我喜欢这本书。",
+    "requestHash": "985d92f62ff45ee6acd602d18d4781b18c57a9331f664572a3ec9cf4c509c0e8",
+    "sha256": "40aebd834fa955b66e2df88ece1efc4ef03655f3367dca54d9049316ce4418a7",
+    "seconds": 2.3040000000000016,
+    "generatedAt": "2026-11-03T11:52:16.542Z"
+  },
+  "我可以看看吗？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我可以看看吗？",
+    "transcript": "我可以看看吗？",
+    "requestHash": "a1af3130992632a3340a2b73fd4ad8c648a2f59f4a64a9d7edd98cd8ffe00ccf",
+    "sha256": "264faaad9ec772f120d2c573cc191090cfebc84d7eec70f653659c7a0a55f8e5",
+    "seconds": 2.1120000000000014,
+    "generatedAt": "2026-11-03T11:52:17.820Z"
+  },
+  "我不喜欢。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我不喜欢。",
+    "transcript": "我不喜欢。",
+    "requestHash": "1ae530bb7d7aff74d865b88f59a7ba0fb5c074dac695a36d04e6d08088db087f",
+    "sha256": "d79c0ba6a6d6c04ecad590d673a96716f8b05517271be2b86780305df95cb671",
+    "seconds": 1.4640000000000009,
+    "generatedAt": "2026-11-03T11:52:19.365Z"
+  },
+  "我要那本。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我要那本。",
+    "transcript": "我要那本。",
+    "requestHash": "83b3fc3300731b49cb039dd9d8531d416329927b174ded1d36a756db29dbb137",
+    "sha256": "590e0676d6d7a047f694936a8d62693a28b9a1a1dcbf0e9d2595fb4d37f78983",
+    "seconds": 1.560000000000001,
+    "generatedAt": "2026-11-03T11:52:20.680Z"
+  },
+  "我要这本。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我要这本。",
+    "transcript": "我要这本。",
+    "requestHash": "647a6689e9a543b50593390eaa7a50b5f73defa15e28d04ac26e156bda2496a0",
+    "sha256": "35d7e15aef12537ad6a56ec0626b2f31794a51acb379df169735747c9f598032",
+    "seconds": 1.608000000000001,
+    "generatedAt": "2026-11-03T11:52:22.402Z"
+  },
+  "我们今天去哪里？": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我们今天去哪里？",
+    "transcript": "我们今天去哪里？",
+    "requestHash": "2535c0638f168038dd0591028d0ad38aa56d2d1b2cfb571eaba68e5127647f4b",
+    "sha256": "99883c19297c940bc67e519af2f54a087357f0ee59cfb9a3febb9390e2c1d031",
+    "seconds": 2.568000000000002,
+    "generatedAt": "2026-11-03T11:52:24.019Z"
+  },
+  "先去公园，再去吃饭。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "先去公园，再去吃饭。",
+    "transcript": "先去公园，再去吃饭。",
+    "requestHash": "72b575bea3da53759bf082dbe35fa5914d2fcfc2988cf4ae901cde85051b44d6",
+    "sha256": "a9f73d4e788f0a0384d773310afaef42e452746ad499bc9e096f4a8e8391e329",
+    "seconds": 3.3120000000000025,
+    "generatedAt": "2026-11-03T11:52:25.829Z"
+  },
+  "请再说一遍。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "请再说一遍。",
+    "transcript": "请再说一遍。",
+    "requestHash": "ef300855dd96c9f033c4467032008cdbfeee53de5de932ae76d1960bc67a5351",
+    "sha256": "9954102b5099ec3e3d20c0d5fce5492735c7ef4957ef7528c92d43f5b9827d7b",
+    "seconds": 1.8480000000000012,
+    "generatedAt": "2026-11-03T11:52:27.385Z"
+  },
+  "先去公园。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "先去公园。",
+    "transcript": "先去公园。",
+    "requestHash": "298c53847cf29df506a86caf56deaf927ddea16e3e540d67a9184bce3a6a3bb0",
+    "sha256": "eaf94ac7432998959cb89d77689fe0b62f662d4c4199407fa93f0cd9c86b54a5",
+    "seconds": 1.7520000000000011,
+    "generatedAt": "2026-11-03T11:52:28.556Z"
+  },
+  "好。我想喝茶。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "好。我想喝茶。",
+    "transcript": "好。我想喝茶。",
+    "requestHash": "b02f7807ac8fb70052e4b06b35f672ac27d916ae3e91ca9c115c0c6f8cfccf0b",
+    "sha256": "c1587dacfc0598cd5b55c4e5e2dbd4e427c47db51e708ad429b9c149ee8eda7f",
+    "seconds": 3.0480000000000023,
+    "generatedAt": "2026-11-03T11:52:30.809Z"
+  },
+  "我们下午三点在咖啡馆见。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我们下午三点在咖啡馆见。",
+    "transcript": "我们下午三点在咖啡馆见。",
+    "requestHash": "81a36646ede7bc725f66bbe3def8f5d868d17556f2d6b784d3e9b5a63b853f1c",
+    "sha256": "8be2a61ec1bd3a0bac329362f5db4ccc84a8c733802015c63b38364dbf366600",
+    "seconds": 3.000000000000002,
+    "generatedAt": "2026-11-03T11:52:32.787Z"
+  },
+  "我们": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我们",
+    "transcript": "我们",
+    "requestHash": "f2a4366e9f74dc6703558cc1ec4580ee51cfbd2033812827109836adf79c450b",
+    "sha256": "a17edf1248ae65d7e9262b367024d881b1e808a088355b0fa4f1409ebf91f8d3",
+    "seconds": 1.0560000000000005,
+    "generatedAt": "2026-11-03T11:52:34.591Z"
+  },
+  "先": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "先",
+    "transcript": "先",
+    "requestHash": "fee6b2c80beae5f8fec2d108e577f3ebb65d226af45f9416801fd889a3d4fe89",
+    "sha256": "2d89b1b7b0e47246d2c355e44fd9878adfdf71074fba5c9deb3a0471e7839f95",
+    "seconds": 0.9600000000000005,
+    "generatedAt": "2026-11-03T11:52:35.645Z"
+  },
+  "再": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "再",
+    "transcript": "再",
+    "requestHash": "66c7ca6072bb0a826f13a5973bec1f06af615145a304b32ef82016cdf2462b05",
+    "sha256": "9c1bfd5993921d1e8cb357f665d41e5aa715a8a879af49ebc81d740aa346f827",
+    "seconds": 0.8160000000000004,
+    "generatedAt": "2026-11-03T11:52:36.894Z"
+  },
+  "吃饭": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "吃饭",
+    "transcript": "吃饭",
+    "requestHash": "6cea5677a97e44ca1f17b36e3189de20ed214cfd379af1397695282be07a21c6",
+    "sha256": "3543ae089295385261fb67cd8bd7733e58b988994a4056fc63a12fc1aa049b7c",
+    "seconds": 1.2000000000000006,
+    "generatedAt": "2026-11-03T11:52:38.206Z"
+  },
+  "说": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "说",
+    "transcript": "说",
+    "requestHash": "3e954660876615bd673a5aaec4391d7de5170a697afbc6dfa7176797130ac4f3",
+    "sha256": "df68912cd2292ea32e2c9d2978c84f263b0774a5582751b01f1c99dc3efcd325",
+    "seconds": 0.8640000000000004,
+    "generatedAt": "2026-11-03T11:52:39.505Z"
+  },
+  "一遍": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "一遍",
+    "transcript": "一遍",
+    "requestHash": "fe5c404084223b7fcad74e93751107452fcade49a4aee1c48afbf12ff4620ca8",
+    "sha256": "3f6568e8a9efff39851445e802e9b4fc27f04396cace0a91104874750e183ef9",
+    "seconds": 0.9600000000000005,
+    "generatedAt": "2026-11-03T11:52:41.033Z"
+  },
+  "慢一点": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "慢一点",
+    "transcript": "慢一点",
+    "requestHash": "8f56cfecbaf15801cb984f66b98c014954c1853dfc2cf52d377a054e2b9969b6",
+    "sha256": "c6d1836f72260136162fe5e234b4d4305bf842334edf34467b8b1b158c22891d",
+    "seconds": 1.3200000000000007,
+    "generatedAt": "2026-11-03T11:52:42.557Z"
+  },
+  "我们先喝茶，再去公园。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我们先喝茶，再去公园。",
+    "transcript": "我们先喝茶，再去公园。",
+    "requestHash": "5d1606d832c7a207931a8a19c896f9a0a066fb30c01f47f4b6e1a8c82323e385",
+    "sha256": "98ffed9bdba75662fe122fc0397cf9a37323cad1d687d5fadf6f08c9cccf0ca3",
+    "seconds": 3.6000000000000028,
+    "generatedAt": "2026-11-03T11:52:44.415Z"
+  },
+  "我们下午三点在公园见。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "我们下午三点在公园见。",
+    "transcript": "我们下午三点在公园见。",
+    "requestHash": "5f9efbddd12d00eeb08fac5cac5d7cf8f2782b8693d5813f85a1eb4d55fd430f",
+    "sha256": "11556dec97148144428aeffd4a9684b069f9f88114a83a509840e2be5f0ac450",
+    "seconds": 2.952000000000002,
+    "generatedAt": "2026-11-03T11:52:46.206Z"
+  },
+  "在车站见。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "在车站见。",
+    "transcript": "在车站见。",
+    "requestHash": "f759012241eebb379fe85246c6e4ebf8dc00080d7b2af8914b5721a7c32e3a15",
+    "sha256": "ea9951ad5e51014e48feb0b4cca504e7013d5431126ac0a776ba69595206589d",
+    "seconds": 1.4160000000000008,
+    "generatedAt": "2026-11-03T11:52:47.733Z"
+  },
+  "再见！": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "再见！",
+    "transcript": "再见！",
+    "requestHash": "90eaa1c8674e6bff2d570f50ad310d6ae0b7fea48d5d7f769a5c82e955018e74",
+    "sha256": "9875c39babaa1bf9bea9eaaca26874545c2d86b0ed48490c0cc3d5ad6e10bc77",
+    "seconds": 0.9120000000000005,
+    "generatedAt": "2026-11-03T11:52:48.773Z"
+  },
+  "九块。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "九块。",
+    "transcript": "九块。",
+    "requestHash": "6863fcf802aad8cdc26bd945cddf66137d397124704a4bb47d9c304a22cb6e85",
+    "sha256": "700ba59ba25f1a31cf9dbe188088f168b70d64f566b0082e5929ad8368ca227e",
+    "seconds": 0.9600000000000005,
+    "generatedAt": "2026-11-03T11:52:50.177Z"
+  },
+  "这是我爸爸。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "这是我爸爸。",
+    "transcript": "这是我爸爸。",
+    "requestHash": "e57116a813894971024d5a864a972e48c5c4de1cf8f65945c4ee3a5d00a067fa",
+    "sha256": "71820a3325a5d5b38247202a94cf8c963c9bee67837cffb951f9f848d58e595d",
+    "seconds": 2.3520000000000016,
+    "generatedAt": "2026-11-03T11:52:51.921Z"
+  },
+  "明天下午三点在公园见。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "明天下午三点在公园见。",
+    "transcript": "明天下午三点在公园见。",
+    "requestHash": "d7c46b1c9167b427190dbc65d627ec802b2832356eecceb9f894f114f52e4fb0",
+    "sha256": "f1be7ff41799aed8ca53ba5baed871ba39c925548089f70f94461cb99f63d53a",
+    "seconds": 3.1680000000000024,
+    "generatedAt": "2026-11-03T11:52:53.801Z"
+  },
+  "今天上午三点在车站见。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "今天上午三点在车站见。",
+    "transcript": "今天上午三点在车站见。",
+    "requestHash": "43b35b595024770d66e4d16d75db6b107f62b83f79b721e7c3b3cfb840b6e6f7",
+    "sha256": "1640a1aeb0eb8795fd7155ca083a063716b5077ba63f06294cf60672fbf84d26",
+    "seconds": 3.2160000000000024,
+    "generatedAt": "2026-11-03T11:52:55.274Z"
+  },
+  "请慢一点。": {
+    "model": "gpt-realtime-2.1",
+    "voice": "marin",
+    "text": "请慢一点。",
+    "transcript": "请慢一点。",
+    "requestHash": "8a2c85aae840d1f5d98de01d2d8268d95ca7f3082293b6391b7cccbd9f9d3d99",
+    "sha256": "49a621fbeaad593c6b43ebd494013418552710c077a4af168de5bb33dfbd507e",
+    "seconds": 1.560000000000001,
+    "generatedAt": "2026-11-03T11:52:56.937Z"
+  }
+}

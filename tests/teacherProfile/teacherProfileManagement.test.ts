@@ -7,6 +7,7 @@ import { join, relative, sep } from "node:path";
 import assert from "node:assert/strict";
 import { execSync } from "node:child_process";
 import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
+import { hasOnlyMandarinAudioAddition } from "../helpers/mandarinAudioScope";
 
 const REPO_ROOT = process.cwd();
 
@@ -383,6 +384,7 @@ test("forbidden files: branch does not touch Stripe checkout/webhook, Supabase/R
     if (hasOnlyGuidedStripeReturnChange(file)) continue;
     for (const rule of forbidden) {
       if (rule.re.test(file)) {
+        if (rule.label === "generated audio assets" && hasOnlyMandarinAudioAddition(file, mergeBase)) continue;
         if (rule.label === "Supabase migrations" && approvedMigrationExceptions.has(file)) {
           continue;
         }

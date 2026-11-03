@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { test } from "node:test";
 import sharp from "sharp";
@@ -27,6 +29,10 @@ import { mandarinCourseAudio } from "@/lib/yo/audio/mandarinCourseAudio";
 import paths from "@/lib/yo/mandarin/audioPaths.json";
 import images from "@/lib/yo/mandarin/imageAssets.json";
 import tones from "@/lib/yo/mandarin/toneAssets.json";
+import {
+  exactTranscript,
+  recordingRequest,
+} from "@/scripts/generate-mandarin-course-local-audio";
 import {
   preflightManifest,
   validateMp3,
@@ -230,6 +236,58 @@ test("all shipped speech and native tone assets are real validated MP3s", () => 
     assert.match(tone.license, /^CC BY/);
     assert.ok(
       validateMp3(readFileSync("public" + tone.src)).durationSeconds > 0.2,
+    );
+  }
+});
+test("every course clip uses the requested model and voice with exact scripts and verified bytes", () => {
+  const evidence = JSON.parse(
+    readFileSync("lib/yo/mandarin/audioProvenance.json", "utf8"),
+  );
+  assert.equal(Object.keys(evidence).length, mandarinCourseAudio.length);
+  assert.equal(Object.keys(paths).length, mandarinCourseAudio.length);
+  const hash = (value: Buffer | string) =>
+    createHash("sha256").update(value).digest("hex");
+  for (const item of mandarinCourseAudio) {
+    const src = (paths as Record<string, string>)[item.text];
+    assert.equal(src, "/audio/" + item.storagePath);
+    assert.match(src, /\/mandarin-foundations\/v2\//);
+    const proof = evidence[item.text],
+      bytes = readFileSync("public" + src);
+    assert.equal(proof.model, "gpt-realtime-2.1");
+    assert.equal(proof.voice, "marin");
+    assert.equal(proof.text, item.text);
+    assert.equal(exactTranscript(item.text, proof.transcript), true, item.id);
+    assert.equal(
+      proof.requestHash,
+      hash(JSON.stringify(recordingRequest(item.text))),
+    );
+    assert.equal(proof.sha256, hash(bytes));
+    assert.equal(proof.seconds, validateMp3(bytes).durationSeconds);
+    const original = "public" + src.replace("/v2/", "/v1/");
+    assert.ok(existsSync(original), "Retain original recording for rollback");
+  }
+  const originals = execFileSync(
+    "git",
+    [
+      "ls-tree",
+      "-r",
+      "--name-only",
+      "HEAD",
+      "--",
+      "public/audio/yo/zh/mandarin-foundations/v1",
+      "public/audio/yo/zh/reference-tones",
+    ],
+    { encoding: "utf8" },
+  )
+    .trim()
+    .split(/\r?\n/)
+    .filter(Boolean);
+  for (const file of originals) {
+    const before = execFileSync("git", ["show", `HEAD:${file}`]);
+    assert.equal(
+      hash(readFileSync(file)),
+      hash(before),
+      file + " must not be overwritten",
     );
   }
 });

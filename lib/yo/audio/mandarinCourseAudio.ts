@@ -23,11 +23,11 @@ export const mandarinCourseAudio: readonly YoAudioItem[] = [
     id: "zh-course-" + hash,
     targetLanguage: "zh",
     moduleId: "mandarin-foundations",
-    lessonId: "v1",
+    lessonId: "v2",
     type: "sentence",
     text,
     spokenText: text,
-    storagePath: `yo/zh/mandarin-foundations/v1/mandarin-standard/sentence/${hash}.mp3`,
+    storagePath: `yo/zh/mandarin-foundations/v2/mandarin-standard/sentence/${hash}.mp3`,
     accentProfile: "mandarin_standard",
   };
 });

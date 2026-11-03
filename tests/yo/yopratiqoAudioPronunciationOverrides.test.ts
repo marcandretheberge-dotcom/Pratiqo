@@ -72,7 +72,7 @@ const mandarinAdditions = new Set(mandarinCourseAudio.map(item => `public/audio/
 const mandarinTones = new Set(Object.values(mandarinToneAssets).map(item => `public${item.src}`));
 function isAuthorizedMandarinAddition(path: string): boolean {
   return !originalAudio.has(path) && (
-    /^public\/audio\/yo\/zh\/mandarin-foundations\/v1\/mandarin-standard\/sentence\/[a-f0-9]{16}\.mp3$/.test(path) && mandarinAdditions.has(path)
+    /^public\/audio\/yo\/zh\/mandarin-foundations\/v2\/mandarin-standard\/sentence\/[a-f0-9]{16}\.mp3$/.test(path) && mandarinAdditions.has(path)
     || /^public\/audio\/yo\/zh\/reference-tones\/tone-[1-4]\.mp3$/.test(path) && mandarinTones.has(path)
   );
 }
@@ -277,6 +277,7 @@ test("audio scope permits only validated authorized language additions, never ch
   for (const path of originalAudio) assert.equal(isAuthorizedGermanAddition(path), false);
   for (const path of originalAudio) assert.equal(isAuthorizedMandarinAddition(path), false);
   assert.equal(isAuthorizedMandarinAddition("public/audio/yo/zh/unregistered.mp3"), false);
+  assert.equal(isAuthorizedMandarinAddition("public/audio/yo/zh/mandarin-foundations/v2/mandarin-standard/sentence/0000000000000000.mp3"), false);
   assert.equal(isAuthorizedMandarinAddition("public/audio/yo/zh/reference-tones/tone-5.mp3"), false);
   assert.equal(isAuthorizedMandarinAddition("public/audio/yo/it/replacement.mp3"), false);
 });
