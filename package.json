@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:yo-mandarin": "node --import tsx tests/yo/yopratiqoMandarinCourse.test.ts && node --import tsx tests/yo/yopratiqoMandarinPlayer.test.ts && node --import tsx tests/yo/yopratiqoMandarinRealtimeAudio.test.ts",
     "test:yo-portuguese": "node --import tsx tests/yo/yopratiqoPortugueseCourse.test.ts && node --import tsx tests/yo/yopratiqoPortuguesePlayer.test.ts",
     "test:yo-german": "node --import tsx tests/yo/yopratiqoGermanCourseContent.test.ts && node --import tsx tests/yo/yopratiqoGermanCoursePlayer.test.ts && node --import tsx tests/yo/yopratiqoGermanAudio.test.ts",
     "test:homepage": "node tests/marketing/homepageClarity.mjs && node tests/marketing/homepageMap.mjs && tsx tests/marketing/homepageMapArea.test.ts",
@@ -133,6 +134,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "8.18.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "sharp": "^0.34.5",
@@ -141,6 +143,7 @@
     "typescript": "^5",
     "@electric-sql/pglite": "0.5.10",
     "jsdom": "26.1.0",
-    "@testing-library/react": "16.3.3"
+    "@testing-library/react": "16.3.3",
+    "ws": "8.22.0"
   }
 }

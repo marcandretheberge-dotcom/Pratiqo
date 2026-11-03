@@ -25,6 +25,9 @@ import { germanCourseAudio } from "@/lib/yo/audio/germanCourseAudio";
 import { germanPublishedAudio } from "@/lib/yo/german/courseAudioPublished";
 import { portugueseCourseAudio } from "@/lib/yo/audio/portugueseCourseAudio";
 import { portuguesePublishedAudio } from "@/lib/yo/portuguese/courseAudioPublished";
+import { mandarinCourseAudio } from "@/lib/yo/audio/mandarinCourseAudio";
+import mandarinPublishedAudio from "@/lib/yo/mandarin/audioPaths.json";
+import mandarinToneAssets from "@/lib/yo/mandarin/toneAssets.json";
 import { validateMp3 } from "@/scripts/generate-yopratiqo-audio";
 
 type TestFn = () => void | Promise<void>;
@@ -64,6 +67,14 @@ const portugueseAdditions = new Set(portugueseCourseAudio.map((item) => `public/
 function isAuthorizedPortugueseAddition(path: string): boolean {
   return /^public\/audio\/yo\/pt-br\/portuguese-course-foundations\/v1\/brazilian-portuguese\/sentence\/[a-z0-9-]+\.mp3$/.test(path)
     && !originalAudio.has(path) && portugueseAdditions.has(path);
+}
+const mandarinAdditions = new Set(mandarinCourseAudio.map(item => `public/audio/${item.storagePath}`));
+const mandarinTones = new Set(Object.values(mandarinToneAssets).map(item => `public${item.src}`));
+function isAuthorizedMandarinAddition(path: string): boolean {
+  return !originalAudio.has(path) && (
+    /^public\/audio\/yo\/zh\/mandarin-foundations\/v2\/mandarin-standard\/sentence\/[a-f0-9]{16}\.mp3$/.test(path) && mandarinAdditions.has(path)
+    || /^public\/audio\/yo\/zh\/reference-tones\/tone-[1-4]\.mp3$/.test(path) && mandarinTones.has(path)
+  );
 }
 
 const FR_MODULE_ID = "fr-quebec-workplace-survival-1";
@@ -253,8 +264,8 @@ test("audio scope permits only validated authorized language additions, never ch
   ];
   const mp3s = changed.filter((path) => /\.mp3$/i.test(path));
   for (const path of mp3s) {
-    assert.ok(isAuthorizedGermanAddition(path) || isAuthorizedPortugueseAddition(path), `unauthorized audio change: ${path}`);
-    const published = isAuthorizedPortugueseAddition(path) ? portuguesePublishedAudio : germanPublishedAudio;
+    assert.ok(isAuthorizedGermanAddition(path) || isAuthorizedPortugueseAddition(path) || isAuthorizedMandarinAddition(path), `unauthorized audio change: ${path}`);
+    const published = isAuthorizedMandarinAddition(path) ? { ...mandarinPublishedAudio, ...Object.fromEntries(Object.entries(mandarinToneAssets).map(([key, value]) => [key, value.src])) } : isAuthorizedPortugueseAddition(path) ? portuguesePublishedAudio : germanPublishedAudio;
     assert.ok(Object.values(published).includes(path.slice("public".length)));
     assert.ok(validateMp3(readFileSync(join(REPO_ROOT, path))).durationSeconds > 0.2);
   }
@@ -264,6 +275,11 @@ test("audio scope permits only validated authorized language additions, never ch
   assert.equal(isAuthorizedPortugueseAddition("public/audio/yo/de/replacement.mp3"), false);
   for (const path of originalAudio) assert.equal(isAuthorizedPortugueseAddition(path), false);
   for (const path of originalAudio) assert.equal(isAuthorizedGermanAddition(path), false);
+  for (const path of originalAudio) assert.equal(isAuthorizedMandarinAddition(path), false);
+  assert.equal(isAuthorizedMandarinAddition("public/audio/yo/zh/unregistered.mp3"), false);
+  assert.equal(isAuthorizedMandarinAddition("public/audio/yo/zh/mandarin-foundations/v2/mandarin-standard/sentence/0000000000000000.mp3"), false);
+  assert.equal(isAuthorizedMandarinAddition("public/audio/yo/zh/reference-tones/tone-5.mp3"), false);
+  assert.equal(isAuthorizedMandarinAddition("public/audio/yo/it/replacement.mp3"), false);
 });
 
 test("tracked patch avoids generated audio and restricted product systems", () => {
@@ -515,7 +531,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     /^supabase\//,
   ];
   for (const path of changed) {
-    if (isAuthorizedGermanAddition(path) || isAuthorizedPortugueseAddition(path)) continue;
+    if (isAuthorizedGermanAddition(path) || isAuthorizedPortugueseAddition(path) || isAuthorizedMandarinAddition(path)) continue;
     // Authorized learner-demand work, unrelated to audio. Keep scope narrow and
     // assert the privacy/security contract instead of disabling the scope guard.
     if (path === "app/api/learner-demand/route.ts") {

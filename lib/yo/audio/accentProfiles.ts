@@ -77,6 +77,7 @@ export type YoAudioAccentProfileId =
   | "canadian_english"
   | "german_standard"
   | "brazilian_portuguese"
+  | "mandarin_standard"
   | "japanese_standard";
 
 export interface YoAudioAccentProfile {
@@ -211,6 +212,14 @@ const PROFILES: Record<YoAudioAccentProfileId, YoAudioAccentProfile> = {
     ttsInstructions: "Read the supplied Portuguese exactly once in clear Brazilian Portuguese, with a calm natural pace for beginners. Preserve nasal vowels, written accents, word stress and Brazilian vocabulary. Do not translate, answer questions or add commentary.",
     defaultVoice: "alloy",
     bcp47Hint: "pt-BR",
+  },
+  mandarin_standard: {
+    id: "mandarin_standard",
+    pathSlug: "mandarin-standard",
+    label: "Standard Mandarin",
+    ttsInstructions: "Read the supplied simplified Chinese exactly once in standard Mandarin. Use natural lexical tones, neutral tones and contextual tone sandhi. Do not translate, answer questions or add commentary.",
+    defaultVoice: "alloy",
+    bcp47Hint: "zh-CN",
   },
   japanese_standard: {
     id: "japanese_standard",

@@ -75,6 +75,7 @@ export type YoTargetLanguage =
   | "pt"
   | "it"
   | "de"
+  | "zh"
   | "ja";
 
 /**
