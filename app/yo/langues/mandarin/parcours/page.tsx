@@ -3,9 +3,9 @@ import { getYoLocale } from "@/lib/yo/localize";
 import { MandarinCourseHome } from "@/components/yo/mandarin/MandarinCourseHome";
 import { L } from "@/lib/yo/mandarin/types";
 import {
-  mandarinUnits,
   MANDARIN_LANGUAGE_SOURCE,
 } from "@/lib/yo/mandarin/course";
+import { mandarinJourneyUnits, mandarinFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
 
 export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<{ lang?: string | string[] }> };
@@ -23,20 +23,11 @@ export async function generateMetadata({
   };
 }
 export default async function Page({ searchParams }: Props) {
-  const units = mandarinUnits.map(
-    ({ id, number, title, setting, scene, exercises }) => ({
-      id,
-      number,
-      title,
-      setting,
-      scene,
-      exerciseIds: exercises.map((exercise) => exercise.id),
-    }),
-  );
   return (
     <MandarinCourseHome
       locale={getYoLocale((await searchParams).lang)}
-      units={units}
+      units={mandarinJourneyUnits}
+      finalIds={mandarinFinalIds}
       languageSource={MANDARIN_LANGUAGE_SOURCE}
     />
   );

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { mandarinJourneyUnits, mandarinFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import * as React from "react";
@@ -107,6 +108,7 @@ function mount(step?: string) {
   }
   return render(
     React.createElement(MandarinCoursePlayer, {
+      journeyUnits: mandarinJourneyUnits, finalIds: mandarinFinalIds,
       unit: mandarinUnits[0],
       locale: "fr",
     }),
@@ -317,8 +319,11 @@ test("blocked storage does not break practice; malformed storage starts safely",
   Object.defineProperty(globalThis, "localStorage", original);
 });
 test("final mission offers real picture matching and sentence games without awarding course mastery", () => {
+  // Preserve an existing final session; direct access for a new learner is tested separately.
+  localStorage.setItem(MANDARIN_PROGRESS_KEY, JSON.stringify({ ...emptyProgress(), unit: "bilan" }));
   const view = render(
     React.createElement(MandarinCoursePlayer, {
+      journeyUnits: mandarinJourneyUnits, finalIds: mandarinFinalIds,
       unit: mandarinFinal,
       locale: "en",
     }),
@@ -438,6 +443,7 @@ test("final completion requires checked exercises, not trivia or self-assessment
   const mountFinal = () =>
     render(
       React.createElement(MandarinCoursePlayer, {
+        journeyUnits: mandarinJourneyUnits, finalIds: mandarinFinalIds,
         unit: mandarinFinal,
         locale: "fr",
       }),
@@ -473,7 +479,7 @@ test("final completion requires checked exercises, not trivia or self-assessment
   );
   assert.equal(
     view
-      .getByRole("link", { name: "Continuer le parcours" })
+      .getByRole("link", { name: "Voir le parcours" })
       .getAttribute("href"),
     "/yo/langues/mandarin/parcours",
   );

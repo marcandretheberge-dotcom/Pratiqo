@@ -1,6 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import type { JourneyUnit } from "@/lib/yo/learningJourney";
+import { japaneseJourney, canEnterFoundationStep } from "@/lib/yo/foundationJourney";
+import { CourseJourneyGate } from "../journey/CourseJourney";
+import { FoundationJourneyAdvance } from "../journey/FoundationJourneyAdvance";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, BookmarkPlus, CheckCircle2, Compass, GraduationCap, RotateCcw } from "lucide-react";
 import type { YoLocale } from "@/lib/yo/types";
@@ -80,10 +84,15 @@ function buildStages(unit: JapaneseCourseUnit, final: boolean): Stage[] {
   return stages;
 }
 
-export function JapaneseCoursePlayer({ unit, locale, sources, completionAction, final = false }: {
-  unit: JapaneseCourseUnit; locale: YoLocale; sources: JapaneseCourseSource[]; completionAction?: ReactNode; final?: boolean;
+export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, finalIds, completionAction, final = false }: {
+  unit: JapaneseCourseUnit; locale: YoLocale; sources: JapaneseCourseSource[]; journeyUnits: JourneyUnit[]; finalIds: string[]; completionAction?: ReactNode; final?: boolean;
 }) {
   const { progress, update, ready, storageAvailable } = useJapaneseCourseProgress();
+  const journey = japaneseJourney(journeyUnits, progress);
+  const finalStarted = progress.lastUnit === "bilan" || Boolean(progress.lastSteps.bilan) || finalIds.some(id => Boolean(progress.results[id]));
+  const allowed = canEnterFoundationStep(journey, unit.slug, finalStarted);
+  const finalOpen = canEnterFoundationStep(journey, "bilan", finalStarted);
+  const href = (id?: string) => buildYoLocaleHref(JAPANESE_COURSE_PATH + (id ? "/" + id : ""), locale);
   const stages = useMemo(() => buildStages(unit, final), [unit, final]);
   const [index, setIndex] = useState(0);
   const [activityStates, setActivityStates] = useState<Record<string, JapaneseActivityState>>({});
@@ -102,15 +111,15 @@ export function JapaneseCoursePlayer({ unit, locale, sources, completionAction, 
   const uncompleted = stages.filter((item) => item.activity && !progress.results[item.id]?.passed);
 
   useEffect(() => {
-    if (!ready || resumeLoaded.current) return;
+    if (!ready || !allowed || resumeLoaded.current) return;
     resumeLoaded.current = true;
     const saved = stages.findIndex((item) => item.id === progress.lastSteps[unit.slug]);
     if (saved >= 0) setIndex(saved);
-  }, [ready, progress.lastSteps, stages, unit.slug]);
+  }, [ready, allowed, progress.lastSteps, stages, unit.slug]);
   useEffect(() => {
-    if (!ready || !resumeLoaded.current) return;
+    if (!ready || !allowed || !resumeLoaded.current) return;
     update((current) => current.lastUnit === unit.slug && current.lastSteps[unit.slug] === stage.id ? current : { ...current, lastUnit: unit.slug, lastSteps: { ...current.lastSteps, [unit.slug]: stage.id } });
-  }, [ready, stage.id, unit.slug, update]);
+  }, [ready, allowed, stage.id, unit.slug, update]);
   useEffect(() => {
     if (!focusRequested.current) return;
     focusRequested.current = false;
@@ -178,7 +187,6 @@ export function JapaneseCoursePlayer({ unit, locale, sources, completionAction, 
   const feedbackChoice = currentActivity && "choices" in currentActivity && currentState && typeof currentState.answer === "string" ? currentActivity.choices.find((item) => item.id === currentState.answer) : undefined;
   const coachMessage = currentState?.checked ? (feedbackChoice?.feedback ?? currentActivity!.explanation) : currentActivity?.prompt ?? studyCoach.message;
   const coachExample = currentActivity?.kind === "build" ? currentActivity.phrase : currentActivity && "stimulus" in currentActivity && typeof currentActivity.stimulus === "object" ? currentActivity.stimulus : currentActivity ? undefined : studyCoach.example;
-  const nextPath = final ? JAPANESE_COURSE_PATH : unit.number < 8 ? JAPANESE_COURSE_PATH + "/module-" + (unit.number + 1) : JAPANESE_COURSE_PATH + "/bilan";
   const studyPanels: Array<{ id: string; content: ReactNode }> = final ? [] : [
     { id: "dialogue", content: <JapaneseDialoguePanel unit={unit} locale={locale} showRomaji={showRomaji} /> },
     { id: "vocabulary", content: <JapaneseVocabularyLab unit={unit} locale={locale} showRomaji={showRomaji} /> },
@@ -187,6 +195,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, completionAction, 
     { id: "writing", content: <JapaneseWritingLab unit={unit} locale={locale} showRomaji={showRomaji} /> },
   ];
 
+  if (!ready || !allowed) return <CourseJourneyGate locale={locale} ready={ready} href={href()} />;
   return <div lang={htmlLangFor(locale)} className="flex h-[100dvh] flex-col overflow-hidden bg-[#f7f5ef] text-slate-800" data-japanese-course-player={unit.id}>
     <JapaneseCourseHeader locale={locale} pathname={JAPANESE_COURSE_PATH + "/" + unit.slug} backHref={JAPANESE_COURSE_PATH} title={(final ? C.final[locale] : "日本語 · " + String(unit.number).padStart(2, "0"))} />
     <div className="flex min-h-0 flex-1">
@@ -232,7 +241,8 @@ export function JapaneseCoursePlayer({ unit, locale, sources, completionAction, 
               {reviewStages.length ? <button onClick={() => coachAction("review")} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-indigo-300 bg-indigo-50 px-5 text-sm font-semibold text-indigo-900"><RotateCcw size={15} aria-hidden />{C.reviewAction[locale]}</button> : null}
               {!final ? <fieldset className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5"><legend className="px-2 font-semibold">{C.self[locale]}</legend>{unit.canDos.map((item, i) => <label key={i} className="flex items-start gap-3 text-sm leading-relaxed"><input type="checkbox" className="mt-1 size-4 accent-indigo-700" checked={!!selfChecks[i]} onChange={(event) => setSelfChecks((current) => ({ ...current, [i]: event.target.checked }))} />{item[locale]}</label>)}<p className="text-xs text-slate-500">{C.selfNote[locale]}</p></fieldset> : null}
               {counts.complete && completionAction ? <div className="rounded-2xl border border-slate-200 bg-white p-5">{completionAction}</div> : null}
-              <div className="flex flex-wrap gap-3"><Link href={buildYoLocaleHref(nextPath, locale)} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-indigo-700 px-5 text-sm font-semibold text-white">{final ? C.path[locale] : unit.number === 8 ? C.final[locale] : C.nextModule[locale]}<ArrowRight size={16} aria-hidden /></Link><Link href={"/trouver-un-prof?q=japonais" + (locale === "fr" ? "" : "&lang=" + locale)} className="inline-flex min-h-11 items-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold">{C.teacher[locale]}</Link></div>
+              {final ? <Link href={href()} className="inline-flex min-h-11 items-center gap-2 text-indigo-800 underline">{C.path[locale]}</Link> : <FoundationJourneyAdvance journey={journey} unitId={unit.slug} locale={locale} href={href} finalOpen={finalOpen} />}
+              <Link href={"/trouver-un-prof?q=japonais" + (locale === "fr" ? "" : "&lang=" + locale)} className="inline-flex min-h-11 items-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold">{C.teacher[locale]}</Link>
               <p className="text-xs leading-relaxed text-slate-500">{C.academic[locale]}</p>
             </div> : null}
           </div>
@@ -250,6 +260,6 @@ export function JapaneseCoursePlayer({ unit, locale, sources, completionAction, 
       </div>
       {!storageAvailable ? <p role="status" className="mt-1 text-center text-xs text-amber-900">{C.noStorage[locale]}</p> : null}
     </footer>
-    <JapaneseYoppoCoach locale={locale} contextId={unit.id + ":" + stage.id + ":" + (currentState?.revision ?? 0)} message={coachMessage} hint={currentActivity?.hint ?? studyCoach.hint} explanation={currentActivity?.explanation ?? studyCoach.explanation} example={coachExample} visualState={stage.kind === "summary" && counts.complete ? final ? "badge_unlocked" : "level_up" : currentState?.checked ? currentState.correct ? "celebrating" : "confused" : stage.kind === "mission" ? "map" : "idle"} onAction={coachAction} canRetry={!!currentState?.checked} reviewCount={reviewStages.length} />
+    <JapaneseYoppoCoach locale={locale} contextId={unit.id + ":" + stage.id + ":" + (currentState?.revision ?? 0)} message={coachMessage} hint={currentActivity?.hint ?? studyCoach.hint} explanation={currentActivity?.explanation ?? studyCoach.explanation} example={coachExample} visualState={stage.kind === "summary" && counts.complete && counts.independent === counts.total ? final ? "badge_unlocked" : "level_up" : currentState?.checked ? currentState.correct ? "celebrating" : "confused" : stage.kind === "mission" ? "map" : "idle"} onAction={coachAction} canRetry={!!currentState?.checked} reviewCount={reviewStages.length} />
   </div>;
 }

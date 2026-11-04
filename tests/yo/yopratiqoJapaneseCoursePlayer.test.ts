@@ -7,6 +7,7 @@ import * as React from "react";
 import { JapaneseCoursePlayer } from "@/components/yo/japanese/JapaneseCoursePlayer";
 import { JapaneseCourseHome, type JapaneseUnitOutline } from "@/components/yo/japanese/JapaneseCourseHome";
 import { japaneseCourseUnits, japaneseCourseSources, japaneseFinalAssessment } from "@/lib/yo/japaneseCourse";
+import { japaneseJourneyUnits, japaneseFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
 import {
   emptyJapaneseProgress, JAPANESE_COURSE_PATH, JAPANESE_PROGRESS_KEY,
   japaneseUnitPracticeIds, parseJapaneseProgress, recordJapaneseResult,
@@ -45,7 +46,7 @@ const outlines: JapaneseUnitOutline[] = japaneseCourseUnits.map((item) => ({ ...
 const completionLabel = "Record this completion";
 const completionAction = React.createElement("button", { type: "button" }, completionLabel);
 const courseNode = (chosenUnit = unit, locale: YoLocale = "en", final = false) => React.createElement(JapaneseCoursePlayer, {
-  unit: chosenUnit, locale, final, sources: japaneseCourseSources, completionAction,
+  unit: chosenUnit, locale, final, sources: japaneseCourseSources, completionAction, journeyUnits: japaneseJourneyUnits, finalIds: japaneseFinalIds,
 });
 const homeNode = (locale: YoLocale = "en") => React.createElement(JapaneseCourseHome, {
   locale, units: outlines, finalIds: japaneseFinalAssessment.map((activity) => activity.id), sources: japaneseCourseSources,
@@ -239,9 +240,11 @@ for (const locale of ["fr", "en", "es"] as const) {
     const copy = homeLabels[locale];
     assert.equal(view.getByRole("link", { name: copy.resume }).getAttribute("href"), href(`${JAPANESE_COURSE_PATH}/${japaneseCourseUnits[2].slug}`, locale));
     assert.equal(view.getByRole("link", { name: copy.back }).getAttribute("href"), href("/yo/langues", locale));
-    assert.equal(view.getByRole("link", { name: copy.final }).getAttribute("href"), href(`${JAPANESE_COURSE_PATH}/bilan`, locale));
+    assert.equal(view.queryByRole("link", { name: copy.final }), null, "A resumed module is not evidence that all modules passed.");
     assert.equal(view.getByRole("link", { name: copy.intro }).getAttribute("href"), href("/yo/langues/japonais/intro", locale));
-    for (const link of view.getAllByRole("link", { name: copy.enter })) {
+    const unlockedLinks = view.container.querySelectorAll('[data-journey-unit][data-unlocked="true"] a');
+    assert.equal(unlockedLinks.length, 2, "First and legacy-started modules remain available.");
+    for (const link of unlockedLinks) {
       const url = new URL(link.getAttribute("href")!, window.location.origin);
       assert.equal(url.searchParams.get("lang"), locale === "fr" ? null : locale);
       assert.match(url.pathname, /\/parcours\/module-[1-8]$/);

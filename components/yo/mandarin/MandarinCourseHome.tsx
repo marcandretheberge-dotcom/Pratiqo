@@ -1,31 +1,33 @@
 "use client";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, RotateCcw } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { buildYoLocaleHref } from "@/lib/yo/localize";
-import type { Unit } from "@/lib/yo/mandarin/types";
+import type { JourneyUnit } from "@/lib/yo/learningJourney";
+import { LearningJourney } from "../journey/CourseJourney";
+import { mandarinJourney, canEnterFoundationStep, foundationJourneyCopy } from "@/lib/yo/foundationJourney";
 import { MANDARIN_PATH } from "@/lib/yo/mandarin/progress";
 import { L } from "@/lib/yo/mandarin/types";
 import images from "@/lib/yo/mandarin/imageAssets.json";
-import { sceneDescriptions } from "@/lib/yo/mandarin/visuals";
 import type { YoLocale } from "@/lib/yo/types";
 import { useMandarinProgress } from "./useMandarinProgress";
 
-export type MandarinCourseCard = Pick<
-  Unit,
-  "id" | "number" | "title" | "setting" | "scene"
-> & { exerciseIds: string[] };
 export function MandarinCourseHome({
   locale,
   units,
   languageSource,
+  finalIds,
 }: {
   locale: YoLocale;
-  units: MandarinCourseCard[];
+  units: JourneyUnit[];
+  finalIds: string[];
   languageSource: string;
 }) {
   const { progress, ready, stored } = useMandarinProgress();
+  const journey = mandarinJourney(units, progress);
+  const finalOpen = canEnterFoundationStep(journey, "bilan", progress.unit === "bilan" ||
+    progress.steps.bilan !== undefined || finalIds.some(id => Boolean(progress.results[id] || progress.drafts[id])));
+  const href = (id?: string) => buildYoLocaleHref(MANDARIN_PATH + (id ? "/" + id : ""), locale);
   return (
     <main className="min-h-screen bg-[#f6f9f8] px-4 py-6 text-gray-900">
       <div className="mx-auto max-w-6xl">
@@ -84,7 +86,7 @@ export function MandarinCourseHome({
         {ready && (
           <Link
             href={buildYoLocaleHref(
-              `${MANDARIN_PATH}/${progress.unit}`,
+              `${MANDARIN_PATH}/${progress.unit === "bilan" && finalOpen ? "bilan" : journey.current?.unit.id ?? "u01"}`,
               locale,
             )}
             className="mb-8 inline-flex min-h-12 items-center gap-3 rounded-lg bg-teal-800 px-5 text-white"
@@ -110,61 +112,10 @@ export function MandarinCourseHome({
             }
           </p>
         )}
-        <ol className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {units.map((unit) => {
-            const photo = images[unit.scene as keyof typeof images];
-            const done = unit.exerciseIds.filter(
-              (id) => progress.results[id]?.passed,
-            ).length;
-            return (
-              <li
-                key={unit.id}
-                className="overflow-hidden rounded-lg border border-gray-200 bg-white"
-              >
-                <Link
-                  href={buildYoLocaleHref(
-                    `${MANDARIN_PATH}/${unit.id}`,
-                    locale,
-                  )}
-                  className="group block"
-                >
-                  <Image
-                    src={photo.src}
-                    alt={
-                      sceneDescriptions[
-                        unit.scene as keyof typeof sceneDescriptions
-                      ][locale]
-                    }
-                    width={photo.width}
-                    height={photo.height}
-                    className="aspect-[2/1] w-full object-cover"
-                  />
-                  <div className="p-5">
-                    <p className="text-xs font-semibold text-teal-800">
-                      {String(unit.number).padStart(2, "0")}
-                    </p>
-                    <h2 className="mt-2 text-xl font-bold group-hover:text-teal-800">
-                      {unit.title[locale]}
-                    </h2>
-                    <p className="mt-3 min-h-16 text-sm leading-relaxed text-gray-600">
-                      {unit.setting[locale]}
-                    </p>
-                    <p className="mt-4 flex items-center justify-between text-sm text-teal-900">
-                      <span>
-                        {done} / {unit.exerciseIds.length}{" "}
-                        {L("exercices", "exercises", "ejercicios")[locale]}
-                      </span>
-                      <ArrowRight size={18} />
-                    </p>
-                  </div>
-                </Link>
-              </li>
-            );
-          })}
-        </ol>
+        <LearningJourney journey={journey} ready={ready} locale={locale} href={href} copy={foundationJourneyCopy[locale]} />
         <section className="mt-8 border-y border-teal-200 py-6">
-          <Link
-            href={buildYoLocaleHref(`${MANDARIN_PATH}/bilan`, locale)}
+          {ready && finalOpen ? <Link
+            href={href("bilan")}
             className="inline-flex min-h-12 items-center gap-3 text-xl font-bold text-teal-900"
           >
             {
@@ -175,7 +126,7 @@ export function MandarinCourseHome({
               )[locale]
             }
             <ArrowRight size={20} />
-          </Link>
+          </Link> : <p className="text-sm text-gray-700">{foundationJourneyCopy[locale].pending}</p>}
           <p className="mt-3 text-sm text-gray-600">
             {
               L(

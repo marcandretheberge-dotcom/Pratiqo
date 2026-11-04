@@ -1,4 +1,8 @@
 "use client";
+import type { JourneyUnit } from "@/lib/yo/learningJourney";
+import { mandarinJourney, canEnterFoundationStep } from "@/lib/yo/foundationJourney";
+import { CourseJourneyGate } from "../journey/CourseJourney";
+import { FoundationJourneyAdvance } from "../journey/FoundationJourneyAdvance";
 import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -74,13 +78,23 @@ function PracticeGame({
 export function MandarinCoursePlayer({
   unit,
   locale,
+  journeyUnits,
+  finalIds,
 }: {
   unit: Unit;
   locale: YoLocale;
+  journeyUnits: JourneyUnit[];
+  finalIds: string[];
 }) {
   const { progress, ready, stored, update: persist } = useMandarinProgress();
   const update = (change: (value: Progress) => Progress) =>
     persist((value) => ({ ...change(value), unit: unit.id }));
+  const journey = mandarinJourney(journeyUnits, progress);
+  const finalStarted = progress.unit === "bilan" || progress.steps.bilan !== undefined ||
+    finalIds.some(id => Boolean(progress.results[id] || progress.drafts[id]));
+  const allowed = canEnterFoundationStep(journey, unit.id, finalStarted);
+  const finalOpen = canEnterFoundationStep(journey, "bilan", finalStarted);
+  const href = (id?: string) => buildYoLocaleHref(MANDARIN_PATH + (id ? "/" + id : ""), locale);
   const stages = mandarinStages(unit);
   const step = Math.min(progress.steps[unit.id] ?? 0, stages.length - 1);
   const stage = stages[step];
@@ -129,12 +143,6 @@ export function MandarinCoursePlayer({
         },
       }));
   }
-  const nextPath =
-    unit.id === "bilan"
-      ? MANDARIN_PATH
-      : unit.number === 8
-        ? `${MANDARIN_PATH}/bilan`
-        : `${MANDARIN_PATH}/u${String(unit.number + 1).padStart(2, "0")}`;
   const games = [
     {
       id: "picture",
@@ -161,6 +169,7 @@ export function MandarinCoursePlayer({
       label: L("Une rencontre", "An encounter", "Un encuentro"),
     },
   ];
+  if (!ready || !allowed) return <CourseJourneyGate locale={locale} ready={ready} href={href()} />;
   return (
     <div
       className="flex h-dvh flex-col overflow-hidden bg-[#f6f9f8] text-gray-900"
@@ -474,7 +483,7 @@ export function MandarinCoursePlayer({
                 {unit.exercises
                   .filter(
                     (exercise) =>
-                      !progress.results[exercise.id]?.passed ||
+                      !progress.results[exercise.id]?.independent ||
                       progress.results[exercise.id]?.review,
                   )
                   .map((exercise) => (
@@ -519,19 +528,7 @@ export function MandarinCoursePlayer({
                   </label>
                 );
               })}
-              <Link
-                href={buildYoLocaleHref(nextPath, locale)}
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-teal-800 px-5 text-white"
-              >
-                <BookOpen size={18} />
-                {
-                  L(
-                    "Continuer le parcours",
-                    "Continue the course",
-                    "Continuar el curso",
-                  )[locale]
-                }
-              </Link>
+              {unit.id === "bilan" ? <Link href={href()} className="inline-flex min-h-11 items-center gap-2 text-teal-900 underline"><BookOpen size={18} />{L("Voir le parcours", "View the journey", "Ver el recorrido")[locale]}</Link> : <FoundationJourneyAdvance journey={journey} unitId={unit.id} locale={locale} href={href} finalOpen={finalOpen} />}
             </section>
           )}
         </div>

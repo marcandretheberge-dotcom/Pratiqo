@@ -6,6 +6,7 @@ import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { CourseCatalog } from "@/lib/yo/italian/course/courseTypes";
 import type { CourseProgress } from "@/lib/yo/italian/course/courseProgress";
 import { buildCourseJourney } from "@/lib/yo/courseJourney";
+import type { LearningJourney as Journey } from "@/lib/yo/learningJourney";
 import type { YoLocale } from "@/lib/yo/types";
 import { CourseCulturePhoto } from "../italian/course/CourseCulturePhoto";
 import { journeyCopy } from "./journeyCopy";
@@ -14,13 +15,20 @@ type Props = { catalog: CourseCatalog; progress: CourseProgress; locale: YoLocal
 const action = "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700";
 
 export function CourseJourney({ catalog, progress, locale, ready, href }: Props) {
-  const c = journeyCopy[locale];
   const journey = buildCourseJourney(catalog, progress);
+  return <LearningJourney journey={journey} locale={locale} ready={ready} href={href} />;
+}
+
+export function LearningJourney({ journey, locale, ready, href, copy }: {
+  journey: Journey; locale: YoLocale; ready: boolean; href: (unitId?: string) => string;
+  copy?: Partial<(typeof journeyCopy)["en"]>;
+}) {
+  const c = { ...journeyCopy[locale], ...copy };
   return <section aria-label={c.title} className="my-8 min-w-0">
     <div className="border-b border-emerald-200 pb-5">
       <h2 className="text-2xl font-bold text-emerald-950">{c.title}</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700">{c.rule}</p>
-      <p role="status" className="mt-3 text-sm font-semibold text-emerald-800">{ready ? `${journey.passedCount}/${catalog.units.length} · ${c.checkpoints}` : c.loading}</p>
+      <p role="status" className="mt-3 text-sm font-semibold text-emerald-800">{ready ? `${journey.passedCount}/${journey.steps.length} · ${c.checkpoints}` : c.loading}</p>
     </div>
     <ol className="relative mx-auto mt-6 max-w-4xl">
       {journey.steps.map((step, index) => {

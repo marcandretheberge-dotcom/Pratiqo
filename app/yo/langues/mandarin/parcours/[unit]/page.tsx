@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getYoLocale } from "@/lib/yo/localize";
 import { getMandarinUnit } from "@/lib/yo/mandarin/course";
 import { MandarinCoursePlayer } from "@/components/yo/mandarin/MandarinCoursePlayer";
+import { mandarinJourneyUnits, mandarinFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
 export const dynamic = "force-dynamic";
 type Props = {
   params: Promise<{ unit: string }>;
@@ -27,6 +28,8 @@ export default async function Page({ params, searchParams }: Props) {
     <MandarinCoursePlayer
       key={unit.id}
       unit={unit}
+      journeyUnits={mandarinJourneyUnits}
+      finalIds={mandarinFinalIds}
       locale={getYoLocale((await searchParams).lang)}
     />
   );

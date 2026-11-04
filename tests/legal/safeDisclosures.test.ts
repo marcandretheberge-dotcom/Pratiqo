@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
 import { assertItalianLearningSurface, italianLearningFiles } from "../helpers/italianLearningScope";
+import { assertJourneyLearningSurface, journeyLearningFiles } from "../helpers/italianLearningScope";
 import { assertYoPublicSeoSurface, yoPublicSeoFiles } from "../helpers/yoPublicSeoScope";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
@@ -1539,6 +1540,22 @@ test("reviewed Italian learning surfaces cannot add privileged behavior", () => 
   }
 });
 
+test("reviewed journey surfaces cannot add privileged behavior", () => {
+  for (const file of journeyLearningFiles) assertJourneyLearningSurface(file, read(file));
+  const file = "lib/yo/foundationJourney.ts";
+  for (const source of [
+    'import Stripe from "stripe";',
+    'import { charge } from "@/lib/payments/charge";',
+    'import { useAuth } from "../../components/AuthProvider";',
+    'fetch("/api/checkout");',
+    '"use server";',
+    'const module = import("@/lib/supabaseAdmin");',
+  ]) assert.throws(() => assertJourneyLearningSurface(file, source));
+  for (const path of ["app/api/stripe/checkout/route.ts", "lib/payments/charge.ts", "supabase/migrations/example.sql", "components/yo/Unknown.tsx"]) {
+    assert.throws(() => assertJourneyLearningSurface(path, ""));
+  }
+});
+
 test("reviewed public SEO surfaces cannot add privileged behavior", () => {
   for (const file of yoPublicSeoFiles) assertYoPublicSeoSurface(file, read(file));
   const file = "components/yo/YoCourseOverview.tsx";
@@ -1590,6 +1607,10 @@ test("safe-disclosure branch did not touch restricted systems", () => {
     }
     if (italianLearningFiles.has(file)) {
       assertItalianLearningSurface(file, read(file));
+      continue;
+    }
+    if (journeyLearningFiles.has(file)) {
+      assertJourneyLearningSurface(file, read(file));
       continue;
     }
     if (hasOnlyGuidedStripeReturnChange(file)) continue;

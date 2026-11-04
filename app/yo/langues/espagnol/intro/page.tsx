@@ -657,6 +657,7 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
       backHref={backHref}
       toggleHref={toggleHref}
       screens={screens}
+      explorationJourney="spanish-intro"
       enableTapNavigation
     />
   );
