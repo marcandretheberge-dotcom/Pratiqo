@@ -169,6 +169,7 @@ jobs:
         with:
           name: mandarin-flag-validated
           path: .flag-review/
+          include-hidden-files: true
           retention-days: 7
           if-no-files-found: error
 
