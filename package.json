@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "test:yo-journey": "node --import tsx tests/yo/yopratiqoCourseJourney.test.ts",
     "test:yo-mandarin": "node --import tsx tests/yo/yopratiqoMandarinCourse.test.ts && node --import tsx tests/yo/yopratiqoMandarinPlayer.test.ts && node --import tsx tests/yo/yopratiqoMandarinRealtimeAudio.test.ts",
     "test:yo-portuguese": "node --import tsx tests/yo/yopratiqoPortugueseCourse.test.ts && node --import tsx tests/yo/yopratiqoPortuguesePlayer.test.ts",
     "test:yo-german": "node --import tsx tests/yo/yopratiqoGermanCourseContent.test.ts && node --import tsx tests/yo/yopratiqoGermanCoursePlayer.test.ts && node --import tsx tests/yo/yopratiqoGermanAudio.test.ts",

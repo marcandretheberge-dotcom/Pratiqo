@@ -28,6 +28,8 @@ import { CourseCulturePhoto } from "../italian/course/CourseCulturePhoto";
 import { useItalianCourseProgress } from "../italian/course/useItalianCourseProgress";
 import { GermanAssessment } from "./GermanAssessment";
 import { GermanCourseShell, button, outline, copy } from "./GermanCourseShared";
+import { CourseJourneyGate, CourseJourneyAdvance } from "../journey/CourseJourney";
+import { buildCourseJourney } from "@/lib/yo/courseJourney";
 
 function RecallCards({
   lesson,
@@ -295,6 +297,8 @@ type UnitProps = {
 export function GermanCourseUnit(props: UnitProps) {
   const experience = useCourseExperience();
   const state = useItalianCourseProgress(props.catalog, experience.progressKey);
+  const step = buildCourseJourney(props.catalog, state.progress).steps.find(item => item.unit.id === props.unit.id);
+  if (!state.ready || !step?.unlocked) return <CourseJourneyGate locale={props.locale} ready={state.ready} href={experience.href(props.locale)} />;
   return (
     <GermanUnitSession
       key={props.unit.id + "-" + state.progress.resetAt}
@@ -786,6 +790,7 @@ function GermanUnitSession({
                 assessment={unit.quiz}
                 locale={locale}
                 onComplete={state.recordAssessment}
+                resultAction={<CourseJourneyAdvance locale={locale} catalog={catalog} progress={state.progress} unitId={unit.id} href={id => experience.href(locale, id)} />}
               />
             ) : null}
             {view === "write" ? (

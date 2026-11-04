@@ -190,8 +190,9 @@ for (const locale of ["fr", "en", "es"] as const)
           .getAllByRole("link")
           .filter((a) => /\/parcours\/u\d/.test(a.getAttribute("href") ?? ""))
           .length,
-        9,
+        2,
       );
+      assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length, germanCatalog.units.length - 1);
       assert.equal(starts, 0);
     },
   );

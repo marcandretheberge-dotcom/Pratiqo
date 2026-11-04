@@ -140,24 +140,25 @@ for (const locale of ["fr", "en", "es"] as const)
     const links = dashboard
       .getAllByRole("link")
       .filter((a) => /\/parcours\/u\d/.test(a.getAttribute("href") ?? ""));
-    assert.equal(links.length, 9);
-    assert.ok(
+    assert.equal(links.length, 2);
+    assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,catalog.units.length-1);
+    assert.equal(
       dashboard
         .getAllByRole("link")
         .some(
           (a) =>
             a.getAttribute("href") ===
             `/yo/langues/portugais-bresil/parcours/final?lang=${locale}`,
-        ),
+        ), false,
     );
-    assert.ok(
+    assert.equal(
       dashboard
         .getAllByRole("link")
         .some(
           (a) =>
             a.getAttribute("href") ===
             `/yo/langues/portugais-bresil/parcours/culture?lang=${locale}`,
-        ),
+        ), false,
     );
     assert.ok(
       links.every((a) =>
