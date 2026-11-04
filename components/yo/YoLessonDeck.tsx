@@ -49,14 +49,13 @@
  *     on each navigation so every screen feels like a fresh
  *     page; respects `prefers-reduced-motion`.
  *
- * The deck never persists anything by itself. Save-progress
- * persistence stays fully owned by `<YoMarkModuleCompletedButton>`
- * mounted inside the final screen's content.
+ * Assessed/server progress stays owned by the existing completion
+ * button. Free introductions can opt into a local navigation bookmark;
+ * it never records a completed module or quiz response.
  *
  * Privacy / safety profile
  * ------------------------
- *   • Client component, but state-only-in-memory. No API calls,
- *     no persistence, no payment library, no Supabase write, no
+ *   • No API calls, payment library, Supabase write,
  *     quiz storage, no AI summary, no analytics.
  */
 
@@ -72,6 +71,8 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import Link from "next/link";
+import { useExplorationJourney, type IntroJourneyId } from "./journey/useExplorationJourney";
+import { ExplorationJourneyMap } from "./journey/ExplorationJourneyMap";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -107,6 +108,8 @@ export type YoLessonDeckProps = {
    * and for future deep-linking.
    */
   initialIndex?: number;
+  /** Free introductions only. Saves navigation bookmarks, never assessed progress. */
+  explorationJourney?: IntroJourneyId;
   /**
    * Opt-in tap-zone navigation. When enabled, a clean tap on
    * the left ~30 % of the stage area is treated as Back and a
@@ -221,6 +224,7 @@ export function YoLessonDeck({
   toggleHref,
   screens,
   initialIndex = 0,
+  explorationJourney,
   enableTapNavigation = false,
   allowScreenScroll = true,
   variant = "standard",
@@ -235,7 +239,10 @@ export function YoLessonDeck({
     return initialIndex;
   }, [initialIndex, total]);
 
-  const [currentIndex, setCurrentIndex] = useState(safeInitial);
+  const screenIds = useMemo(() => screens.map(screen => screen.id), [screens]);
+  const exploration = useExplorationJourney(explorationJourney, screenIds, safeInitial);
+  const currentIndex = exploration.index;
+  const setCurrentIndex = exploration.move;
   const [referenceStepGate, setReferenceStepGate] =
     useState<YoLessonDeckStepGateState>(DEFAULT_STEP_GATE);
   const stageRef = useRef<HTMLDivElement | null>(null);
@@ -251,13 +258,13 @@ export function YoLessonDeck({
 
   const goPrev = useCallback(() => {
     setCurrentIndex((i) => Math.max(0, i - 1));
-  }, []);
+  }, [setCurrentIndex]);
   const goNext = useCallback(() => {
     if (variant === "reference" && referenceStepGate.enabled && !referenceStepGate.canAdvance) {
       return;
     }
     setCurrentIndex((i) => Math.min(total - 1, i + 1));
-  }, [referenceStepGate.canAdvance, referenceStepGate.enabled, total, variant]);
+  }, [referenceStepGate.canAdvance, referenceStepGate.enabled, total, variant, setCurrentIndex]);
 
   useEffect(() => {
     setReferenceStepGate(DEFAULT_STEP_GATE);
@@ -558,6 +565,7 @@ export function YoLessonDeck({
         <span className="text-xs font-bold uppercase tracking-[0.16em] text-[#13A085]">
           {labels.progressAnnouncement(currentIndex + 1, total)}
         </span>
+        {explorationJourney ? <ExplorationJourneyMap locale={locale} screens={screens} index={currentIndex} visited={exploration.visited} ready={exploration.ready} stored={exploration.stored} move={setCurrentIndex} /> : null}
         <div
           aria-hidden
           className="flex flex-1 items-center gap-1.5 overflow-x-auto"

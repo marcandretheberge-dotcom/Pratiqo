@@ -5,6 +5,7 @@ import { japaneseCourseUnits, japaneseCourseSources, japaneseFinalAssessment } f
 import type { JapaneseCourseUnit } from "@/lib/yo/japaneseCourseTypes";
 import { JapaneseCoursePlayer } from "@/components/yo/japanese/JapaneseCoursePlayer";
 import { YoMarkModuleCompletedButton } from "@/components/yo/YoMarkModuleCompletedButton";
+import { japaneseJourneyUnits, japaneseFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
 
 export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ unit: string }>; searchParams: Promise<{ lang?: string | string[] }> };
@@ -35,7 +36,7 @@ export default async function JapaneseUnitPage({ params, searchParams }: Props) 
   const unit = resolveUnit((await params).unit);
   if (!unit) notFound();
   const locale = getYoLocale((await searchParams).lang);
-  return <JapaneseCoursePlayer key={unit.id} unit={unit} locale={locale} sources={japaneseCourseSources} final={unit.slug === "bilan"} completionAction={
+  return <JapaneseCoursePlayer key={unit.id} unit={unit} locale={locale} journeyUnits={japaneseJourneyUnits} finalIds={japaneseFinalIds} sources={japaneseCourseSources} final={unit.slug === "bilan"} completionAction={
     <YoMarkModuleCompletedButton locale={locale} payload={{
       course_id: "japanese-foundations", module_id: unit.id, module_title: unit.title[locale],
       discipline: "Japonais", level_label: "Fondations", progress_state: "completed",

@@ -723,6 +723,7 @@ export default async function YoFrancaisQuebecIntroPage({
       backHref={backHref}
       toggleHref={toggleHref}
       screens={screens}
+      explorationJourney="french-quebec-intro"
       enableTapNavigation
     />
   );

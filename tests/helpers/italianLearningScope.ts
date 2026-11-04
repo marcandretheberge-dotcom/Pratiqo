@@ -31,8 +31,35 @@ const sharedImports = new Set([
   "lib/yopratiqo/fetchAuthenticatedProgressSnapshots", "lib/yopratiqo/progressSnapshotPersistence",
 ]);
 
+export const journeyLearningFiles = new Set([
+  "app/yo/langues/japonais/parcours/[unit]/page.tsx",
+  "app/yo/langues/mandarin/parcours/[unit]/page.tsx",
+  "app/yo/langues/mandarin/parcours/page.tsx",
+  "components/yo/japanese/JapaneseCourseHome.tsx",
+  "components/yo/japanese/JapaneseCoursePlayer.tsx",
+  "components/yo/journey/CourseJourney.tsx",
+  "components/yo/journey/ExplorationJourneyMap.tsx",
+  "components/yo/journey/FoundationJourneyAdvance.tsx",
+  "components/yo/journey/useExplorationJourney.ts",
+  "components/yo/mandarin/MandarinCourseHome.tsx",
+  "components/yo/mandarin/MandarinCoursePlayer.tsx",
+  "lib/yo/courseJourney.ts",
+  "lib/yo/foundationJourney.ts",
+  "lib/yo/foundationJourneyCatalogs.ts",
+  "lib/yo/learningJourney.ts",
+]);
+
 export function assertItalianLearningSurface(file: string, source: string): void {
   assert.ok(italianLearningFiles.has(file), `Not a reviewed Italian learning file: ${file}`);
+  assertLearningSurface(file, source);
+}
+
+export function assertJourneyLearningSurface(file: string, source: string): void {
+  assert.ok(journeyLearningFiles.has(file), `Not a reviewed journey file: ${file}`);
+  assertLearningSurface(file, source);
+}
+
+function assertLearningSurface(file: string, source: string): void {
   assert.doesNotMatch(source, /["']use server["']|\b(?:fetch|XMLHttpRequest|WebSocket|sendBeacon|eval)\s*\(|\bimport\s*\(|\brequire\s*\(|SUPABASE_SERVICE_ROLE_KEY|OPENAI_API_KEY|STRIPE_SECRET_KEY|\/api\//, file);
   const ast = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   for (const statement of ast.statements) {
@@ -43,7 +70,8 @@ export function assertItalianLearningSurface(file: string, source: string): void
     const resolved = specifier.startsWith(".")
       ? posix.normalize(posix.join(posix.dirname(file), specifier))
       : specifier.replace(/^@\//, "");
-    assert.ok(sharedImports.has(resolved) || resolved.startsWith("components/yo/") || resolved.startsWith("lib/yo/"),
+    const serverRouteImport = journeyLearningFiles.has(file) && file.startsWith("app/yo/") && ["next", "next/navigation"].includes(resolved);
+    assert.ok(serverRouteImport || sharedImports.has(resolved) || resolved.startsWith("components/yo/") || resolved.startsWith("lib/yo/"),
       `Outside learning boundary: ${file} imports ${specifier}`);
     assert.doesNotMatch(resolved, /stripe|supabase|(?:^|\/)(?:auth|payments?|checkout|consent|sharing)(?:\/|$)/i,
       `Privileged dependency in ${file}`);
