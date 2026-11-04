@@ -1,0 +1,213 @@
+name: Mandarin flag hotfix validation
+
+on:
+  push:
+    branches: ["fix/yopratiqo-mandarin-flag-20261103"]
+    paths: [".github/workflows/mandarin-flag-hotfix.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: "22.13.0"
+          package-manager-cache: false
+      - name: Apply narrowly scoped flag fix
+        shell: python
+        run: |
+          import math
+          import subprocess
+          from pathlib import Path
+
+          expected = {
+              'components/yo/YoLanguageBadge.tsx': '53a0d5c549b24b13ea33b27711a859d67a672bec',
+              'components/yo/YoLanguageQuickStart.tsx': 'efb11bbf1e949b28751b4e06bd63350d685d1794',
+              'tests/yo/yopratiqoLanguageSelection.test.ts': '8859c57fb393084ba5e73b072d94d1d107c28b1b',
+          }
+          for file, sha in expected.items():
+              actual = subprocess.check_output(['git', 'hash-object', file], text=True).strip()
+              assert actual == sha, f'Refusing to overwrite changed source: {file}'
+
+          def replace_once(text, old, new):
+              assert text.count(old) == 1, f'Anchor is not unique: {old[:100]}'
+              return text.replace(old, new, 1)
+
+          def star(cx, cy, radius, angle):
+              inner = math.sin(math.pi / 10) / math.sin(3 * math.pi / 10)
+              points = []
+              for i in range(10):
+                  r = radius if i % 2 == 0 else radius * inner
+                  a = angle + i * math.pi / 5
+                  points.append(f'{cx + r * math.cos(a):.6f},{cy + r * math.sin(a):.6f}')
+              return ' '.join(points)
+
+          stars = [star(5, 5, 3, -math.pi / 2)]
+          for x, y in [(10, 2), (12, 4), (12, 7), (10, 9)]:
+              stars.append(star(x, y, 1, math.atan2(5 - y, 5 - x)))
+          polygons = '\n'.join(f'        <polygon points="{points}" />' for points in stars)
+          flag = '''// China flag geometry: 3:2 field, one large star and four stars facing it.
+          // Source: https://www.protocol.gov.hk/en/flags-emblems-anthem.html
+          function FlagChina(): ReactElement {
+            return (
+              <svg {...FLAG_SVG_PROPS} viewBox="0 0 30 20">
+                <rect width="30" height="20" fill="#DE2910" />
+                <g fill="#FFDE00">
+          ''' + polygons + '''
+                </g>
+              </svg>
+            );
+          }
+
+          '''
+          p = Path('components/yo/YoLanguageBadge.tsx')
+          text = p.read_text()
+          text = replace_once(text, '"pt-br" | "do";', '"pt-br" | "do" | "zh";')
+          text = replace_once(text, 'function FlagDominicanRepublic(): ReactElement {', flag + 'function FlagDominicanRepublic(): ReactElement {')
+          text = replace_once(text, '  do: FlagDominicanRepublic,', '  do: FlagDominicanRepublic,\n  zh: FlagChina,')
+          p.write_text(text)
+
+          p = Path('components/yo/YoLanguageQuickStart.tsx')
+          text = replace_once(p.read_text(), '<span lang="zh-Hans" className="text-3xl" aria-hidden>中</span>', '<YoLanguageBadge language="zh" ariaLabel={t(lstr("Chine", "China", "China"), locale)} />')
+          p.write_text(text)
+
+          p = Path('tests/yo/yopratiqoLanguageSelection.test.ts')
+          extra = r'''test("Mandarin uses the shared Chinese flag instead of a character placeholder", () => {
+            const start = pageSrc.indexOf('buildYoLocaleHref("/yo/langues/mandarin/parcours", locale)');
+            assert.ok(start >= 0, "Mandarin course card must exist");
+            const end = pageSrc.indexOf("</Link></li>", start);
+            assert.ok(end > start, "Mandarin course card must be complete");
+            const card = pageSrc.slice(start, end);
+            assert.match(card, /<YoLanguageBadge language="zh"/);
+            assert.match(card, /ariaLabel=\{t\(lstr\("Chine", "China", "China"\), locale\)\}/);
+            assert.doesNotMatch(card, />\s*(?:中|ZH|CN)\s*<\/span>/);
+            assert.ok(exists("app/yo/langues/mandarin/parcours/page.tsx"));
+          });
+
+          test("Chinese flag support is registered with five self-contained stars", () => {
+            assert.match(badgeSrcCode, /YoLanguageBadgeId\s*=[^;]*\|\s*"zh"/);
+            assert.match(badgeSrcCode, /zh:\s*FlagChina/);
+            const start = badgeSrcCode.indexOf("function FlagChina(): ReactElement {");
+            const end = badgeSrcCode.indexOf("function FlagDominicanRepublic", start);
+            assert.ok(start >= 0 && end > start);
+            const flag = badgeSrcCode.slice(start, end);
+            assert.match(flag, /viewBox="0 0 30 20"/);
+            assert.match(flag, /fill="#DE2910"/);
+            assert.match(flag, /fill="#FFDE00"/);
+            const stars = [...flag.matchAll(/<polygon points="([^"]+)"/g)];
+            assert.equal(stars.length, 5, "one large and four small stars");
+            for (const [, points] of stars) assert.equal(points.trim().split(/\s+/).length, 10);
+            assert.doesNotMatch(flag, /<image\b|<img\b|<text\b|href=/);
+          });
+
+          '''
+          text = replace_once(p.read_text(), 'async function run() {', extra + 'async function run() {')
+          p.write_text(text)
+          print('Applied Chinese flag fix to exactly three reviewed files.')
+      - run: npm ci --no-audit --no-fund
+      - name: Language catalog regression
+        run: npm run test:yo-languages
+      - name: Mandarin course regression
+        run: npm run test:yo-mandarin
+      - name: TypeScript validation
+        run: npx --no-install tsc --noEmit
+      - name: Render actual badges and collect reviewed files
+        shell: bash
+        run: |
+          mkdir -p .flag-review
+          node --import tsx --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import React from 'react';
+          import { renderToStaticMarkup } from 'react-dom/server';
+          import { writeFileSync } from 'node:fs';
+          globalThis.React = React;
+          const mod = await import('./components/yo/YoLanguageBadge.tsx');
+          const Badge = mod.YoLanguageBadge || mod.default?.YoLanguageBadge;
+          assert.equal(typeof Badge, 'function');
+          const ids = ['es', 'fr-ca', 'en', 'ja', 'it', 'de', 'pt-br', 'do', 'zh'];
+          for (const language of ids) {
+            for (const size of ['sm', 'md']) {
+              const html = renderToStaticMarkup(React.createElement(Badge, { language, ariaLabel: 'Flag ' + language, size }));
+              assert.ok(html.includes('data-yo-language-badge="' + language + '"'));
+              assert.ok(html.includes('role="img"'));
+              assert.ok(html.includes('<svg'));
+              if (language === 'zh') {
+                assert.equal((html.match(/<polygon /g) || []).length, 5);
+                assert.ok(!html.includes('<image'));
+                assert.ok(html.includes('aria-hidden="true"'));
+                assert.ok(html.includes('focusable="false"'));
+                if (size === 'md') writeFileSync('.flag-review/mandarin-flag.svg', html.match(/<svg[\s\S]*?<\/svg>/)[0]);
+              }
+            }
+          }
+          console.log('Rendered 18 badge variants successfully: nine flags, two sizes.');
+          JS
+          git diff --check
+          python3 - <<'PY'
+          import hashlib, json, shutil, subprocess
+          from pathlib import Path
+          files = ['components/yo/YoLanguageBadge.tsx', 'components/yo/YoLanguageQuickStart.tsx', 'tests/yo/yopratiqoLanguageSelection.test.ts']
+          changed = subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines()
+          assert sorted(changed) == sorted(files), changed
+          hashes = {}
+          for file in files:
+              destination = Path('.flag-review') / file
+              destination.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copyfile(file, destination)
+              hashes[file] = hashlib.sha256(destination.read_bytes()).hexdigest()
+          Path('.flag-review/hashes.json').write_text(json.dumps(hashes, indent=2) + '\n')
+          print(json.dumps(hashes, indent=2))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mandarin-flag-validated
+          path: .flag-review/
+          retention-days: 7
+          if-no-files-found: error
+
+  commit:
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fix/yopratiqo-mandarin-flag-20261103
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: mandarin-flag-validated
+          path: /tmp/mandarin-flag-validated
+      - name: Commit only validated source, remove temporary workflow
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          python3 - <<'PY'
+          import hashlib, json, shutil
+          from pathlib import Path
+          root = Path('/tmp/mandarin-flag-validated')
+          files = ['components/yo/YoLanguageBadge.tsx', 'components/yo/YoLanguageQuickStart.tsx', 'tests/yo/yopratiqoLanguageSelection.test.ts']
+          hashes = json.loads((root / 'hashes.json').read_text())
+          assert sorted(hashes) == sorted(files)
+          for file in files:
+              source = root / file
+              assert source.is_file() and not source.is_symlink()
+              assert hashlib.sha256(source.read_bytes()).hexdigest() == hashes[file]
+              shutil.copyfile(source, file)
+          PY
+          git rm .github/workflows/mandarin-flag-hotfix.yml
+          git add components/yo/YoLanguageBadge.tsx components/yo/YoLanguageQuickStart.tsx tests/yo/yopratiqoLanguageSelection.test.ts
+          git diff --cached --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Fix Mandarin catalog Chinese flag with regression coverage"
+          git push origin HEAD:fix/yopratiqo-mandarin-flag-20261103
