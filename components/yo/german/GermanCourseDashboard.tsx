@@ -10,6 +10,9 @@ import { getDueActivityIds } from "@/lib/yo/italian/course/courseProgress";
 import { t } from "@/lib/yo/german/courseAuthoring";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { GermanCourseShell, button, outline, copy } from "./GermanCourseShared";
+import { CourseJourney } from "../journey/CourseJourney";
+import { buildCourseJourney, canEnterCourseAssessment } from "@/lib/yo/courseJourney";
+import { journeyCopy } from "../journey/journeyCopy";
 
 export function GermanCourseDashboard({
   locale,
@@ -25,11 +28,12 @@ export function GermanCourseDashboard({
     c = copy[locale];
   const due = getDueActivityIds(state.progress, catalog);
   const dueUnit = catalog.units.find((u) => u.activityIds.includes(due[0]));
-  const resume = state.progress.resume;
+  const current = buildCourseJourney(catalog, state.progress).current?.unit;
+  const resume = state.progress.resume?.unitId === current?.id ? state.progress.resume : null;
   const photo = catalog.units.find(unit => unit.photo)?.photo;
   const resumeHref = resume
     ? `${experience.href(locale, resume.unitId)}&lesson=${resume.lessonId}${resume.activityId ? `&activity=${resume.activityId}` : ""}`
-    : experience.href(locale, "u01");
+    : experience.href(locale, current?.id ?? "u01");
   return (
     <GermanCourseShell locale={locale}>
       <section className="grid gap-5 border-b border-emerald-100 pb-7 md:grid-cols-[minmax(0,1fr)_280px]">
@@ -91,48 +95,12 @@ export function GermanCourseDashboard({
           {catalog.units.reduce((n, u) => n + u.activityIds.length, 0)}{" "}
           {t("activités", "activities", "actividades")[locale]}
         </p>
-        <ol className="mt-5 grid gap-4 md:grid-cols-2">
-          {catalog.units.map((unit) => {
-            const done = unit.activityIds.filter(
-              (id) => state.progress.activities[id]?.completed,
-            ).length;
-            return (
-              <li key={unit.id} className="min-w-0">
-                <Link
-                  href={experience.href(locale, unit.id)}
-                  className="block h-full rounded-lg border border-gray-200 bg-white p-5 transition hover:border-emerald-600 focus-visible:outline-2 focus-visible:outline-emerald-700"
-                >
-                  <span className="text-xs font-bold text-emerald-700">
-                    {String(unit.number).padStart(2, "0")}
-                  </span>
-                  <h3 className="mt-2 text-xl font-bold">
-                    {unit.title[locale]}
-                  </h3>
-                  <p className="mt-3 text-sm leading-relaxed text-gray-600">
-                    {unit.objectives.map((o) => o[locale]).join(" · ")}
-                  </p>
-                  <div className="mt-4 flex items-center justify-between gap-3 text-xs text-gray-600">
-                    <span>
-                      {done}/{unit.activityIds.length} · {c.done}
-                    </span>
-                    <ArrowRight size={17} aria-hidden />
-                  </div>
-                  <progress
-                    aria-label={unit.title[locale]}
-                    value={done}
-                    max={unit.activityIds.length}
-                    className="mt-3 h-2 w-full accent-emerald-700"
-                  />
-                </Link>
-              </li>
-            );
-          })}
-        </ol>
+        <CourseJourney locale={locale} catalog={catalog} progress={state.progress} ready={state.ready} href={id => experience.href(locale, id)} />
       </section>
       <section className="mt-8 grid gap-4 border-t border-gray-200 pt-6 sm:grid-cols-2">
         {catalog.assessments
           .filter((a) => a.id === experience.finalId || a.theme === "culture")
-          .map((a) => (
+          .map((a) => state.ready && canEnterCourseAssessment(catalog, state.progress, a.id) ? (
             <Link
               key={a.id}
               href={experience.href(
@@ -164,7 +132,7 @@ export function GermanCourseDashboard({
               </span>
               <ArrowRight size={17} className="ml-auto shrink-0" aria-hidden />
             </Link>
-          ))}
+          ) : <div key={a.id} className="border-b border-gray-200 p-5"><h3 className="font-bold">{a.title[locale]}</h3><p className="mt-2 text-sm">{journeyCopy[locale].pending}</p></div>)}
       </section>
       <button
         type="button"

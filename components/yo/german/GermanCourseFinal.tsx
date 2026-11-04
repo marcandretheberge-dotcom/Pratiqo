@@ -9,6 +9,8 @@ import { ItalianAudioProvider } from "../italian/ItalianAudioProvider";
 import { useItalianCourseProgress } from "../italian/course/useItalianCourseProgress";
 import { GermanCourseShell, copy } from "./GermanCourseShared";
 import { GermanAssessment } from "./GermanAssessment";
+import { CourseJourneyGate } from "../journey/CourseJourney";
+import { canEnterCourseAssessment } from "@/lib/yo/courseJourney";
 export function GermanCourseFinal({
   assessment,
   catalog,
@@ -22,6 +24,7 @@ export function GermanCourseFinal({
 }) {
   const experience = useCourseExperience();
   const state = useItalianCourseProgress(catalog, experience.progressKey);
+  if (!state.ready || !canEnterCourseAssessment(catalog, state.progress, assessment.id)) return <CourseJourneyGate locale={locale} ready={state.ready} href={experience.href(locale)} />;
   return (
     <ItalianAudioProvider paths={audioPaths} language={experience.language}>
       <GermanCourseShell

@@ -1,7 +1,7 @@
 "use client";
 import { useCourseExperience } from "./CourseExperience";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import type { CourseAssessment } from "@/lib/yo/italian/course/courseTypes";
 import type { YoLocale } from "@/lib/yo/types";
 import { ItalianGame } from "../italian/ItalianGames";
@@ -15,7 +15,9 @@ export function GermanAssessment({
   assessment,
   locale,
   onComplete,
+  resultAction,
 }: {
+  resultAction?: ReactNode;
   assessment: CourseAssessment;
   locale: YoLocale;
   onComplete: (
@@ -135,6 +137,7 @@ export function GermanAssessment({
             )[locale]
           }
         </p>
+        {resultAction}
         <div className="mt-6 flex flex-wrap gap-3">
           <button type="button" className={button} onClick={restart}>
             {c.replay}

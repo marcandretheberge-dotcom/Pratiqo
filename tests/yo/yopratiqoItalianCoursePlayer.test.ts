@@ -10,7 +10,7 @@ import { ItalianCourseAssessment } from "@/components/yo/italian/course/ItalianC
 import { italianCultureFinal } from "@/lib/yo/italian/course/courseCulture";
 import { ItalianAudioProvider } from "@/components/yo/italian/ItalianAudioProvider";
 import { italianCourseUnits, italianCourseCatalog, courseSources } from "@/lib/yo/italian/course/courseData";
-import { ITALIAN_COURSE_PROGRESS_KEY, resetCourseProgress, type CourseProgress } from "@/lib/yo/italian/course/courseProgress";
+import { ITALIAN_COURSE_PROGRESS_KEY, emptyCourseProgress, recordCourseAssessment, resetCourseProgress, type CourseProgress } from "@/lib/yo/italian/course/courseProgress";
 import type { ItalianChoiceActivity, ItalianMatchActivity } from "@/lib/yo/italian/italianModuleTypes";
 import type { CourseQuestion } from "@/lib/yo/italian/course/courseTypes";
 import type { YoLocale } from "@/lib/yo/types";
@@ -47,7 +47,7 @@ for(const locale of ["fr","en","es"] as const)test(`${locale}: course and unit r
  const view=mount(locale);assert.equal(view.getByRole("heading",{level:1}).textContent,unit.title[locale]);assert.ok(view.getByRole("link",{name:locale.toUpperCase()}));assert.equal(starts,0);assert.equal(view.queryAllByRole("checkbox").length,0);
  click(view.getByRole("button",{name:{fr:"3. La langue",en:"3. Language",es:"3. La lengua"}[locale]}));assert.ok(view.getByText(lesson.grammar.body[locale]));
  click(view.getByRole("button",{name:{fr:"6. À toi",en:"6. Your turn",es:"6. Tu turno"}[locale]}));assert.equal(view.getAllByRole("checkbox").length,lesson.speaking.checklist.length);
- cleanup();const dashboard=render(React.createElement(ItalianCourseDashboard,{locale,catalog:italianCourseCatalog,sources:courseSources}));assert.equal(dashboard.getAllByRole("link").filter(link=>(link.getAttribute("href")??"").includes("/parcours/u")).length,13);assert.equal(starts,0);
+ cleanup();const dashboard=render(React.createElement(ItalianCourseDashboard,{locale,catalog:italianCourseCatalog,sources:courseSources}));assert.equal(dashboard.getAllByRole("link").filter(link=>(link.getAttribute("href")??"").includes("/parcours/u")).length,2);assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,italianCourseCatalog.units.length-1);assert.equal(starts,0);
 });
 test("phrase translations can be hidden in the optional notebook without removing Italian audio",()=>{const view=mount();play(view);click(view.getByRole("button",{name:"Carnet de mots"}));const notebook=within(view.getByRole("heading",{name:"Carnet de mots"}).closest("section")!);assert.ok(notebook.getByText(lesson.vocabulary[0].meaning.fr));click(notebook.getByRole("button",{name:"Masquer les traductions"}));assert.equal(notebook.queryByText(lesson.vocabulary[0].meaning.fr),null);assert.ok(notebook.getByRole("button",{name:`Écouter : ${lesson.vocabulary[0].it}`}));});
 test("independent pair completion persists and replays do not duplicate completed activities",()=>{const view=mount();play(view);pairs(view);assert.equal(saved().activities[match.id].independent,true);assert.equal(Object.values(saved().activities).filter(v=>v.completed).length,1);click(view.getByRole("button",{name:"Rejouer sans aide"}));pairs(view);assert.equal(Object.values(saved().activities).filter(v=>v.completed).length,1);assert.equal(saved().activities[match.id].attempts,2);});
@@ -120,7 +120,16 @@ test("each lesson has exactly one dictation using its already recorded listening
   assert.ok(item.activities.some(a=>a.kind==="listen"&&a.stimulus===(dictations[0] as {listeningText:string}).listeningText));
  }
 });
+function completeUnitCheckpoints() {
+ let progress=emptyCourseProgress();
+ for(const unit of italianCourseCatalog.units){
+  const a=italianCourseCatalog.assessments.find(a=>a.id===unit.quizId)!;
+  progress=recordCourseAssessment(progress,italianCourseCatalog,a.id,a.questionCount,a.questionCount,false);
+ }
+ window.localStorage.setItem(ITALIAN_COURSE_PROGRESS_KEY,JSON.stringify(progress));
+}
 for (const locale of ["fr", "en", "es"] as const) test(`${locale}: photo stops are taught in lessons and final quiz is discoverable`, () => {
+ completeUnitCheckpoints();
  for (const item of italianCourseUnits.filter(u => u.cultureStop)) {
   const view = mount(locale, { unit: item });
   assert.ok(view.getByText(item.cultureStop!.body[locale]));
@@ -134,6 +143,7 @@ for (const locale of ["fr", "en", "es"] as const) test(`${locale}: photo stops a
 });
 
 test("culture finale hides place captions until answered, explains errors, persists and replays", () => {
+ completeUnitCheckpoints();
  const view = render(React.createElement(ItalianCourseAssessment, { assessment: italianCultureFinal, locale: "fr", catalog: italianCourseCatalog, audioPaths: {} }));
  click(view.getByRole("button", { name: "Commencer le bilan" }));
  for (const [i, question] of italianCultureFinal.questions.entries()) {
