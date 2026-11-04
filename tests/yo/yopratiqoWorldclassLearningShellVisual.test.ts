@@ -69,7 +69,7 @@ test("language catalogue uses shrinkable single-column mobile cards and two desk
   assert.match(page, /<YoLanguageQuickStart locale=\{locale\}/);
   assert.match(page, /<YoAppShellScroller/);
   assert.match(cards, /<ul className="grid min-w-0 gap-3 md:grid-cols-2"/);
-  assert.match(cards, /<li key=\{language.id\} className="min-w-0"/);
+  assert.match(cards, /<li\b[^>]*className="min-w-0(?:\s|")/);
   assert.match(cards, /min-w-0 flex-1/);
   assert.match(cards, /break-words/);
   assert.doesNotMatch(cards, /overflow-x-auto|min-w-\[(?:[3-9]\d{2}|\d{4})px\]/);

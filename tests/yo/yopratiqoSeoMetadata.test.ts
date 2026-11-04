@@ -105,11 +105,15 @@ test("YoPratiqo SEO config covers the language hub and all five intro routes", (
       "frenchQuebecIntro",
       "frenchQuebecLanding",
       "frenchQuebecModuleOne",
+      "germanLanding",
+      "hub",
       "italianIntro",
       "italianLanding",
       "japaneseIntro",
       "japaneseLanding",
       "languageHub",
+      "mandarinLanding",
+      "portugueseLanding",
       "spanishIntro",
       "spanishLanding",
     ],
@@ -148,7 +152,7 @@ test("metadata helper emits canonical, OpenGraph, Twitter, and route-aware robot
   // a future routing addition automatically inherits the right gate.
   for (const route of ROUTES) {
     const metadata = buildYoPratiqoMetadata(route.id, "en");
-    const canonical = `${SITE_URL}${route.route}`;
+    const canonical = `${SITE_URL}${route.route}${isYoPratiqoRouteIndexable(route.id) ? "?lang=en" : ""}`;
 
     assert.equal(metadata.alternates?.canonical, canonical);
     assert.equal(metadata.openGraph?.url, canonical);
@@ -183,7 +187,7 @@ test("Spanish Japanese metadata matches its translated landing without changing 
     assert.equal(metadata.twitter?.title, metadata.title);
     assert.equal(metadata.openGraph?.description, metadata.description);
     assert.equal(metadata.openGraph?.locale, "es_ES");
-    assert.equal(metadata.alternates?.canonical, `${SITE_URL}/yo/langues/japonais`);
+    assert.equal(metadata.alternates?.canonical, `${SITE_URL}/yo/langues/japonais?lang=es`);
   }
   assert.deepEqual(buildYoPratiqoMetadata("italianLanding", "es"), buildYoPratiqoMetadata("italianLanding", "fr"));
   assert.deepEqual(buildYoPratiqoMetadata("japaneseIntro", "es"), buildYoPratiqoMetadata("japaneseIntro", "fr"));

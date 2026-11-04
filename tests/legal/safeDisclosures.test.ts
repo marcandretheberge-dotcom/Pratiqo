@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
 import { assertItalianLearningSurface, italianLearningFiles } from "../helpers/italianLearningScope";
+import { assertYoPublicSeoSurface, yoPublicSeoFiles } from "../helpers/yoPublicSeoScope";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -1538,6 +1539,26 @@ test("reviewed Italian learning surfaces cannot add privileged behavior", () => 
   }
 });
 
+test("reviewed public SEO surfaces cannot add privileged behavior", () => {
+  for (const file of yoPublicSeoFiles) assertYoPublicSeoSurface(file, read(file));
+  const file = "components/yo/YoCourseOverview.tsx";
+  for (const source of [
+    'import Stripe from "stripe";',
+    'import { useAuth } from "@/components/AuthProvider";',
+    'import { client } from "@/lib/supabaseAdmin";',
+    'import { checkout } from "@/lib/yo/checkout";',
+    'export { charge } from "@/lib/payments/charge";',
+    'fetch("/api/checkout");',
+    '"use server";',
+    'const secret = process.env.STRIPE_SECRET_KEY;',
+    'const module = import("@/lib/supabaseAdmin");',
+    'require("@/lib/supabaseAdmin");',
+  ]) assert.throws(() => assertYoPublicSeoSurface(file, source));
+  for (const path of ["app/api/yo/route.ts", "lib/yo/yopratiqoProductConfig.ts", "lib/yo/mandarin/course.ts", "supabase/migrations/example.sql"]) {
+    assert.throws(() => assertYoPublicSeoSurface(path, ""));
+  }
+});
+
 test("safe-disclosure branch did not touch restricted systems", () => {
   const changed = changedFilesForBranch();
   if (!changed) return;
@@ -1563,6 +1584,10 @@ test("safe-disclosure branch did not touch restricted systems", () => {
 
   const violations: string[] = [];
   for (const file of changed) {
+    if (yoPublicSeoFiles.has(file)) {
+      assertYoPublicSeoSurface(file, read(file));
+      continue;
+    }
     if (italianLearningFiles.has(file)) {
       assertItalianLearningSurface(file, read(file));
       continue;

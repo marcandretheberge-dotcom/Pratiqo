@@ -35,6 +35,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { yopratiqoProductConfig } from "@/lib/yo/yopratiqoProductConfig";
+import { getYoPublicLanguages } from "@/lib/yo/publicCatalog";
 
 const REPO_ROOT = process.cwd();
 function read(relativePath: string): string {
@@ -169,7 +170,8 @@ test("English intro route is converted and the catalog claims it honestly", () =
   );
   assert.match(catalogPage, /<YoLanguageQuickStart locale=\{locale\}/);
   assert.equal(yopratiqoProductConfig.currentFreeIntroModules.find(language => language.slug === "anglais")?.isAccessibleForFree, true);
-  assert.match(catalogSrc, /anglais:\s*\{[^\n]+path:\s*"\/yo\/langues\/anglais\/intro"/);
+  assert.equal(getYoPublicLanguages().find(course => course.slug === "anglais")?.path, "/yo/langues/anglais/intro");
+  assert.match(catalogSrc, /getYoPublicLanguages/);
 });
 
 // ─── 5. No converted intro uses YoBreadcrumb as primary nav ──────
