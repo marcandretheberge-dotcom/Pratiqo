@@ -18,7 +18,7 @@
 import type { ReactElement } from "react";
 import { cn } from "@/lib/utils";
 
-export type YoLanguageBadgeId = "es" | "fr-ca" | "en" | "ja" | "it" | "de" | "pt-br" | "do";
+export type YoLanguageBadgeId = "es" | "fr-ca" | "en" | "ja" | "it" | "de" | "pt-br" | "do" | "zh";
 
 export interface YoLanguageBadgeProps {
   language: YoLanguageBadgeId;
@@ -148,6 +148,23 @@ function FlagBrazil(): ReactElement {
   );
 }
 
+// China flag geometry: 3:2 field, one large star and four stars facing it.
+// Source: https://www.protocol.gov.hk/en/flags-emblems-anthem.html
+function FlagChina(): ReactElement {
+  return (
+    <svg {...FLAG_SVG_PROPS} viewBox="0 0 30 20">
+      <rect width="30" height="20" fill="#DE2910" />
+      <g fill="#FFDE00">
+        <polygon points="5.000000,2.000000 5.673542,4.072949 7.853170,4.072949 6.089814,5.354102 6.763356,7.427051 5.000000,6.145898 3.236644,7.427051 3.910186,5.354102 2.146830,4.072949 4.326458,4.072949" />
+        <polygon points="9.142507,2.514496 9.619509,1.966469 9.245706,1.343464 9.914312,1.627769 10.391313,1.079742 10.327533,1.803480 10.996139,2.087786 10.288115,2.250775 10.224335,2.974512 9.850532,2.351507" />
+        <polygon points="11.010051,4.141421 11.662338,3.821444 11.559589,3.102204 12.065473,3.623687 12.717761,3.303710 12.378127,3.945982 12.884011,4.467465 12.168222,4.342928 11.828588,4.985200 11.725840,4.265959" />
+        <polygon points="11.038476,6.725279 11.764551,6.699231 11.964148,6.000643 12.213291,6.683132 12.939366,6.657084 12.367269,7.104934 12.616412,7.787424 12.013694,7.381720 11.441597,7.829570 11.641194,7.130982" />
+        <polygon points="9.219131,8.375305 9.898951,8.631643 10.352819,8.064308 10.319103,8.790068 10.998923,9.046406 10.298265,9.238612 10.264550,9.964372 9.865235,9.357402 9.164578,9.549609 9.618445,8.982275" />
+      </g>
+    </svg>
+  );
+}
+
 function FlagDominicanRepublic(): ReactElement {
   return (
     <svg {...FLAG_SVG_PROPS} viewBox="0 0 750 500">
@@ -165,6 +182,7 @@ const LANGUAGE_FLAGS: Record<YoLanguageBadgeId, () => ReactElement> = {
   de: FlagGermany,
   "pt-br": FlagBrazil,
   do: FlagDominicanRepublic,
+  zh: FlagChina,
 };
 
 const SIZE_STYLES = {

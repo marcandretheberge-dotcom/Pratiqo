@@ -428,6 +428,34 @@ test("Italian and Japanese describe their complete courses; English remains an i
   assert.doesNotMatch(pageCopySrc, /status:\s*"coming_soon"|Nouveau\./);
 });
 
+test("Mandarin uses the shared Chinese flag instead of a character placeholder", () => {
+  const start = pageSrc.indexOf('buildYoLocaleHref("/yo/langues/mandarin/parcours", locale)');
+  assert.ok(start >= 0, "Mandarin course card must exist");
+  const end = pageSrc.indexOf("</Link></li>", start);
+  assert.ok(end > start, "Mandarin course card must be complete");
+  const card = pageSrc.slice(start, end);
+  assert.match(card, /<YoLanguageBadge language="zh"/);
+  assert.match(card, /ariaLabel=\{t\(lstr\("Chine", "China", "China"\), locale\)\}/);
+  assert.doesNotMatch(card, />\s*(?:中|ZH|CN)\s*<\/span>/);
+  assert.ok(exists("app/yo/langues/mandarin/parcours/page.tsx"));
+});
+
+test("Chinese flag support is registered with five self-contained stars", () => {
+  assert.match(badgeSrcCode, /YoLanguageBadgeId\s*=[^;]*\|\s*"zh"/);
+  assert.match(badgeSrcCode, /zh:\s*FlagChina/);
+  const start = badgeSrcCode.indexOf("function FlagChina(): ReactElement {");
+  const end = badgeSrcCode.indexOf("function FlagDominicanRepublic", start);
+  assert.ok(start >= 0 && end > start);
+  const flag = badgeSrcCode.slice(start, end);
+  assert.match(flag, /viewBox="0 0 30 20"/);
+  assert.match(flag, /fill="#DE2910"/);
+  assert.match(flag, /fill="#FFDE00"/);
+  const stars = [...flag.matchAll(/<polygon points="([^"]+)"/g)];
+  assert.equal(stars.length, 5, "one large and four small stars");
+  for (const [, points] of stars) assert.equal(points.trim().split(/\s+/).length, 10);
+  assert.doesNotMatch(flag, /<image\b|<img\b|<text\b|href=/);
+});
+
 async function run() {
   for (const { name, fn } of tests) {
     try {

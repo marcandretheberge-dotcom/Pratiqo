@@ -45,7 +45,7 @@ export function YoLanguageQuickStart({ locale }: { locale: YoLocale }) {
         <ArrowRight size={18} className="shrink-0 text-emerald-700" aria-hidden />
       </Link></li>
       <li className="min-w-0"><Link href={buildYoLocaleHref("/yo/langues/mandarin/parcours", locale)} className="group flex min-h-24 min-w-0 items-center gap-3 rounded-lg border border-emerald-100 bg-white p-4 text-emerald-950 shadow-sm transition hover:border-emerald-600 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
-        <span lang="zh-Hans" className="text-3xl" aria-hidden>中</span>
+        <YoLanguageBadge language="zh" ariaLabel={t(lstr("Chine", "China", "China"), locale)} />
         <span className="min-w-0 flex-1"><span className="block text-base font-bold">{t(lstr("Mandarin", "Mandarin", "Mandarín"), locale)}</span><span className="mt-1 block text-xs leading-relaxed text-gray-600">{t(lstr("Premières conversations · 8 modules et une mission finale", "First conversations · 8 modules and a final mission", "Primeras conversaciones · 8 módulos y una misión final"), locale)}</span></span>
         <ArrowRight size={18} className="shrink-0 text-emerald-700" aria-hidden />
       </Link></li>
