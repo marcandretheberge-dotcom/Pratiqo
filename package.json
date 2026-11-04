@@ -33,7 +33,7 @@
     "test:yo-japanese": "tsx tests/yo/yopratiqoJapaneseIntro.test.ts && tsx tests/yo/yopratiqoJapaneseAudio.test.ts && npm run test:yo-japanese-foundations",
     "test:yo-quiz-ui": "tsx tests/yo/yopratiqoQuizUi.test.ts",
     "test:yo-languages": "tsx tests/yo/yopratiqoLanguageSelection.test.ts",
-    "test:yo-seo": "tsx tests/yo/yopratiqoSeoMetadata.test.ts",
+    "test:yo-seo": "tsx tests/yo/yopratiqoSeoMetadata.test.ts && tsx tests/yo/yopratiqoSeoCatalog.test.ts",
     "test:yo-foundation": "tsx tests/yo/yopratiqoProductFoundation.test.ts",
     "test:yo-course-navigation": "tsx tests/yo/yopratiqoCourseLocaleNavigation.test.ts",
     "test:yo-arrival-listening": "tsx tests/yo/yopratiqoArrivalListeningData.test.ts && tsx tests/yo/yopratiqoArrivalListeningLesson.test.ts",

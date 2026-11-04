@@ -3,8 +3,10 @@ import { YoAppHeader } from "@/components/yo/YoAppHeader";
 import { YoAppShell, YoAppShellScroller } from "@/components/yo/YoAppShell";
 import { YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
 import { YoLanguageQuickStart } from "@/components/yo/YoLanguageQuickStart";
+import { YoDocumentLanguage } from "@/components/yo/YoDocumentLanguage";
 import { getYoLocale, lstr, t } from "@/lib/yo/localize";
-import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
+import { buildYoCatalogItemList, buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
 
 export const dynamic = "force-dynamic";
 interface PageProps { searchParams: Promise<{ lang?: string | string[] }> }
@@ -18,6 +20,8 @@ export default async function YoLanguesPage({ searchParams }: PageProps) {
   const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
   const title = t(lstr("Langues", "Languages", "Idiomas"), locale);
   return <div data-testid="yo-langues-catalog" data-yo-langues-catalog="true" lang={locale}>
+    <YoDocumentLanguage locale={locale} />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildYoCatalogItemList(locale)) }} />
     <YoAppShell surfaceId="langues" background="bg-[#FAFCFB]" header={
       <div data-testid="yo-langues-catalog-header"><YoAppHeader locale={locale}
         backHref={`/yo${langSuffix}`}

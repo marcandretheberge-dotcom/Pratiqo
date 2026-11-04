@@ -225,7 +225,13 @@ test("desktop sub-trees declare leftRail + center, with rightRail only where it 
 test("catalog uses one shrinkable mobile column and two comfortable desktop columns", () => {
   const src = read("components/yo/YoLanguageQuickStart.tsx");
   assert.match(src, /<ul className="grid min-w-0 gap-3 md:grid-cols-2"/);
-  assert.match(src, /<li key=\{language.id\} className="min-w-0"/);
+  const cards = [...walk(YoLanguageQuickStart({ locale: "fr" }))].filter(element => element.type === "li");
+  assert.ok(cards.length > 0);
+  for (const card of cards) {
+    assert.ok(card.key, "language cards need stable keys");
+    assert.ok((card.props as { className: string }).className.split(" ").includes("min-w-0"),
+      "every language card must remain shrinkable");
+  }
   assert.match(src, /break-words/);
   assert.doesNotMatch(src, /overflow-x-auto|xl:grid-cols-3/);
 });

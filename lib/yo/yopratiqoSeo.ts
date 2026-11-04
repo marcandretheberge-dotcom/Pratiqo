@@ -1,18 +1,37 @@
 import type { Metadata } from "next";
+import type { YoLocale } from "./types";
 
 import { SITE_URL } from "@/lib/seo/site";
+import { buildYoLocaleHref, t } from "./localize";
+import { getYoPublicLanguages, isYoPublicLanguageIndexable, yoPublicCatalog } from "./publicCatalog";
 import {
   isYoHubIndexable,
   isYoIntroPageIndexable,
-  isYoLandingPageIndexable,
   isYoPremiumModuleIndexable,
   type YoPratiqoModuleSlug,
   type YoPratiqoPageType,
 } from "@/lib/yo/yopratiqoProductConfig";
 
+export function buildYoCatalogItemList(locale: YoLocale) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: getYoPublicLanguages().map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: t(item.name, locale),
+      url: SITE_URL + buildYoLocaleHref(item.landingRoute, item.presentationLocales.includes(locale) ? locale : "fr"),
+    })),
+  };
+}
+
 export type YoPratiqoSeoLocale = "fr" | "en";
 
 export type YoPratiqoSeoRouteId =
+  | "hub"
+  | "germanLanding"
+  | "portugueseLanding"
+  | "mandarinLanding"
   | "languageHub"
   | "englishLanding"
   | "frenchQuebecLanding"
@@ -48,7 +67,7 @@ export type YoPratiqoSeoEntry = {
    * landing/intro entries, omitted for the hub. Drives both indexing
    * and Course schema decisions per-module.
    */
-  slug?: YoPratiqoModuleSlug;
+  slug?: YoPratiqoModuleSlug | "allemand" | "portugais-bresil" | "mandarin";
   /**
    * Stable id of the future premium module this entry represents.
    * Required for `pageType: "future_premium"` entries; ignored
@@ -60,7 +79,29 @@ export type YoPratiqoSeoEntry = {
 
 const DEFAULT_OG_IMAGE = `${SITE_URL}/branding/pratiqo-logo.png`;
 
+function publishedLanding(slug: "allemand" | "portugais-bresil" | "mandarin"): YoPratiqoSeoEntry {
+  const course = yoPublicCatalog.find((entry) => entry.slug === slug)!;
+  return {
+    route: course.landingRoute, defaultLocale: "fr", pageType: "landing", slug,
+    copy: {
+      fr: { title: `${course.name.fr} avec Yoppo | YoPratiqo`, description: course.description.fr },
+      en: { title: `${course.name.en} with Yoppo | YoPratiqo`, description: course.description.en },
+      es: { title: `${course.name.es} con Yoppo | YoPratiqo`, description: course.description.es! },
+    },
+  };
+}
+
 export const yopratiqoSeoEntries = {
+  hub: {
+    route: "/yo", defaultLocale: "fr", pageType: "hub",
+    copy: {
+      fr: { title: "YoPratiqo — Choisir une langue et pratiquer avec Yoppo", description: "Explore les langues de YoPratiqo : introductions gratuites et parcours avec Yoppo, dialogues, écoute, jeux de pratique et découvertes culturelles." },
+      en: { title: "YoPratiqo — Choose a language and practise with Yoppo", description: "Explore YoPratiqo languages: free introductions and courses with Yoppo, dialogues, listening, practice games and cultural discoveries." },
+    },
+  },
+  germanLanding: publishedLanding("allemand"),
+  portugueseLanding: publishedLanding("portugais-bresil"),
+  mandarinLanding: publishedLanding("mandarin"),
   languageHub: {
     route: "/yo/langues",
     defaultLocale: "fr",
@@ -70,13 +111,14 @@ export const yopratiqoSeoEntries = {
         title:
           "YoPratiqo — Apprendre avec des modules interactifs et de vrais professeurs",
         description:
-          "Découvrez les intros gratuites YoPratiqo en espagnol, anglais, français québécois, italien et japonais, puis pratiquez avec un vrai professeur sur Pratiqo.",
+          "Choisis ta langue et commence directement : introductions gratuites et parcours YoPratiqo avec Yoppo, dialogues, écoute et jeux de pratique.",
       },
       en: {
         title: "YoPratiqo — Learn with interactive modules and real teachers",
         description:
-          "Explore free YoPratiqo intros in Spanish, English, Quebec French, Italian, and Japanese, then practice with a real teacher on Pratiqo.",
+          "Choose a language and start directly: free introductions and YoPratiqo courses with Yoppo, dialogues, listening and practice games.",
       },
+      es: { title: "Idiomas con Yoppo — Catálogo YoPratiqo", description: "Elige tu idioma y empieza directamente: introducciones gratuitas y cursos YoPratiqo con Yoppo, diálogos, escucha y juegos de práctica." },
     },
   },
   englishLanding: {
@@ -131,6 +173,7 @@ export const yopratiqoSeoEntries = {
         description:
           "Start Spanish with an immersive intro: first words, culture, travel phrases, audio, and a bridge to real teacher practice.",
       },
+      es: { title: "Español con YoPratiqo — viajes, cultura y primeras conversaciones", description: "Empieza el español con una introducción inmersiva: primeras palabras, cultura, frases de viaje, audio y práctica con un profesor." },
     },
   },
   japaneseLanding: {
@@ -163,14 +206,14 @@ export const yopratiqoSeoEntries = {
     slug: "italien",
     copy: {
       fr: {
-        title: "Italien avec YoPratiqo — voyage, culture et premières phrases",
+        title: "Italien avec Yoppo — 12 unités de pratique | YoPratiqo",
         description:
-          "Découvrez l’italien avec une intro culturelle : premiers mots, régions, phrases utiles, audio et pratique guidée avec un professeur.",
+          "Découvre La vie en italien : douze unités avec Yoppo, dialogues, écoute, jeux, lectures, projets et quiz culturel en images. Introduction également disponible.",
       },
       en: {
-        title: "Italian with YoPratiqo — travel, culture and first phrases",
+        title: "Italian with Yoppo — 12 practice units | YoPratiqo",
         description:
-          "Discover Italian with a cultural intro: first words, regions, useful phrases, audio, and guided practice with a teacher.",
+          "Explore Life in Italian: twelve units with Yoppo, dialogues, listening, games, readings, projects and a picture-based culture quiz. Introduction also available.",
       },
     },
   },
@@ -323,7 +366,7 @@ export function isYoPratiqoRouteIndexable(
     case "hub":
       return isYoHubIndexable();
     case "landing":
-      return entry.slug ? isYoLandingPageIndexable(entry.slug) : false;
+      return entry.slug ? isYoPublicLanguageIndexable(entry.slug) : false;
     case "intro":
       return entry.slug ? isYoIntroPageIndexable(entry.slug) : false;
     case "future_premium":
@@ -340,10 +383,11 @@ export function buildYoPratiqoMetadata(
   lang?: string | string[],
 ): Metadata {
   const entry: YoPratiqoSeoEntry = yopratiqoSeoEntries[routeId];
-  const requested = (Array.isArray(lang) ? lang[0] : lang)?.trim().toLowerCase();
-  const locale = requested === "es" && entry.copy.es ? "es" : resolveYoPratiqoSeoLocale(lang, entry.defaultLocale);
+  const locale = resolveYoPratiqoPageLocale(routeId, lang);
   const copy = entry.copy[locale] ?? entry.copy[entry.defaultLocale];
-  const canonical = `${SITE_URL}${entry.route}`;
+  const canonical = isYoPratiqoRouteIndexable(routeId)
+    ? `${SITE_URL}${buildYoLocaleHref(entry.route, locale)}`
+    : `${SITE_URL}${entry.route}`;
   const image = entry.image ?? DEFAULT_OG_IMAGE;
   const indexable = isYoPratiqoRouteIndexable(routeId);
 
@@ -352,6 +396,7 @@ export function buildYoPratiqoMetadata(
     description: copy.description,
     alternates: {
       canonical,
+      ...(indexable ? { languages: getYoPratiqoLanguageAlternates(routeId) } : {}),
     },
     openGraph: {
       title: copy.title,
@@ -378,4 +423,24 @@ export function buildYoPratiqoMetadata(
       follow: indexable,
     },
   };
+}
+
+/** Resolve only translations actually authored for this public page. */
+export function resolveYoPratiqoPageLocale(
+  routeId: YoPratiqoSeoRouteId,
+  input?: string | string[],
+): YoLocale {
+  const entry: YoPratiqoSeoEntry = yopratiqoSeoEntries[routeId];
+  const requested = (Array.isArray(input) ? input[0] : input)?.trim().toLowerCase();
+  if (requested === "es" && entry.copy.es) return "es";
+  return resolveYoPratiqoSeoLocale(input, entry.defaultLocale);
+}
+
+export function getYoPratiqoLanguageAlternates(routeId: YoPratiqoSeoRouteId): Record<string, string> {
+  if (!isYoPratiqoRouteIndexable(routeId)) return {};
+  const entry: YoPratiqoSeoEntry = yopratiqoSeoEntries[routeId];
+  return Object.fromEntries((["fr", "en", ...(entry.copy.es ? ["es"] : [])] as YoLocale[]).map(locale => [
+    locale === "fr" ? "fr-CA" : locale === "en" ? "en-CA" : "es",
+    `${SITE_URL}${buildYoLocaleHref(entry.route, locale)}`,
+  ]));
 }

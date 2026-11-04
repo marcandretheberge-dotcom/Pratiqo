@@ -231,7 +231,7 @@ test("routes preserve locale, isolate client data and expose the Brazilian cours
     /notFound\(/,
   );
   assert.match(
-    readFileSync("components/yo/YoLanguageQuickStart.tsx", "utf8"),
+    readFileSync("lib/yo/publicCatalog.ts", "utf8"),
     /portugais-bresil\/parcours/,
   );
   for (const name of [

@@ -40,29 +40,20 @@ import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoLanguageQuickStart } from "@/components/yo/YoLanguageQuickStart";
 import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
 import { YoPublicCompanionOnboardingCard } from "@/components/yo/YoPublicCompanionOnboardingCard";
-import { SITE_URL } from "@/lib/seo/site";
+import { buildYoCatalogItemList, buildYoPratiqoMetadata, resolveYoPratiqoPageLocale } from "@/lib/yo/yopratiqoSeo";
+import { serializeJsonLd } from "@/lib/seo/jsonLd";
+import { getYoPublicLanguages } from "@/lib/yo/publicCatalog";
+import { YoDocumentLanguage } from "@/components/yo/YoDocumentLanguage";
 import { dominicanRepublicA1 } from "@/lib/yo/dominicanRepublicA1";
-import { formatYoPrice, getYoLocale, t } from "@/lib/yo/localize";
+import { t } from "@/lib/yo/localize";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "YoPratiqo | Apprends à ton rythme — langues, musique, soutien scolaire",
-  description:
-    "Explore YoPratiqo, la gamme Pratiqo qui te permet d’apprendre à ton rythme les mêmes disciplines que tu peux pratiquer avec un vrai professeur Pratiqo.",
-  alternates: {
-    canonical: `${SITE_URL}/yo`,
-  },
-  openGraph: {
-    title: "YoPratiqo",
-    description:
-      "Apprends à ton rythme : langues, musique et soutien scolaire — la même qualité Pratiqo, version autonome.",
-    type: "website",
-    url: `${SITE_URL}/yo`,
-    locale: "fr_CA",
-  },
-};
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const params = await searchParams;
+  return buildYoPratiqoMetadata("hub", params.lang);
+}
 
 interface PageProps {
   searchParams: Promise<{ lang?: string | string[] }>;
@@ -138,8 +129,8 @@ const HUB_COPY = {
     en: "Start with one discipline. The YoPratiqo method grows with you.",
   },
   finalBody: {
-    fr: "Langues est ouvert aujourd’hui (cinq parcours d’introduction). Musique et Soutien scolaire suivent quand chaque programme est prêt à enseigner sérieusement.",
-    en: "Languages is open today (five intro paths). Music and Academic support come next, when each program is ready to teach seriously.",
+    fr: "Explore les introductions et les parcours de langues disponibles. Musique et Soutien scolaire restent en préparation.",
+    en: "Explore the available language introductions and courses. Music and Academic support are still in preparation.",
   },
   finalCta: {
     fr: "Découvrir les langues",
@@ -208,10 +199,10 @@ const pillars = [
   },
   {
     icon: Headphones,
-    title: { fr: "Audio à venir", en: "Audio coming soon" },
+    title: { fr: "Écoute et pratique", en: "Listen and practise" },
     body: {
-      fr: "La structure est prête pour des voix natives et des pratiques guidées.",
-      en: "The structure is ready for native voices and guided practice.",
+      fr: "Des dialogues à écouter et à retravailler. Les voix de pratique sont synthétiques.",
+      en: "Listen to dialogues and practise them again. Practice voices are synthetic.",
     },
   },
 ];
@@ -232,8 +223,8 @@ const productLines = [
     status: "available" as const,
     title: { fr: "Langues", en: "Languages" },
     body: {
-      fr: "Cinq parcours d’introduction immersifs : espagnol, français québécois, italien, anglais et japonais.",
-      en: "Five immersive intro paths: Spanish, Quebec French, Italian, English, and Japanese.",
+      fr: "Introductions et parcours avec Yoppo : écoute, dialogues, jeux utiles et culture.",
+      en: "Introductions and courses with Yoppo: listening, dialogues, useful games and culture.",
     },
     href: "/yo/langues",
   },
@@ -259,7 +250,7 @@ const productLines = [
 
 export default async function YoHubPage({ searchParams }: PageProps) {
   const resolvedSearchParams = await searchParams;
-  const locale = getYoLocale(resolvedSearchParams.lang);
+  const locale = resolveYoPratiqoPageLocale("hub", resolvedSearchParams.lang);
   const yoModule = dominicanRepublicA1.module;
   const langSuffix = locale === "fr" ? "" : `?lang=${locale}`;
   // Primary path: nudge users into the new IA tree.
@@ -273,7 +264,9 @@ export default async function YoHubPage({ searchParams }: PageProps) {
   const francisationHref = `/yo/langues/francais-quebec${langSuffix}`;
 
   return (
-    <div className="min-h-[100dvh] bg-[#f5f8f7] text-[#172642]">
+    <div lang={locale} className="min-h-[100dvh] bg-[#f5f8f7] text-[#172642]">
+      <YoDocumentLanguage locale={locale} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildYoCatalogItemList(locale)) }} />
       {/* The direct language list replaces the redundant mobile header shortcut. */}
       <header className="sticky top-0 z-50 border-b border-emerald-100 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
@@ -281,7 +274,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
             <YoPratiqoLogo size="sm" priority={false} />
           </Link>
           <nav aria-label="YoPratiqo" className="flex items-center gap-2">
-            <YoLanguageSelector locale={locale} pathname="/yo" />
+            <YoLanguageSelector locale={locale} pathname="/yo" availableLocales={["fr", "en"]} />
             <Link
               href={languesHref}
               className="hidden items-center rounded-full border border-[#13A085]/30 bg-[#E3F1EB] px-4 py-2 text-sm font-bold text-[#172642] shadow-[0_1px_0_rgba(19,160,133,0.18)] transition hover:bg-[#d8ecdf] sm:inline-flex"
@@ -345,14 +338,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                         {t(HUB_COPY.featuredTitle, locale)}
                       </h2>
                     </div>
-                    <div className="rounded-2xl border border-[#E7DFCF] bg-[#FBF7EE] px-4 py-2 text-right">
-                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#566073]">
-                        {t(HUB_COPY.priceLabel, locale)}
-                      </p>
-                      <p className="text-lg font-black text-[#172642]">
-                        {formatYoPrice(yoModule.priceCents, locale, yoModule.currency)}
-                      </p>
-                    </div>
+
                   </div>
                   <p className="mt-4 text-sm leading-relaxed text-[#566073]">
                     {t(HUB_COPY.featuredBody, locale)}
@@ -364,25 +350,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                     {t(HUB_COPY.featuredCta, locale)}
                     <span aria-hidden>→</span>
                   </Link>
-                  {/* Trust strip: 12-month access + 30-day money-back guarantee. */}
-                  <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-[#E7DFCF] bg-[#FBF7EE] px-3 py-2.5">
-                    <div className="flex flex-wrap gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E3F1EB] px-3 py-1 text-xs font-semibold text-[#172642]">
-                        <CheckCircle2 className="size-3.5" aria-hidden />
-                        {t(HUB_COPY.twelveMonthAccessLabel, locale)}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E3F1EB] px-3 py-1 text-xs font-semibold text-[#172642]">
-                        <CheckCircle2 className="size-3.5" aria-hidden />
-                        {t(HUB_COPY.moneyBackLabel, locale)}
-                      </span>
-                    </div>
-                    <Link
-                      href="/legal/yo-remboursement"
-                      className="text-[11px] font-medium text-[#566073] underline-offset-2 hover:underline"
-                    >
-                      {t(HUB_COPY.legalLinkLabel, locale)}
-                    </Link>
-                  </div>
+
                 </div>
               </div>
             </div>
@@ -544,9 +512,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
                   `yoModule` stay imported so the hero featured-course
                   card keeps working. */}
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#FFF4D6]/72">
-                {locale === "fr"
-                  ? "Cinq parcours d’introduction"
-                  : "Five intro paths"}
+                {getYoPublicLanguages().length} {locale === "fr" ? "langues à explorer" : "languages to explore"}
               </p>
             </div>
           </div>

@@ -40,6 +40,7 @@
  */
 
 import type { Metadata } from "next";
+import { YoDocumentLanguage } from "@/components/yo/YoDocumentLanguage";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -286,12 +287,12 @@ function PromiseRail({ locale }: { locale: YoLocale }): React.JSX.Element {
         <Sparkles className="size-3.5 text-[#F4B400]" aria-hidden />
         YoPratiqo
       </span>
-      <h1
+      <h2
         id="yo-spanish-hub-title"
         className="text-2xl font-semibold leading-tight tracking-tight text-[#0F6E56] sm:text-3xl"
       >
         {t(PAGE_TITLE, locale)}
-      </h1>
+      </h2>
       <p className="text-sm leading-relaxed text-[#0F6E56]/80 sm:text-base">
         {t(PAGE_SUBTITLE, locale)}
       </p>
@@ -452,12 +453,12 @@ function renderMobilePrimaryScreen(
         <Sparkles className="size-3 text-[#F4B400]" aria-hidden />
         YoPratiqo
       </span>
-      <h1
+      <h2
         id="yo-spanish-hub-title"
         className="text-2xl font-semibold leading-tight tracking-tight text-[#0F6E56]"
       >
         {t(PAGE_TITLE, locale)}
-      </h1>
+      </h2>
       <p className="text-sm leading-relaxed text-[#0F6E56]/80">
         {t(PAGE_SUBTITLE, locale)}
       </p>
@@ -581,6 +582,9 @@ export default async function YoSpanishLandingPage({
   );
 
   return (
+    <div lang={locale}>
+      <YoDocumentLanguage locale={locale} />
+      <h1 className="sr-only">{t(PAGE_TITLE, locale)}</h1>
     <YoAdaptiveStepShell
       surfaceId="spanish-hub"
       mobile={{
@@ -655,5 +659,6 @@ export default async function YoSpanishLandingPage({
       }}
       className={`yo-spanish-hub-lang-suffix-${locale === "fr" ? "fr" : locale}`}
     />
+    </div>
   );
 }

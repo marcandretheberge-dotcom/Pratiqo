@@ -32,6 +32,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { getYoPublicLanguages, yoPublicCatalog } from "@/lib/yo/publicCatalog";
 
 const REPO_ROOT = process.cwd();
 function read(relativePath: string): string {
@@ -48,6 +49,7 @@ function test(name: string, fn: TestFn): void {
 }
 
 const pageSrc = read("components/yo/YoLanguageQuickStart.tsx");
+const catalogSrc = read("lib/yo/publicCatalog.ts");
 const badgeSrc = read("components/yo/YoLanguageBadge.tsx");
 
 /**
@@ -76,7 +78,7 @@ function stripComments(src: string): string {
     .replace(/(^|[^:"'`])\/\/.*$/gm, "$1"); // line comments, skipping URL-ish slashes
 }
 
-const pageCopySrc = stripComments(pageSrc);
+const pageCopySrc = stripComments(catalogSrc);
 
 // ─── 1. Visual badge replaces the broken emoji-flag fallback ──────
 test("page imports YoLanguageBadge and its YoLanguageBadgeId type", () => {
@@ -84,7 +86,7 @@ test("page imports YoLanguageBadge and its YoLanguageBadgeId type", () => {
     pageSrc,
     /import\s+\{[^}]*YoLanguageBadge[^}]*\}\s+from\s+["']@\/components\/yo\/YoLanguageBadge["']/,
   );
-  assert.match(pageSrc, /YoLanguageBadgeId/);
+  assert.match(catalogSrc, /YoLanguageBadgeId/);
 });
 
 test("page no longer carries raw Unicode regional-indicator emoji on the language cards", () => {
@@ -108,7 +110,7 @@ test("page no longer carries raw Unicode regional-indicator emoji on the languag
 test("page declares badge ids for the core launch languages", () => {
   for (const id of ['"es"', '"fr-ca"', '"en"', '"ja"', '"it"']) {
     assert.ok(
-      pageSrc.includes(`badge: ${id}`),
+      catalogSrc.includes(`badge: ${id}`),
       `language card data must declare badge: ${id}`,
     );
   }
@@ -319,8 +321,9 @@ test("United Kingdom renderer embeds the Wikimedia 3-5 source structure", () => 
 });
 
 test("German and Brazilian Portuguese cards use real YoLanguageBadge flags", () => {
-  assert.match(pageSrc, /<YoLanguageBadge language="de"/);
-  assert.match(pageSrc, /<YoLanguageBadge language="pt-br"/);
+  assert.equal(yoPublicCatalog.find(course => course.slug === "allemand")?.badge, "de");
+  assert.equal(yoPublicCatalog.find(course => course.slug === "portugais-bresil")?.badge, "pt-br");
+  assert.match(pageSrc, /<YoLanguageBadge language=\{item.badge\}/);
   assert.doesNotMatch(pageSrc, />DE<\/span>/);
   assert.doesNotMatch(pageSrc, />BR<\/span>/);
 });
@@ -403,10 +406,10 @@ test("French card copy never claims global French scope", () => {
 
 test("French card copy preserves the francisation and Quebec scope", () => {
   // The FR blurb is the source of truth for the launch positioning.
-  assert.match(pageSrc, /[Ff]rancisation/);
-  assert.match(pageSrc, /Qu[eé]bec/);
+  assert.match(catalogSrc, /[Ff]rancisation/);
+  assert.match(catalogSrc, /Qu[eé]bec/);
   // EN equivalent must also be scoped.
-  assert.match(pageSrc, /Francization/);
+  assert.match(catalogSrc, /Francization/);
   // (The earlier "À venir / Coming soon" assertions were retired
   // when Japanese moved out of `coming_soon`. The francisation FR
   // card now opens to a real route with a `"Nouveau."` marker
@@ -416,27 +419,24 @@ test("French card copy preserves the francisation and Quebec scope", () => {
 
 // ─── 3. Launch scope ───────────────────────────────────────────────
 test("all live language tiles point to real lessons or course dashboards", () => {
-  const paths=[...pageSrc.matchAll(/path:\s*"([^"]+)"/g)].map(match=>match[1]);
-  assert.deepEqual(paths.sort(), ["/yo/langues/italien/parcours","/yo/langues/japonais/parcours","/yo/langues/espagnol/intro","/yo/langues/anglais/intro","/yo/langues/francais-quebec/intro"].sort());
+  const paths = getYoPublicLanguages().map(course => course.path);
+  assert.deepEqual([...paths].sort(), ["/yo/langues/italien/parcours","/yo/langues/japonais/parcours","/yo/langues/espagnol/intro","/yo/langues/anglais/intro","/yo/langues/francais-quebec/intro","/yo/langues/allemand/parcours","/yo/langues/portugais-bresil/parcours","/yo/langues/mandarin/parcours"].sort());
   for(const destination of paths) assert.ok(exists(`app${destination}/page.tsx`), destination);
-  assert.match(pageSrc, /isAccessibleForFree/);
+  assert.match(catalogSrc, /isAccessibleForFree/);
 });
 test("Italian and Japanese describe their complete courses; English remains an introduction", () => {
-  assert.match(pageSrc, /12 unités/);
-  assert.match(pageSrc, /8 modules/);
-  assert.match(pageSrc, /Oser parler · introduction/);
+  assert.match(catalogSrc, /12 unités/);
+  assert.match(catalogSrc, /8 modules/);
+  assert.match(catalogSrc, /Oser parler · introduction/);
   assert.doesNotMatch(pageCopySrc, /status:\s*"coming_soon"|Nouveau\./);
 });
 
 test("Mandarin uses the shared Chinese flag instead of a character placeholder", () => {
-  const start = pageSrc.indexOf('buildYoLocaleHref("/yo/langues/mandarin/parcours", locale)');
-  assert.ok(start >= 0, "Mandarin course card must exist");
-  const end = pageSrc.indexOf("</Link></li>", start);
-  assert.ok(end > start, "Mandarin course card must be complete");
-  const card = pageSrc.slice(start, end);
-  assert.match(card, /<YoLanguageBadge language="zh"/);
-  assert.match(card, /ariaLabel=\{t\(lstr\("Chine", "China", "China"\), locale\)\}/);
-  assert.doesNotMatch(card, />\s*(?:中|ZH|CN)\s*<\/span>/);
+  const card = getYoPublicLanguages().find(course => course.slug === "mandarin");
+  assert.equal(card?.path, "/yo/langues/mandarin/parcours");
+  assert.equal(card?.badge, "zh");
+  assert.match(pageSrc, /ariaLabel=\{t\(item.name, locale\)\}/);
+  assert.doesNotMatch(pageSrc, />\s*(?:中|ZH|CN)\s*<\/span>/);
   assert.ok(exists("app/yo/langues/mandarin/parcours/page.tsx"));
 });
 

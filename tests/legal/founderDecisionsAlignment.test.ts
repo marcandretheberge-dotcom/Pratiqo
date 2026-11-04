@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
 import { assertItalianLearningSurface, italianLearningFiles } from "../helpers/italianLearningScope";
+import { assertYoPublicSeoSurface, yoPublicSeoFiles } from "../helpers/yoPublicSeoScope";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -727,6 +728,10 @@ test("branch did not touch restricted systems", () => {
 
   const violations: string[] = [];
   for (const file of changed) {
+    if (yoPublicSeoFiles.has(file)) {
+      assertYoPublicSeoSurface(file, read(file));
+      continue;
+    }
     if (italianLearningFiles.has(file)) {
       assertItalianLearningSurface(file, read(file));
       continue;

@@ -33,7 +33,7 @@ const REPO_ROOT = process.cwd();
 
 function read(relativePath: string): string {
   const source = readFileSync(join(REPO_ROOT, relativePath), "utf8")
-    + (relativePath === "app/yo/langues/page.tsx" ? readFileSync(join(REPO_ROOT, "components/yo/YoLanguageQuickStart.tsx"), "utf8") : "");
+    + (relativePath === "app/yo/langues/page.tsx" ? readFileSync(join(REPO_ROOT, "components/yo/YoLanguageQuickStart.tsx"), "utf8") + readFileSync(join(REPO_ROOT, "lib/yo/publicCatalog.ts"), "utf8") : "");
   return source.replace(
     /\r\n/g,
     "\n",

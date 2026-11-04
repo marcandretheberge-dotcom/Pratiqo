@@ -182,12 +182,12 @@ export const yopratiqoLandingContent = {
   },
   italien: {
     heroTitle: lstr(
-      "Italien pour voyager, comprendre les régions et parler avec aisance.",
-      "Italian for travel, regions, and confident first phrases.",
+      "La vie en italien, avec Yoppo.",
+      "Life in Italian, with Yoppo.",
     ),
     heroSubtitle: lstr(
-      "Découvre les premiers mots, la culture, les régions, les gestes utiles et les phrases qui rendent un échange plus naturel.",
-      "Discover first words, culture, regions, useful cues, and phrases that make an exchange feel more natural.",
+      "Douze unités pour pratiquer : dialogues, écoute, jeux, lectures, projets écrits et oraux, photos et quiz culturel final. L’introduction culturelle reste accessible séparément.",
+      "Twelve practice units: dialogues, listening, games, readings, written and spoken projects, photos and a final culture quiz. The cultural introduction remains separately accessible.",
     ),
     audience: lstr(
       "Pour les voyageurs et débutants qui veulent une base culturelle avant de pratiquer l’oral.",
@@ -214,8 +214,8 @@ export const yopratiqoLandingContent = {
       "Après l’intro, pratique avec un vrai professeur sur Pratiqo.",
       "After the intro, practice with a real teacher on Pratiqo.",
     ),
-    schemaName: "YoPratiqo Italian Intro",
-    schemaDescription: "A free self-paced Italian intro connected to teacher practice.",
+    schemaName: "YoPratiqo Life in Italian",
+    schemaDescription: "A free twelve-unit Italian practice course with Yoppo, listening, games, reading and culture.",
     teaches: ["Italian first phrases", "travel Italian", "cultural context"],
     about: ["Italian learning", "Italian culture"],
   },

@@ -58,7 +58,9 @@ import {
 import { SITE_URL } from "@/lib/seo/site";
 import { serializeJsonLd } from "@/lib/seo/jsonLd";
 import { buildYopratiqoCourseSchema } from "@/lib/seo/yopratiqoCourseSchema";
-import { lstr, t } from "@/lib/yo/localize";
+import { buildYoLocaleHref, lstr, t } from "@/lib/yo/localize";
+import { yoPublicCatalog } from "@/lib/yo/publicCatalog";
+import { YoDocumentLanguage } from "@/components/yo/YoDocumentLanguage";
 import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import type { YoPratiqoLandingContent } from "@/lib/yo/yopratiqoLandingContent";
 import {
@@ -130,14 +132,13 @@ export function YoLanguageLandingPage({
   const shouldInjectCourseSchema = canInjectYoPratiqoCourseSchema(moduleConfig);
   const courseSchema = shouldInjectCourseSchema
     ? buildYopratiqoCourseSchema({
-        name: content.schemaName,
-        description: content.schemaDescription,
-        url: `${SITE_URL}${moduleConfig.landingRoute}`,
+        name: t(content.heroTitle, locale),
+        description: t(content.heroSubtitle, locale),
+        url: `${SITE_URL}${buildYoLocaleHref(moduleConfig.landingRoute, locale)}`,
         inLanguage: moduleConfig.inLanguage,
         educationalLevel: moduleConfig.educationalLevel,
         isAccessibleForFree: moduleConfig.isAccessibleForFree,
-        teaches: content.teaches,
-        about: content.about,
+        teaches: content.learnBullets.map(item => t(item, locale)),
       })
     : null;
 
@@ -164,12 +165,12 @@ export function YoLanguageLandingPage({
       <p className="text-xs font-black uppercase tracking-[0.22em] text-[#1D9E75]">
         {languageLabel}
       </p>
-      <h1
+      <h2
         id="yo-language-landing-title"
         className="text-2xl font-semibold leading-tight tracking-tight text-[#0F6E56] break-words sm:text-3xl lg:text-4xl"
       >
         {t(content.heroTitle, locale)}
-      </h1>
+      </h2>
       <p className="text-sm leading-relaxed text-[#0F6E56]/82 sm:text-base">
         {t(content.heroSubtitle, locale)}
       </p>
@@ -318,6 +319,7 @@ export function YoLanguageLandingPage({
       backLabel={t(BACK_TO_LANGUES, locale)}
       title={languageLabel}
       selectorPath={moduleConfig.landingRoute}
+      availableLocales={yoPublicCatalog.find(course => course.slug === moduleConfig.slug)?.presentationLocales}
       surfaceId={`${moduleConfig.slug}-landing`}
       appearance="mobile"
     />
@@ -329,13 +331,16 @@ export function YoLanguageLandingPage({
       backLabel={t(BACK_TO_LANGUES, locale)}
       title={languageLabel}
       selectorPath={moduleConfig.landingRoute}
+      availableLocales={yoPublicCatalog.find(course => course.slug === moduleConfig.slug)?.presentationLocales}
       surfaceId={`${moduleConfig.slug}-landing`}
       appearance="desktop"
     />
   );
 
   return (
-    <>
+    <div lang={locale}>
+      <YoDocumentLanguage locale={locale} />
+      <h1 className="sr-only">{t(content.heroTitle, locale)}</h1>
       {courseSchema ? (
         <script
           type="application/ld+json"
@@ -421,6 +426,6 @@ export function YoLanguageLandingPage({
           ),
         }}
       />
-    </>
+    </div>
   );
 }

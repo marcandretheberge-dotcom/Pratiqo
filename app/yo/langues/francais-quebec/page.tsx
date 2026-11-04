@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 
 import { YoLanguageLandingPage } from "@/components/yo/YoLanguageLandingPage";
 import { YoUpcomingModuleCard } from "@/components/yo/YoUpcomingModuleCard";
-import { getYoLocale } from "@/lib/yo/localize";
 import type { YoLocale } from "@/lib/yo/types";
 import { yopratiqoLandingContent } from "@/lib/yo/yopratiqoLandingContent";
-import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
+import { buildYoPratiqoMetadata, resolveYoPratiqoPageLocale } from "@/lib/yo/yopratiqoSeo";
 import { getYoPratiqoModuleBySlug } from "@/lib/yo/yopratiqoProductConfig";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +37,7 @@ export default async function YoFrenchQuebecLandingPage({
   searchParams: Promise<{ lang?: string | string[] }>;
 }) {
   const params = await searchParams;
-  const locale = getYoLocale(params.lang);
+  const locale = resolveYoPratiqoPageLocale("frenchQuebecLanding", params.lang);
   const moduleHref = MODULE_HREF_BY_LOCALE[locale];
 
   return (
