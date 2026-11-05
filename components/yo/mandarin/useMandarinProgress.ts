@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { announceAdventureEvaluation } from "@/lib/yo/adventure";
 import {
   emptyProgress,
   MANDARIN_PROGRESS_KEY,
@@ -23,12 +24,14 @@ export function useMandarinProgress() {
     setReady(true);
   }, []);
   const update = useCallback((transform: (current: Progress) => Progress) => {
-    const next = transform(latest.current);
+    const previous = latest.current;
+    const next = transform(previous);
     latest.current = next;
     setProgress(next);
     try {
       localStorage.setItem(MANDARIN_PROGRESS_KEY, JSON.stringify(next));
       setStored(true);
+      if (JSON.stringify(previous.results) !== JSON.stringify(next.results)) announceAdventureEvaluation();
     } catch {
       setStored(false);
     }

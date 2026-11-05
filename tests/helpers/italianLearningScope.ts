@@ -32,6 +32,19 @@ const sharedImports = new Set([
 ]);
 
 export const journeyLearningFiles = new Set([
+  // Phase 5 presentation and saved-result adapters; the same AST guard applies.
+  "components/yo/journey/AdventureProgress.tsx",
+  "components/yo/journey/AdventureScenery.tsx",
+  "components/yo/journey/adventureStyles.ts",
+  "components/yo/YoAudioFeedbackProvider.tsx",
+  "components/yo/YoArrivalListeningLesson.tsx",
+  "components/yo/german/GermanCourseFinal.tsx",
+  "components/yo/german/GermanCourseUnit.tsx",
+  "components/yo/italian/course/useItalianCourseProgress.ts",
+  "components/yo/japanese/useJapaneseCourseProgress.ts",
+  "components/yo/mandarin/useMandarinProgress.ts",
+  "lib/yo/adventure.ts",
+  "lib/yo/adventureSound.ts",
   // PR429: reviewed lesson UI/content only; assertLearningSurface still checks
   // every listed source and rejects privileged imports, API calls and secrets.
   "app/yo/langues/francais-quebec/module-1/lecon-3/page.tsx",

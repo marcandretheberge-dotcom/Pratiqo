@@ -5,6 +5,7 @@ import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { buildYoLocaleHref } from "@/lib/yo/localize";
 import type { JourneyUnit } from "@/lib/yo/learningJourney";
 import { LearningJourney } from "../journey/CourseJourney";
+import { AdventureProgress } from "../journey/AdventureProgress";
 import { mandarinJourney, canEnterFoundationStep, foundationJourneyCopy } from "@/lib/yo/foundationJourney";
 import { MANDARIN_PATH } from "@/lib/yo/mandarin/progress";
 import { L } from "@/lib/yo/mandarin/types";
@@ -112,6 +113,7 @@ export function MandarinCourseHome({
             }
           </p>
         )}
+        <AdventureProgress journey={journey} world="mandarin" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} />
         <LearningJourney journey={journey} ready={ready} locale={locale} href={href} copy={foundationJourneyCopy[locale]} />
         <section className="mt-8 border-y border-teal-200 py-6">
           {ready && finalOpen ? <Link

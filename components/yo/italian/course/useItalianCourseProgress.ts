@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { announceAdventureEvaluation } from "@/lib/yo/adventure";
 import type { CourseCatalog } from "@/lib/yo/italian/course/courseTypes";
 import { emptyCourseProgress, ITALIAN_COURSE_PROGRESS_KEY, markCourseProduction, mergeCourseProgress, parseCourseProgress, recordCourseActivity, recordCourseAssessment, resetCourseProgress, serializeCourseProgress, setCourseResume, type CourseProgress } from "@/lib/yo/italian/course/courseProgress";
 
@@ -19,8 +20,8 @@ export function useItalianCourseProgress(catalog: CourseCatalog, storageKey = IT
 
   const persist = useCallback((next: CourseProgress) => {
     apply(next);
-    try { window.localStorage.setItem(storageKey, serializeCourseProgress(next)); setStorageAvailable(true); }
-    catch { setStorageAvailable(false); }
+    try { window.localStorage.setItem(storageKey, serializeCourseProgress(next)); setStorageAvailable(true); return true; }
+    catch { setStorageAvailable(false); return false; }
   }, [apply, storageKey]);
 
   useEffect(() => {
@@ -48,18 +49,21 @@ export function useItalianCourseProgress(catalog: CourseCatalog, storageKey = IT
     return () => window.removeEventListener("storage", sync);
   }, [catalog, apply, persist, storageKey]);
 
-  const update = useCallback((change: (current: CourseProgress) => CourseProgress) => {
+  const update = useCallback((change: (current: CourseProgress) => CourseProgress, evaluated = false) => {
     let base = latest.current;
     try { base = mergeCourseProgress(base, parseCourseProgress(window.localStorage.getItem(storageKey), catalog)); }
     catch { setStorageAvailable(false); }
+    const receivedProgress = serializeCourseProgress(base) !== serializeCourseProgress(latest.current);
     const next = change(base);
     if (next === base) { apply(base); return; }
     // No storage side effects inside a React state updater: actions persist immediately once.
-    persist(next);
+    const saved = persist(next);
+    // A simultaneous cross-tab merge is recognised silently, never as this attempt's reward.
+    if (saved && evaluated && !receivedProgress) announceAdventureEvaluation();
   }, [catalog, apply, persist, storageKey]);
 
-  const recordActivity = useCallback((id: string, correct: boolean, assisted: boolean) => update(base => recordCourseActivity(base, catalog, id, correct, assisted)), [catalog, update]);
-  const recordAssessment = useCallback((id: string, correct: number, total: number, assisted: boolean) => update(base => recordCourseAssessment(base, catalog, id, correct, total, assisted)), [catalog, update]);
+  const recordActivity = useCallback((id: string, correct: boolean, assisted: boolean) => update(base => recordCourseActivity(base, catalog, id, correct, assisted), true), [catalog, update]);
+  const recordAssessment = useCallback((id: string, correct: number, total: number, assisted: boolean) => update(base => recordCourseAssessment(base, catalog, id, correct, total, assisted), true), [catalog, update]);
   const markProduction = useCallback((id: string, done: boolean) => update(base => markCourseProduction(base, catalog, id, done)), [catalog, update]);
   const setResume = useCallback((unitId: string, lessonId: string, activityId?: string) => update(base => setCourseResume(base, catalog, unitId, lessonId, activityId)), [catalog, update]);
   const reset = useCallback(() => update(base => resetCourseProgress(base)), [update]);

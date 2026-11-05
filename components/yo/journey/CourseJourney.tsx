@@ -10,13 +10,16 @@ import type { LearningJourney as Journey } from "@/lib/yo/learningJourney";
 import type { YoLocale } from "@/lib/yo/types";
 import { CourseCulturePhoto } from "../italian/course/CourseCulturePhoto";
 import { journeyCopy } from "./journeyCopy";
+import { adventureCopy, adventureWorld, destinationState } from "@/lib/yo/adventure";
+import { AdventureScenery } from "./AdventureScenery";
+import { CourseAdventure } from "./AdventureProgress";
 
 type Props = { catalog: CourseCatalog; progress: CourseProgress; locale: YoLocale; ready: boolean; href: (unitId?: string) => string };
 const action = "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700";
 
 export function CourseJourney({ catalog, progress, locale, ready, href }: Props) {
   const journey = buildCourseJourney(catalog, progress);
-  return <LearningJourney journey={journey} locale={locale} ready={ready} href={href} />;
+  return <><CourseAdventure catalog={catalog} progress={progress} locale={locale} ready={ready} href={href()} /><LearningJourney journey={journey} locale={locale} ready={ready} href={href} /></>;
 }
 
 export function LearningJourney({ journey, locale, ready, href, copy }: {
@@ -24,6 +27,8 @@ export function LearningJourney({ journey, locale, ready, href, copy }: {
   copy?: Partial<(typeof journeyCopy)["en"]>;
 }) {
   const c = { ...journeyCopy[locale], ...copy };
+  const world = adventureWorld(href());
+  const a = adventureCopy[locale];
   return <section aria-label={c.title} className="my-8 min-w-0">
     <div className="border-b border-emerald-200 pb-5">
       <h2 className="text-2xl font-bold text-emerald-950">{c.title}</h2>
@@ -34,7 +39,8 @@ export function LearningJourney({ journey, locale, ready, href, copy }: {
       {journey.steps.map((step, index) => {
         const current = ready && step.unit.id === journey.current?.unit.id;
         const open = ready && step.unlocked;
-        return <li key={step.unit.id} data-journey-unit={step.unit.id} data-unlocked={open} aria-current={current ? "step" : undefined} className="relative grid min-w-0 grid-cols-[56px_minmax(0,1fr)] gap-3 pb-8 sm:grid-cols-[88px_minmax(0,1fr)] sm:gap-5">
+        const state = ready ? destinationState(step) : "locked";
+        return <li key={step.unit.id} data-journey-unit={step.unit.id} data-unlocked={open} data-destination-state={state} aria-current={current ? "step" : undefined} className="relative grid min-w-0 grid-cols-[56px_minmax(0,1fr)] gap-3 pb-8 sm:grid-cols-[88px_minmax(0,1fr)] sm:gap-5">
           <div className="relative flex flex-col items-center">
             {index < journey.steps.length - 1 ? <div aria-hidden className={`absolute bottom-[-2rem] top-14 w-1 ${step.passed ? "bg-emerald-500" : "bg-gray-200"}`} /> : null}
             <span aria-label={`${step.unit.number}. ${step.passed ? c.passed : open ? c.enter : c.locked}`} className={`relative z-10 grid h-14 w-14 shrink-0 place-items-center rounded-full border-2 text-lg font-bold ${step.passed ? "border-emerald-700 bg-emerald-700 text-white" : current ? "border-emerald-700 bg-white text-emerald-900" : "border-gray-300 bg-white text-gray-600"}`}>
@@ -43,9 +49,10 @@ export function LearningJourney({ journey, locale, ready, href, copy }: {
             {current ? <div className="relative z-10 mt-2 motion-safe:animate-[fadeIn_300ms_ease-out]" data-yoppo-position={step.unit.id}><CompanionAvatar visualId="travel" state="map" locale={locale} size="xs" compact /></div> : null}
           </div>
           <article className={`min-w-0 rounded-lg border p-4 sm:p-6 ${current ? "border-emerald-600 bg-emerald-50" : "border-gray-200 bg-white"}`}>
+            <div className="mb-3 max-w-sm"><AdventureScenery world={world} state={state} /></div>
             <div className="grid min-w-0 items-start gap-4 sm:grid-cols-[minmax(0,1fr)_160px]">
               <div className="min-w-0">
-                <p className={`text-xs font-bold ${current ? "text-emerald-800" : "text-gray-600"}`}>{current ? c.here : step.passed ? c.passed : open ? c.enter : c.locked}</p>
+                <p className={`text-xs font-bold ${current ? "text-emerald-800" : "text-gray-600"}`}>{current ? `${c.here} · ` : ""}{a.states[state]}</p>
                 <h3 className="mt-2 break-words text-xl font-bold text-gray-900">{step.unit.title[locale]}</h3>
                 <p className="mt-3 text-sm leading-6 text-gray-700">{step.unit.objectives[0]?.[locale] ?? step.unit.subtitle[locale]}</p>
                 {step.unit.objectives.length > 1 ? <details className="mt-2 text-sm text-gray-700"><summary className="min-h-11 cursor-pointer py-3 font-semibold">{c.goals}</summary><ul className="list-disc space-y-2 pl-5">{step.unit.objectives.slice(1).map((goal, i) => <li key={i}>{goal[locale]}</li>)}</ul></details> : null}

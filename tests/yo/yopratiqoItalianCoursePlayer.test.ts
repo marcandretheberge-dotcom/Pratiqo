@@ -44,10 +44,12 @@ function answerQuestion(view:View,q:CourseQuestion,correct=true){
  click(view.getByRole("button",{name:"Vérifier"}));
 }
 for(const locale of ["fr","en","es"] as const)test(`${locale}: course and unit render with complete localized navigation and no autoplay`,()=>{
- const view=mount(locale);assert.equal(view.getByRole("heading",{level:1}).textContent,unit.title[locale]);assert.ok(view.getByRole("link",{name:locale.toUpperCase()}));assert.equal(starts,0);assert.equal(view.queryAllByRole("checkbox").length,0);
+ const view=mount(locale);assert.equal(view.getByRole("heading",{level:1}).textContent,unit.title[locale]);assert.ok(view.getByRole("link",{name:locale.toUpperCase()}));assert.equal(starts,0);
+ const effects=view.getByRole("checkbox",{name:{fr:"Effets sonores",en:"Sound effects",es:"Efectos de sonido"}[locale]}) as HTMLInputElement;
+ assert.equal(effects.checked,false);assert.equal(view.queryAllByRole("checkbox").filter(item=>item!==effects).length,0);
  click(view.getByRole("button",{name:{fr:"2. La scène",en:"2. The scene",es:"2. La escena"}[locale]}));assert.ok(view.getByText(lesson.reading.it));
  click(view.getByRole("button",{name:{fr:"4. La langue",en:"4. Language",es:"4. La lengua"}[locale]}));assert.ok(view.getByText(lesson.grammar.body[locale]));
- click(view.getByRole("button",{name:{fr:"6. À toi",en:"6. Your turn",es:"6. Tu turno"}[locale]}));assert.equal(view.getAllByRole("checkbox").length,lesson.speaking.checklist.length);
+ click(view.getByRole("button",{name:{fr:"6. À toi",en:"6. Your turn",es:"6. Tu turno"}[locale]}));assert.equal(view.getAllByRole("checkbox").filter(item=>item!==effects).length,lesson.speaking.checklist.length);
  cleanup();const dashboard=render(React.createElement(ItalianCourseDashboard,{locale,catalog:italianCourseCatalog,sources:courseSources}));assert.equal(dashboard.getAllByRole("link").filter(link=>(link.getAttribute("href")??"").includes("/parcours/u")).length,2);assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,italianCourseCatalog.units.length-1);assert.equal(starts,0);
 });
 test("phrase translations can be hidden in the optional notebook without removing Italian audio",()=>{const view=mount();play(view);click(view.getByRole("button",{name:"Carnet de mots"}));const notebook=within(view.getByRole("heading",{name:"Carnet de mots"}).closest("section")!);assert.ok(notebook.getByText(lesson.vocabulary[0].meaning.fr));click(notebook.getByRole("button",{name:"Masquer les traductions"}));assert.equal(notebook.queryByText(lesson.vocabulary[0].meaning.fr),null);assert.ok(notebook.getByRole("button",{name:`Écouter : ${lesson.vocabulary[0].it}`}));});

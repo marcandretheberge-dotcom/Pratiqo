@@ -570,7 +570,7 @@ export function YoLessonDeck({
         <span className="text-xs font-bold uppercase tracking-[0.16em] text-[#13A085]">
           {labels.progressAnnouncement(currentIndex + 1, total)}
         </span>
-        {explorationJourney ? <ExplorationJourneyMap locale={locale} screens={screens} index={currentIndex} visited={exploration.visited} ready={exploration.ready} stored={exploration.stored} move={setCurrentIndex} /> : null}
+        {explorationJourney ? <ExplorationJourneyMap journeyId={explorationJourney} locale={locale} screens={screens} index={currentIndex} visited={exploration.visited} ready={exploration.ready} stored={exploration.stored} move={setCurrentIndex} /> : null}
         <div
           aria-hidden
           className="flex flex-1 items-center gap-1.5 overflow-x-auto"

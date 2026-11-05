@@ -4,6 +4,9 @@ import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { Map, ArrowRight } from "lucide-react";
 import type { YoLocale } from "@/lib/yo/types";
 import { useRef } from "react";
+import { AdventureScenery } from "./AdventureScenery";
+import { adventureWorld } from "@/lib/yo/adventure";
+import { adventureCss } from "./adventureStyles";
 
 const copy = {
   fr: { map: "Mon parcours avec Yoppo", here: "On est ici", visited: "Explorée", next: "À explorer", note: "Les étapes explorées sont des repères, pas des compétences validées.", storage: "Reprise non enregistrée sur cet appareil." },
@@ -11,19 +14,22 @@ const copy = {
   es: { map: "Mi recorrido con Yoppo", here: "Estamos aquí", visited: "Explorada", next: "Por explorar", note: "Las etapas exploradas son marcadores, no habilidades verificadas.", storage: "No se puede guardar tu lugar en este dispositivo." },
 };
 
-export function ExplorationJourneyMap({ locale, screens, index, visited, ready, stored, move }: {
+export function ExplorationJourneyMap({ locale, screens, index, visited, ready, stored, move, journeyId = "english-intro" }: {
   locale: YoLocale; screens: { id: string; title: string }[]; index: number; visited: string[];
   ready: boolean; stored: boolean; move: (index: number) => void;
+  journeyId?: string;
 }) {
   const panel = useRef<HTMLDetailsElement>(null);
   const c = copy[locale];
   return <details ref={panel} className="relative shrink-0 normal-case tracking-normal">
+    <style>{adventureCss}</style>
     <summary aria-label={c.map} title={c.map} className="flex min-h-11 cursor-pointer list-none items-center gap-1 rounded-lg px-1 text-emerald-900">
       <CompanionAvatar visualId="travel" state="map" locale={locale} size="xs" compact />
       <Map size={18} aria-hidden />
     </summary>
     <section aria-label={c.map} className="fixed inset-x-4 top-32 z-50 mt-2 max-h-[60dvh] overflow-y-auto rounded-lg border border-emerald-200 bg-white p-4 text-gray-900 shadow-lg sm:absolute sm:inset-x-auto sm:left-0 sm:top-full sm:w-80">
       <h2 className="text-base font-bold">{c.map}</h2>
+      <div className="my-3"><AdventureScenery world={adventureWorld(journeyId)} state="progress" /></div>
       <ol className="mt-3 space-y-1">
         {screens.map((screen, i) => <li key={screen.id} aria-current={i === index ? "step" : undefined}>
           <button type="button" disabled={!ready} onClick={() => { move(i); if (panel.current) panel.current.open = false; }}

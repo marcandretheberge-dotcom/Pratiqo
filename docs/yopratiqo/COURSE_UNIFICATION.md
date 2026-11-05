@@ -1,5 +1,26 @@
 # Course quality unification — working specification
 
+## Release authorization update - 2026-11-05
+
+The user subsequently authorized deployment of the validated web increment.
+The earlier draft-only/publication restrictions below describe the previous
+review stage, not the current authorization. Passes, credits, gifts, native-store
+submission and account-sync work are still outside this release.
+
+All 28 reviewed-cache Italian audio objects have now been published to the
+existing Pratiqo `yopratiqo-audio` bucket with `upsert: false`: 28 cache hits,
+28 uploads and 28 public MP3/hash verifications, zero failures, zero generation.
+No working recording was overwritten. A fresh complete 905-path public audit is
+required before merge. The local-only build artifacts are not promoted; Git/Vercel
+must rebuild the final commit using the project's Production environment.
+
+Human pronunciation certification and physical-device QA are not claimed. See
+`YOPPO_ADVENTURE_REVIEW.md` for the subsequently validated adventure presentation.
+The previous production rollback candidate is Vercel deployment
+`8CvuRrEyuw4ztF1QtQjc3ZSq396W`, commit
+`d8a6eaa03086b519f46256067cc4fe0f9c93877f`. Application rollback preserves the
+existing and newly added recordings and all progress; no migration is needed.
+
 ## Product decision
 
 Japanese is the quality reference. Match its coherent lesson flow, language-specific
