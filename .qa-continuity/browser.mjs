@@ -16,6 +16,9 @@ const preview = await createPreview(repo);
 const log = createWriteStream(path.join(output, 'preview.log'));
 const server = spawn(process.execPath, [path.join(repo, 'node_modules/next/dist/bin/next'), 'dev', '--webpack', '--hostname', '127.0.0.1', '--port', '3105'], { cwd: preview, env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });
 server.stdout.pipe(log, { end: false }); server.stderr.pipe(log, { end: false });
+let serverLogTail = '';
+const captureServerLog = chunk => { serverLogTail = (serverLogTail + chunk.toString()).slice(-8_000); };
+server.stdout.on('data', captureServerLog); server.stderr.on('data', captureServerLog);
 const origin = 'http://127.0.0.1:3105';
 const french = '/yo/langues/francais-quebec/module-1/lecon-3?lang=fr';
 let browser;
@@ -86,11 +89,25 @@ async function inspectItalian(page, width, state, expanded, restoredControl = fa
 try {
   const deadline = Date.now() + 90_000;
   let ready = false;
+  let lastStartupResponse = 'No HTTP response received';
   while (Date.now() < deadline && server.exitCode === null) {
-    try { const response = await fetch(origin + french); if (response.status === 200) { ready = true; break; } } catch {}
-    await delay(300);
+    let response;
+    try {
+      response = await fetch(origin + french, { signal: AbortSignal.timeout(Math.max(1, Math.min(15_000, deadline - Date.now()))) });
+    } catch (error) { lastStartupResponse = String(error); }
+    if (response) {
+      lastStartupResponse = `HTTP ${response.status} ${response.statusText}`;
+      if (response.status >= 500) {
+        const body = await response.text().catch(error => `Could not read response: ${String(error)}`);
+        const summary = body.replace(/\s+/g, ' ').slice(0, 1_500);
+        throw new Error(`Preview compilation failed: ${lastStartupResponse} at ${origin + french}\nResponse: ${summary}\nPreview log tail:\n${serverLogTail}`);
+      }
+      await response.body?.cancel();
+      if (response.status === 200) { ready = true; break; }
+    }
+    await delay(Math.max(0, Math.min(300, deadline - Date.now())));
   }
-  assert.ok(ready, 'The isolated real-route preview must start successfully');
+  assert.ok(ready, `The isolated real-route preview must start successfully. Last response: ${lastStartupResponse}\nPreview log tail:\n${serverLogTail}`);
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   page.on('pageerror', error => errors.push(error.message));

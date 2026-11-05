@@ -10,7 +10,7 @@ export async function createPreview(repo) {
     await symlink(path.join(repo, name), path.join(root, name), 'dir');
   }
   await writeFile(path.join(root, 'package.json'), JSON.stringify({ private: true, dependencies: { next: '16.2.9', react: '19.2.4', 'react-dom': '19.2.4' } }));
-  await writeFile(path.join(root, 'tsconfig.json'), JSON.stringify({ compilerOptions: { target: 'ES2017', lib: ['dom', 'dom.iterable', 'esnext'], allowJs: true, skipLibCheck: true, strict: true, noEmit: true, esModuleInterop: true, module: 'esnext', moduleResolution: 'bundler', resolveJsonModule: true, isolatedModules: true, jsx: 'react-jsx', plugins: [{ name: 'next' }], paths: { '@/*': [repo + '/*'] } }, include: ['next-env.d.ts', '**/*.ts', '**/*.tsx', '.next/types/**/*.ts'], exclude: ['node_modules'] }, null, 2));
+  await writeFile(path.join(root, 'tsconfig.json'), JSON.stringify({ compilerOptions: { target: 'ES2017', lib: ['dom', 'dom.iterable', 'esnext'], allowJs: true, skipLibCheck: true, strict: true, noEmit: true, esModuleInterop: true, module: 'esnext', moduleResolution: 'bundler', resolveJsonModule: true, isolatedModules: true, jsx: 'react-jsx', plugins: [{ name: 'next' }], baseUrl: '.', paths: { '@/*': ['./*'] } }, include: ['next-env.d.ts', '**/*.ts', '**/*.tsx', '.next/types/**/*.ts'], exclude: ['node_modules'] }, null, 2));
   await writeFile(path.join(root, 'postcss.config.mjs'), await readFile(path.join(repo, 'postcss.config.mjs')));
   await writeFile(path.join(root, 'next.config.ts'), 'import type { NextConfig } from "next";\nconst config: NextConfig = { devIndicators: false };\nexport default config;\n');
   const css = await readFile(path.join(repo, 'app/globals.css'), 'utf8');
@@ -19,7 +19,7 @@ export async function createPreview(repo) {
   for (const route of ['yo/langues/francais-quebec/module-1/lecon-3', 'yo/langues/italien/parcours/[unitId]']) {
     const target = path.join(root, 'app', route);
     await mkdir(target, { recursive: true });
-    await writeFile(path.join(target, 'page.tsx'), `export { default } from "@/app/${route}/page";\n`);
+    await writeFile(path.join(target, 'page.tsx'), await readFile(path.join(repo, 'app', route, 'page.tsx')));
   }
   return root;
 }
