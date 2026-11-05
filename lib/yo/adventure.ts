@@ -2,7 +2,7 @@ import type { LearningJourney } from "./learningJourney";
 import type { YoLocale } from "./types";
 
 export type AdventureWorld = "italian" | "german" | "portuguese" | "japanese" | "mandarin" | "french" | "english" | "spanish";
-export type AdventureKind = "unlock" | "checkpoint" | "mastery" | "finale";
+export type AdventureKind = "unlock" | "checkpoint" | "recap" | "mastery" | "finale";
 export type DestinationState = "locked" | "available" | "progress" | "completed" | "mastered";
 export type AdventureMilestone = { id: string; kind: AdventureKind; unitId?: string; title: Record<YoLocale, string>; skills: Record<YoLocale, string>[] };
 export const ADVENTURE_EVALUATED = "yo-adventure-evaluated";
@@ -22,6 +22,8 @@ export function adventureMilestones(journey: LearningJourney, finalPassed = fals
     if (step.unlocked) milestones.push({ ...common, skills: [step.unit.objectives[0] ?? step.unit.subtitle], id: `${step.unit.id}:unlock`, kind: "unlock" });
     const half = Math.ceil(step.unit.activityIds.length / 2);
     if (half > 0 && step.independent >= half) milestones.push({ ...common, skills: [], id: `${step.unit.id}:checkpoint`, kind: "checkpoint" });
+    // This recognises the assessed recap, separately from the practice-count encouragement.
+    if (step.midpointPassed) milestones.push({ ...common, skills: [], id: `${step.unit.id}:recap`, kind: "recap" });
     if (step.passed) milestones.push({ ...common, id: `${step.unit.id}:mastery`, kind: "mastery" });
   }
   // Culture trivia and merely opening the final are never a course completion.
@@ -56,7 +58,8 @@ export function adventureWorld(path: string): AdventureWorld {
 export const adventureCopy = {
   fr: {
     states: { locked: "Destination verrouillée", available: "Prête à explorer", progress: "Voyage en cours", completed: "Activités terminées · défi à valider", mastered: "Défi maîtrisé" },
-    kinds: { unlock: "Un nouveau chemin s’ouvre", checkpoint: "Une belle étape franchie", mastery: "Destination illuminée", finale: "Le voyage prend vie" },
+    kinds: { unlock: "Un nouveau chemin s’ouvre", checkpoint: "Une belle étape franchie", recap: "Halte réussie", mastery: "Destination illuminée", finale: "Le voyage prend vie" },
+    recapSuccess: "Tu as réussi le mini-bilan sans aide. La mission finale rassemble les situations de toute l’unité.", victory: "Mission accomplie !", victoryStory: "La petite tour de papier s’efface et le chemin s’illumine.", nextDestination: "Prochaine destination", visitDestination: "Rejoindre cette destination",
     effects: "Effets sonores", replay: "Rejouer la célébration", skip: "Continuer", milestones: "Mes jalons", goal: "Ta prochaine mission", skills: "Objectifs évalués dans ce défi", half: "Tu as réussi au moins la moitié des exercices de cette étape sans aide affichée.",
     proof: "Ce jalon reconnaît les exercices évalués, pas une certification ni la maîtrise de toute la langue.", access: "Ce chemin guide ton apprentissage. Il n’achète ni ne débloque de contenu payant.",
     final: "Les défis du parcours et le bilan final sont réussis. Reprends les situations à revoir avant d’explorer une autre langue.", local: "Jalons issus de ta progression enregistrée sur cet appareil.", unavailable: "Son indisponible ici. La célébration reste visible.",
@@ -64,7 +67,8 @@ export const adventureCopy = {
   },
   en: {
     states: { locked: "Locked destination", available: "Ready to explore", progress: "Journey in progress", completed: "Activities completed · challenge pending", mastered: "Challenge mastered" },
-    kinds: { unlock: "A new path opens", checkpoint: "A meaningful step forward", mastery: "Destination brought to life", finale: "Your journey comes alive" },
+    kinds: { unlock: "A new path opens", checkpoint: "A meaningful step forward", recap: "Recap passed", mastery: "Destination brought to life", finale: "Your journey comes alive" },
+    recapSuccess: "You passed the short recap without help. The final mission brings the unit’s situations together.", victory: "Mission complete!", victoryStory: "The little paper tower settles and the path lights up.", nextDestination: "Next destination", visitDestination: "Go to this destination",
     effects: "Sound effects", replay: "Replay celebration", skip: "Continue", milestones: "My milestones", goal: "Your next mission", skills: "Objectives assessed in this challenge", half: "You have passed at least half of this step’s exercises without displayed help.",
     proof: "This milestone recognises the assessed exercises, not certification or mastery of the whole language.", access: "This path guides learning. It does not purchase or unlock paid content.",
     final: "The journey challenges and final review are passed. Revisit situations needing practice before exploring another language.", local: "Milestones come from progress saved on this device.", unavailable: "Sound is unavailable here. The celebration remains visible.",
@@ -72,7 +76,8 @@ export const adventureCopy = {
   },
   es: {
     states: { locked: "Destino bloqueado", available: "Listo para explorar", progress: "Viaje en curso", completed: "Actividades terminadas · reto pendiente", mastered: "Reto dominado" },
-    kinds: { unlock: "Se abre un nuevo camino", checkpoint: "Un paso importante", mastery: "El destino cobra vida", finale: "Tu viaje cobra vida" },
+    kinds: { unlock: "Se abre un nuevo camino", checkpoint: "Un paso importante", recap: "Parada superada", mastery: "El destino cobra vida", finale: "Tu viaje cobra vida" },
+    recapSuccess: "Has superado el mini-repaso sin ayuda. La misión final reúne las situaciones de toda la unidad.", victory: "¡Misión cumplida!", victoryStory: "La pequeña torre de papel se deshace y el camino se ilumina.", nextDestination: "Próximo destino", visitDestination: "Ir a este destino",
     effects: "Efectos de sonido", replay: "Repetir celebración", skip: "Continuar", milestones: "Mis logros", goal: "Tu próxima misión", skills: "Objetivos evaluados en este reto", half: "Has superado al menos la mitad de los ejercicios de esta etapa sin ayuda mostrada.",
     proof: "Este logro reconoce los ejercicios evaluados, no una certificación ni el dominio de toda la lengua.", access: "Este camino guía el aprendizaje. No compra ni desbloquea contenido de pago.",
     final: "Has superado los retos del recorrido y la evaluación final. Repasa las situaciones pendientes antes de explorar otro idioma.", local: "Los logros proceden del progreso guardado en este dispositivo.", unavailable: "El sonido no está disponible aquí. La celebración sigue visible.",

@@ -2,11 +2,16 @@ import { units01to06 } from "./units01to06";
 import { units07to12 } from "./units07to12";
 import { courseAssessments } from "./courseAssessments";
 import { italianCultureStops } from "./courseCulture";
+import { italianFirstMidpoint, italianFirstMission } from "./coursePilot";
 import { t } from "./courseAuthoring";
 import type { CourseCatalog, CourseSource, CourseUnit } from "./courseTypes";
 
 /** Imported by Server Components and offline tooling; clients receive one unit at a time. */
-export const italianCourseUnits: CourseUnit[] = [...units01to06, ...units07to12].map(unit => ({ ...unit, cultureStop: italianCultureStops[unit.id] }));
+export const italianCourseUnits: CourseUnit[] = [...units01to06, ...units07to12].map(unit => ({
+  ...unit,
+  cultureStop: italianCultureStops[unit.id],
+  ...(unit.id === "u01" ? { midpoint: italianFirstMidpoint, quiz: { ...unit.quiz, mission: italianFirstMission } } : {}),
+}));
 export { courseAssessments };
 export const courseSources: CourseSource[] = [
   ...Object.values(italianCultureStops).map(stop => stop.source),
@@ -20,10 +25,11 @@ export const italianCourseCatalog: CourseCatalog = {
   units: italianCourseUnits.map(unit => ({ id:unit.id, number:unit.number, title:unit.title, subtitle:unit.subtitle, objectives:unit.objectives,
     lessons:unit.lessons.map(lesson => ({ id:lesson.id, title:lesson.title, activityIds:lesson.activities.map(activity=>activity.id) })),
     activityIds:unit.lessons.flatMap(lesson=>lesson.activities.map(activity=>activity.id)), quizId:unit.quiz.id, productionId:unit.production.id,
+    ...(unit.midpoint ? { midpointId: unit.midpoint.id } : {}),
     photo:unit.cultureStop?.photo,
     phraseCount:unit.lessons.reduce((sum, lesson)=>sum+lesson.vocabulary.length,0),
   })),
-  assessments:[...italianCourseUnits.map(unit=>unit.quiz), ...courseAssessments].map(assessment=>({id:assessment.id,title:assessment.title,unitIds:assessment.unitIds,questionCount:assessment.questions.length,passPercent:assessment.passPercent,theme:assessment.theme})),
+  assessments:[...italianCourseUnits.flatMap(unit=>[unit.quiz, ...(unit.midpoint ? [unit.midpoint] : [])]), ...courseAssessments].map(assessment=>({id:assessment.id,title:assessment.title,unitIds:assessment.unitIds,questionCount:assessment.questions.length,passPercent:assessment.passPercent,theme:assessment.theme,...(assessment.purpose ? { purpose: assessment.purpose } : {})})),
 };
 
 export function getItalianCourseUnit(id: string) { return italianCourseUnits.find(unit=>unit.id===id); }

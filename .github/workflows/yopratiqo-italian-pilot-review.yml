@@ -1,0 +1,57 @@
+name: YoPratiqo Italian adventure pilot review
+on:
+  push:
+    branches:
+      - feat/yopratiqo-italian-adventure-pilot-20261105
+permissions:
+  contents: read
+concurrency:
+  group: yo-pilot-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  pilot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Full repository TypeScript
+        run: npx tsc --noEmit --incremental false
+      - name: Pilot interactions and preserved continuity
+        run: |
+          npm run test:yo-italian-pilot
+          npm run test:yo-continuity
+      - name: Existing Italian course and shared course regressions
+        run: |
+          npm run test:yo-journey
+          npm run test:yo-italian-course
+          npm run test:yo-german
+          npm run test:yo-portuguese
+      - name: Launch-critical regressions
+        run: npm run test:launch-critical
+      - name: Install isolated browser test runtime
+        run: |
+          npm install --prefix "$RUNNER_TEMP/yo-browser" --ignore-scripts --no-audit --no-fund playwright@1.62.1
+          "$RUNNER_TEMP/yo-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Real browser Italian adventure loop
+        env:
+          YO_QA_BROWSER_ROOT: ${{ runner.temp }}/yo-browser
+          YO_QA_OUTPUT: ${{ runner.temp }}/yo-pilot-results
+        run: node --import tsx .qa-pilot/browser.mjs
+      - name: Preserve review evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: yopratiqo-italian-pilot-review
+          path: ${{ runner.temp }}/yo-pilot-results
+          if-no-files-found: ignore
+          retention-days: 7

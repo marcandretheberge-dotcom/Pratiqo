@@ -38,6 +38,21 @@ export type CourseQuestion = (ItalianChoiceActivity | ItalianTypeActivity) & {
   photo?: CoursePhoto;
   taughtInUnitId?: string;
 };
+export interface CourseMissionScene {
+  title: LocaleText;
+  character: LocaleText;
+  setting: LocaleText;
+  success: LocaleText;
+  recovery: LocaleText;
+}
+export interface CourseMission {
+  title: LocaleText;
+  briefing: LocaleText;
+  success: LocaleText;
+  retry: LocaleText;
+  assisted: LocaleText;
+  scenes: Record<string, CourseMissionScene>;
+}
 export interface CourseAssessment {
   id: string;
   title: LocaleText;
@@ -46,6 +61,8 @@ export interface CourseAssessment {
   questions: CourseQuestion[];
   passPercent: 80;
   theme?: "culture";
+  purpose?: "midpoint";
+  mission?: CourseMission;
 }
 export interface CourseProduction {
   id: string;
@@ -62,6 +79,7 @@ export interface CourseUnit {
   objectives: LocaleText[];
   lessons: CourseLesson[];
   quiz: CourseAssessment;
+  midpoint?: CourseAssessment;
   production: CourseProduction;
   culture: { title: LocaleText; body: LocaleText; sourceIds: string[] };
   cultureStop?: CourseCultureStop;
@@ -71,9 +89,10 @@ export interface CourseUnitSummary {
   id: string; number: number; title: LocaleText; subtitle: LocaleText; objectives: LocaleText[];
   lessons: { id: string; title: LocaleText; activityIds: string[] }[];
   activityIds: string[]; quizId: string; productionId: string; phraseCount: number;
+  midpointId?: string;
   photo?: CoursePhoto;
 }
 export interface CourseCatalog {
   units: CourseUnitSummary[];
-  assessments: { id: string; title: LocaleText; unitIds: string[]; questionCount: number; passPercent: 80; theme?: "culture" }[];
+  assessments: { id: string; title: LocaleText; unitIds: string[]; questionCount: number; passPercent: 80; theme?: "culture"; purpose?: "midpoint" }[];
 }

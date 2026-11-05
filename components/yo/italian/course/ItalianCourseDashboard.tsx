@@ -27,7 +27,7 @@ export function ItalianCourseDashboard({locale,catalog,sources}:{locale:YoLocale
  const due=getDueActivityIds(progress,catalog),future=activityIds.filter(id=>progress.activities[id]?.nextReviewAt>Date.now()).length;
  const nextUnit=buildCourseJourney(catalog,progress).current?.unit??catalog.units[0];
  const resume=progress.resume?.unitId===nextUnit.id?progress.resume:null,continueHref=resume?italianCourseHref(locale,resume.unitId,resume.lessonId,resume.activityId):italianCourseHref(locale,nextUnit.id);
- const checkpoints=catalog.assessments.filter(a=>!catalog.units.some(unit=>unit.quizId===a.id));
+ const checkpoints=catalog.assessments.filter(a=>a.purpose!=="midpoint"&&!catalog.units.some(unit=>unit.quizId===a.id));
  const reviewItems=due.slice(0,12).map(id=>{const unit=catalog.units.find(u=>u.activityIds.includes(id))!;const lesson=unit.lessons.find(l=>l.activityIds.includes(id))!;return {id,unit,lesson};});
  return <div lang={locale} className="min-h-screen bg-[#f6f2e8] pb-32 text-[#302f27]"><CourseHeader locale={locale}/><main className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-12">
   <header className="flex flex-wrap items-center justify-between gap-5 border-b border-[#d7dfd3] pb-6">
