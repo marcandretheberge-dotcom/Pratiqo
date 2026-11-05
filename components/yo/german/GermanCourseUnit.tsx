@@ -1,4 +1,5 @@
 "use client";
+import { CourseAdventure } from "../journey/AdventureProgress";
 import { useCourseExperience } from "./CourseExperience";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -426,6 +427,7 @@ function GermanUnitSession({
   return (
     <ItalianAudioProvider paths={audioPaths} language={experience.language}>
       <GermanCourseShell locale={locale} unit={unit.id}>
+        <CourseAdventure catalog={catalog} progress={state.progress} locale={locale} ready={state.ready} href={experience.href(locale)} />
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold text-emerald-800">

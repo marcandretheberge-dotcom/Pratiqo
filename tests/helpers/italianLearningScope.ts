@@ -32,6 +32,37 @@ const sharedImports = new Set([
 ]);
 
 export const journeyLearningFiles = new Set([
+  // Phase 5 presentation and saved-result adapters; the same AST guard applies.
+  "components/yo/journey/AdventureProgress.tsx",
+  "components/yo/journey/AdventureScenery.tsx",
+  "components/yo/journey/adventureStyles.ts",
+  "components/yo/YoAudioFeedbackProvider.tsx",
+  "components/yo/YoArrivalListeningLesson.tsx",
+  "components/yo/german/GermanCourseFinal.tsx",
+  "components/yo/german/GermanCourseUnit.tsx",
+  "components/yo/italian/course/useItalianCourseProgress.ts",
+  "components/yo/japanese/useJapaneseCourseProgress.ts",
+  "components/yo/mandarin/useMandarinProgress.ts",
+  "lib/yo/adventure.ts",
+  "lib/yo/adventureSound.ts",
+  // PR429: reviewed lesson UI/content only; assertLearningSurface still checks
+  // every listed source and rejects privileged imports, API calls and secrets.
+  "app/yo/langues/francais-quebec/module-1/lecon-3/page.tsx",
+  "components/yo/SpanishRegionalPractice.tsx",
+  "components/yo/YoAudioPlayer.tsx",
+  "components/yo/YoLanguageSelector.tsx",
+  "components/yo/YoMobileAppStepShell.tsx",
+  "components/yo/YoPremiumModuleShell.tsx",
+  "components/yo/YoPronunciationButton.tsx",
+  "components/yo/YoStepNavigator.tsx",
+  "components/yo/companion/DeckYoppoCoach.tsx",
+  "components/yo/companion/YoppoLearningCompanion.tsx",
+  "components/yo/italian/ItalianModuleAudio.tsx",
+  "lib/yo/audio/italianCourseAudio.ts",
+  "lib/yo/audio/stopLessonAudio.ts",
+  "lib/yo/italian/course/units01to06.ts",
+  "lib/yo/spanishRegionalPractice.ts",
+  "lib/yo/spanishIntroA1.ts",
   "app/yo/langues/japonais/parcours/[unit]/page.tsx",
   "app/yo/langues/mandarin/parcours/[unit]/page.tsx",
   "app/yo/langues/mandarin/parcours/page.tsx",
@@ -71,7 +102,8 @@ function assertLearningSurface(file: string, source: string): void {
       ? posix.normalize(posix.join(posix.dirname(file), specifier))
       : specifier.replace(/^@\//, "");
     const serverRouteImport = journeyLearningFiles.has(file) && file.startsWith("app/yo/") && ["next", "next/navigation"].includes(resolved);
-    assert.ok(serverRouteImport || sharedImports.has(resolved) || resolved.startsWith("components/yo/") || resolved.startsWith("lib/yo/"),
+    const localePathRead = file === "components/yo/YoLanguageSelector.tsx" && resolved === "next/navigation";
+    assert.ok(serverRouteImport || localePathRead || sharedImports.has(resolved) || resolved.startsWith("components/yo/") || resolved.startsWith("lib/yo/"),
       `Outside learning boundary: ${file} imports ${specifier}`);
     assert.doesNotMatch(resolved, /stripe|supabase|(?:^|\/)(?:auth|payments?|checkout|consent|sharing)(?:\/|$)/i,
       `Privileged dependency in ${file}`);

@@ -71,6 +71,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import Link from "next/link";
+import { DeckYoppoCoach } from "./companion/DeckYoppoCoach";
 import { useExplorationJourney, type IntroJourneyId } from "./journey/useExplorationJourney";
 import { ExplorationJourneyMap } from "./journey/ExplorationJourneyMap";
 import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
@@ -279,6 +280,7 @@ export function YoLessonDeck({
   // working.
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
+      if (event.defaultPrevented || document.querySelector("dialog[open]")) return;
       // Don't hijack typing in form fields (none today, but
       // kept as a guard so future per-screen inputs stay safe).
       const target = event.target as HTMLElement | null;
@@ -288,7 +290,7 @@ export function YoLessonDeck({
           tag === "input" ||
           tag === "textarea" ||
           tag === "select" ||
-          target.isContentEditable
+          target.isContentEditable || target.closest("[data-yoppo-controls]")
         ) {
           return;
         }
@@ -310,6 +312,8 @@ export function YoLessonDeck({
   // document) so the deck stays viewport-locked. Respects
   // `prefers-reduced-motion`.
   useEffect(() => {
+    window.dispatchEvent(new Event("yo-audio-stop"));
+    window.dispatchEvent(new Event("yo-speech-cancel"));
     const node = activeScreenRef.current;
     if (!node) return;
     const prefersReducedMotion =
@@ -491,6 +495,7 @@ export function YoLessonDeck({
             </YoLessonDeckStepGateContext.Provider>
           </main>
 
+          <DeckYoppoCoach locale={locale} screen={activeScreen} />
           <footer
             data-no-deck-swipe="true"
             data-no-deck-tap="true"
@@ -565,7 +570,7 @@ export function YoLessonDeck({
         <span className="text-xs font-bold uppercase tracking-[0.16em] text-[#13A085]">
           {labels.progressAnnouncement(currentIndex + 1, total)}
         </span>
-        {explorationJourney ? <ExplorationJourneyMap locale={locale} screens={screens} index={currentIndex} visited={exploration.visited} ready={exploration.ready} stored={exploration.stored} move={setCurrentIndex} /> : null}
+        {explorationJourney ? <ExplorationJourneyMap journeyId={explorationJourney} locale={locale} screens={screens} index={currentIndex} visited={exploration.visited} ready={exploration.ready} stored={exploration.stored} move={setCurrentIndex} /> : null}
         <div
           aria-hidden
           className="flex flex-1 items-center gap-1.5 overflow-x-auto"
@@ -637,6 +642,7 @@ export function YoLessonDeck({
         })}
       </div>
 
+      <DeckYoppoCoach locale={locale} screen={screens[currentIndex]} />
       <YoLessonDeckNav
         locale={locale}
         currentIndex={currentIndex}
@@ -688,3 +694,4 @@ function ReferenceLessonScreen({
 }
 
 export default YoLessonDeck;
+

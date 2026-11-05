@@ -1,4 +1,5 @@
 "use client";
+import { CourseAdventure } from "../journey/AdventureProgress";
 import { useCourseExperience } from "./CourseExperience";
 import type {
   CourseAssessment,
@@ -39,6 +40,7 @@ export function GermanCourseFinal({
             ? copy[locale].blocked
             : copy[locale].local}
         </p>
+        <CourseAdventure catalog={catalog} progress={state.progress} locale={locale} ready={state.ready} href={experience.href(locale)} />
         <GermanAssessment
           key={state.progress.resetAt}
           assessment={assessment}

@@ -43,6 +43,7 @@ export function YoppoLearningCompanion({
   renderGame,
   clock = activeClock,
   policy,
+  dock = "reserved",
 }: {
   locale: YoLocale;
   lesson: Localized;
@@ -54,6 +55,7 @@ export function YoppoLearningCompanion({
   renderGame: (props: GameProps) => ReactNode;
   clock?: () => number;
   policy?: BreakPolicy;
+  dock?: "reserved" | "inline";
 }) {
   const [hidden, setHidden] = useState(false);
   const [position, setPosition] = useState(0);
@@ -183,7 +185,8 @@ export function YoppoLearningCompanion({
     <>
       <div
         data-testid="yoppo-reserved-rail"
-        className="pointer-events-none fixed inset-x-0 bottom-16 z-40 h-28 border-t border-teal-100 bg-[#f6f9f8]"
+        data-yoppo-controls="true"
+        className={dock === "inline" ? "pointer-events-none relative z-40 h-14 shrink-0 border-t border-teal-100 bg-[#f6f9f8]" : "pointer-events-none fixed inset-x-0 bottom-16 z-40 h-28 border-t border-teal-100 bg-[#f6f9f8]"}
       >
         {hidden ? (
           <button
@@ -198,7 +201,7 @@ export function YoppoLearningCompanion({
             style={{
               left: `clamp(12px, calc(100% - 108px + ${position}px), calc(100% - 108px))`,
             }}
-            className="pointer-events-auto absolute bottom-1 flex flex-col items-center"
+            className={dock === "inline" ? "pointer-events-auto absolute bottom-1 flex items-center" : "pointer-events-auto absolute bottom-1 flex flex-col items-center"}
           >
             <button
               ref={opener}
@@ -213,7 +216,7 @@ export function YoppoLearningCompanion({
                 visualId="travel"
                 state="idle"
                 locale={locale}
-                size="sm"
+                size={dock === "inline" ? "xs" : "sm"}
                 compact
               />
             </button>
@@ -270,6 +273,8 @@ export function YoppoLearningCompanion({
       </div>
       <dialog
         ref={dialog}
+        aria-label="Yoppo"
+        data-yoppo-controls="true"
         onCancel={(event) => {
           event.preventDefault();
           minimize();
@@ -518,3 +523,4 @@ export function YoppoLearningCompanion({
     </>
   );
 }
+

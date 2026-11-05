@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { announceAdventureEvaluation } from "@/lib/yo/adventure";
 import { emptyJapaneseProgress, JAPANESE_PROGRESS_KEY, mergeJapaneseProgress, parseJapaneseProgress, type JapaneseCourseProgress } from "@/lib/yo/japaneseCourseProgress";
 
 export function useJapaneseCourseProgress() {
@@ -61,6 +62,7 @@ export function useJapaneseCourseProgress() {
       }
       storage = availableStorage;
     } catch { /* Keep the current in-memory session when storage is blocked. */ }
+    const receivedResults = JSON.stringify(base.results) !== JSON.stringify(currentProgress.current.results);
     const transformed = transform(base);
     const next = mergeJapaneseProgress(transformed, transformed);
     currentProgress.current = next;
@@ -77,6 +79,7 @@ export function useJapaneseCourseProgress() {
     // put storage writes or the transform inside a replayable React updater.
     setProgress(next);
     setStorageAvailable(saved);
+    if (saved && !receivedResults && JSON.stringify(base.results) !== JSON.stringify(next.results)) announceAdventureEvaluation();
   }, []);
   return { progress, update, ready, storageAvailable };
 }

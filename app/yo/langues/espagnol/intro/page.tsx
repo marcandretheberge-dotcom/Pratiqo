@@ -58,6 +58,7 @@ import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
 import { YoReadingPreview } from "@/components/yo/YoReadingPreview";
 import { YoSpanishAudioButton } from "@/components/yo/YoSpanishAudioButton";
 import { YoLessonDeck } from "@/components/yo/YoLessonDeck";
+import { SpanishRegionalPractice } from "@/components/yo/SpanishRegionalPractice";
 import type { YoLessonDeckScreen } from "@/lib/yo/lessonDeckTypes";
 import { getYoLanguageIntroDeckMeta } from "@/lib/yo/languageIntroDecks";
 
@@ -169,12 +170,12 @@ const DECK_TITLE_COACH = lstr(
 );
 
 const DECK_LABEL_DESTINATIONS = lstr(
-  "Choisis ta destination",
-  "Choose your destination",
+  "Explore les cultures",
+  "Explore the cultures",
 );
 const DECK_TITLE_DESTINATIONS = lstr(
-  "Une fois prêt, choisis un pays",
-  "When you’re ready, pick a country",
+  "Continue ton parcours en espagnol",
+  "Continue your Spanish journey",
 );
 
 const DECK_LABEL_TEACHER = lstr(
@@ -192,8 +193,8 @@ const WORDS_BODY = lstr(
 );
 
 const DESTINATIONS_BODY = lstr(
-  "Chaque pays a son rythme et ses expressions. Commence par celui qui te parle le plus.",
-  "Each country has its own rhythm and expressions. Start with the one that calls to you.",
+  "Un même espagnol relie des voix et des cultures variées. Découvre-les dans des situations concrètes.",
+  "Spanish connects varied voices and cultures. Discover them through practical situations.",
 );
 
 const TEACHER_BODY = lstr(
@@ -387,6 +388,7 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
               </article>
             ))}
           </div>
+          <SpanishRegionalPractice locale={locale} />
         </section>
       ),
     },
@@ -662,3 +664,4 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
     />
   );
 }
+

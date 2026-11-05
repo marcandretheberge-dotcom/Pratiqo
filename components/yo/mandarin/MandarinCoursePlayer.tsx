@@ -1,4 +1,5 @@
 "use client";
+import { AdventureProgress } from "../journey/AdventureProgress";
 import type { JourneyUnit } from "@/lib/yo/learningJourney";
 import { mandarinJourney, canEnterFoundationStep } from "@/lib/yo/foundationJourney";
 import { CourseJourneyGate } from "../journey/CourseJourney";
@@ -223,6 +224,7 @@ export function MandarinCoursePlayer({
             }
           </p>
         )}
+        <AdventureProgress journey={journey} world="mandarin" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} />
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <label className="min-w-0 flex-1">
             <span className="sr-only">

@@ -80,7 +80,7 @@ test("removing an activity deep link in the same lesson returns to study without
   assert.equal(view.getByRole("button", { name: "Découvrir" }).getAttribute("aria-pressed"), "true");
   assert.equal(view.getByRole("button", { name: "Jouer et pratiquer" }).getAttribute("aria-pressed"), "false");
   assert.ok(view.getByText(lesson.goal.fr));
-  click(view.getByRole("button", { name: "3. La langue" }));
+  click(view.getByRole("button", { name: "4. La langue" }));
   assert.ok(view.getByText(lesson.grammar.body.fr));
   assert.equal(view.queryByRole("group", { name: "Expressions italiennes" }), null);
   assert.equal(saved().resume?.lessonId, lesson.id);

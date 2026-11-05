@@ -7,7 +7,7 @@ export function buildCourseJourney(catalog: CourseCatalog, progress: CourseProgr
   return buildLearningJourney(catalog.units, unit => {
     const assessment = catalog.assessments.find(item => item.id === unit.quizId);
     return {
-      passed: Boolean(assessment && (progress.assessments[unit.quizId]?.bestIndependent ?? -1) >= assessment.passPercent),
+      passed: Boolean(assessment && assessment.theme !== "culture" && (progress.assessments[unit.quizId]?.bestIndependent ?? -1) >= assessment.passPercent),
       // Legacy activity stays reachable without becoming a passed checkpoint.
       started: Boolean(progress.resume?.unitId === unit.id || progress.assessments[unit.quizId] ||
         progress.productionsUpdatedAt[unit.productionId] || unit.activityIds.some(id => progress.activities[id])),

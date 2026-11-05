@@ -197,6 +197,7 @@ function buildSteps(locale: YoLocale) {
     {
       id: "situation",
       label: "Situation",
+      companionHint: "Observe la personne avant de parler : est-elle occupée ? Prépare une seule question courte, puis laisse-lui le temps de répondre.",
       content: (
         <LessonCard eyebrow="Situation" title="Tu as une vraie question… et tu bloques." state="confused">
           <p className="text-base font-semibold leading-relaxed text-[#0F6E56]/80">
@@ -209,6 +210,7 @@ function buildSteps(locale: YoLocale) {
     {
       id: "mission",
       label: "Mission",
+      companionHint: "Ta mission est d’ouvrir un échange au travail. Imagine une information dont tu as vraiment besoin, puis essaie une amorce polie à voix haute.",
       content: (
         <LessonCard eyebrow="Mission" title="Trois gestes à automatiser" state="map">
           <div className="grid gap-2">
@@ -240,6 +242,7 @@ function buildSteps(locale: YoLocale) {
     {
       id: "opener-explained",
       label: "Pourquoi",
+      companionHint: "Une amorce prépare l’échange sans raconter toute l’histoire. Par exemple, « Aurais-tu deux minutes ? » permet de vérifier si le moment convient.",
       content: (
         <LessonCard eyebrow="Mini-explication" title="Pourquoi ça fonctionne" state="teacher_ready">
           <p className="text-base font-semibold leading-relaxed text-[#0F6E56]/80">
@@ -424,6 +427,7 @@ function buildSteps(locale: YoLocale) {
     {
       id: "summary",
       label: "Résumé",
+      companionHint: "Rejoue la même situation avec un autre collègue : une amorce, une pause, puis ta question. Change l’information demandée pour ne pas seulement réciter.",
       content: (
         <LessonCard eyebrow="Résumé" title="Ce que tu sais faire maintenant" state="badge_unlocked">
           <div className="grid gap-2">
@@ -507,6 +511,7 @@ export default async function FrenchQuebecLesson3Page({ searchParams }: PageProp
         header,
         steps,
         locale,
+        companion: true,
         stepsAriaLabel: "Leçon 3 interactive YoPratiqo",
         rootBackHref: moduleHref,
         rootBackLabel: "Module 1",
@@ -525,6 +530,7 @@ export default async function FrenchQuebecLesson3Page({ searchParams }: PageProp
                 locale={locale}
                 ariaLabel="Leçon 3 interactive YoPratiqo"
                 variant="embedded"
+                companion
                 rootBackHref={moduleHref}
                 rootBackLabel="Module 1"
               />

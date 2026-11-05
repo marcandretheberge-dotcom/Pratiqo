@@ -148,10 +148,13 @@ export function YoArrivalListeningLesson({ sceneId, locale }: { sceneId: Arrival
     };
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener(PLAYBACK_EVENT, onSibling);
+    const onLessonStop = () => stopPlayback();
+    window.addEventListener("yo-audio-stop", onLessonStop);
     return () => {
       observer?.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener(PLAYBACK_EVENT, onSibling);
+      window.removeEventListener("yo-audio-stop", onLessonStop);
       stopPlayback(false);
       audioRef.current = null;
     };

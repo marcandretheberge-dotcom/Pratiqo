@@ -166,8 +166,8 @@ const regions: SpanishRegion[] = [
       "Guatemala, Honduras, El Salvador, Nicaragua, Costa Rica, Panama",
     ),
     note: lstr(
-      "Petits pays, parlers chaleureux, fortes traditions culturelles.",
-      "Small countries, warm dialects, strong cultural traditions.",
+      "Des usages variés selon les communautés et les situations. Les exemples de cette introduction ne représentent pas tous ces pays.",
+      "Usage varies between communities and situations. This introduction's examples do not represent all these countries.",
     ),
   },
   {
@@ -178,8 +178,8 @@ const regions: SpanishRegion[] = [
       "Cuba, Dominican Republic, Puerto Rico",
     ),
     note: lstr(
-      "Rythme rapide, voyelles musicales et beaucoup d’expressions locales — c’est la zone de départ de la section Voyage de YoPratiqo.",
-      "Fast rhythm, musical vowels, and many local expressions — this is the starting zone for YoPratiqo's Travel section.",
+      "Des communautés et des usages divers. Le parcours dominicain existant explore des situations de voyage en République dominicaine, sans représenter toutes les Caraïbes.",
+      "Diverse communities and usage. The existing Dominican journey explores travel situations in the Dominican Republic, not the whole Caribbean.",
     ),
   },
   {
@@ -222,8 +222,9 @@ const variations: SpanishVariation[] = [
     id: "variation_tu_vos_usted",
     title: lstr("Tú, vos, usted", "Tú, vos, usted"),
     body: lstr(
-      "Certains pays disent « tú », d’autres « vos », d’autres encore préfèrent « usted » par politesse. Tous veulent dire « toi ».",
-      "Some countries say “tú,” others say “vos,” and others prefer “usted” to be polite. All of them mean “you.”",
+      "« Tú », « vos » et « usted » servent à s’adresser à une personne. Leur usage dépend de la région, de la relation et de la situation : un pays n’emploie pas une seule forme.",
+      "“Tú,” “vos” and “usted” address one person. Usage depends on the region, relationship and situation: a country does not use just one form.",
+      "«Tú», «vos» y «usted» se usan para dirigirse a una persona. Su uso depende de la región, la relación y la situación: un país no utiliza una sola forma.",
     ),
     example: "¿Cómo estás? · ¿Cómo está?",
   },
@@ -231,8 +232,9 @@ const variations: SpanishVariation[] = [
     id: "variation_accent",
     title: lstr("L’accent change", "The accent changes"),
     body: lstr(
-      "L’espagnol des Caraïbes sonne rapide et chantant. Celui d’Espagne marque davantage le « s » et le « th ». Celui des Andes est plus lent et clair.",
-      "Caribbean Spanish sounds fast and musical. Spanish from Spain emphasizes the “s” and the “th.” Andean Spanish is slower and clearer.",
+      "Il existe plusieurs accents au sein d’un même pays. Écoute une personne dans une situation précise plutôt que d’attribuer une vitesse ou une clarté à toute une région.",
+      "There are several accents within the same country. Listen to a person in a specific situation rather than assigning a speed or clarity to an entire region.",
+      "Hay varios acentos dentro de un mismo país. Escucha a una persona en una situación concreta en vez de atribuir una velocidad o claridad a toda una región.",
     ),
   },
   {
@@ -248,8 +250,9 @@ const variations: SpanishVariation[] = [
     id: "variation_register",
     title: lstr("La politesse aussi", "Politeness too"),
     body: lstr(
-      "Dans certains pays, on tutoie facilement. Dans d’autres, on garde le « usted » longtemps. Un professeur Pratiqo peut t’expliquer ce qui se fait sur place.",
-      "In some countries, people switch to first names quickly. In others, “usted” stays the norm for a long time. A Pratiqo teacher can explain what's done where you're going.",
+      "Observe comment ton interlocuteur s’adresse à toi. La politesse dépend aussi de la relation et du contexte, pas seulement du pays. Tu peux demander quelle forme utiliser.",
+      "Notice how the other person addresses you. Politeness also depends on the relationship and context, not just the country. You can ask which form to use.",
+      "Observa cómo se dirige a ti la otra persona. La cortesía también depende de la relación y del contexto, no solo del país. Puedes preguntar qué forma usar.",
     ),
   },
 ];
@@ -395,8 +398,8 @@ const quizQuestions: YoQuizQuestion[] = [
       {
         id: "a",
         label: lstr(
-          "Chaque pays a son accent, son vocabulaire et son histoire propre",
-          "Each country has its own accent, vocabulary, and history",
+          "Les communautés et les situations ont des usages et des histoires différents",
+          "Communities and situations have different usage and histories",
         ),
       },
       {
@@ -416,8 +419,8 @@ const quizQuestions: YoQuizQuestion[] = [
     ],
     correctOptionId: "a",
     explanation: lstr(
-      "C’est bien la même langue partout — les hispanophones se comprennent sans problème. Mais chaque pays apporte son rythme, ses mots et ses expressions.",
-      "It is the same language everywhere — Spanish speakers understand each other fine. But each country brings its own rhythm, words, and expressions.",
+      "Les variétés partagent une langue commune, mais certains mots et usages dépendent du contexte. Demander une reformulation aide quand un mot est nouveau pour toi.",
+      "The varieties share a common language, but some words and usage depend on context. Asking someone to rephrase helps when a word is new to you.",
     ),
   },
 ];

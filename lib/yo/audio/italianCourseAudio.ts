@@ -22,8 +22,8 @@ const recordings: readonly (readonly [string,string])[] = [
     "buongiorno-yoppo-6d64cb8c2518"
   ],
   [
-    "È mattina. Lina entra: «Buongiorno, Yoppo!». Yoppo risponde: «Ciao, Lina!». Lina dice: «Grazie!». Yoppo risponde: «Prego!».",
-    "e-mattina-lina-entra-buongiorno-yoppo-yoppo-risp-cd31235b1681"
+    "È mattina. Lina entra nel bar: «Buongiorno, Yoppo!». «Ciao, Lina!». Yoppo porta il caffè. «Grazie!» dice Lina. «Prego!». Dopo il caffè, Lina si alza: «Arrivederci!».",
+    "e-mattina-lina-entra-nel-bar-buongiorno-yoppo-ci-5ed6515e924d"
   ],
   [
     "Buonasera, Yoppo!",
@@ -78,8 +78,8 @@ const recordings: readonly (readonly [string,string])[] = [
     "caffe-7af55717dc9f"
   ],
   [
-    "Yoppo guarda tre parole: caffè, chiave, bagno. Legge lentamente. Poi dice: «Un gelato, per favore». Lina sorride e ripete: «Gelato!».",
-    "yoppo-guarda-tre-parole-caffe-chiave-bagno-legge-a8a80ed73217"
+    "Al bar, Lina legge il menu: «Un caffè?». Yoppo guarda il gelato: «Un gelato, per favore». Lina ripete: «Un gelato?». «Sì, grazie!». Il caffè è per Lina; il gelato è per Yoppo.",
+    "al-bar-lina-legge-il-menu-un-caffe-yoppo-guarda-4646a06576c7"
   ],
   [
     "Ascolta.",

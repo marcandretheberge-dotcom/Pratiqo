@@ -1,4 +1,5 @@
 "use client";
+import { AdventureProgress } from "../journey/AdventureProgress";
 
 import Link from "next/link";
 import type { JourneyUnit } from "@/lib/yo/learningJourney";
@@ -215,6 +216,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
         </div>
         <div ref={pane} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-8 sm:py-7" data-japanese-stage-pane>
           <div className="mx-auto max-w-3xl pb-24 sm:pb-20">
+            <AdventureProgress journey={journey} world="japanese" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} />
             <div className="mb-5"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-500">{final ? C.final[locale] : C.module[locale] + " " + String(unit.number).padStart(2, "0")} · {unit.title[locale]}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 outline-none sm:text-3xl">{stage.title[locale]}</h1></div>
             {stage.kind === "mission" ? <div className="space-y-5">
               <div className="relative overflow-hidden rounded-3xl bg-[#25285b] p-6 text-white sm:p-8"><div className="pointer-events-none absolute -right-5 -top-8 h-44 w-44 rounded-full border-[28px] border-white/5" aria-hidden /><Compass size={26} className="mb-6 text-[#f2b2a2]" aria-hidden /><p className="max-w-xl text-xl leading-relaxed">{unit.subtitle[locale]}</p><p className="mt-4 text-sm leading-relaxed text-indigo-100">{unit.setting[locale]}</p></div>

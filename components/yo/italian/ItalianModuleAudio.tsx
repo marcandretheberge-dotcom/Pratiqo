@@ -6,6 +6,7 @@ import { buildPublicAudioUrl } from "@/lib/yo/audio/audioUrl";
 import { getItalianBolognaAudioItem } from "@/lib/yo/audio/italianBolognaAudio";
 import type { YoLocale } from "@/lib/yo/types";
 import { useCourseLanguage, useItalianAudioPath } from "./ItalianAudioProvider";
+import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 
 const copy = {
   fr: { play: "Écouter", stop: "Arrêter", slow: "Ralentir", aiVoice: "Voix IA", unavailable: "Cet enregistrement est indisponible. Utilise la transcription.", failed: "La lecture a été interrompue ou n’a pas démarré. Réessaie ou lis la transcription." },
@@ -74,7 +75,7 @@ export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianMod
     const url = bundledGerman || bundledPortuguese ? storagePath : storagePath && buildPublicAudioUrl(storagePath);
     if (!url || typeof window.Audio !== "function") { setError("unavailable"); return; }
 
-    window.dispatchEvent(new Event(ITALIAN_MODULE_AUDIO_STOP_EVENT));
+    stopLessonAudio();
     let audio: HTMLAudioElement;
     try { audio = new window.Audio(url); }
     catch { setError("failed"); return; }
