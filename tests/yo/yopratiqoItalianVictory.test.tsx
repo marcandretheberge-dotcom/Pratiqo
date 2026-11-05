@@ -181,6 +181,48 @@ test("Escape cancellation restores the learner's focus and never advances the co
   assert.equal(serializeCourseProgress(progress), original);
 });
 
+test("Tab wraps both dialog boundaries and ignores disabled, hidden and non-tabbable controls", () => {
+  const view = render(node());
+  evaluated(view, pass());
+  const dialog = view.getByRole("dialog") as HTMLDialogElement;
+  const first = within(dialog).getAllByRole("button", { name: "Continue" })[0];
+  const last = within(dialog).getByRole("button", { name: "Sound effects" });
+  const disabled = document.createElement("button"); disabled.disabled = true;
+  const hiddenParent = document.createElement("div"); hiddenParent.hidden = true;
+  hiddenParent.append(document.createElement("button"));
+  const hidden = document.createElement("button"); hidden.style.visibility = "hidden";
+  const notTabbable = document.createElement("button"); notTabbable.tabIndex = -1;
+  const collapsed = document.createElement("button");
+  dialog.prepend(disabled, hiddenParent);
+  dialog.append(hidden, notTabbable, collapsed);
+  // JSDOM has no layout; only the collapsed target reports no rendered box.
+  for (const element of dialog.querySelectorAll<HTMLElement>("button, a[href]")) {
+    Object.defineProperty(element, "getClientRects", { value: () => element === collapsed ? [] : [{ width: 44, height: 44 }] });
+  }
+  const tab = (target: HTMLElement, shiftKey = false) => {
+    target.focus();
+    assert.equal(document.activeElement, target);
+    const event = new dom.window.KeyboardEvent("keydown", { key: "Tab", shiftKey, bubbles: true, cancelable: true });
+    fireEvent(target, event);
+    return event;
+  };
+  assert.equal(tab(last).defaultPrevented, true);
+  assert.equal(document.activeElement, first);
+  assert.equal(tab(first, true).defaultPrevented, true);
+  assert.equal(document.activeElement, last);
+  // Model the native dialog's own focusability, which JSDOM does not implement.
+  dialog.tabIndex = -1;
+  assert.equal(tab(dialog, true).defaultPrevented, true);
+  assert.equal(document.activeElement, last);
+  assert.equal(tab(dialog).defaultPrevented, true);
+  assert.equal(document.activeElement, first);
+  const middle = within(dialog).getByRole("button", { name: adventureCopy.en.replay });
+  assert.equal(tab(middle).defaultPrevented, false, "ordinary movement within the dialog stays native");
+  const escape = new dom.window.KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+  fireEvent(middle, escape);
+  assert.equal(escape.defaultPrevented, false, "Escape is still handled by native dialog cancellation");
+});
+
 test("reduced motion has a visible resting destination and ordinary maps never play the victory", () => {
   const view = render(<AdventureScenery world="italian" state="mastered" />);
   assert.equal(view.container.querySelector("[data-victory-scene]"), null);
@@ -224,6 +266,26 @@ test("the original victory cue is bounded and still uses the interruptible share
   assert.notDeepEqual(adventureScore.recap, adventureScore.checkpoint);
 });
 
+test("sound status belongs to the current replay while a suspended context resumes", async () => {
+  localStorage.setItem(EFFECTS_KEY, "false");
+  const view = render(node());
+  await act(async () => { announceAdventureEvaluation(); view.rerender(node(pass())); });
+  const state = () => view.container.querySelector("[data-effect-state]")?.getAttribute("data-effect-state");
+  assert.equal(state(), "played");
+  contexts.at(-1)!.state = "suspended";
+  let resume!: () => void;
+  resumeWait = new Promise<void>(resolve => { resume = resolve; });
+  try {
+    const dialog = view.getByRole("dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: adventureCopy.en.replay }));
+    assert.equal(state(), "idle", "the previous replay's success cannot describe a pending replay");
+    await act(async () => { resume(); await resumeWait; });
+    assert.equal(state(), "played");
+    fireEvent.click(within(dialog).getAllByRole("button", { name: "Continue" })[0]);
+    assert.equal(state(), "idle");
+  } finally { resume(); resumeWait = undefined; }
+});
+
 test("sound can be muted inside the victory; replay and hiding stop all scheduled notes", async () => {
   localStorage.setItem(EFFECTS_KEY, "false");
   const view = render(node());
@@ -234,6 +296,7 @@ test("sound can be muted inside the victory; replay and hiding stop all schedule
   assert.equal(played.length, italianVictoryScore.length);
   await act(async () => fireEvent.click(within(dialog).getByRole("button", { name: "Sound effects" })));
   assert.equal(localStorage.getItem(EFFECTS_KEY), "true");
+  assert.equal(view.container.querySelector("[data-effect-state]")?.getAttribute("data-effect-state"), "idle");
   assert.ok(played.every(voice => voice.stops.includes(-1)));
   start = voices.length;
   await act(async () => fireEvent.click(within(dialog).getByRole("button", { name: adventureCopy.en.replay })));

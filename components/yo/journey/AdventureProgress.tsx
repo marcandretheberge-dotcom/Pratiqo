@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { Flag, RotateCcw, Trophy, Volume2, X } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
@@ -17,6 +17,22 @@ import styles, { adventureCss } from "./adventureStyles";
 
 export { EFFECTS_KEY } from "@/lib/yo/adventureSound";
 const button = "inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2";
+
+function keepDialogFocus(event: KeyboardEvent<HTMLDialogElement>) {
+  if (event.key !== "Tab" || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+  const panel = event.currentTarget;
+  const controls = Array.from(panel.querySelectorAll<HTMLElement>("a[href], button, input, select, textarea, [tabindex]")).filter(element => {
+    const style = window.getComputedStyle(element);
+    return element.tabIndex >= 0 && !element.matches(":disabled, [aria-disabled='true']") && !element.closest("[hidden], [inert], [aria-hidden='true']")
+      && style.display !== "none" && style.visibility !== "hidden" && style.visibility !== "collapse" && element.getClientRects().length > 0;
+  });
+  const first = controls[0], last = controls.at(-1), focused = document.activeElement;
+  if (!first || !last) { event.preventDefault(); panel.focus(); return; }
+  if (event.shiftKey ? focused === first || focused === panel : focused === last || focused === panel) {
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  }
+}
 
 export function CourseAdventure({ catalog, progress, locale, ready, href }: {
   catalog: CourseCatalog; progress: CourseProgress; locale: YoLocale; ready: boolean; href: string;
@@ -39,8 +55,7 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
   const [evaluation, setEvaluation] = useState(0);
   const [queue, setQueue] = useState<AdventureMilestone[]>([]);
   const [effects, setEffects] = useState(false);
-  const [soundError, setSoundError] = useState(false);
-  const [soundPlayed, setSoundPlayed] = useState(false);
+  const [soundResult, setSoundResult] = useState<{ key: string; state: "played" | "unavailable" } | null>(null);
   const [replay, setReplay] = useState(0);
   const seen = useRef(new Set<string>());
   const visible = queue[0];
@@ -49,6 +64,9 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
   const pilotNextId = pilotNext?.unlocked ? pilotNext.unit.id : undefined;
   const destination = visible?.kind === "mastery" && visible.unitId === "u01" && pilotNextId ? pilotNext : undefined;
   const victory = Boolean(destination);
+  const soundKey = `${world}:${visible?.id ?? "settings"}:${replay}:${victory}`;
+  const soundState = effects && soundResult?.key === soundKey ? soundResult.state : "idle";
+  const soundError = soundState === "unavailable";
   const dialog = useRef<HTMLDialogElement>(null);
   const showing = Boolean(visible);
   const latest = useRef(earned);
@@ -89,13 +107,11 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
   }, [fingerprint, ready, world, evaluation, pilotNextId]);
 
   useEffect(() => {
-    setSoundPlayed(false);
-    setSoundError(false);
     if (!visible || !effectsRef.current) return;
     let mounted = true;
-    void playAdventureSound(visible.kind, victory ? "italian-u01" : undefined).then(ok => { if (mounted && effectsRef.current) { setSoundError(!ok); setSoundPlayed(ok); } });
+    void playAdventureSound(visible.kind, victory ? "italian-u01" : undefined).then(ok => { if (mounted && effectsRef.current) setSoundResult({ key: soundKey, state: ok ? "played" : "unavailable" }); });
     return () => { mounted = false; stopAdventureSound(); };
-  }, [visible, replay, victory]);
+  }, [visible, victory, soundKey]);
 
   useEffect(() => {
     if (!showing) return;
@@ -115,8 +131,8 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
     if (visible) dialog.current?.querySelector<HTMLButtonElement>("button")?.focus();
   }, [visible, replay]);
 
-  function dismiss() { stopAdventureSound(); setQueue(items => items.slice(1)); setSoundError(false); }
-  function dismissAll() { stopAdventureSound(); setQueue([]); setSoundError(false); }
+  function dismiss() { stopAdventureSound(); setQueue(items => items.slice(1)); setSoundResult(null); }
+  function dismissAll() { stopAdventureSound(); setQueue([]); setSoundResult(null); }
   function repeat(item: AdventureMilestone) {
     // Prime a suspended context directly from the replay gesture; it still obeys the saved mute preference.
     if (effectsRef.current) void prepareAdventureSound();
@@ -124,13 +140,13 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
   }
   async function toggleEffects(enabled: boolean) {
     effectsRef.current = enabled;
-    setEffects(enabled); setSoundError(false);
+    setEffects(enabled); setSoundResult(null);
     try { localStorage.setItem(EFFECTS_KEY, String(!enabled)); } catch { /* Session-only preference is safe. */ }
     if (!enabled) stopAdventureSound();
-    else { const available = await prepareAdventureSound(); if (effectsRef.current) setSoundError(!available); }
+    else { const available = await prepareAdventureSound(); if (effectsRef.current && !available) setSoundResult({ key: soundKey, state: "unavailable" }); }
   }
   const trophies = earned.filter(item => item.kind !== "unlock");
-  return <div className="my-4 min-w-0" data-adventure-world={world} data-effect-state={soundError ? "unavailable" : soundPlayed ? "played" : "idle"}>
+  return <div className="my-4 min-w-0" data-adventure-world={world} data-effect-state={soundState}>
     <style>{adventureCss}</style>
     <div className="flex flex-wrap items-start justify-between gap-3 border-y border-emerald-100 py-2">
       <details className="min-w-0 flex-1">
@@ -144,7 +160,7 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
       </details>
       <label className="flex min-h-11 shrink-0 cursor-pointer items-center gap-2 text-sm text-gray-700"><Volume2 size={16} aria-hidden /><span>{c.effects}</span><input type="checkbox" checked={effects} onChange={event => void toggleEffects(event.target.checked)} className="size-4 accent-emerald-800" /></label>
     </div>
-    <dialog ref={dialog} aria-label={visible ? victory ? c.victory : c.kinds[visible.kind] : c.milestones} onCancel={event => { event.preventDefault(); dismissAll(); }} className="fixed m-auto max-h-[85dvh] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto overscroll-contain rounded-lg border border-emerald-200 bg-white p-4 text-gray-900 shadow-xl backdrop:bg-black/35 sm:p-6" data-yoppo-controls>
+    <dialog ref={dialog} aria-label={visible ? victory ? c.victory : c.kinds[visible.kind] : c.milestones} onKeyDown={keepDialogFocus} onCancel={event => { event.preventDefault(); dismissAll(); }} className="fixed m-auto max-h-[85dvh] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto overscroll-contain rounded-lg border border-emerald-200 bg-white p-4 text-gray-900 shadow-xl backdrop:bg-black/35 sm:p-6" data-yoppo-controls>
     {visible ? <section key={`${visible.id}-${replay}`} aria-label={victory ? c.victory : c.kinds[visible.kind]} className={styles.celebration} data-celebration={visible.kind} data-celebration-scene={victory ? "italian-u01" : undefined}>
       <div className="flex items-start gap-3">
         <CompanionAvatar visualId="travel" state={visible.kind === "unlock" ? "map" : "celebrating"} locale={locale} size="sm" compact />
