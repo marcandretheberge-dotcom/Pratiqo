@@ -43,8 +43,22 @@ All Italian speech reuses the existing exact recordings. The complete speech reg
 
 ## Verification
 
-Local checks completed during implementation: new content and midpoint rules, rendered mission interactions, existing Italian player and progress regressions, existing adventure regressions, exact audio-registry coverage, and successful compilation of the real unit route.
+The complete checkout passed [review run 42112153509](https://github.com/marcandretheberge-dotcom/Pratiqo/actions/runs/42112153509) at `debd6c537aeae8958ccb155c34da673209d3a15e`:
 
-Full repository TypeScript, the shared language regressions, browser walkthrough and production preview verification are pending in this draft. Browser evidence will record the exact tested revision and any fixture limitations before this change is marked ready for review.
+- Full repository TypeScript.
+- **46 new pilot checks**: 8 content, 6 midpoint rules, 5 rendered midpoint integration, 11 mission-player, and 16 victory/audio/accessibility checks.
+- Existing continuity suite (63 checks), Italian course suite, shared journey suite, German and Portuguese regressions, and launch-critical regressions.
+- The browser walkthrough performs ten real practice submissions, a five-question recap, an assisted 80% mission, an independent retry, victory replay/skip, reload and real navigation to unit two. It does not inject progress.
+- Native keyboard Tab containment, sound opt-in, reduced-motion static state, and layouts at 320, 390 and 1280 pixels all pass, with no uncaught page errors.
+
+The first browser run exposed a Tab boundary that could leave the native dialog. The application now explicitly wraps Tab and Shift+Tab between visible, enabled controls; the unchanged browser assertion passed on the corrected revision. The sound result is also keyed to the current scene/replay so an old cue cannot describe a new pending replay. Targeted ESLint has no errors and introduces no new warnings; existing hook warnings remain outside this change's corrective scope.
+
+[Browser evidence artifact](https://github.com/marcandretheberge-dotcom/Pratiqo/actions/runs/42112153509/artifacts/13453593183) contains the walkthrough report and screenshots (seven-day retention). The isolated browser harness runs the real route/component sources and CSS with an Arial font fallback. Native HTMLAudio uses a deterministic WAV response for repeatable playback checks; the original WebAudio victory cue is exercised directly. Separate audio-registry tests confirm that every spoken Italian string has its existing exact recording path.
+
+The deployed Vercel preview was also exercised through all five mission scenes using the real recorded listening clip. It displayed the independent result and victory, entered unit two, restored progress silently on reload, and kept eight successive Tab presses inside the corrected dialog. The Vercel preview build succeeded.
+
+Temporary browser/workflow scaffolding is removed in the final review commit. All 23 application, configuration and test files are retained byte-for-byte from the successful tested revision; only these notes and removal of the temporary scaffolding follow that run.
+
+Run the focused regressions locally with `npm run test:yo-italian-pilot`.
 
 The review branch is stacked on `fix/yopratiqo-learning-continuity-20261105`. Production is not part of this review step.
