@@ -1,4 +1,4 @@
-/** Rendered interaction checks for the floating Italian companion. */
+/** Rendered interaction checks for floating and reserved inline Italian help. */
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -251,6 +251,87 @@ test("the lesson remains interactive and position controls do not require draggi
   assert.ok(point(view).x < before.x && point(view).y < before.y);
   fireEvent.click(view.getByRole("button", { name: "Replacer Yoppo" }));
   assert.deepEqual(point(view), before);
+});
+
+for (const locale of ["fr", "en", "es"] as const) {
+  test(`${locale}: inline help keeps progressive reveal, recorded audio and lesson callbacks`, () => {
+    const actions: string[] = [];
+    let listens = 0;
+    const view = render(node({ locale, presentation: "inline", onAction: action => actions.push(action), canRetry: true, reviewCount: 3, completedCount: 2, totalCount: 16,
+      exampleAudio: React.createElement("button", { onClick: () => listens++ }, "Recorded example") }));
+    fireEvent.click(view.getByRole("button", { name: labels[locale].open }));
+    const panel = view.getByRole("region", { name: labels[locale].title });
+    assert.ok(view.container.contains(panel), "help must reserve space inside the course layout");
+    assert.equal(document.activeElement, within(panel).getByRole("heading"));
+    assert.equal(view.queryByText(props.hint[locale]), null);
+    assert.equal((view.getByRole("button", { name: labels[locale].explain }) as HTMLButtonElement).disabled, true);
+    fireEvent.click(view.getByRole("button", { name: labels[locale].hint }));
+    assert.ok(view.getByText(props.hint[locale]));
+    fireEvent.click(view.getByRole("button", { name: labels[locale].hint2 }));
+    assert.ok(view.getByText(props.hint2![locale]));
+    fireEvent.click(view.getByRole("button", { name: labels[locale].explain }));
+    assert.ok(view.getByText(props.explanation[locale]));
+    assert.equal(view.queryByRole("button", { name: "Recorded example" }), null);
+    fireEvent.click(view.getByRole("button", { name: labels[locale].example }));
+    fireEvent.click(view.getByRole("button", { name: "Recorded example" }));
+    assert.equal(listens, 1);
+    assert.deepEqual(actions, ["hint", "hint", "explain", "explain"]);
+    const progress = view.getByRole("progressbar") as HTMLProgressElement;
+    const retry = { fr: "Je réessaie", en: "Try again", es: "Lo intento de nuevo" }[locale];
+    const review = { fr: "Mes révisions (3)", en: "My review (3)", es: "Mis repasos (3)" }[locale];
+    fireEvent.click(view.getByRole("button", { name: retry }));
+    assert.equal(progress.value, 2, "help actions must not award mastery");
+    fireEvent.click(view.getByRole("button", { name: review }));
+    assert.equal(view.queryByRole("region"), null);
+    fireEvent.click(view.getByRole("button", { name: labels[locale].open }));
+    const challenge = { fr: /Défie-moi/, en: /Challenge me/, es: /Ponme a prueba/ }[locale];
+    fireEvent.click(view.getByRole("button", { name: challenge }));
+    assert.deepEqual(actions.slice(-3), ["retry", "review", "challenge"]);
+    assert.equal(view.queryByRole("region"), null);
+  });
+}
+
+test("inline help stays in normal flow on mobile and leaves lesson controls interactive", () => {
+  viewport(320, 568);
+  window.localStorage.setItem(key, JSON.stringify({ version: 1, x: 900, y: 650, hidden: false }));
+  let lessonClicks = 0;
+  const lesson = React.createElement("button", { onClick: () => lessonClicks++ }, "Lesson action");
+  const view = render(React.createElement(React.Fragment, null, node({ presentation: "inline" }), lesson));
+  const opener = view.getByRole("button", { name: labels.fr.open });
+  fireEvent.click(opener);
+  const panel = view.getByRole("region");
+  assert.ok(view.container.contains(opener) && view.container.contains(panel));
+  assert.equal(view.container.querySelector(".fixed"), null, "no avatar, panel or restore control may cover lesson content");
+  assert.equal(panel.style.left, "");
+  assert.equal(panel.style.top, "");
+  assert.equal(panel.style.transform, "");
+  assert.equal(view.getByTestId("italian-yoppo-position").style.left, "");
+  assert.equal(view.queryByText("Déplacer Yoppo", { selector: "summary" }), null);
+  const arrow = new dom.window.KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true, cancelable: true });
+  fireEvent(opener, arrow);
+  assert.equal(arrow.defaultPrevented, false, "inline controls must leave normal keyboard scrolling available");
+  fireEvent.click(view.getByRole("button", { name: "Lesson action" }));
+  assert.equal(lessonClicks, 1);
+  fireEvent.keyDown(panel, { key: "Escape" });
+  assert.equal(document.activeElement, opener);
+  assert.equal(view.queryByRole("region"), null);
+});
+
+test("inline hide and restore preserve preferences and accessible focus in the reserved slot", () => {
+  let view = render(node({ presentation: "inline" }));
+  fireEvent.click(view.getByRole("button", { name: labels.fr.open }));
+  fireEvent.click(view.getByRole("button", { name: "Masquer Yoppo" }));
+  assert.equal(document.activeElement, view.getByRole("button", { name: "Retrouver Yoppo" }));
+  assert.equal(JSON.parse(window.localStorage.getItem(key)!).hidden, true);
+  view.unmount();
+  view = render(node({ presentation: "inline" }));
+  const restore = view.getByRole("button", { name: "Retrouver Yoppo" });
+  assert.ok(view.container.contains(restore));
+  assert.equal(restore.style.top, "");
+  assert.equal(restore.classList.contains("fixed"), false);
+  fireEvent.click(restore);
+  assert.equal(document.activeElement, view.getByRole("heading", { name: labels.fr.title }));
+  assert.equal(JSON.parse(window.localStorage.getItem(key)!).hidden, false);
 });
 
 let failed = 0;

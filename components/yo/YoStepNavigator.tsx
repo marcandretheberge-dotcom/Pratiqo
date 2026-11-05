@@ -71,7 +71,6 @@ import {
   useId,
   useMemo,
   useRef,
-  useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
@@ -86,6 +85,7 @@ import {
 import type { YoLocale } from "@/lib/yo/types";
 import { DeckYoppoCoach } from "@/components/yo/companion/DeckYoppoCoach";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
+import { useYoLessonDraftState } from "@/components/yo/YoLessonDraftProvider";
 
 export type YoStepNavigatorStep = {
   /** Stable per-route slug, e.g. "welcome" / "languages-main" / "languages-secondary". */
@@ -182,7 +182,7 @@ export function YoStepNavigator({
     return initialIndex;
   }, [initialIndex, total]);
 
-  const [currentIndex, setCurrentIndex] = useState(safeInitial);
+  const [currentIndex, setCurrentIndex] = useYoLessonDraftState("navigator:index", safeInitial);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const activeStepRef = useRef<HTMLDivElement | null>(null);
   const pointerStart = useRef<
@@ -200,16 +200,16 @@ export function YoStepNavigator({
 
   const goPrev = useCallback(() => {
     setCurrentIndex((i) => Math.max(0, i - 1));
-  }, []);
+  }, [setCurrentIndex]);
   const goNext = useCallback(() => {
     setCurrentIndex((i) => Math.min(total - 1, i + 1));
-  }, [total]);
+  }, [setCurrentIndex, total]);
   const goTo = useCallback(
     (idx: number) => {
       if (idx < 0 || idx >= total) return;
       setCurrentIndex(idx);
     },
-    [total],
+    [setCurrentIndex, total],
   );
 
   // Keyboard arrow navigation. Doesn't hijack typing in form fields.
