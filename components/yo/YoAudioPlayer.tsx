@@ -39,6 +39,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Volume2, Loader2, VolumeX } from "lucide-react";
 import { buildPublicAudioUrl } from "@/lib/yo/audio/audioUrl";
 import { cn } from "@/lib/utils";
+import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 
 export interface YoAudioPlayerProps {
   /**
@@ -78,6 +79,8 @@ export function YoAudioPlayer({
 }: YoAudioPlayerProps) {
   const [state, setState] = useState<PlaybackState>("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const root = useRef<HTMLButtonElement | null>(null);
+  const requested = useRef(false);
   const attempt = useRef(0);
   const bufferTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -88,7 +91,7 @@ export function YoAudioPlayer({
 
   // Lazily construct the underlying Audio element so SSR is not
   // affected by `new Audio(...)` (which references DOM globals).
-  // `preload="metadata"` is set explicitly per the Phase 1 contract.
+  // Hidden lesson screens must not prefetch every recording.
   useEffect(() => {
     if (!audioUrl) return;
     if (typeof window === "undefined") return;
@@ -100,18 +103,25 @@ export function YoAudioPlayer({
 
     setState("idle");
     const clearBuffer = () => { if (bufferTimer.current) clearTimeout(bufferTimer.current); };
-    const stop = () => { attempt.current++; clearBuffer(); try { el.pause(); el.currentTime = 0; } catch { /* Media may not have loaded yet. */ } setState("idle"); };
-    const onPlay = () => { clearBuffer(); setState("playing"); };
+    const stop = () => { requested.current = false; attempt.current++; clearBuffer(); try { el.pause(); el.currentTime = 0; } catch { /* Media may not have loaded yet. */ } setState("idle"); };
+    const onPlay = () => { if (!requested.current) { el.pause(); return; } clearBuffer(); setState("playing"); };
     const onPause = () => { clearBuffer(); setState(s => s === "error" ? s : "idle"); };
-    const onEnded = () => { clearBuffer(); setState("idle"); };
-    const onError = () => { clearBuffer(); setState("error"); };
+    const onEnded = () => { requested.current = false; clearBuffer(); setState("idle"); };
+    const onError = () => { if (!requested.current) return; stop(); setState("error"); };
     const onWaiting = () => {
+      if (!requested.current) return;
       clearBuffer(); setState("loading");
       bufferTimer.current = setTimeout(() => { stop(); setState("error"); }, 15000);
     };
     const onVisibility = () => { if (document.visibilityState !== "visible") stop(); };
     window.addEventListener("yo-audio-stop", stop);
     document.addEventListener("visibilitychange", onVisibility);
+    const observer = typeof MutationObserver === "undefined" ? null : new MutationObserver(() => {
+      if (root.current?.closest("[hidden], [inert], [aria-hidden='true']")) stop();
+    });
+    for (let ancestor: Element | null = root.current; ancestor; ancestor = ancestor.parentElement) {
+      observer?.observe(ancestor, { attributes: true, attributeFilter: ["hidden", "inert", "aria-hidden"] });
+    }
 
     el.addEventListener("playing", onPlay);
     el.addEventListener("loadstart", onWaiting);
@@ -122,6 +132,8 @@ export function YoAudioPlayer({
 
     return () => {
       attempt.current++;
+      requested.current = false;
+      observer?.disconnect();
       clearBuffer();
       window.removeEventListener("yo-audio-stop", stop);
       document.removeEventListener("visibilitychange", onVisibility);
@@ -151,6 +163,7 @@ export function YoAudioPlayer({
       if (!el || !audioUrl) return;
 
       if (state === "playing" || state === "loading") {
+        requested.current = false;
         attempt.current++;
         if (bufferTimer.current) clearTimeout(bufferTimer.current);
         try {
@@ -163,11 +176,13 @@ export function YoAudioPlayer({
         return;
       }
 
-      window.dispatchEvent(new Event("yo-audio-stop"));
+      stopLessonAudio();
+      requested.current = true;
       const currentAttempt = ++attempt.current;
       const failed = () => {
         if (currentAttempt !== attempt.current || audioRef.current !== el) return;
         if (bufferTimer.current) clearTimeout(bufferTimer.current);
+        requested.current = false;
         setState("error");
       };
       if (state === "error") el.load();
@@ -178,11 +193,7 @@ export function YoAudioPlayer({
     [audioUrl, state],
   );
 
-  // SSR / no-URL / error: render an inert, low-emphasis placeholder so
-  // the layout stays stable. Surfaced as `aria-hidden` for non-error
-  // cases (we don't want screen readers to announce a play button that
-  // would never work) and as a labelled, disabled button for the
-  // explicit error case so users get feedback if the MP3 404s.
+  // No URL means no working control; a failed recording remains retryable.
   if (!audioUrl) {
     return (
       <span
@@ -203,6 +214,7 @@ export function YoAudioPlayer({
   if (state === "error") {
     return (
       <button
+        ref={root}
         type="button"
         onClick={handleClick}
         aria-label={`${computedAriaLabel} (retry audio)`}
@@ -220,6 +232,7 @@ export function YoAudioPlayer({
 
   return (
     <button
+      ref={root}
       type="button"
       onClick={handleClick}
       aria-label={

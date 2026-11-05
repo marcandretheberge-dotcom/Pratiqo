@@ -58,6 +58,7 @@ import { YoQuizPreview } from "@/components/yo/YoQuizPreview";
 import { YoReadingPreview } from "@/components/yo/YoReadingPreview";
 import { YoSpanishAudioButton } from "@/components/yo/YoSpanishAudioButton";
 import { YoLessonDeck } from "@/components/yo/YoLessonDeck";
+import { SpanishRegionalPractice } from "@/components/yo/SpanishRegionalPractice";
 import type { YoLessonDeckScreen } from "@/lib/yo/lessonDeckTypes";
 import { getYoLanguageIntroDeckMeta } from "@/lib/yo/languageIntroDecks";
 
@@ -387,6 +388,7 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
               </article>
             ))}
           </div>
+          <SpanishRegionalPractice locale={locale} />
         </section>
       ),
     },

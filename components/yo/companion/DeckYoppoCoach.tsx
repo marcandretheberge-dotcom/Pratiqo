@@ -5,6 +5,7 @@ import type { YoLocale } from "@/lib/yo/types";
 import type { YoLessonDeckScreen } from "@/lib/yo/lessonDeckTypes";
 import { YoppoLearningCompanion } from "./YoppoLearningCompanion";
 import { yoppoTrivia } from "@/lib/yo/companion/trivia";
+import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 
 const L = (fr: string, en: string, es: string) => ({ fr, en, es });
 const hints = {
@@ -35,17 +36,12 @@ function QuickTrivia({ locale, questionKey, onComplete }: { locale: YoLocale; qu
   </section>;
 }
 
-function stopLessonAudio() {
-  for (const event of ["yo-audio-stop", "yo-italian-audio-stop", "yo-japanese-audio-stop", "yo-speech-cancel"]) window.dispatchEvent(new Event(event));
-  window.speechSynthesis?.cancel();
-}
-
-export function DeckYoppoCoach({ locale, screen }: { locale: YoLocale; screen: YoLessonDeckScreen }) {
+export function DeckYoppoCoach({ locale, screen, dock = "inline" }: { locale: YoLocale; screen: Pick<YoLessonDeckScreen, "kind" | "title"> & Partial<YoLessonDeckScreen>; dock?: "inline" | "reserved" }) {
   // Strategy hints reveal no checked answers, so they do not alter assessment scoring.
   const hint = hints[screen.kind === "quiz" ? "practice" : screen.kind === "completion" ? "summary" : screen.kind];
-  return <YoppoLearningCompanion locale={locale} dock="inline"
+  return <YoppoLearningCompanion locale={locale} dock={dock}
     lesson={L(screen.title, screen.title, screen.title)}
-    help={<p>{hint[locale]}</p>} onHelp={() => {}} onStopAudio={stopLessonAudio} onTrivia={() => {}}
+    help={<div className="space-y-3"><p>{hint[locale]}</p>{screen.kind !== "quiz" && screen.helperText ? <p>{screen.helperText}</p> : null}</div>} onHelp={() => {}} onStopAudio={stopLessonAudio} onTrivia={() => {}}
     games={[{ id: "quick-trivia", label: L("Quiz découverte", "Discovery quiz", "Quiz de descubrimientos") }]}
     renderGame={({ questionKey, onComplete }) => <QuickTrivia key={questionKey} locale={locale} questionKey={questionKey} onComplete={onComplete} />}
   />;

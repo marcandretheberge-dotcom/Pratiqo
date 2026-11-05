@@ -84,6 +84,8 @@ import {
   type YoLessonDeckChromeLabels,
 } from "@/lib/yo/lessonDeckTypes";
 import type { YoLocale } from "@/lib/yo/types";
+import { DeckYoppoCoach } from "@/components/yo/companion/DeckYoppoCoach";
+import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 
 export type YoStepNavigatorStep = {
   /** Stable per-route slug, e.g. "welcome" / "languages-main" / "languages-secondary". */
@@ -92,6 +94,8 @@ export type YoStepNavigatorStep = {
   label?: string;
   /** The step's content. Wrapped by the navigator in a host element. */
   content: React.ReactNode;
+  /** Optional strategy only; never include an assessment answer. */
+  companionHint?: string;
 };
 
 export type YoStepNavigatorVariant = "standalone" | "embedded";
@@ -135,6 +139,7 @@ export type YoStepNavigatorProps = {
   /** Optional label override for the last-step Next link. */
   lastStepNextLabel?: string;
   className?: string;
+  companion?: boolean;
 };
 
 // Re-use the deck gesture thresholds so the swipe feel is the same
@@ -163,6 +168,7 @@ export function YoStepNavigator({
   lastStepNextHref,
   lastStepNextLabel,
   className,
+  companion = false,
 }: YoStepNavigatorProps): React.JSX.Element {
   const total = steps.length;
   if (total === 0) {
@@ -209,6 +215,7 @@ export function YoStepNavigator({
   // Keyboard arrow navigation. Doesn't hijack typing in form fields.
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
+      if (event.defaultPrevented || document.querySelector("dialog[open]")) return;
       const target = event.target as HTMLElement | null;
       if (target) {
         const tag = target.tagName?.toLowerCase();
@@ -216,7 +223,7 @@ export function YoStepNavigator({
           tag === "input" ||
           tag === "textarea" ||
           tag === "select" ||
-          target.isContentEditable
+          target.isContentEditable || target.closest("[data-yoppo-controls]")
         ) {
           return;
         }
@@ -238,6 +245,7 @@ export function YoStepNavigator({
   // prefers-reduced-motion.
   useEffect(() => {
     const node = activeStepRef.current;
+    stopLessonAudio();
     if (!node) return;
     const prefersReducedMotion =
       typeof window !== "undefined" &&
@@ -382,6 +390,7 @@ export function YoStepNavigator({
         })}
       </div>
 
+      {companion ? <DeckYoppoCoach locale={locale} screen={{ kind: "practice", title: steps[currentIndex].label ?? ariaLabel ?? labels.progressAnnouncement(currentIndex + 1, total), helperText: steps[currentIndex].companionHint }} /> : null}
       {/* Bottom chrome — explicit Back / dots / Next. */}
       <nav
         data-testid="yo-step-navigator-nav"

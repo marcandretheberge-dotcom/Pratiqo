@@ -64,6 +64,7 @@ import { YoBreadcrumb } from "@/components/yo/YoBreadcrumb";
 import { YoLegalDisclaimer } from "@/components/yo/YoLegalDisclaimer";
 import { YoFrenchAudioButton } from "@/components/yo/YoFrenchAudioButton";
 import { YoLocaleSwitcher } from "@/components/yo/YoLocaleSwitcher";
+import { DeckYoppoCoach } from "@/components/yo/companion/DeckYoppoCoach";
 import type { FrQuebecModuleLesson } from "@/lib/yo/frQuebecWorkplaceSurvivalModule";
 
 /**
@@ -2290,6 +2291,7 @@ export function YoPremiumModuleShell(props: YoPremiumModuleShellProps) {
           <YoLegalDisclaimer locale={locale} />
         </section>
       </main>
+      <DeckYoppoCoach locale={locale} dock="reserved" screen={{ kind: "dialogue", title: t(lstr(props.titleFr, props.titleEn, props.titleEs), locale), helperText: t(lstr("Au travail, repère d’abord l’action demandée : mettre, prendre, apporter. Rejoue ensuite la consigne avec tu puis vous. Une demande comme « Pouvez-vous répéter ? » permet de continuer l’échange.", "At work, first identify the requested action: mettre, prendre, apporter. Then say the instruction with tu and with vous. A request such as ‘Pouvez-vous répéter ?’ keeps the exchange going.", "En el trabajo, identifica primero la acción: mettre, prendre, apporter. Repite la instrucción con tu y con vous. Una petición como « Pouvez-vous répéter ? » permite continuar el intercambio."), locale) }} />
     </div>
   );
 }

@@ -29,6 +29,7 @@ import type { YoLocale, YoLocalizedString } from "@/lib/yo/types";
 import { t } from "@/lib/yo/localize";
 import { YO_COPY } from "@/lib/yo/copy";
 import { cn } from "@/lib/utils";
+import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 
 export interface YoPronunciationButtonProps {
   /** Spanish target text to be pronounced. */
@@ -94,11 +95,14 @@ export function YoPronunciationButton({
       voicesRef.current = synth.getVoices();
     };
     const stop = () => { synth.cancel(); setIsPlaying(false); };
+    const visibility = () => { if (document.visibilityState !== "visible") stop(); };
     window.addEventListener("yo-speech-cancel", stop);
+    document.addEventListener("visibilitychange", visibility);
     updateVoices();
     synth.addEventListener?.("voiceschanged", updateVoices);
     return () => {
       window.removeEventListener("yo-speech-cancel", stop);
+      document.removeEventListener("visibilitychange", visibility);
       synth.removeEventListener?.("voiceschanged", updateVoices);
       // Cancel any in-flight utterance on unmount to avoid a ghost voice
       // continuing after the learner navigates away.
@@ -136,6 +140,7 @@ export function YoPronunciationButton({
         /* ignore */
       }
 
+      stopLessonAudio();
       const utterance = new window.SpeechSynthesisUtterance(text);
       utterance.lang = speechLang;
       utterance.rate = 0.95;

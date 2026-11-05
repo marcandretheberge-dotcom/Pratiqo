@@ -184,9 +184,9 @@ const COMPANION_HEADING = lstr(
   "Yoppo · tu compañero",
 );
 const COMPANION_HINT = lstr(
-  "Yoppo suit ton voyage à travers les pays hispanophones.",
-  "Yoppo follows your trip through Spanish-speaking countries.",
-  "Yoppo sigue tu viaje por los países hispanohablantes.",
+  "Yoppo t’accompagne : bases communes, pratique, puis immersion culturelle.",
+  "Yoppo is by your side: common foundations, practice, then cultural immersion.",
+  "Yoppo te acompaña: bases comunes, práctica e inmersión cultural.",
 );
 
 function localizedHref(base: string, locale: YoLocale): string {

@@ -1,4 +1,12 @@
 {
+  "followUp": {
+    "checkedAtUtc": "2026-11-05T02:38:19.966Z",
+    "scope": "Current intro, Bologna and foundation manifest paths, deduplicated by storage path",
+    "publicReadOnly": { "referencedUnique": 905, "existingVerified": 877, "missingBologna": 26, "newReadingPaths": 2 },
+    "isolatedLocalRepair": { "generated": 28, "uploaded": 28, "verified": 28, "failed": 0, "model": "gpt-4o-mini-tts", "voice": "alloy", "publicWrites": 0 },
+    "browserDecoding": { "method": "Web Audio decodeAudioData of every local MP3", "decoded": 905, "failed": 0, "roundedTotalSeconds": 2662 },
+    "limits": "Local preview only. Human pronunciation review and approved public publication remain required. Historical counts below are not a claim that production has been repaired."
+  },
   "baseCommit": "d8a6eaa03086b519f46256067cc4fe0f9c93877f",
   "checkedAtUtc": "2026-11-05T02:08:53.014157+00:00",
   "method": "Public GET, response status and MIME; bodies discarded. One failure body confirmed Object not found / NoSuchKey. No perceptual or browser-playback review.",

@@ -87,6 +87,7 @@ export type YoMobileAppStepShellProps = {
   surfaceId: string;
   /** Extra wrapper class — never replaces the no-scroll contract. */
   className?: string;
+  companion?: boolean;
 };
 
 export function YoMobileAppStepShell({
@@ -102,6 +103,7 @@ export function YoMobileAppStepShell({
   background,
   surfaceId,
   className,
+  companion,
 }: YoMobileAppStepShellProps): React.JSX.Element {
   return (
     <div
@@ -121,6 +123,7 @@ export function YoMobileAppStepShell({
           locale={locale}
           ariaLabel={stepsAriaLabel}
           steps={steps}
+          companion={companion}
           variant="standalone"
           rootBackHref={rootBackHref}
           rootBackLabel={rootBackLabel}
