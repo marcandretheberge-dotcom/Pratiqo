@@ -16,7 +16,7 @@
  *           missing (tests, local dev without .env);
  *       (b) the MP3 returns 404 — the requested item has not been
  *           generated yet by `scripts/generate-yopratiqo-audio.ts`;
- *       (c) the browser cannot decode the asset — disabled, a11y label
+ *       (c) the browser cannot decode the asset — retry available, a11y label
  *           updated, parent UI keeps rendering.
  *
  * Security contract:
@@ -32,8 +32,7 @@
  *   - Pressing again while playing acts as a stop (matches the existing
  *     `YoPronunciationButton` behaviour so the two surfaces feel
  *     identical to learners).
- *   - `preload="metadata"` keeps initial network use small while still
- *     showing duration / readiness in screen-reader output.
+ *   - `preload="none"` avoids loading every hidden lesson recording.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -79,6 +78,8 @@ export function YoAudioPlayer({
 }: YoAudioPlayerProps) {
   const [state, setState] = useState<PlaybackState>("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const attempt = useRef(0);
+  const bufferTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const audioUrl = useMemo(
     () => buildPublicAudioUrl(storagePath, { bucket, version }),
@@ -93,24 +94,39 @@ export function YoAudioPlayer({
     if (typeof window === "undefined") return;
 
     const el = new window.Audio(audioUrl);
-    el.preload = "metadata";
+    el.preload = "none";
     el.crossOrigin = "anonymous";
     audioRef.current = el;
 
-    const onPlay = () => setState("playing");
-    const onPause = () => setState((s) => (s === "playing" ? "idle" : s));
-    const onEnded = () => setState("idle");
-    const onError = () => setState("error");
-    const onWaiting = () => setState("loading");
+    setState("idle");
+    const clearBuffer = () => { if (bufferTimer.current) clearTimeout(bufferTimer.current); };
+    const stop = () => { attempt.current++; clearBuffer(); try { el.pause(); el.currentTime = 0; } catch { /* Media may not have loaded yet. */ } setState("idle"); };
+    const onPlay = () => { clearBuffer(); setState("playing"); };
+    const onPause = () => { clearBuffer(); setState(s => s === "error" ? s : "idle"); };
+    const onEnded = () => { clearBuffer(); setState("idle"); };
+    const onError = () => { clearBuffer(); setState("error"); };
+    const onWaiting = () => {
+      clearBuffer(); setState("loading");
+      bufferTimer.current = setTimeout(() => { stop(); setState("error"); }, 15000);
+    };
+    const onVisibility = () => { if (document.visibilityState !== "visible") stop(); };
+    window.addEventListener("yo-audio-stop", stop);
+    document.addEventListener("visibilitychange", onVisibility);
 
-    el.addEventListener("play", onPlay);
+    el.addEventListener("playing", onPlay);
+    el.addEventListener("loadstart", onWaiting);
     el.addEventListener("pause", onPause);
     el.addEventListener("ended", onEnded);
     el.addEventListener("error", onError);
     el.addEventListener("waiting", onWaiting);
 
     return () => {
-      el.removeEventListener("play", onPlay);
+      attempt.current++;
+      clearBuffer();
+      window.removeEventListener("yo-audio-stop", stop);
+      document.removeEventListener("visibilitychange", onVisibility);
+      el.removeEventListener("playing", onPlay);
+      el.removeEventListener("loadstart", onWaiting);
       el.removeEventListener("pause", onPause);
       el.removeEventListener("ended", onEnded);
       el.removeEventListener("error", onError);
@@ -134,7 +150,9 @@ export function YoAudioPlayer({
       const el = audioRef.current;
       if (!el || !audioUrl) return;
 
-      if (state === "playing") {
+      if (state === "playing" || state === "loading") {
+        attempt.current++;
+        if (bufferTimer.current) clearTimeout(bufferTimer.current);
         try {
           el.pause();
           el.currentTime = 0;
@@ -145,11 +163,17 @@ export function YoAudioPlayer({
         return;
       }
 
+      window.dispatchEvent(new Event("yo-audio-stop"));
+      const currentAttempt = ++attempt.current;
+      const failed = () => {
+        if (currentAttempt !== attempt.current || audioRef.current !== el) return;
+        if (bufferTimer.current) clearTimeout(bufferTimer.current);
+        setState("error");
+      };
+      if (state === "error") el.load();
       setState("loading");
-      const playPromise = el.play();
-      if (playPromise && typeof playPromise.then === "function") {
-        playPromise.catch(() => setState("error"));
-      }
+      bufferTimer.current = setTimeout(() => { if (currentAttempt === attempt.current) { el.pause(); failed(); } }, 15000);
+      try { void el.play()?.catch(failed); } catch { failed(); }
     },
     [audioUrl, state],
   );
@@ -180,8 +204,8 @@ export function YoAudioPlayer({
     return (
       <button
         type="button"
-        disabled
-        aria-label={`${computedAriaLabel} (audio unavailable)`}
+        onClick={handleClick}
+        aria-label={`${computedAriaLabel} (retry audio)`}
         className={cn(
           "inline-flex shrink-0 items-center justify-center rounded-full bg-white text-[#9CA3AF] ring-1 ring-[#E5E7EB]",
           size === "xs" ? "size-6 p-1" : "size-8 p-1.5",
@@ -224,3 +248,4 @@ export function YoAudioPlayer({
     </button>
   );
 }
+

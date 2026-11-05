@@ -89,9 +89,9 @@ export async function generateMetadata({
 
 const PAGE_TITLE = lstr("Espagnol", "Spanish", "Español");
 const PAGE_SUBTITLE = lstr(
-  "Une langue, plusieurs musiques. Commence par l’intro globale, puis choisis un pays.",
-  "One language, many musics. Start with the global intro, then pick a country.",
-  "Un idioma, muchas músicas. Empieza por la intro global y elige un país.",
+  "Une langue, plusieurs voix. Apprends l’espagnol et découvre ses cultures au fil des modules.",
+  "One language, many voices. Learn Spanish and explore its cultures throughout the modules.",
+  "Un idioma, muchas voces. Aprende español y descubre sus culturas a lo largo de los módulos.",
 );
 
 const BACK_LABEL = lstr("Langues", "Languages", "Idiomas");
@@ -103,9 +103,9 @@ const INTRO_CARD_TITLE = lstr(
   "El español en el mundo",
 );
 const INTRO_CARD_BODY = lstr(
-  "Une intro courte et culturelle pour comprendre l’espagnol mondial avant de choisir un pays.",
-  "A short cultural intro to understand world Spanish before picking a country.",
-  "Una intro corta y cultural para entender el español mundial antes de elegir un país.",
+  "Une introduction aux bases communes de l’espagnol, à ses voix et à ses cultures.",
+  "An introduction to shared Spanish foundations, its voices and its cultures.",
+  "Una introducción a las bases compartidas del español, sus voces y sus culturas.",
 );
 const INTRO_CARD_CTA = lstr(
   "Commencer l’intro gratuite",
@@ -119,9 +119,9 @@ const INTRO_CARD_HINT = lstr(
 );
 
 const RD_CARD_EYEBROW = lstr(
-  "Parcours complet · A1 → A2",
-  "Complete course · A1 → A2",
-  "Ruta completa · A1 → A2",
+  "Immersion culturelle · 5 modules",
+  "Cultural immersion · 5 modules",
+  "Inmersión cultural · 5 módulos",
 );
 const RD_CARD_TITLE = lstr(
   "République dominicaine — voyage et culture",
@@ -150,14 +150,14 @@ const RD_FLAG_ARIA = lstr(
 );
 
 const COMING_SOON_EYEBROW = lstr(
-  "Autres pays hispanophones",
-  "Other Spanish-speaking countries",
-  "Otros países hispanohablantes",
+  "Des cultures au fil du parcours",
+  "Cultures throughout the journey",
+  "Culturas a lo largo del recorrido",
 );
 const COMING_SOON_BODY = lstr(
-  "Mexique, Espagne, Argentine, Pérou et plus arrivent quand chaque pays est prêt à enseigner sérieusement.",
-  "Mexico, Spain, Argentina, Peru and more land when each country is ready to teach seriously.",
-  "México, España, Argentina, Perú y más llegan cuando cada país esté listo para enseñar en serio.",
+  "Les prochaines étapes relieront les situations du quotidien aux cultures du Mexique, de l’Espagne, du Río de la Plata et des Andes.",
+  "Upcoming stages will connect everyday situations with cultures in Mexico, Spain, the Río de la Plata and the Andes.",
+  "Las próximas etapas conectarán situaciones cotidianas con culturas de México, España, el Río de la Plata y los Andes.",
 );
 
 const PROMISE_EYEBROW = lstr(
@@ -173,9 +173,9 @@ const PROMISE_BODY = lstr(
 
 const WHATS_NEXT_EYEBROW = lstr("La suite", "What's next", "Lo que sigue");
 const WHATS_NEXT_BODY = lstr(
-  "La République dominicaine est le parcours espagnol complet A1 → A2. Les autres pays (Mexique, Espagne, Argentine, Pérou) arrivent quand ils seront prêts à enseigner sérieusement.",
-  "Dominican Republic is the complete A1 → A2 Spanish path. Other countries (Mexico, Spain, Argentina, Peru) land when they're ready to teach seriously.",
-  "República Dominicana es la ruta completa A1 → A2 en español. Otros países (México, España, Argentina, Perú) llegan cuando estén listos para enseñar en serio.",
+  "Continue avec l’immersion dominicaine disponible. Elle deviendra une étape culturelle d’un parcours d’espagnol plus large : les nouvelles étapes sont en préparation.",
+  "Continue with the available Dominican immersion. It will become a cultural stop within a broader Spanish journey; the new stages are in preparation.",
+  "Continúa con la inmersión dominicana disponible. Será una etapa cultural de un recorrido de español más amplio; las nuevas etapas están en preparación.",
 );
 
 const COMPANION_HEADING = lstr(
@@ -662,3 +662,4 @@ export default async function YoSpanishLandingPage({
     </div>
   );
 }
+

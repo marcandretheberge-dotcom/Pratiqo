@@ -93,9 +93,12 @@ export function YoPronunciationButton({
     const updateVoices = () => {
       voicesRef.current = synth.getVoices();
     };
+    const stop = () => { synth.cancel(); setIsPlaying(false); };
+    window.addEventListener("yo-speech-cancel", stop);
     updateVoices();
     synth.addEventListener?.("voiceschanged", updateVoices);
     return () => {
+      window.removeEventListener("yo-speech-cancel", stop);
       synth.removeEventListener?.("voiceschanged", updateVoices);
       // Cancel any in-flight utterance on unmount to avoid a ghost voice
       // continuing after the learner navigates away.
@@ -195,3 +198,4 @@ export function YoPronunciationButton({
     </button>
   );
 }
+
