@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowRight, BookOpen, Check, HelpCircle, LockKeyhole, MapPin, Stamp, Volume2, VolumeX, X } from "lucide-react";
+import { ArrowRight, BookOpen, Check, HelpCircle, LockKeyhole, MapPin, Stamp, X } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { YoLocale } from "@/lib/yo/types";
 import type { CourseCatalog, CourseUnit } from "@/lib/yo/italian/course/courseTypes";
@@ -11,7 +11,8 @@ import { italianCourseHref } from "@/lib/yo/italian/course/courseLinks";
 import { getDueActivityIds } from "@/lib/yo/italian/course/courseProgress";
 import { buildCourseJourney } from "@/lib/yo/courseJourney";
 import { getYoPratiqoModuleBySlug } from "@/lib/yo/yopratiqoProductConfig";
-import { EFFECTS_KEY, listenForAdventureInterruptions, playAdventureSound, prepareAdventureSound, stopAdventureSound } from "@/lib/yo/adventureSound";
+import { listenForAdventureInterruptions } from "@/lib/yo/adventureSound";
+import { FeedbackSettings, useLearningFeedback } from "../../feedback/LearningFeedback";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { GUIDED_KEY, TOUR_KEY, emptyGame, initialGuided, parseGuided, guidedSteps, guidedPassed, guidedPoints, lessonDone, nextGuidedStep, type GuidedState, type GameDraft } from "@/lib/yo/italian/course/guidedItalian";
 import { useItalianCourseProgress } from "../course/useItalianCourseProgress";
@@ -43,7 +44,8 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   const [loaded, setLoaded] = useState(false), [storageAvailable, setStorageAvailable] = useState(true);
   const [overlay, setOverlay] = useState<"notebook" | "tools" | null>(null), [tour, setTour] = useState<number | null>(null);
   const [notebookMeanings, setNotebookMeanings] = useState(true);
-  const [effects, setEffects] = useState(false), [translation, setTranslation] = useState(false), [hint, setHint] = useState(false);
+  const feedback = useLearningFeedback();
+  const [translation, setTranslation] = useState(false), [hint, setHint] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null), primaryAction = useRef<HTMLButtonElement>(null);
   const routeRequest = useRef("");
   const step = steps[ui.step], lesson = unit.lessons[step.lesson], exercise = step.activity;
@@ -112,7 +114,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
       const previous = progress.assessments[unit.quiz.id];
       if (!previous || previous.last.completedAt < s.runStartedAt) recordAssessment(unit.quiz.id, correct, answers.length, assisted);
       commit({ ...s, view: "result", resumeView: null, answers, submitted: true, game: emptyGame() });
-      if (effects && !assisted && correct / answers.length * 100 >= unit.quiz.passPercent) void playAdventureSound("unlock");
+      if (!assisted && correct / answers.length * 100 >= unit.quiz.passPercent) feedback.emit(`stamp:${unit.id}:${s.runStartedAt}`, "stamp");
     } else commit({ ...s, quizIndex: s.quizIndex + 1, answers, game: emptyGame() });
     focus();
   }
@@ -123,11 +125,6 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     if (ui.view === "mission" && exercise && !ui.game.complete) updateGame({ ...current.current.game, assisted: true });
     setOverlay("notebook");
   }
-  function toggleEffects() {
-    const enabled = !effects; setEffects(enabled);
-    try { localStorage.setItem(EFFECTS_KEY, String(!enabled)); } catch { /* Session preference. */ }
-    if (enabled) void prepareAdventureSound(); else stopAdventureSound();
-  }
   useEffect(() => listenForAdventureInterruptions(), []);
   useEffect(() => {
     if (!ready || loadedReset.current === progress.resetAt) return;
@@ -136,7 +133,6 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     let nextState = initialGuided(progress.resetAt);
     try {
       nextState = parseGuided(localStorage.getItem(uiKey), unit, progress.resetAt, Object.keys(visualWords));
-      setEffects(localStorage.getItem(EFFECTS_KEY) === "false");
       setTour(localStorage.getItem(TOUR_KEY) === "seen" ? null : 0);
     } catch { setStorageAvailable(false); setTour(0); }
     // Opening the course always returns to its map; the action resumes the exact unfinished draft.
@@ -210,7 +206,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
             <button type="button" className={`${primary} mt-7 w-full`} onClick={advance}>{c.next}<ArrowRight size={18} aria-hidden /></button>
           </> : <>
             {exercise.id === lesson.readingActivityId ? <div className="mb-6 rounded-2xl bg-emerald-50 p-4"><p lang="it" className="text-base leading-7">{lesson.reading.it}</p></div> : null}
-            <GuidedGame key={exercise.id} activity={exercise} locale={locale} value={ui.game} onChange={updateGame} onAttempt={(correct, assisted) => { recordActivity(exercise.id, correct, assisted); if (correct && effects) void playAdventureSound("correct"); }} onContinue={advance} />
+            <GuidedGame key={exercise.id} activity={exercise} locale={locale} value={ui.game} onChange={updateGame} onAttempt={(correct, assisted) => { recordActivity(exercise.id, correct, assisted); }} onContinue={advance} />
             {!ui.game.complete ? <><button type="button" className={`${secondary} mt-3`} onClick={() => { setHint(true); updateGame({ ...current.current.game, assisted: true }); }}>{c.hint}</button>{hint ? <aside className="mt-2 rounded-2xl bg-emerald-50 p-4"><p className="text-sm leading-6">{exercise.hint[locale]}</p><p className="mt-2 text-xs">{c.hintUsed}</p></aside> : null}</> : null}
           </>}
         </div>
@@ -222,7 +218,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     <Dialog.Root open={overlay !== null} onOpenChange={open => { if (!open) { stopLessonAudio(); setOverlay(null); } }}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-stone-950/40" /><Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85dvh] w-[calc(100%_-_2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl bg-[#fbf9f3] p-5 shadow-xl sm:p-7" aria-describedby={undefined}><div className="flex items-start justify-between gap-4"><Dialog.Title className="text-xl font-bold text-emerald-950">{overlay === "notebook" ? c.notebook : c.tools}</Dialog.Title><Dialog.Close className={secondary} aria-label={c.close}><X size={21} aria-hidden /></Dialog.Close></div>
       {overlay === "notebook" ? <><p className="my-4 text-sm leading-6">{wordBank ? say("Toute la banque du module, disponible dès le début. Ouvre-la librement pendant la pratique.","The whole module bank, available from the beginning. Use it freely during practice.","Todo el banco del módulo, disponible desde el principio. Úsalo durante la práctica.") : c.learnedWords}</p>{wordBank ? <Link href={bankHref} target="_blank" rel="noopener" className={`${secondary} underline`}>{say("Imprimer la banque complète","Print the complete bank","Imprimir el banco completo")}</Link> : null}<button type="button" className={secondary} aria-pressed={notebookMeanings} onClick={() => setNotebookMeanings(!notebookMeanings)}>{notebookMeanings ? {fr:"Masquer les traductions",en:"Hide translations",es:"Ocultar traducciones"}[locale] : c.translation}</button>{!notebookWords.length ? <p className="py-6 text-sm">{c.emptyNotebook}</p> : notebookWords.map(p => <div key={p.it} className="border-b border-stone-200 py-4"><p lang="it" className="font-bold">{p.it}</p>{notebookMeanings ? <p className="my-2 text-sm">{p.meaning[locale]}</p> : null}<LearningAudio text={p.it} locale={locale} /></div>)}</> : <div className="mt-5 space-y-6">
         {onConfigure ? <section><h3 className="font-bold">{say("Mon départ et mon rythme","My starting point and pace","Mi inicio y mi ritmo")}</h3><p className="mt-2 text-sm">{rhythm ? `${rhythm.sessions} × ${rhythm.minutes} min / ${say("semaine","week","semana")}` : say("À mon rythme","At my pace","A mi ritmo")}</p><button type="button" className={`${secondary} mt-2`} onClick={()=>{stopLessonAudio();setOverlay(null);onConfigure();}}>{say("Ajuster avec Yoppo","Adjust with Yoppo","Ajustar con Yoppo")}</button>{profile?.reviewUnitIds.map(id=><Link className={`${secondary} block underline`} key={id} href={italianCourseHref(locale,id)}>{say("Réviser : ","Review: ","Repasar: ")}{catalog.units.find(u=>u.id===id)?.title[locale]}</Link>)}</section> : null}
-        <button type="button" className={secondary} aria-pressed={effects} onClick={toggleEffects}>{effects ? <Volume2 size={19} aria-hidden /> : <VolumeX size={19} aria-hidden />}{c.sounds} · {effects ? "ON" : "OFF"}</button>
+        <FeedbackSettings locale={locale}/>
         <section><h3 className="font-bold">{c.stamp}</h3><p className="mt-2 text-sm leading-6">{c.stampRule}</p><p className="mt-2 text-sm leading-6">{c.pointsRule}</p></section>
         <section><h3 className="font-bold">{c.pass}</h3><p className="mt-2 text-sm leading-6">{c.passBody}</p></section>
         <section><h3 className="font-bold">{c.match}</h3><p className="mt-2 text-sm leading-6">{c.matchBody}</p><Link href={`${teacherUrl}${locale !== "fr" ? `&lang=${locale}` : ""}`} className={`${secondary} mt-2 underline`}>{c.teacher}<ArrowRight size={16} aria-hidden /></Link></section>

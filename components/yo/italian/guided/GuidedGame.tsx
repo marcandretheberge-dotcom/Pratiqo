@@ -6,6 +6,7 @@ import { scrambleItalianItems } from "@/lib/yo/italian/italianModuleLogic";
 import { checkGuided, expectedGuided, listeningText, tokenPool, type GameDraft } from "@/lib/yo/italian/course/guidedItalian";
 import { LearningAudio } from "../../personalized/LearningAudio";
 import { SpatialExercise } from "../../personalized/SpatialExercise";
+import { useAnswerFeedback, YoppoAnswerReaction } from "../../feedback/LearningFeedback";
 import { guidedCopy, primary, secondary } from "./copy";
 
 export function GuidedGame({ activity, locale, value, onChange, onAttempt, onContinue, assessment = false, continueLabel }: {
@@ -13,6 +14,7 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
   onChange: (next: GameDraft) => void; onAttempt: (correct: boolean, assisted: boolean) => void;
   onContinue: () => void; assessment?: boolean; continueLabel?: string;
 }) {
+  const response = useAnswerFeedback();
   const c = guidedCopy[locale], current = useRef(value);
   useLayoutEffect(() => { current.current = value; }, [value]);
   const audio = listeningText(activity), pool = tokenPool(activity);
@@ -21,7 +23,7 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
   const feedback = value.feedback;
   const ready = (!audio || value.heard || value.transcript) && (options ? Boolean(value.selected) : pool.length ? value.tiles.length > 0 : activity.kind === "cafe" ? Object.values(value.basket ?? {}).some(n=>n>0) : activity.kind === "map" ? Boolean(value.path?.length) : false);
   const finished = value.complete;
-  function edit(patch: Partial<GameDraft>) { const next = { ...current.current, ...patch }; current.current = next; onChange(next); }
+  function edit(patch: Partial<GameDraft>) { if (patch.feedback === false || patch.feedback === null) response.clear(); const next = { ...current.current, ...patch }; current.current = next; onChange(next); }
   function report(correct: boolean, complete: boolean) {
     const previous = current.current;
     if (previous.complete || previous.feedback === true) return;
@@ -33,8 +35,9 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
     if (!ready || current.current.complete || current.current.feedback === true) return;
     const correct = checkGuided(activity, current.current);
     const complete = assessment || (correct && (activity.kind !== "dialogue" || current.current.turn === activity.turns.length - 1));
-    if (activity.kind === "dialogue" && correct && !complete) { edit({ feedback: true }); return; }
+    if (activity.kind === "dialogue" && correct && !complete) { edit({ feedback: true }); response.correct(`${activity.id}:turn:${current.current.turn}`); return; }
     report(correct, complete);
+    if (correct) response.correct(`${activity.id}:turn:${current.current.turn}`);
   }
   function pair(id: string) {
     const g = current.current;
@@ -43,6 +46,7 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
       const pairs = [...g.pairs, id];
       if (pairs.length === activity.pairs.length) { edit({ pairs, left: null }); report(true, true); }
       else edit({ pairs, left: null, feedback: null });
+      response.correct(`${activity.id}:pair:${id}`);
     } else { edit({ feedback: false, assisted: true }); onAttempt(false, g.assisted); }
   }
   const optionStyle = "min-h-14 w-full rounded-2xl border-2 px-4 py-4 text-left text-base font-medium focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60";
@@ -55,6 +59,7 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
     {pool.length ? <><div role="group" aria-label={c.sentence} className="flex min-h-28 flex-wrap content-start gap-2 rounded-2xl border-2 border-dashed border-stone-300 p-4">{!value.tiles.length ? <p className="text-sm text-stone-600">{c.tap}</p> : value.tiles.map((id, i) => <button key={id} lang="it" type="button" disabled={finished} aria-label={`${c.remove} ${pool[id]}`} className="min-h-11 rounded-xl border border-emerald-300 bg-emerald-50 px-3 font-semibold" onClick={() => edit({ tiles: current.current.tiles.filter((_, position) => position !== i), feedback: null })}>{pool[id]}</button>)}</div><div className="mt-5 flex flex-wrap gap-2" role="group" aria-label={c.words}>{scrambleItalianItems(pool.map((text, id) => ({ text, id })), activity.id).map(token => <button key={token.id} lang="it" type="button" disabled={finished || value.tiles.includes(token.id)} className="min-h-12 rounded-xl border-2 border-b-4 border-stone-200 bg-white px-4 font-semibold disabled:opacity-25 focus-visible:outline-2" onClick={() => { if (!current.current.tiles.includes(token.id)) edit({ tiles: [...current.current.tiles, token.id], feedback: null }); }}>{token.text}</button>)}</div></> : null}
     {activity.kind === "match" ? <><p className="mb-4 text-sm">{c.pair}</p><div className="grid grid-cols-2 gap-3"><div className="grid gap-3">{activity.pairs.map(item => <button key={item.id} type="button" lang="it" aria-pressed={value.left === item.id} disabled={value.pairs.includes(item.id)} className={`${optionStyle} ${value.left === item.id ? "border-emerald-700 bg-emerald-50" : "border-stone-200 bg-white"}`} onClick={() => edit({ left: item.id, feedback: null })}>{value.pairs.includes(item.id) ? "✓ " : ""}{item.it}</button>)}</div><div className="grid gap-3">{scrambleItalianItems(activity.pairs, activity.id).map(item => <button key={item.id} type="button" disabled={!value.left || value.pairs.includes(item.id)} className={`${optionStyle} border-stone-200 bg-white`} onClick={() => pair(item.id)}>{value.pairs.includes(item.id) ? "✓ " : ""}{item.meaning[locale]}</button>)}</div></div></> : null}
     <SpatialExercise activity={activity} value={value} onChange={edit} locale={locale}/>
+    <YoppoAnswerReaction revision={response.reaction} locale={locale}/>
     {feedback !== null ? <div role="status" className={`mt-6 rounded-2xl p-4 ${feedback ? "bg-emerald-50 text-emerald-950" : "bg-amber-50 text-amber-950"}`}><p className="font-bold">{feedback ? c.correct : activity.kind === "match" ? c.pairWrong : c.wrong}</p>{activity.kind !== "match" ? <p className="mt-2 text-sm leading-6">{options?.find(o => o.id === value.selected)?.feedback[locale] ?? activity.explanation[locale]}</p> : null}{assessment && !feedback ? <p lang="it" className="mt-2 font-semibold">{expectedGuided(activity)}</p> : null}</div> : null}
     <div className="mt-8 border-t border-stone-200 pt-5">
       {finished ? <button type="button" className={`${primary} w-full`} onClick={onContinue}>{continueLabel ?? c.next}</button> : feedback === true && turn ? <button type="button" className={`${primary} w-full`} onClick={() => edit({ turn: current.current.turn + 1, selected: null, feedback: null })}>{c.dialogue}</button> : activity.kind !== "match" ? <button type="button" className={`${primary} w-full`} disabled={!ready} onClick={check}>{c.check}</button> : null}

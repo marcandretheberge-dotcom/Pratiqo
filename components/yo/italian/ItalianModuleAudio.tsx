@@ -8,6 +8,8 @@ import type { YoLocale } from "@/lib/yo/types";
 import { useCourseLanguage, useItalianAudioPath } from "./ItalianAudioProvider";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 
+import { beginLessonAudio } from "@/lib/yo/audio/lessonAudioActivity";
+
 const copy = {
   fr: { play: "Écouter", stop: "Arrêter", slow: "Ralentir", aiVoice: "Voix IA", unavailable: "Cet enregistrement est indisponible. Utilise la transcription.", failed: "La lecture a été interrompue ou n’a pas démarré. Réessaie ou lis la transcription." },
   en: { play: "Listen", stop: "Stop", slow: "Slow down", aiVoice: "AI voice", unavailable: "This recording is unavailable. Use the transcript.", failed: "Playback was interrupted or did not start. Try again or use the transcript." },
@@ -86,7 +88,9 @@ export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianMod
     let heard = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let observer: MutationObserver | undefined;
+    const releaseAudio = beginLessonAudio();
     const active: AudioSession = { audio, dispose: () => {
+      releaseAudio();
       clearTimeout(timer);
       observer?.disconnect();
       audio.removeEventListener("playing", onPlaying);
@@ -146,4 +150,3 @@ export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianMod
     {error ? <span role="status" className="basis-full text-xs text-amber-900">{copy[locale][error]}</span> : null}
   </span>;
 }
-
