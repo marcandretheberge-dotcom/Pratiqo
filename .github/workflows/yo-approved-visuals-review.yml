@@ -1,0 +1,21 @@
+name: Yo approved visuals review
+on:
+  push:
+    branches: [feat/yo-approved-visuals-20261107]
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Exact tracked source snapshot
+        run: git archive --format=tar HEAD | gzip > /tmp/yo-approved-visuals-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yo-approved-visuals-source
+          path: /tmp/yo-approved-visuals-source.tar.gz
+          retention-days: 1
