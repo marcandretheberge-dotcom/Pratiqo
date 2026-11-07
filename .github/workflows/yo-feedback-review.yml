@@ -4,17 +4,76 @@ on:
     branches: [feat/yo-feedback-bois-doux-20261107]
 permissions:
   contents: read
+concurrency:
+  group: yo-feedback-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  snapshot:
+  review:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      YO_QA_DIR: /tmp/yo-feedback-qa
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - run: git archive --format=tar HEAD | gzip > /tmp/yo-feedback-source.tar.gz
-      - uses: actions/upload-artifact@v4
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
         with:
-          name: yo-feedback-source
-          path: /tmp/yo-feedback-source.tar.gz
-          retention-days: 1
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Exact locally reviewed sources, types and lint
+        run: |
+          set -euo pipefail
+          sha256sum -c tests/yo/feedback-source.sha256
+          npx tsc --noEmit
+          npx eslint components/yo/feedback lib/yo/feedback lib/yo/audio/lessonAudioActivity.ts components/yo/personalized/{ItalianLearningEntry,ItalianOnboarding,LearningAudio,VisualVocabulary}.tsx components/yo/italian/guided/{GuidedGame,GuidedItalianCourse}.tsx
+      - name: Feedback and previous course regressions
+        run: |
+          set -euo pipefail
+          node --import tsx tests/yo/yopratiqoFeedback.test.tsx
+          node --import tsx tests/yo/yopratiqoGuidedItalian.test.ts
+          node --import tsx tests/yo/yopratiqoGuidedItalianPlayer.test.tsx
+          node --import tsx tests/yo/yopratiqoPersonalizedItalian.test.ts
+          node --import tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx
+          npm run test:yo-continuity
+          npm run test:yo-italian-pilot
+          npm run test:launch-critical
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Full course and feedback in a real browser
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
+        run: |
+          set -euo pipefail
+          node --import tsx scripts/prepare_yo_personalized_review.ts
+          ./node_modules/.bin/next dev .qa-guided --webpack -p 3129 > "$YO_QA_DIR/server.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail 'http://127.0.0.1:3129/yo/langues/italien/parcours?lang=en' >/dev/null; then break; fi
+            sleep 2
+          done
+          python tests/yo/yopratiqoFeedback.browser.py 2>&1 | tee "$YO_QA_DIR/feedback.log"
+          python tests/yo/yopratiqoPersonalizedItalian.browser.py 2>&1 | tee "$YO_QA_DIR/course.log"
+      - name: Record source evidence
+        if: always()
+        run: |
+          mkdir -p "$YO_QA_DIR"
+          git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
+          git ls-files -s components/yo/feedback lib/yo/feedback lib/yo/audio/lessonAudioActivity.ts components/yo/italian/ItalianModuleAudio.tsx components/yo/italian/guided components/yo/personalized > "$YO_QA_DIR/source-hashes.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-feedback-review
+          path: /tmp/yo-feedback-qa
+          retention-days: 7

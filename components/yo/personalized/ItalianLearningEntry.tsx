@@ -6,8 +6,10 @@ import { GUIDED_PROGRESS_KEY, parseProfile, profileKey, type LearningProfile } f
 import { ITALIAN_COURSE_PROGRESS_KEY, parseCourseProgress, serializeCourseProgress } from "@/lib/yo/italian/course/courseProgress";
 import { italianCourseHref } from "@/lib/yo/italian/course/courseLinks";
 import { t } from "@/lib/yo/italian/course/courseAuthoring";
+import { LearningFeedbackProvider } from "../feedback/LearningFeedback";
 type Props=ComponentProps<typeof GuidedItalianCourse>&{checks:PlacementCheck[];placementAudio:Record<string,string>;entryHome?:boolean};
-export function ItalianLearningEntry({checks,placementAudio,entryHome=false,...course}:Props){
+export function ItalianLearningEntry(props:Props){return <LearningFeedbackProvider><ItalianLearningEntryBody {...props}/></LearningFeedbackProvider>;}
+function ItalianLearningEntryBody({checks,placementAudio,entryHome=false,...course}:Props){
  const [ready,setReady]=useState(false),[profile,setProfile]=useState<LearningProfile|null>(null),[editing,setEditing]=useState(false),[saved,setSaved]=useState(true);
  useEffect(()=>{const f=requestAnimationFrame(()=>{let p:LearningProfile|null=null;try{
   p=parseProfile(localStorage.getItem(profileKey("it")),"it",course.catalog.units.map(u=>u.id));
