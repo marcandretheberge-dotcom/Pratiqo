@@ -1,4 +1,4 @@
-"""Read-only public preview check. No account, fixture, payment or security-policy changes."""
+"""Read-only public preview check. No account, audio fixture or security-policy changes."""
 import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -10,7 +10,16 @@ with sync_playwright() as pw:
  try:
   response=page.goto(os.environ['YO_PREVIEW_URL']+'?lang=fr',timeout=60000);assert response and response.status==200
   onb=page.locator('[data-yoppo-onboarding]');onb.wait_for(timeout=60000)
-  for label in ['Je pars de zéro','Voyager','Continuer','Commencer ici']:onb.get_by_role('button',name=label,exact=True).click()
+  # Exercise the real privacy choice; do not force clicks through overlays or enable analytics.
+  banner=page.get_by_test_id('cookie-consent-banner');banner.wait_for()
+  banner.get_by_role('button',name='Necessary only',exact=True).click()
+  banner.wait_for(state='hidden')
+  def dismiss_install():
+   later=page.get_by_role('button',name='Not now',exact=True)
+   if later.count() and later.is_visible():later.click()
+  dismiss_install()
+  for label in ['Je pars de zéro','Voyager','Continuer','Commencer ici']:
+   dismiss_install();onb.get_by_role('button',name=label,exact=True).click()
   shell=page.locator('[data-guided-italian]');shell.wait_for();shell.get_by_role('button',name='Passer la visite',exact=True).click()
   page.screenshot(path=str(root/'deployed-map-fr.png'),full_page=True)
   shell.get_by_role('button',name='Commencer ma mission',exact=True).click();shell.get_by_role('button',name='Construire mon vocabulaire',exact=True).click()
@@ -18,7 +27,7 @@ with sync_playwright() as pw:
   assert shell.get_by_role('group',name='Quatre images',exact=True).locator('button').count()==4
   page.screenshot(path=str(root/'deployed-vocabulary-fr.png'),full_page=True)
   assert not errors,errors
-  print('Deployed French preview: HTTP 200, onboarding and visual preparation work; an existing real recorded clip reached playing. No fixture or CSP bypass.',flush=True)
+  print('Deployed French preview: HTTP 200, necessary-only consent, onboarding and visual preparation work; an existing real recorded clip reached playing. No audio fixture or CSP bypass.',flush=True)
  except Exception:
   page.screenshot(path=str(root/'preview-failure.png'),full_page=True)
   (root/'preview-failure.txt').write_text(page.locator('body').inner_text());raise
