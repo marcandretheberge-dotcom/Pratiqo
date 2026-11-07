@@ -1,0 +1,20 @@
+name: Yo feedback review
+on:
+  push:
+    branches: [feat/yo-feedback-bois-doux-20261107]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: git archive --format=tar HEAD | gzip > /tmp/yo-feedback-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yo-feedback-source
+          path: /tmp/yo-feedback-source.tar.gz
+          retention-days: 1
