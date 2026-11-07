@@ -35,11 +35,12 @@ jobs:
           test "$(git hash-object lib/yo/pedagogy/firstMeetingGrammar.ts)" = 787a7e73009e9f64cb88a791676f0cdd37567fc4
           test "$(git hash-object tests/yo/yopratiqoReadableLanguage.test.tsx)" = b87e6eafc605851d3b4ea26ba45d6d0d450ab73b
           npx tsc --noEmit
-          npx eslint components/yo/learning/LanguageExplanation.tsx lib/yo/pedagogy/firstMeetingGrammar.ts tests/yo/yopratiqoReadableLanguage.test.tsx components/yo/italian/guided/GuidedItalianCourse.tsx
+          npx eslint components/yo/personalized/ItalianOnboarding.tsx components/yo/learning/LanguageExplanation.tsx lib/yo/pedagogy/firstMeetingGrammar.ts tests/yo/yopratiqoReadableLanguage.test.tsx components/yo/italian/guided/GuidedItalianCourse.tsx
           git diff --check 030ef52a021a5ba53ff5998451d7cbd7c2d1bbff
       - name: Teaching, player and regression checks
         run: |
           set -euo pipefail
+          node --import tsx tests/yo/yopratiqoEasyOnboarding.test.tsx
           node --import tsx tests/yo/yopratiqoReadableLanguage.test.tsx
           node --import tsx tests/yo/yopratiqoApprovedArtwork.test.tsx
           node --import tsx tests/yo/yopratiqoFeedback.test.tsx
@@ -55,7 +56,7 @@ jobs:
       - name: Browser tooling
         run: |
           python -m pip install playwright==1.57.0
-          python -m playwright install --with-deps chromium
+          python -m playwright install --with-deps chromium webkit
       - name: Actual component walkthrough
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
@@ -69,6 +70,7 @@ jobs:
             if curl --silent --fail http://127.0.0.1:3129/yo/langues/italien/parcours?lang=fr >/dev/null; then break; fi
             sleep 2
           done
+          python tests/yo/yopratiqoEasyOnboarding.browser.py 2>&1 | tee "$YO_QA_DIR/onboarding.log"
           python tests/yo/yopratiqoReadableLanguage.browser.py 2>&1 | tee "$YO_QA_DIR/grammar.log"
           python tests/yo/yopratiqoPersonalizedItalian.browser.py 2>&1 | tee "$YO_QA_DIR/course.log"
       - name: Source identity
@@ -76,7 +78,7 @@ jobs:
         run: |
           mkdir -p "$YO_QA_DIR"
           git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
-          git ls-files -s components/yo/learning lib/yo/pedagogy components/yo/italian/guided/GuidedItalianCourse.tsx > "$YO_QA_DIR/source.txt"
+          git ls-files -s components/yo/personalized/ItalianOnboarding.tsx tests/yo/yopratiqoEasyOnboarding* components/yo/learning lib/yo/pedagogy components/yo/italian/guided/GuidedItalianCourse.tsx > "$YO_QA_DIR/source.txt"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
