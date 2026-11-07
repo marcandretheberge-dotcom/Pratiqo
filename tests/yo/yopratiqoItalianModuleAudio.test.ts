@@ -66,7 +66,7 @@ test("no recording is constructed or downloaded until a learner clicks Listen", 
   assert.equal(audioCalls[0].playCalls, 1);
   assert.equal(audioCalls[0].preload, "none");
   assert.equal(audioCalls[0].playbackRate, 1);
-  assert.ok(view.getByText("AI voice"));
+  assert.equal(view.queryByText("AI voice"), null);
 });
 
 test("listening is counted only when sound begins and only once across buffering", () => {
@@ -260,10 +260,10 @@ test("a stalled request times out, releases playback and offers retry", () => {
 });
 
 for (const [locale, play, attribution] of [["fr", "Écouter", "Voix IA"], ["en", "Listen", "AI voice"], ["es", "Escuchar", "Voz IA"]] as const) {
-  test(`${locale}: recorded voice disclosure and controls are localized and do not activate their parent card`, () => {
+  test(`${locale}: controls stay localized without a repeated voice badge and do not activate their parent card`, () => {
     let parentClicks = 0;
     const view = render(React.createElement("div", { onClick: () => { parentClicks += 1; } }, node(FIRST, { locale: locale as YoLocale })));
-    assert.ok(view.getByText(attribution));
+    assert.equal(view.queryByText(attribution), null);
     fireEvent.click(view.getByRole("button", { name: `${play} : ${FIRST}` }));
     assert.equal(parentClicks, 0);
   });
