@@ -158,7 +158,7 @@ test("Japanese intro route mounts YoLessonDeck", () => {
 });
 
 // ─── 4. English intro converted (catalog claim is honest) ─────────
-test("English intro route is converted and the catalog claims it honestly", () => {
+test("English legacy intro remains available behind the new catalogue entry", () => {
   assert.ok(
     exists(INTRO_ROUTES.english),
     "English intro page.tsx must exist on disk",
@@ -170,7 +170,7 @@ test("English intro route is converted and the catalog claims it honestly", () =
   );
   assert.match(catalogPage, /<YoLanguageQuickStart locale=\{locale\}/);
   assert.equal(yopratiqoProductConfig.currentFreeIntroModules.find(language => language.slug === "anglais")?.isAccessibleForFree, true);
-  assert.equal(getYoPublicLanguages().find(course => course.slug === "anglais")?.path, "/yo/langues/anglais/intro");
+  assert.equal(getYoPublicLanguages().find(course => course.slug === "anglais")?.path, "/yo/langues/anglais/demarrer");
   assert.match(catalogSrc, /getYoPublicLanguages/);
 });
 

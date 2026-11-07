@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getYoPublicLanguages, yoPublicCatalog } from "../../lib/yo/publicCatalog";
 import { buildYoCatalogItemList, buildYoPratiqoMetadata, getYoPratiqoLanguageAlternates, isYoPratiqoRouteIndexable, resolveYoPratiqoPageLocale, yopratiqoSeoEntries, type YoPratiqoSeoRouteId } from "../../lib/yo/yopratiqoSeo";
 import { yopratiqoProductConfig } from "../../lib/yo/yopratiqoProductConfig";
 import { buildYoLocaleHref } from "../../lib/yo/localize";
 import { emptySupplySitemap } from "../seo/emptySupplySitemap";
+
+import { catalogRouteExists } from "./sharedRouteAssertion";
 
 const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 async function main() {
@@ -28,7 +30,7 @@ async function main() {
   const entries = await emptySupplySitemap();
   const routes = Object.keys(yopratiqoSeoEntries) as YoPratiqoSeoRouteId[];
   for (const course of yoPublicCatalog) {
-    for (const path of [course.path, course.landingRoute]) assert.ok(existsSync(join(process.cwd(), "app", path, "page.tsx")), path);
+    for (const path of [course.path, course.landingRoute]) assert.ok(catalogRouteExists(path), path);
     const routeId = routes.find(id => yopratiqoSeoEntries[id].route === course.landingRoute)!;
     assert.ok(routeId, course.slug);
     assert.equal(isYoPratiqoRouteIndexable(routeId), true);
@@ -66,7 +68,7 @@ async function main() {
   assert.ok(!/aggregateRating|reviewCount|offers:|price:/.test(overview));
   const hub = read("app/yo/page.tsx");
   assert.ok(!/cinq parcours|five intro paths|Audio à venir|Audio coming soon|voix natives/i.test(hub));
-  assert.match(hub, /getYoPublicLanguages\(\).length/);
+  assert.match(hub, /getYoPublicLanguages\(\)\.length/);
   assert.equal(yopratiqoProductConfig.premiumModulesEnabled, false);
   assert.equal(yopratiqoProductConfig.introPageIndexingEnabled, false);
   console.log(`PASS: ${courses.length} public languages, metadata/translations, direct links, sitemap and unchanged access gates`);

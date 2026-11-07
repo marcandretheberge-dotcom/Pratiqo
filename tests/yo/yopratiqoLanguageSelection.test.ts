@@ -32,6 +32,7 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { catalogRouteExists } from "./sharedRouteAssertion";
 import { getYoPublicLanguages, yoPublicCatalog } from "@/lib/yo/publicCatalog";
 
 const REPO_ROOT = process.cwd();
@@ -420,8 +421,8 @@ test("French card copy preserves the francisation and Quebec scope", () => {
 // ─── 3. Launch scope ───────────────────────────────────────────────
 test("all live language tiles point to real lessons or course dashboards", () => {
   const paths = getYoPublicLanguages().map(course => course.path);
-  assert.deepEqual([...paths].sort(), ["/yo/langues/italien/parcours","/yo/langues/japonais/parcours","/yo/langues/espagnol/intro","/yo/langues/anglais/intro","/yo/langues/francais-quebec/intro","/yo/langues/allemand/parcours","/yo/langues/portugais-bresil/parcours","/yo/langues/mandarin/parcours"].sort());
-  for(const destination of paths) assert.ok(exists(`app${destination}/page.tsx`), destination);
+  assert.deepEqual([...paths].sort(), ["/yo/langues/italien/parcours","/yo/langues/japonais/demarrer","/yo/langues/espagnol/demarrer","/yo/langues/anglais/demarrer","/yo/langues/francais-quebec/demarrer","/yo/langues/allemand/demarrer","/yo/langues/portugais-bresil/demarrer","/yo/langues/mandarin/demarrer"].sort());
+  for(const destination of paths) assert.ok(catalogRouteExists(destination), destination);
   assert.match(catalogSrc, /isAccessibleForFree/);
 });
 test("Italian and Japanese describe their complete courses; English remains an introduction", () => {
@@ -433,7 +434,7 @@ test("Italian and Japanese describe their complete courses; English remains an i
 
 test("Mandarin uses the shared Chinese flag instead of a character placeholder", () => {
   const card = getYoPublicLanguages().find(course => course.slug === "mandarin");
-  assert.equal(card?.path, "/yo/langues/mandarin/parcours");
+  assert.equal(card?.path, "/yo/langues/mandarin/demarrer");
   assert.equal(card?.badge, "zh");
   assert.match(pageSrc, /ariaLabel=\{t\(item.name, locale\)\}/);
   assert.doesNotMatch(pageSrc, />\s*(?:中|ZH|CN)\s*<\/span>/);
