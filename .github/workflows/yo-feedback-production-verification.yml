@@ -50,8 +50,30 @@ jobs:
            page=browser.new_page(viewport={'width':390,'height':844},reduced_motion='reduce')
            page.set_default_timeout(30000)
            errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-           # Instrument real playback; never replace audio, vibration, or browser policy.
-           page.add_init_script('''window.__cues=[];window.__speech=0;window.__heard=0;window.__overlap=0;const start=AudioBufferSourceNode.prototype.start;AudioBufferSourceNode.prototype.start=function(...args){window.__cues.push({samples:this.buffer?.length,peak:Math.max(...this.buffer.getChannelData(0).map(Math.abs))});if(window.__speech>0)window.__overlap++;return start.apply(this,args)};const play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(...args){this.addEventListener('playing',()=>{window.__speech++;window.__heard++},{once:true});this.addEventListener('ended',()=>{window.__speech=Math.max(0,window.__speech-1)},{once:true});return play.apply(this,args)};''')
+           # Instrument actual media state, not a counter affected by listener registration order.
+           # The product releases its audio-busy flag in its ended listener before later listeners.
+           # No playback, vibration, response, or browser security setting is replaced.
+           page.add_init_script('''
+           window.__cues=[];window.__media=[];window.__heard=0;window.__overlap=0;window.__pauses=[];
+           const start=AudioBufferSourceNode.prototype.start;
+           AudioBufferSourceNode.prototype.start=function(...args){
+             const media=window.__media.map(m=>({paused:m.paused,ended:m.ended,time:m.currentTime,duration:m.duration,ready:m.readyState}));
+             window.__cues.push({samples:this.buffer?.length,peak:Math.max(...this.buffer.getChannelData(0).map(Math.abs)),media});
+             if(media.some(m=>!m.paused&&!m.ended&&m.ready>=2))window.__overlap++;
+             return start.apply(this,args);
+           };
+           const play=HTMLMediaElement.prototype.play;
+           HTMLMediaElement.prototype.play=function(...args){
+             if(!window.__media.includes(this))window.__media.push(this);
+             this.addEventListener('playing',()=>window.__heard++,{once:true});
+             return play.apply(this,args);
+           };
+           const pause=HTMLMediaElement.prototype.pause;
+           HTMLMediaElement.prototype.pause=function(...args){
+             window.__pauses.push({ended:this.ended,paused:this.paused,time:this.currentTime,duration:this.duration});
+             return pause.apply(this,args);
+           };
+           ''')
            def click(label):page.get_by_role('button',name=label,exact=True).click()
            try:
             response=page.goto(url,timeout=60000);assert response and response.status==200
@@ -65,18 +87,20 @@ jobs:
              dismiss_install();click(label)
             page.locator('[data-guided-italian]').wait_for();click('Passer la visite');click('Commencer ma mission');click('Construire mon vocabulaire')
             page.locator('[data-visual-vocabulary]').wait_for()
-            # Function predicates work under CSP; string-expression predicates invoke eval.
             page.wait_for_function('() => window.__heard>0')
             assert page.evaluate('() => window.__cues.length')==0
             click('Personnage portant le prénom Luca');click('Vérifier');assert page.evaluate('() => window.__cues.length')==0
             click('Réessayer');click('Personnage portant le prénom Nina');click('Vérifier')
             page.wait_for_function('() => window.__cues.length===1')
-            assert page.evaluate('() => window.__overlap')==0
-            cue=page.evaluate('() => window.__cues[0]');assert cue['samples']==35280 and abs(cue['peak']-.22)<.000001
+            audio_evidence=page.evaluate('() => ({cues:window.__cues,overlap:window.__overlap,pauses:window.__pauses})')
+            (root/'audio-evidence.json').write_text(json.dumps(audio_evidence,indent=2))
+            assert audio_evidence['overlap']==0,audio_evidence
+            assert not any(not p['ended'] and not p['paused'] and p['time']>.02 and p['duration'] and p['time']<p['duration']-.05 for p in audio_evidence['pauses']),audio_evidence
+            cue=audio_evidence['cues'][0];assert cue['samples']==35280 and abs(cue['peak']-.22)<.000001
             page.locator('[data-yoppo-success]').scroll_into_view_if_needed()
             page.wait_for_function("() => {const i=document.querySelector('[data-yoppo-success] img');return i && i.complete && i.naturalWidth>0}")
             page.screenshot(path=str(root/'production-correct-mobile.png'),full_page=True)
-            log('PASS public production: beginner onboarding, real recorded pronunciation, one correct-only wood cue with approved sample length/peak, no wrong-answer cue or pronunciation overlap, original Yoppo image loaded.')
+            log('PASS public production: beginner onboarding, real recorded pronunciation, one correct-only wood cue with approved sample length/peak, no wrong-answer cue, no overlapping or cut-off pronunciation, original Yoppo image loaded.')
             click('Yoppo et mes outils');dialog=page.get_by_role('dialog')
             settings_before=dialog.get_by_role('switch').evaluate_all('(items)=>items.map(i=>({label:i.getAttribute("aria-label")||i.textContent,value:i.getAttribute("aria-checked")}))')
             dialog.get_by_role('switch',name='Sons de réussite',exact=True).click()
