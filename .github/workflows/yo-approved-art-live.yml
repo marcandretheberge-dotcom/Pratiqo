@@ -13,18 +13,19 @@ jobs:
       run:
         shell: bash
     env:
-      YO_ART_URL: https://pratiqo-5phj5dxkr-marcandretheberge-dotcoms-projects.vercel.app
+      YO_ART_URL: https://www.pratiqo.ca
       YO_ART_OUTPUT: /tmp/yo-art-live
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 1b9a4c2879b425dcbbdf65af6afa5b39dd235561
+          ref: 030ef52a021a5ba53ff5998451d7cbd7c2d1bbff
           persist-credentials: false
           fetch-depth: 0
-      - name: Verify immutable reviewed application source
+      - name: Assert exact reviewed production tree
         run: |
           set -euo pipefail
-          git diff --exit-code d81e95618e1c95d694ebef3d62bf0b17032a8a5b -- components lib public app
+          test "$(git rev-parse HEAD^{tree})" = "5362328aa761a79cfd46fbd15ca798736e0a3cfd"
+          git diff --exit-code 1b9a4c2879b425dcbbdf65af6afa5b39dd235561 -- components lib public app tests/yo/yopratiqoApprovedArtwork.browser.py
           mkdir -p "$YO_ART_OUTPUT"
           git rev-parse HEAD > "$YO_ART_OUTPUT/source-commit.txt"
       - uses: actions/setup-python@v5
@@ -34,13 +35,31 @@ jobs:
         run: |
           python -m pip install playwright==1.57.0
           python -m playwright install --with-deps chromium
-      - name: Actual public page, no audio fixture or security bypass
+      - name: Wait for exact public assets then verify actual production
         run: |
           set -euo pipefail
+          python - <<'PY'
+          import os, time, urllib.request
+          from pathlib import Path
+          root = Path('public/images/yo/vocabulary/v1')
+          expected = {p.name: p.read_bytes() for p in root.glob('*.avif')}
+          assert len(expected) == 6
+          for attempt in range(60):
+              try:
+                  for name, data in expected.items():
+                      with urllib.request.urlopen(os.environ['YO_ART_URL'] + '/images/yo/vocabulary/v1/' + name, timeout=15) as response:
+                          assert response.status == 200 and response.read() == data, name
+                  print('All six production assets exactly match the reviewed source.', flush=True)
+                  break
+              except Exception:
+                  if attempt == 59:
+                      raise
+                  time.sleep(5)
+          PY
           python tests/yo/yopratiqoApprovedArtwork.browser.py 2>&1 | tee "$YO_ART_OUTPUT/browser.log"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: yo-approved-art-live
+          name: yo-approved-art-production-030ef52
           path: /tmp/yo-art-live
           retention-days: 7
