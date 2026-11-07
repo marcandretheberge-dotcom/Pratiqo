@@ -18,13 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 33c160bb6e0599555c981e9434a28be9d84104c1
+          ref: f8779b7e14415aa4850f1dc5ab2990f24398522b
           persist-credentials: false
+          fetch-depth: 0
       - name: Exact reviewed source
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = 33c160bb6e0599555c981e9434a28be9d84104c1
+          test "$(git rev-parse HEAD)" = f8779b7e14415aa4850f1dc5ab2990f24398522b
           test "$(git hash-object components/yo/personalized/ItalianOnboarding.tsx)" = 8825f23d5b127255013da700e81018c2d28942bd
+          git diff --exit-code 33c160bb6e0599555c981e9434a28be9d84104c1 HEAD -- app components lib public package.json package-lock.json
           mkdir -p "$YO_QA_DIR"
           git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
       - uses: actions/setup-python@v5
