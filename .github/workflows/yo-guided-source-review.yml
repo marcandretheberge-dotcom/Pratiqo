@@ -8,15 +8,21 @@ permissions:
 jobs:
   source:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Package tracked source only for local review
-        run: git archive --format=tar HEAD | gzip > /tmp/pratiqo-guided-source.tar.gz
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Package locked dependencies only, no credentials or environment
+        run: tar czf /tmp/pratiqo-guided-deps.tar.gz node_modules
       - uses: actions/upload-artifact@v4
         with:
-          name: pratiqo-guided-source
-          path: /tmp/pratiqo-guided-source.tar.gz
+          name: pratiqo-guided-deps
+          path: /tmp/pratiqo-guided-deps.tar.gz
+          compression-level: 0
           retention-days: 1
