@@ -13,6 +13,8 @@ type Localized = Record<YoLocale, string>;
 export type ItalianYoppoAction = "hint" | "explain" | "retry" | "review" | "challenge";
 export interface ItalianYoppoCoachProps {
   locale: YoLocale;
+  /** Inline help reserves space in the course layout; legacy adventures can keep the draggable companion. */
+  presentation?: "floating" | "inline";
   contextId: string;
   message: Localized;
   hint: Localized;
@@ -111,11 +113,12 @@ function panelStyle(point: Point, viewport: Viewport): CSSProperties {
     : { left, top: point.y + SIZE + EDGE, width, maxHeight: Math.min(maxHeight, below) };
 }
 
-/** A floating, learner-controlled companion. The lesson owns assessment and progress. */
+/** Learner-controlled help, either in a reserved course slot or a draggable companion. */
 export function ItalianYoppoCoach({
   locale, contextId, message, hint, hint2, explanation, visualState = "idle", example, exampleAudio, onAction,
-  canRetry = false, reviewCount = 0, completedCount = 0, totalCount = 0,
+  canRetry = false, reviewCount = 0, completedCount = 0, totalCount = 0, presentation = "floating",
 }: ItalianYoppoCoachProps) {
+  const inline = presentation === "inline";
   const language = useCourseLanguage();
   const copy = language === "de" ? { ...COPY[locale], subtitle: { fr: "Yoppo · ton compagnon allemand", en: "Yoppo · your German companion", es: "Yoppo · tu compañero de alemán" }[locale] } : language === "pt-BR" ? { ...COPY[locale], subtitle: { fr: "Yoppo · ton compagnon au Brésil", en: "Yoppo · your Brazil companion", es: "Yoppo · tu compañero en Brasil" }[locale] } : COPY[locale];
   const panelId = useId();
@@ -252,7 +255,7 @@ export function ItalianYoppoCoach({
   const validTotal = Number.isFinite(totalCount) ? Math.max(0, Math.floor(totalCount)) : 0;
   const validCompleted = Number.isFinite(completedCount) ? Math.max(0, Math.min(validTotal, Math.floor(completedCount))) : 0;
 
-  return createPortal(<>
+  const content = <>
     <style>{`
       @keyframes italian-yoppo-wave { 0%,100% { transform:rotate(0) translateY(0); } 25% { transform:rotate(-9deg) translateY(-3px); } 65% { transform:rotate(7deg) translateY(-5px); } }
       @keyframes italian-yoppo-cheer { 0%,100% { transform:translateY(0); } 38% { transform:translateY(-10px) rotate(-5deg); } 70% { transform:translateY(-3px) rotate(4deg); } }
@@ -260,23 +263,23 @@ export function ItalianYoppoCoach({
       .italian-yoppo-cheer { animation:italian-yoppo-cheer 650ms ease-out 1; }
       @media (prefers-reduced-motion:reduce) { .italian-yoppo-wave,.italian-yoppo-cheer { animation:none; } }
     `}</style>
-    {hidden ? <button ref={restoreRef} type="button" onClick={open} className={`${buttonClass} fixed z-[80] shadow-sm`}
-      style={{ left: Math.max(viewport.left + EDGE, viewport.left + viewport.width - 182), top: Math.max(viewport.top + EDGE, viewport.top + viewport.height - BOTTOM - 44) }}>{copy.restore}</button>
-      : <div className="fixed z-[80] h-[88px] w-[88px]" style={{ left: point.x, top: point.y }} data-testid="italian-yoppo-position">
-        <button ref={avatarRef} type="button" aria-label={expanded ? copy.minimize : copy.open} aria-expanded={expanded} aria-controls={panelId} aria-describedby={instructionsId}
-          className="relative flex h-[88px] w-[88px] cursor-grab touch-none select-none items-center justify-center rounded-full bg-transparent p-0 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9A482E] focus-visible:ring-offset-2"
-          onPointerDown={startDrag} onPointerMove={drag} onPointerUp={endDrag} onPointerCancel={endDrag} onLostPointerCapture={endDrag} onKeyDown={keyboardMove}
+    {hidden ? <button ref={restoreRef} type="button" onClick={open} className={`${buttonClass} ${inline ? "w-full" : "fixed z-[80] shadow-sm"}`}
+      style={inline ? undefined : { left: Math.max(viewport.left + EDGE, viewport.left + viewport.width - 182), top: Math.max(viewport.top + EDGE, viewport.top + viewport.height - BOTTOM - 44) }}>{copy.restore}</button>
+      : <div className={inline ? "min-w-0" : "fixed z-[80] h-[88px] w-[88px]"} style={inline ? undefined : { left: point.x, top: point.y }} data-testid="italian-yoppo-position">
+        <button ref={avatarRef} type="button" aria-label={expanded ? copy.minimize : copy.open} aria-expanded={expanded} aria-controls={panelId} aria-describedby={inline ? undefined : instructionsId}
+          className={`relative flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9A482E] focus-visible:ring-offset-2 ${inline ? "min-h-20 w-full gap-2 rounded-2xl border border-[#DDD7C7] bg-[#FFFCF4] p-2 text-left text-[#28483C] hover:bg-[#F0F3E6]" : "h-[88px] w-[88px] cursor-grab touch-none select-none justify-center rounded-full bg-transparent p-0 active:cursor-grabbing"}`}
+          onPointerDown={inline ? undefined : startDrag} onPointerMove={inline ? undefined : drag} onPointerUp={inline ? undefined : endDrag} onPointerCancel={inline ? undefined : endDrag} onLostPointerCapture={inline ? undefined : endDrag} onKeyDown={inline ? (event) => { if (event.key === "Escape" && expanded) { event.preventDefault(); minimize(); } } : keyboardMove}
           onClick={() => { if (suppressClick.current) { suppressClick.current = false; return; } if (expanded) minimize(); else open(); }}>
-          <span key={`${contextId}:${visualState}:${wave}`} className={`pointer-events-none ${reaction ? "italian-yoppo-cheer" : wave > 0 ? "italian-yoppo-wave" : ""}`}>
-            <CompanionAvatar visualId="travel" state={visualState} locale={locale} size="md" compact label="" />
+          <span key={`${contextId}:${visualState}:${wave}`} className={`pointer-events-none shrink-0 ${reaction ? "italian-yoppo-cheer" : wave > 0 ? "italian-yoppo-wave" : ""}`}>
+            <CompanionAvatar visualId="travel" state={visualState} locale={locale} size={inline ? "sm" : "md"} compact label="" />
           </span>
-          <span aria-hidden className="pointer-events-none absolute -bottom-1 rounded-full border border-[#DED8C9] bg-[#FFFCF4] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#70442F] shadow-sm">Yoppo</span>
+          {inline ? <span aria-hidden className="min-w-0 text-sm"><span className="block font-bold">{expanded ? copy.minimize : copy.open}</span><span className="mt-1 block text-xs text-[#696B57]">{copy.support}</span></span> : <span aria-hidden className="pointer-events-none absolute -bottom-1 rounded-full border border-[#DED8C9] bg-[#FFFCF4] px-2 py-0.5 text-[10px] font-bold tracking-wide text-[#70442F] shadow-sm">Yoppo</span>}
         </button>
-        <span id={instructionsId} className="sr-only">{copy.keyboard}</span>
+        {!inline ? <span id={instructionsId} className="sr-only">{copy.keyboard}</span> : null}
       </div>}
-    {!hidden && expanded ? <section id={panelId} aria-labelledby={headingId} className="fixed z-[81] overflow-y-auto overscroll-contain rounded-[1.5rem] border border-[#DDD7C7] bg-[#FFFCF4] text-[#28483C] shadow-[0_20px_70px_rgba(69,49,29,0.22)]" style={panelStyle(point, viewport)}
+    {!hidden && expanded ? <section id={panelId} aria-labelledby={headingId} className={`${inline ? "mt-3 min-w-0 w-full" : "fixed z-[81] shadow-[0_20px_70px_rgba(69,49,29,0.22)]"} overflow-y-auto overscroll-contain rounded-[1.5rem] border border-[#DDD7C7] bg-[#FFFCF4] text-[#28483C]`} style={inline ? { maxHeight: "min(36rem, 70dvh)" } : panelStyle(point, viewport)}
       onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); minimize(); } }}>
-      <header className="sticky top-0 z-10 flex items-start justify-between gap-1 border-b border-[#E7DFCF] bg-[#FFFCF4] px-4 py-3">
+      <header className={`sticky top-0 z-10 flex ${inline ? "flex-wrap" : ""} items-start justify-between gap-1 border-b border-[#E7DFCF] bg-[#FFFCF4] px-4 py-3`}>
         <div className="min-w-0"><p className="text-[10px] font-bold uppercase tracking-wider text-[#8B513C]">{copy.subtitle}</p><h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-1 text-lg font-bold outline-none">{copy.title}</h2></div>
         <div className="flex shrink-0"><button type="button" aria-label={copy.minimize} onClick={minimize} className="flex size-11 items-center justify-center rounded-xl hover:bg-[#EEE8DB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9A482E]"><Minus size={18} aria-hidden /></button><button type="button" aria-label={copy.hide} onClick={hide} className="flex size-11 items-center justify-center rounded-xl hover:bg-[#EEE8DB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9A482E]"><EyeOff size={17} aria-hidden /></button></div>
       </header>
@@ -300,12 +303,13 @@ export function ItalianYoppoCoach({
           <button type="button" onClick={() => { setSupport(null); minimize(); onAction("challenge"); }} className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl bg-[#A55035] px-3 py-2.5 text-left text-white shadow-sm hover:bg-[#8D412B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9A482E] focus-visible:ring-offset-2"><span><span className="block text-sm font-bold">{copy.challenge}</span><span className="text-xs text-[#FFF2DB]">{copy.challengeDetail}</span></span><Sparkles size={20} aria-hidden /></button>
           <div className="flex flex-wrap gap-2">{canRetry ? <button type="button" onClick={() => { setSupport(null); onAction("retry"); }} className={buttonClass}><RotateCcw size={16} aria-hidden />{copy.retry}</button> : null}{reviewCount > 0 ? <button type="button" onClick={() => { setSupport(null); minimize(); onAction("review"); }} className={buttonClass}>{copy.review} ({reviewCount})</button> : null}</div>
         </div> : null}
-        <details className="border-t border-[#E7DFCF] pt-2 text-xs text-[#696B57]"><summary className="flex min-h-11 cursor-pointer items-center rounded-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9A482E]">{copy.position}</summary><p className="leading-relaxed">{copy.keyboard}</p><div className="mt-3 flex flex-wrap gap-1.5">
+        {!inline ? <details className="border-t border-[#E7DFCF] pt-2 text-xs text-[#696B57]"><summary className="flex min-h-11 cursor-pointer items-center rounded-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9A482E]">{copy.position}</summary><p className="leading-relaxed">{copy.keyboard}</p><div className="mt-3 flex flex-wrap gap-1.5">
           <button type="button" aria-label={copy.left} onClick={() => moveBy(-32, 0)} className={buttonClass}><ArrowLeft size={17} aria-hidden /></button><button type="button" aria-label={copy.right} onClick={() => moveBy(32, 0)} className={buttonClass}><ArrowRight size={17} aria-hidden /></button><button type="button" aria-label={copy.up} onClick={() => moveBy(0, -32)} className={buttonClass}><ArrowUp size={17} aria-hidden /></button><button type="button" aria-label={copy.down} onClick={() => moveBy(0, 32)} className={buttonClass}><ArrowDown size={17} aria-hidden /></button><button type="button" onClick={resetPosition} className={buttonClass}>{copy.reset}</button>
-        </div></details>
+        </div></details> : null}
       </div>
     </section> : null}
-  </>, document.body);
+  </>;
+  return inline ? <div className="min-w-0" data-yoppo-presentation="inline">{content}</div> : createPortal(content, document.body);
 }
 
 export default ItalianYoppoCoach;

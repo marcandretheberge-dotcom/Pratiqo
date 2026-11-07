@@ -13,7 +13,8 @@ import type { CourseLesson, LocaleText } from "@/lib/yo/italian/course/courseTyp
 const locales = ["fr", "en", "es"] as const;
 const lessons = italianCourseUnits.flatMap(unit => unit.lessons);
 const practice = lessons.flatMap(lesson => lesson.activities);
-const assessments = [...italianCourseUnits.map(unit => unit.quiz), ...courseAssessments];
+const legacyAssessments = [...italianCourseUnits.map(unit => unit.quiz), ...courseAssessments];
+const assessments = [...italianCourseUnits.flatMap(unit => [unit.quiz, ...(unit.midpoint ? [unit.midpoint] : [])]), ...courseAssessments];
 const languageAssessments = courseAssessments.filter(assessment => assessment.theme !== "culture");
 const questions = assessments.flatMap(assessment => assessment.questions);
 const activities: ItalianActivity[] = [...practice, ...questions];
@@ -105,7 +106,8 @@ test("twelve five-question unit quizzes and three eight-question cumulative asse
     assert.ok(assessment.questions.filter(question => question.kind === "listen").length >= 2, `${assessment.id}: listening transfer`);
     assert.ok(assessment.questions.filter(question => question.kind === "type").length >= 2, `${assessment.id}: written transfer`);
   }
-  assert.equal(questions.length, 94);
+  assert.equal(legacyAssessments.flatMap(assessment => assessment.questions).length, 94, "existing quiz and cumulative questions are unchanged");
+  assert.equal(questions.length, 99, "five optional midpoint questions join the content integrity checks");
 });
 
 test("cumulative assessment prerequisites occur in teaching material within the announced unit scope", () => {
@@ -329,15 +331,17 @@ test("the compact catalog exactly describes the lessons, activities, assessments
     assert.deepEqual(entry.subtitle, unit.subtitle);
     assert.deepEqual(entry.objectives, unit.objectives);
     assert.equal(entry.quizId, unit.quiz.id);
+    assert.equal(entry.midpointId, unit.midpoint?.id);
     assert.equal(entry.productionId, unit.production.id);
     assert.equal(entry.phraseCount, unit.lessons.reduce((sum, lesson) => sum + lesson.vocabulary.length, 0));
     assert.deepEqual(entry.activityIds, unit.lessons.flatMap(lesson => lesson.activities.map(activity => activity.id)));
     assert.deepEqual(entry.lessons, unit.lessons.map(lesson => ({ id: lesson.id, title: lesson.title, activityIds: lesson.activities.map(activity => activity.id) })));
     assert.strictEqual(getItalianCourseUnit(unit.id), unit);
   }
-  assert.equal(italianCourseCatalog.assessments.length, 16);
+  assert.equal(legacyAssessments.length, 16);
+  assert.equal(italianCourseCatalog.assessments.length, 17);
   for (const [index, assessment] of assessments.entries()) {
-    assert.deepEqual(italianCourseCatalog.assessments[index], { id: assessment.id, title: assessment.title, unitIds: assessment.unitIds, questionCount: assessment.questions.length, passPercent: assessment.passPercent, theme: assessment.theme });
+    assert.deepEqual(italianCourseCatalog.assessments[index], { id: assessment.id, title: assessment.title, unitIds: assessment.unitIds, questionCount: assessment.questions.length, passPercent: assessment.passPercent, theme: assessment.theme, ...(assessment.purpose ? { purpose: assessment.purpose } : {}) });
   }
   assert.equal(getItalianCourseUnit("unknown-unit"), undefined);
   assert.ok(!JSON.stringify(italianCourseCatalog).includes('"questions":'), "catalog does not ship answer keys");

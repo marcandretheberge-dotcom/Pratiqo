@@ -69,3 +69,6 @@ backups/
 /.cache/german-local-audio/
 /.cache/portuguese-local-audio/
 /.cache/mandarin-local-audio/
+
+# Backend-free local course QA output
+.qa-guided/

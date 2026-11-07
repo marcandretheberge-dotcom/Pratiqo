@@ -35,7 +35,9 @@ function useGameLanguage(locale: YoLocale) {
 
 export const italianButton = "inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[#245a46] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#183e30] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#245a46]";
 const optionButton = "min-h-14 rounded-2xl border-2 p-4 text-left text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245a46] disabled:cursor-default";
-interface GameProps { locale: YoLocale; onAttempt: (correct: boolean) => void; onHelp: () => void }
+/** Optional checked-choice detail; typed answers stay inside their input component. */
+export interface ItalianAttemptDetail { optionId: string }
+interface GameProps { locale: YoLocale; onAttempt: (correct: boolean, detail?: ItalianAttemptDetail) => void; onHelp: () => void }
 
 function Feedback({ correct, locale, children }: { correct: boolean | null; locale: YoLocale; children?: React.ReactNode }) {
   const { copy } = useGameLanguage(locale);
@@ -66,7 +68,7 @@ function ChoiceGame({ activity, locale, onAttempt, onHelp }: GameProps & { activ
   const [heard, setHeard] = useState(false);
   const listening = activity.kind === "listen";
   const canAnswer = !listening || heard || transcriptRead;
-  function check() { if (!selected || !canAnswer || feedback === true) return; const correct = selected === activity.correctId; setFeedback(correct); onAttempt(correct); }
+  function check() { if (!selected || !canAnswer || feedback === true) return; const correct = selected === activity.correctId; setFeedback(correct); onAttempt(correct, { optionId: selected }); }
   return <div>
     {listening ? <div className="mb-6 rounded-3xl border border-[#dacdb9] bg-[#f8f2e8] p-5">
       <ItalianModuleAudio text={activity.stimulus ?? ""} locale={locale} label={copy.listen} onListen={() => setHeard(true)} />

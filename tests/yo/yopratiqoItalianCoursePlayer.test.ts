@@ -193,12 +193,35 @@ test("finishing the language final offers the cultural finale with the same loca
  assert.equal(view.getByRole("link", { name: italianCultureFinal.title.fr }).getAttribute("href"), "/yo/langues/italien/parcours/bilans/it1-culture-finale");
 });
 
+test("dashboard and assessment help reserve space before their learning content",()=>{
+ const dashboard=render(React.createElement(ItalianCourseDashboard,{locale:"fr",catalog:italianCourseCatalog,sources:courseSources}));
+ const courseDock=dashboard.container.querySelector('[data-yoppo-presentation="inline"]')!;
+ assert.ok(courseDock?.closest("main"));
+ const courseNavigation=dashboard.container.querySelector("main nav")!;
+ assert.ok(courseDock.compareDocumentPosition(courseNavigation)&dom.window.Node.DOCUMENT_POSITION_FOLLOWING,"dashboard help must be near the navigation, not after the long course content");
+ cleanup();
+ const assessment=render(React.createElement(CourseAssessmentPlayer,{assessment:unit.quiz,locale:"fr",onComplete:()=>{}}));
+ click(assessment.getByRole("button",{name:"Commencer le bilan"}));
+ const assessmentDock=assessment.container.querySelector('[data-yoppo-presentation="inline"]')!;
+ assert.ok(assessmentDock);
+ const prompt=assessment.getByText(unit.quiz.questions[0].prompt.fr);
+ assert.ok(assessmentDock.compareDocumentPosition(prompt)&dom.window.Node.DOCUMENT_POSITION_FOLLOWING);
+ click(assessment.getByRole("button",{name:"Ouvrir Yoppo"}));
+ assert.ok(assessmentDock.contains(assessment.getByRole("region",{name:"On joue ensemble ?"})));
+ assert.equal(assessmentDock.querySelector(".fixed"),null);
+});
+
 test("mobile lesson rails stay inside an explicit shrinkable grid",()=>{
  const view=mount();
  const aside=view.container.querySelector("aside")!;
  assert.ok(aside.classList.contains("min-w-0"));
  assert.ok(aside.parentElement!.classList.contains("grid-cols-1"));
  assert.ok(aside.parentElement!.classList.contains("min-w-0"));
+ const dock=aside.querySelector('[data-yoppo-presentation="inline"]');
+ assert.ok(dock,"lesson help belongs in the reserved navigation rail");
+ click(view.getByRole("button",{name:"Ouvrir Yoppo"}));
+ assert.ok(dock.contains(view.getByRole("region",{name:"On joue ensemble ?"})));
+ assert.equal(dock.querySelector(".fixed"),null);
  const selector=view.getByRole("combobox",{name:"leçons"});
  assert.ok(selector.classList.contains("lg:hidden"));
  fireEvent.change(selector,{target:{value:"1"}});flush();

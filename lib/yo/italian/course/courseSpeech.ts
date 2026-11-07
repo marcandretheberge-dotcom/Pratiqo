@@ -16,6 +16,6 @@ export function activitySpeech(activity:ItalianActivity):string[]{
 export function assessmentSpeech(assessment:CourseAssessment){return assessment.questions.flatMap(activitySpeech);}
 export function unitSpeech(unit:CourseUnit){return [
  ...unit.lessons.flatMap(lesson=>[...lesson.vocabulary.map(item=>item.it),...lesson.grammar.examples.map(item=>item.it),...lesson.pronunciation.practice,lesson.reading.it,...lesson.activities.flatMap(activitySpeech)]),
- ...assessmentSpeech(unit.quiz),unit.production.model,
+ ...assessmentSpeech(unit.quiz),...(unit.midpoint ? assessmentSpeech(unit.midpoint) : []),unit.production.model,
 ];}
 export function distinctSpeech(texts:readonly string[]){return [...new Set(texts.map(text=>text.normalize("NFC").trim()).filter(Boolean))];}

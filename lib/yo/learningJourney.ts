@@ -1,7 +1,7 @@
 import type { CourseUnitSummary } from "./italian/course/courseTypes";
 
 export type JourneyUnit = Pick<CourseUnitSummary, "id" | "number" | "title" | "subtitle" | "objectives" | "activityIds" | "photo">;
-export type JourneyEvidence = { passed: boolean; started: boolean; practiced: number; independent: number };
+export type JourneyEvidence = { passed: boolean; started: boolean; practiced: number; independent: number; midpointPassed?: boolean };
 
 /** Navigation is local learning guidance, never an entitlement or a certification. */
 export function buildLearningJourney<U extends JourneyUnit>(
