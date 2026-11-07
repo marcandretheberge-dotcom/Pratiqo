@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: e4465aa96ce772eaec0fa04d9c97072ada80d007
+          ref: 1b9a4c2879b425dcbbdf65af6afa5b39dd235561
           persist-credentials: false
           fetch-depth: 0
       - name: Verify immutable reviewed application source
