@@ -1,0 +1,219 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { ArrowRight, BookOpen, Check, HelpCircle, LockKeyhole, MapPin, Stamp, Volume2, VolumeX, X } from "lucide-react";
+import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
+import type { YoLocale } from "@/lib/yo/types";
+import type { CourseCatalog, CourseUnit } from "@/lib/yo/italian/course/courseTypes";
+import { italianCourseHref } from "@/lib/yo/italian/course/courseLinks";
+import { getDueActivityIds } from "@/lib/yo/italian/course/courseProgress";
+import { buildCourseJourney } from "@/lib/yo/courseJourney";
+import { getYoPratiqoModuleBySlug } from "@/lib/yo/yopratiqoProductConfig";
+import { EFFECTS_KEY, listenForAdventureInterruptions, playAdventureSound, prepareAdventureSound, stopAdventureSound } from "@/lib/yo/adventureSound";
+import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
+import { GUIDED_KEY, TOUR_KEY, emptyGame, initialGuided, parseGuided, guidedSteps, guidedPassed, guidedPoints, lessonDone, nextGuidedStep, type GuidedState, type GameDraft } from "@/lib/yo/italian/course/guidedItalian";
+import { useItalianCourseProgress } from "../course/useItalianCourseProgress";
+import { ItalianAudioProvider } from "../ItalianAudioProvider";
+import { ItalianModuleAudio } from "../ItalianModuleAudio";
+import { AdventureScenery } from "../../journey/AdventureScenery";
+import { GuidedGame } from "./GuidedGame";
+import { guidedCopy, primary, secondary } from "./copy";
+
+type Props = { unit: CourseUnit; catalog: CourseCatalog; locale: YoLocale; audioPaths: Record<string, string>; initialLessonId?: string; initialActivityId?: string };
+
+/** Reference pilot. Learning evidence stays in the existing store; this store holds UI drafts only. */
+export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initialLessonId, initialActivityId }: Props) {
+  const c = guidedCopy[locale], learning = useItalianCourseProgress(catalog), { progress, ready, recordActivity, recordAssessment, setResume } = learning;
+  const steps = guidedSteps(unit);
+  const [ui, setUi] = useState<GuidedState>(() => initialGuided());
+  const current = useRef(ui);
+  useLayoutEffect(() => { current.current = ui; }, [ui]);
+  const loadedReset = useRef<number | null>(null);
+  const [loaded, setLoaded] = useState(false), [storageAvailable, setStorageAvailable] = useState(true);
+  const [overlay, setOverlay] = useState<"notebook" | "tools" | null>(null), [tour, setTour] = useState<number | null>(null);
+  const [notebookMeanings, setNotebookMeanings] = useState(true);
+  const [effects, setEffects] = useState(false), [translation, setTranslation] = useState(false), [hint, setHint] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null), primaryAction = useRef<HTMLButtonElement>(null);
+  const routeRequest = useRef("");
+  const step = steps[ui.step], lesson = unit.lessons[step.lesson], exercise = step.activity;
+  const passed = guidedPassed(unit, progress), done = unit.lessons.filter(l => lessonDone(l, progress)).length;
+  const next = nextGuidedStep(steps, ui, progress);
+  const challengeMode = ui.view === "challenge", question = unit.quiz.questions[ui.quizIndex];
+  const completedAnswers = ui.answers.filter(a => a.correct).length, resultHelp = ui.answers.some(a => a.assisted);
+  const resultPassed = ui.answers.length === unit.quiz.questions.length && !resultHelp && completedAnswers / unit.quiz.questions.length * 100 >= unit.quiz.passPercent;
+  const nextUnit = catalog.units[catalog.units.findIndex(u => u.id === unit.id) + 1];
+  const journey = buildCourseJourney(catalog, progress);
+  const due = getDueActivityIds(progress, catalog).filter(id => steps.some(s => s.id === id));
+  const missionSteps = steps.filter(s => s.lesson === step.lesson), position = missionSteps.findIndex(s => s.id === step.id);
+  const phrases = unit.lessons.filter((l, i) => ui.seen.some(id => id.startsWith(l.id)) || l.activities.some(a => progress.activities[a.id]) || (ui.view === "mission" && i === step.lesson)).flatMap(l => l.vocabulary);
+  const notebookWords = [...new Map(phrases.map(p => [p.it, p])).values()];
+
+  function commit(nextState: GuidedState) {
+    current.current = nextState; setUi(nextState);
+    try { localStorage.setItem(GUIDED_KEY, JSON.stringify(nextState)); setStorageAvailable(true); }
+    catch { setStorageAvailable(false); }
+  }
+  function focus() { requestAnimationFrame(() => { heading.current?.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "instant" }); }); }
+  function stop() { stopLessonAudio(); setTranslation(false); setHint(false); }
+  function move(index: number) {
+    if (index < 0 || index >= steps.length) return;
+    stop(); const destination = steps[index];
+    commit({ ...current.current, view: "mission", resumeView: "mission", step: index, game: emptyGame() });
+    setResume(unit.id, unit.lessons[destination.lesson].id, destination.activity?.id); focus();
+  }
+  function beginMission() {
+    finishTour();
+    const s = current.current;
+    if (s.resumeView === "challenge" && !s.submitted) { commit({ ...s, view: "challenge" }); focus(); return; }
+    if (s.resumeView === "mission") { commit({ ...s, view: "mission" }); focus(); return; }
+    if (next < 0) { commit({ ...s, view: "challenge-intro" }); focus(); return; }
+    move(next);
+  }
+  function finishTour() { setTour(null); try { localStorage.setItem(TOUR_KEY, "seen"); } catch { /* Guidance remains usable without storage. */ } }
+  function leave() {
+    stop(); setOverlay(null);
+    const s = current.current;
+    commit({ ...s, view: "map", resumeView: s.view === "mission" || s.view === "challenge" ? s.view : s.resumeView }); focus();
+  }
+  function advance() {
+    const s = current.current;
+    if (step.activity && !s.game.complete) return;
+    const seen = !step.activity ? [...new Set([...s.seen, step.id])] : s.seen;
+    commit({ ...s, seen });
+    if (s.step === steps.length - 1) { stop(); commit({ ...current.current, view: "challenge-intro", resumeView: null, game: emptyGame() }); focus(); }
+    else move(s.step + 1);
+  }
+  function startChallenge() {
+    stop(); commit({ ...current.current, view: "challenge", resumeView: "challenge", quizIndex: 0, game: emptyGame(), answers: [], runStartedAt: Math.max(Date.now(), (progress.assessments[unit.quiz.id]?.last.completedAt ?? 0) + 1), submitted: false }); focus();
+  }
+  function nextQuestion() {
+    const s = current.current;
+    if (!s.game.complete || s.answers.length !== s.quizIndex || s.submitted) return;
+    stop(); const answers = [...s.answers, { correct: s.game.feedback === true, assisted: s.game.assisted }];
+    if (answers.length === unit.quiz.questions.length) {
+      const correct = answers.filter(a => a.correct).length, assisted = answers.some(a => a.assisted);
+      // A restored result must not re-submit or duplicate points. Canonical best results remain monotonic.
+      const previous = progress.assessments[unit.quiz.id];
+      if (!previous || previous.last.completedAt < s.runStartedAt) recordAssessment(unit.quiz.id, correct, answers.length, assisted);
+      commit({ ...s, view: "result", resumeView: null, answers, submitted: true, game: emptyGame() });
+      if (effects && !assisted && correct / answers.length * 100 >= unit.quiz.passPercent) void playAdventureSound("unlock");
+    } else commit({ ...s, quizIndex: s.quizIndex + 1, answers, game: emptyGame() });
+    focus();
+  }
+  function updateGame(game: GameDraft) { commit({ ...current.current, game }); }
+  function openNotebook() {
+    if (challengeMode) return;
+    stopLessonAudio();
+    if (ui.view === "mission" && exercise && !ui.game.complete) updateGame({ ...current.current.game, assisted: true });
+    setOverlay("notebook");
+  }
+  function toggleEffects() {
+    const enabled = !effects; setEffects(enabled);
+    try { localStorage.setItem(EFFECTS_KEY, String(!enabled)); } catch { /* Session preference. */ }
+    if (enabled) void prepareAdventureSound(); else stopAdventureSound();
+  }
+  useEffect(() => listenForAdventureInterruptions(), []);
+  useEffect(() => {
+    if (!ready || loadedReset.current === progress.resetAt) return;
+    const frame = requestAnimationFrame(() => {
+    loadedReset.current = progress.resetAt;
+    let nextState = initialGuided(progress.resetAt);
+    try {
+      nextState = parseGuided(localStorage.getItem(GUIDED_KEY), unit, progress.resetAt);
+      setEffects(localStorage.getItem(EFFECTS_KEY) === "false");
+      setTour(localStorage.getItem(TOUR_KEY) === "seen" ? null : 0);
+    } catch { setStorageAvailable(false); setTour(0); }
+    // Opening the course always returns to its map; the action resumes the exact unfinished draft.
+    if (nextState.view === "mission" || nextState.view === "challenge") nextState = { ...nextState, resumeView: nextState.view, view: "map" };
+    current.current = nextState; setUi(nextState); setLoaded(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [ready, progress.resetAt, unit]);
+  const followIncomingRoute = useEffectEvent(() => {
+    if (!loaded || !initialLessonId) return;
+    const request = `${initialLessonId}/${initialActivityId ?? ""}`;
+    if (routeRequest.current === request) return;
+    routeRequest.current = request;
+    const at = steps.findIndex(s => unit.lessons[s.lesson].id === initialLessonId && (initialActivityId ? s.id === initialActivityId : s.stage === "scene"));
+    if (at >= 0) {
+      finishTour();
+      const saved = current.current;
+      if (saved.resumeView === "mission" && (saved.step === at || (!initialActivityId && steps[saved.step].lesson === steps[at].lesson))) { commit({ ...saved, view: "mission" }); focus(); }
+      else move(at);
+    }
+  });
+  useEffect(() => { const frame = requestAnimationFrame(() => followIncomingRoute()); return () => cancelAnimationFrame(frame); }, [loaded, initialLessonId, initialActivityId]);
+
+  if (!ready || !loaded) return <main lang={locale} className="mx-auto max-w-xl p-10"><p role="status">{c.loading}</p></main>;
+  const teacherUrl = getYoPratiqoModuleBySlug("italien")?.teacherSearchUrl ?? "/trouver-un-prof?q=italien";
+  return <ItalianAudioProvider paths={audioPaths}><div lang={locale} className="min-h-screen bg-[#fbf9f3] text-stone-800" data-guided-italian>
+    <header className="border-b border-stone-200 bg-white"><div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+      {ui.view === "map" ? <Link href={`/yo/langues${locale !== "fr" ? `?lang=${locale}` : ""}`} className="text-lg font-black text-emerald-900">Yo<span className="text-orange-700">Pratiqo</span></Link> : <button type="button" onClick={leave} className={secondary} aria-label={c.leave}><X size={21} aria-hidden /><span className="hidden sm:inline">{c.home}</span></button>}
+      <span className="text-sm font-bold text-emerald-900">Italiano · A1</span>
+      <div className="flex gap-1"><button type="button" className={`${secondary} ${tour === 1 ? "ring-4 ring-orange-300" : ""}`} onClick={openNotebook} disabled={challengeMode} title={challengeMode ? c.noHints : c.notebook} aria-label={c.notebook}><BookOpen size={21} aria-hidden /><span className="hidden sm:inline">{c.notebook}</span></button><button type="button" className={secondary} onClick={() => { stopLessonAudio(); setOverlay("tools"); }} aria-label={c.help}><HelpCircle size={21} aria-hidden /></button></div>
+    </div></header>
+    <main className="mx-auto max-w-5xl px-4 pb-12 pt-5 sm:px-6 sm:pt-8">
+      {(!learning.storageAvailable || !storageAvailable) ? <p role="status" className="mb-5 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{c.unsaved}</p> : null}
+      {ui.view === "map" ? <>
+        {tour !== null ? <aside aria-label={c.tourTitle} className="mb-6 flex items-start gap-4 rounded-3xl border-2 border-emerald-700 bg-white p-5 shadow-sm"><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="sm" compact /><div className="min-w-0 flex-1"><p className="text-xs font-bold text-emerald-700">YOPPO · {tour + 1}/3</p><h2 className="mt-1 font-bold">{c.tourTitle}</h2><p className="mt-2 text-sm leading-6">{[c.tourPath, c.tourWords, c.tourStart][tour]}</p><div className="mt-3 flex flex-wrap gap-2"><button type="button" className={primary} onClick={() => { if (tour < 2) setTour(tour + 1); else beginMission(); }}>{tour === 2 ? c.start : c.next}</button><button type="button" className={secondary} onClick={finishTour}>{c.skip}</button></div></div></aside> : null}
+        <div className="grid items-start gap-7 md:grid-cols-[minmax(0,1fr)_320px]">
+          <section className={`order-2 md:order-1 ${tour === 0 ? "rounded-3xl ring-4 ring-orange-300" : ""}`}>
+            <p className="text-xs font-bold uppercase tracking-widest text-orange-800">{c.preview}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-3xl font-black tracking-tight outline-none sm:text-4xl">Ciao, Bologna.</h1><p className="mt-3 max-w-xl text-sm leading-6 text-stone-600">{c.courseNote}</p>
+            <div className="my-6 max-w-sm"><AdventureScenery world="italian" state={passed ? "mastered" : "progress"} /></div>
+            <ol className="relative mx-auto max-w-md space-y-3 pb-4">
+              {unit.lessons.map((item, i) => { const complete = lessonDone(item, progress), at = steps.findIndex(s => s.lesson === i), available = i === 0 || lessonDone(unit.lessons[i - 1], progress) || item.activities.some(a => progress.activities[a.id]); const active = next >= 0 && steps[next].lesson === i; return <li key={item.id} className={`relative flex items-center gap-4 ${i % 2 ? "ml-7 sm:ml-12" : "mr-7 sm:mr-12"}`}>
+                {i < unit.lessons.length - 1 ? <div aria-hidden className="absolute left-7 top-14 h-20 border-l-4 border-dotted border-emerald-200" /> : null}
+                <button type="button" disabled={!available} aria-label={`${c.mission} ${i + 1} · ${item.title[locale]}${complete ? ` · ${c.completeMission}` : ""}`} aria-current={active ? "step" : undefined} className={`relative z-10 grid h-16 w-16 shrink-0 place-items-center rounded-full border-b-4 font-black focus-visible:outline-4 focus-visible:outline-offset-4 ${complete ? "border-emerald-900 bg-emerald-700 text-white" : active ? "border-orange-900 bg-orange-200 text-emerald-950" : "border-stone-300 bg-stone-100 text-stone-500"}`} onClick={() => { finishTour(); move(at); }}>{complete ? <Check aria-hidden /> : available ? i + 1 : <LockKeyhole size={20} aria-hidden />}</button>
+                <div className="min-w-0 py-4"><p className="text-xs font-bold text-emerald-700">{c.mission} {i + 1}</p><p className="mt-1 text-sm font-bold">{item.title[locale]}</p>{active ? <div className="mt-1"><CompanionAvatar visualId="travel" state="map" locale={locale} size="xs" compact /></div> : null}</div>
+              </li>; })}
+              <li className="relative flex items-center gap-4"><span className={`grid h-16 w-16 shrink-0 place-items-center rounded-full border-2 ${passed ? "border-emerald-700 bg-emerald-50" : "border-stone-200 bg-white"}`}><Stamp aria-hidden /></span><div><p className="font-bold">{c.challenge}</p><p className="mt-1 text-sm">{passed ? c.stampDone : "4 / 5"}</p></div></li>
+            </ol>
+          </section>
+          <aside className="order-1 rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 md:order-2 md:sticky md:top-6">
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-800"><MapPin size={16} aria-hidden />{passed ? c.stamp : c.remaining}</p><h2 className="mt-3 text-xl font-bold">{passed ? c.stampDone : ui.resumeView === "challenge" ? c.challenge : next < 0 ? c.challenge : unit.lessons[steps[next].lesson].title[locale]}</h2>
+            <p className="mt-3 text-sm leading-6">{c.stampRule}</p><p className="mt-4 text-sm font-semibold">{done}/{unit.lessons.length} {c.progress}</p>
+            {passed && nextUnit ? <Link href={italianCourseHref(locale, nextUnit.id)} className={`${primary} mt-5 w-full`}>{c.nextUnit}<ArrowRight size={18} aria-hidden /></Link> : <button ref={primaryAction} type="button" className={`${primary} mt-5 w-full ${tour === 2 ? "ring-4 ring-orange-300 ring-offset-4" : ""}`} onClick={beginMission}>{ui.resumeView === "challenge" ? c.challenge : next < 0 && !ui.resumeView ? c.begin : ui.resumeView ? c.resume : c.start}<ArrowRight size={18} aria-hidden /></button>}
+            <p className="mt-4 text-sm font-bold text-emerald-800">{guidedPoints(unit, progress)} {c.points}</p><p className="mt-3 text-xs text-stone-500">{learning.storageAvailable && storageAvailable ? c.saved : c.unsaved}</p>
+            {passed ? <button type="button" className={`${secondary} mt-3`} onClick={() => move(0)}>{c.practice}</button> : <button type="button" className="mt-5 min-h-11 text-left text-xs text-stone-600 underline" onClick={() => { finishTour(); stop(); commit({ ...current.current, view: "challenge-intro", resumeView: null, game: emptyGame() }); focus(); }}>{c.finalShortcut}</button>}
+          </aside>
+        </div>
+        <details className="mt-8 border-t border-stone-200 pt-4"><summary className="min-h-11 cursor-pointer text-sm font-bold text-emerald-900">{c.home} · {catalog.units.length} {c.unit.toLowerCase()}s</summary><ol className="mt-3 grid gap-3 sm:grid-cols-2">{journey.steps.slice(1).map(destination => <li key={destination.unit.id} className="rounded-2xl border border-stone-200 bg-white p-4"><p className="text-xs font-bold text-stone-600">{c.unit} {destination.unit.number}</p><p className="mt-1 font-bold">{destination.unit.title[locale]}</p>{destination.unlocked ? <Link className={`${secondary} mt-2`} href={italianCourseHref(locale, destination.unit.id)}>{destination.passed ? c.reviewLabel : c.next}<ArrowRight size={16} aria-hidden /></Link> : <p className="mt-2 text-sm text-stone-500">{c.locked}</p>}</li>)}</ol></details>
+      </> : null}
+
+      {ui.view === "mission" ? <div className="mx-auto max-w-2xl">
+        <div className="mb-6"><p className="text-sm font-bold text-emerald-800">{c.mission} {step.lesson + 1} · {c.step} {position + 1}/{missionSteps.length}</p><div role="progressbar" aria-label={`${c.mission} ${step.lesson + 1}`} aria-valuenow={position} aria-valuemin={0} aria-valuemax={missionSteps.length} className="mt-3 h-3 overflow-hidden rounded-full bg-stone-200"><div className="h-full rounded-full bg-emerald-700" style={{ width: `${position / missionSteps.length * 100}%` }} /></div></div>
+        <h1 ref={heading} tabIndex={-1} className="mb-5 text-2xl font-bold outline-none">{lesson.title[locale]}</h1>
+        <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-8">
+          {!exercise ? <>
+            <div className="mb-5 flex items-start gap-3"><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="xs" compact /><p className="pt-2 text-sm leading-6">{lesson.goal[locale]}</p></div>
+            {step.stage === "scene" ? <><p className="mb-4 text-xs font-bold uppercase text-emerald-800">{c.scene}</p><ItalianModuleAudio text={lesson.reading.it} locale={locale} /><p lang="it" className="my-5 whitespace-pre-line text-xl leading-9">{lesson.reading.it}</p><button className={secondary} type="button" aria-expanded={translation} onClick={() => setTranslation(!translation)}>{c.translation}</button>{translation ? <p className="mt-3 text-sm leading-7">{lesson.reading.meaning[locale]}</p> : null}</> : null}
+            {step.stage === "words" ? <><h2 className="mb-5 text-xl font-bold">{c.notebook}</h2><div className="space-y-4">{lesson.vocabulary.map(p => <div key={p.it} className="border-b border-stone-100 pb-4"><p lang="it" className="text-lg font-semibold">{p.it}</p><p className="my-2 text-sm text-stone-600">{p.meaning[locale]}</p><ItalianModuleAudio text={p.it} locale={locale} /></div>)}</div><p className="mt-4 text-sm text-stone-600">{c.learnedWords}</p></> : null}
+            {step.stage === "language" ? <><p className="mb-2 text-xs font-bold uppercase text-emerald-800">{c.language}</p><h2 className="mb-4 text-xl font-bold">{lesson.grammar.title[locale]}</h2><p className="whitespace-pre-line text-base leading-8">{lesson.grammar.body[locale]}</p><div className="mt-5 space-y-3">{lesson.grammar.examples.slice(0, 3).map(p => <div key={p.it} className="rounded-2xl bg-emerald-50 p-4"><p lang="it" className="font-bold">{p.it}</p><p className="mt-1 text-sm">{p.meaning[locale]}</p></div>)}</div></> : null}
+            {step.stage === "sounds" ? <><h2 className="mb-4 text-xl font-bold">{c.pronunciation}</h2><p className="text-base leading-7">{lesson.pronunciation.body[locale]}</p><div className="mt-5 space-y-4">{lesson.pronunciation.practice.map(text => <div key={text}><p lang="it" className="mb-2 text-lg font-semibold">{text}</p><ItalianModuleAudio text={text} locale={locale} /></div>)}</div></> : null}
+            <button type="button" className={`${primary} mt-7 w-full`} onClick={advance}>{c.next}<ArrowRight size={18} aria-hidden /></button>
+          </> : <>
+            {exercise.id === lesson.readingActivityId ? <div className="mb-6 rounded-2xl bg-emerald-50 p-4"><p lang="it" className="text-base leading-7">{lesson.reading.it}</p></div> : null}
+            <GuidedGame key={exercise.id} activity={exercise} locale={locale} value={ui.game} onChange={updateGame} onAttempt={(correct, assisted) => { recordActivity(exercise.id, correct, assisted); if (correct && effects) void playAdventureSound("correct"); }} onContinue={advance} />
+            {!ui.game.complete ? <><button type="button" className={`${secondary} mt-3`} onClick={() => { setHint(true); updateGame({ ...current.current.game, assisted: true }); }}>{c.hint}</button>{hint ? <aside className="mt-2 rounded-2xl bg-emerald-50 p-4"><p className="text-sm leading-6">{exercise.hint[locale]}</p><p className="mt-2 text-xs">{c.hintUsed}</p></aside> : null}</> : null}
+          </>}
+        </div>
+      </div> : null}
+      {ui.view === "challenge-intro" ? <section className="mx-auto max-w-xl rounded-3xl border border-stone-200 bg-white p-6 sm:p-8"><CompanionAvatar visualId="travel" state="teacher_ready" size="sm" locale={locale} compact /><h1 ref={heading} tabIndex={-1} className="mt-5 text-3xl font-bold outline-none">{c.challenge}</h1><p className="mt-4 text-lg font-semibold">{c.stampRule}</p><p className="mt-4 text-sm leading-7">{unit.quiz.mission?.briefing[locale] ?? unit.quiz.description[locale]}</p><p className="mt-5 rounded-2xl bg-emerald-50 p-4 text-sm leading-7">{c.finalRule}</p><button type="button" className={`${primary} mt-6 w-full`} onClick={startChallenge}>{c.begin}</button><button type="button" className={`${secondary} mt-3 w-full`} onClick={() => move(next >= 0 ? next : 0)}>{c.practice}</button></section> : null}
+      {challengeMode ? <section className="mx-auto max-w-2xl"><p className="mb-3 text-sm font-bold text-emerald-800">{c.challenge} · {ui.quizIndex + 1}/{unit.quiz.questions.length}</p><h1 ref={heading} tabIndex={-1} className="mb-5 text-2xl font-bold outline-none">{unit.quiz.mission?.scenes[question.id]?.title[locale] ?? c.challenge}</h1><div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-8">{unit.quiz.mission?.scenes[question.id] ? <p className="mb-6 rounded-2xl bg-emerald-50 p-4 text-sm leading-7">{unit.quiz.mission.scenes[question.id].setting[locale].replace("Écris une demande polie", "Construis une demande polie avec les mots").replace("Write a polite request", "Build a polite request with the words").replace("Escribe una petición cortés", "Construye una petición cortés con las palabras")}</p> : null}<GuidedGame key={`${ui.runStartedAt}:${question.id}`} activity={question} locale={locale} value={ui.game} onChange={updateGame} onAttempt={() => {}} onContinue={nextQuestion} assessment continueLabel={ui.quizIndex === unit.quiz.questions.length - 1 ? c.result : c.next} /></div><p className="mt-3 text-xs text-stone-600">{c.noHints}</p></section> : null}
+      {ui.view === "result" ? <section className="mx-auto max-w-xl rounded-3xl border border-stone-200 bg-white p-6 text-center sm:p-8"><div className="flex justify-center"><CompanionAvatar visualId="travel" state={resultPassed ? "celebrating" : "teacher_ready"} size="md" locale={locale} compact /></div><h1 ref={heading} tabIndex={-1} className="mt-5 text-2xl font-bold outline-none">{resultPassed ? c.passed : resultHelp ? c.helped : c.missed}</h1><p className="mt-5 text-4xl font-black text-emerald-800">{completedAnswers}/{unit.quiz.questions.length}</p>{resultPassed ? <p className="mx-auto mt-5 inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-700 p-4 font-bold motion-safe:animate-[fadeIn_300ms_ease-out]"><Stamp aria-hidden />{c.stamp}</p> : null}<p className="mt-5 text-sm leading-6 text-stone-600">{c.finishNotice}</p>{resultPassed ? <button type="button" className={`${primary} mt-6 w-full`} onClick={leave}>{c.map}<ArrowRight size={18} aria-hidden /></button> : <><button type="button" className={`${primary} mt-6 w-full`} onClick={() => move(0)}>{c.practice}</button><button type="button" className={`${secondary} mt-3 w-full`} onClick={startChallenge}>{c.retry}</button></>}</section> : null}
+    </main>
+    <Dialog.Root open={overlay !== null} onOpenChange={open => { if (!open) { stopLessonAudio(); setOverlay(null); } }}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-stone-950/40" /><Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85dvh] w-[calc(100%_-_2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl bg-[#fbf9f3] p-5 shadow-xl sm:p-7" aria-describedby={undefined}><div className="flex items-start justify-between gap-4"><Dialog.Title className="text-xl font-bold text-emerald-950">{overlay === "notebook" ? c.notebook : c.tools}</Dialog.Title><Dialog.Close className={secondary} aria-label={c.close}><X size={21} aria-hidden /></Dialog.Close></div>
+      {overlay === "notebook" ? <><p className="my-4 text-sm leading-6">{c.learnedWords}</p><button type="button" className={secondary} aria-pressed={notebookMeanings} onClick={() => setNotebookMeanings(!notebookMeanings)}>{notebookMeanings ? {fr:"Masquer les traductions",en:"Hide translations",es:"Ocultar traducciones"}[locale] : c.translation}</button>{!notebookWords.length ? <p className="py-6 text-sm">{c.emptyNotebook}</p> : notebookWords.map(p => <div key={p.it} className="border-b border-stone-200 py-4"><p lang="it" className="font-bold">{p.it}</p>{notebookMeanings ? <p className="my-2 text-sm">{p.meaning[locale]}</p> : null}<ItalianModuleAudio text={p.it} locale={locale} /></div>)}</> : <div className="mt-5 space-y-6">
+        <button type="button" className={secondary} aria-pressed={effects} onClick={toggleEffects}>{effects ? <Volume2 size={19} aria-hidden /> : <VolumeX size={19} aria-hidden />}{c.sounds} · {effects ? "ON" : "OFF"}</button>
+        <section><h3 className="font-bold">{c.stamp}</h3><p className="mt-2 text-sm leading-6">{c.stampRule}</p><p className="mt-2 text-sm leading-6">{c.pointsRule}</p></section>
+        <section><h3 className="font-bold">{c.pass}</h3><p className="mt-2 text-sm leading-6">{c.passBody}</p></section>
+        <section><h3 className="font-bold">{c.match}</h3><p className="mt-2 text-sm leading-6">{c.matchBody}</p><Link href={`${teacherUrl}${locale !== "fr" ? `&lang=${locale}` : ""}`} className={`${secondary} mt-2 underline`}>{c.teacher}<ArrowRight size={16} aria-hidden /></Link></section>
+        {due.length && !challengeMode ? <button type="button" className={secondary} onClick={() => { setOverlay(null); move(steps.findIndex(s => s.id === due[0])); }}>{c.practice} ({due.length})</button> : null}
+        <button type="button" className={secondary} onClick={() => { setOverlay(null); leave(); setTour(0); }}>{c.showTour}</button>
+        <nav aria-label="Interface" className="flex gap-3">{(["fr", "en", "es"] as const).map(lang => <Link key={lang} href={italianCourseHref(lang, unit.id)} aria-current={locale === lang ? "page" : undefined} className={secondary}>{lang.toUpperCase()}</Link>)}</nav>
+      </div>}
+    </Dialog.Content></Dialog.Portal></Dialog.Root>
+  </div></ItalianAudioProvider>;
+}
