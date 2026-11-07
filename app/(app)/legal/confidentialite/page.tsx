@@ -111,15 +111,19 @@ export default async function ConfidentialitePage() {
     mdContent = fs.readFileSync(fallback, "utf8");
   }
   const addendum = yopratiqoPrivacyAddendum[lang];
+  const toc = [...TOC[lang], { id: addendum.id, label: addendum.label }];
 
   return (
     <LegalLayout
       title={TITLES[lang]}
       lastUpdated={addendum.lastUpdated}
-      toc={[...TOC[lang], { id: addendum.id, label: addendum.label }]}
+      toc={toc}
       currentPath="/legal/confidentialite"
     >
-      <LegalMarkdownBody content={`${mdContent}\n\n---\n\n${addendum.content}`} />
+      <LegalMarkdownBody
+        content={`${mdContent}\n\n---\n\n${addendum.content}`}
+        headingIds={toc.map((item) => item.id)}
+      />
     </LegalLayout>
   );
 }
