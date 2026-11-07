@@ -51,6 +51,8 @@ jobs:
             page.wait_for_function('window.__cues.length===1')
             assert page.evaluate('window.__overlap')==0
             cue=page.evaluate('window.__cues[0]');assert cue['samples']==35280 and abs(cue['peak']-.22)<.000001
+            page.locator('[data-yoppo-success]').scroll_into_view_if_needed()
+            page.wait_for_function("() => {const i=document.querySelector('[data-yoppo-success] img');return i && i.complete && i.naturalWidth>0}")
             page.screenshot(path=str(root/'live-correct-mobile.png'),full_page=True)
             click('Yoppo et mes outils');dialog=page.get_by_role('dialog')
             dialog.get_by_role('switch',name='Sons de réussite',exact=True).click()
@@ -62,7 +64,7 @@ jobs:
             page.reload();page.locator('[data-guided-italian]').wait_for();assert page.evaluate('window.__cues.length')==0
             click('Yoppo et mes outils');assert page.get_by_role('switch',name='Sons de réussite').get_attribute('aria-checked')=='false'
             assert not errors,errors
-            print('PASS exact deployed preview 2c26c9d: correct-only soft wood buffer, pronunciation priority, no wrong-answer cue, independent mute persisted on reload, zero uncaught page errors. No audio fixtures and no physical haptic claim.')
+            print('PASS exact deployed preview 2c26c9d: correct-only soft wood buffer, pronunciation priority, loaded original Yoppo celebration image, no wrong-answer cue, independent mute persisted on reload, zero uncaught page errors. No audio fixtures and no physical haptic claim.')
            except Exception:
             page.screenshot(path=str(root/'failure.png'),full_page=True)
             (root/'failure.txt').write_text(page.locator('body').inner_text());raise
