@@ -1,17 +1,17 @@
 import type { ItalianActivity } from "../italianModuleTypes";
 import type { CourseUnit, CourseLesson } from "./courseTypes";
 import type { CourseProgress } from "./courseProgress";
-import { matchesItalianAnswer } from "../italianModuleLogic";
+import { checkItalianCafe, checkItalianMap, matchesItalianAnswer } from "../italianModuleLogic";
 
 export const GUIDED_VERSION = 1;
 export const GUIDED_KEY = "yo.italian.guided.v1.u01";
 export const TOUR_KEY = "yo.italian.guided.tour.v1";
-export type GuidedStage = "scene" | "words" | "language" | "sounds" | "exercise";
+export type GuidedStage = "prepare" | "scene" | "words" | "language" | "sounds" | "exercise";
 export type GuidedStep = { id: string; lesson: number; stage: GuidedStage; activity?: ItalianActivity };
 export type GameDraft = {
   selected: string | null; tiles: number[]; pairs: string[]; left: string | null;
   turn: number; feedback: boolean | null; assisted: boolean; heard: boolean;
-  transcript: boolean; complete: boolean;
+  transcript: boolean; complete: boolean; basket?: Record<string, number>; path?: ("up" | "down" | "left" | "right")[];
 };
 export const emptyGame = (): GameDraft => ({ selected: null, tiles: [], pairs: [], left: null, turn: 0, feedback: null, assisted: false, heard: false, transcript: false, complete: false });
 export type GuidedState = {
@@ -23,8 +23,9 @@ export type GuidedState = {
 export const initialGuided = (resetAt = 0): GuidedState => ({ version: 1, resetAt, step: 0, seen: [], view: "map", resumeView: null, game: emptyGame(), quizIndex: 0, answers: [], runStartedAt: 0, submitted: false });
 
 /** The unit is still taught in full. The written/self-rated workshop is not a prerequisite. */
-export function guidedSteps(unit: CourseUnit): GuidedStep[] {
+export function guidedSteps(unit: CourseUnit, preparedLessons: readonly string[] = []): GuidedStep[] {
   return unit.lessons.flatMap((lesson, index) => [
+    ...(preparedLessons.includes(lesson.id) ? [{ id: `${lesson.id}:prepare`, lesson: index, stage: "prepare" as const }] : []),
     ...(["scene", "words", "language", "sounds"] as const).map(stage => ({ id: `${lesson.id}:${stage}`, lesson: index, stage })),
     ...lesson.activities.map(activity => ({ id: activity.id, lesson: index, stage: "exercise" as const, activity })),
   ]);
@@ -55,7 +56,8 @@ export function checkGuided(activity: ItalianActivity, game: GameDraft): boolean
     case "order": return matchesItalianAnswer(game.tiles.map(i => tokenPool(activity)[i]).join(" "), [activity.answer.join(" ")]);
     case "match": return game.pairs.length === activity.pairs.length;
     case "dialogue": return game.selected === activity.turns[game.turn]?.correctId;
-    default: return false; // The u01 pilot does not render café/map games.
+    case "cafe": return checkItalianCafe(activity, game.basket ?? {});
+    case "map": return checkItalianMap(activity, game.path ?? []);
   }
 }
 export function expectedGuided(activity: ItalianActivity): string {
@@ -69,8 +71,8 @@ export function expectedGuided(activity: ItalianActivity): string {
 function object(value: unknown): value is Record<string, unknown> { return typeof value === "object" && value !== null && !Array.isArray(value); }
 function index(value: unknown, max: number): value is number { return Number.isInteger(value) && Number(value) >= 0 && Number(value) < max; }
 /** UI state is not an entitlement or an assessment result. Invalid drafts never award anything. */
-export function parseGuided(raw: string | null, unit: CourseUnit, resetAt: number): GuidedState {
-  const fresh = initialGuided(resetAt), steps = guidedSteps(unit);
+export function parseGuided(raw: string | null, unit: CourseUnit, resetAt: number, preparedLessons: readonly string[] = []): GuidedState {
+  const fresh = initialGuided(resetAt), steps = guidedSteps(unit, preparedLessons);
   if (!raw || raw.length > 50000) return fresh;
   try {
     const s: unknown = JSON.parse(raw);
@@ -88,6 +90,8 @@ export function parseGuided(raw: string | null, unit: CourseUnit, resetAt: numbe
       !index(g.turn, activity?.kind === "dialogue" ? activity.turns.length : 1) ||
       !(g.feedback === null || typeof g.feedback === "boolean") ||
       ![g.assisted, g.heard, g.transcript, g.complete].every(v => typeof v === "boolean")) return fresh;
+    if (g.basket !== undefined && (!object(g.basket) || activity?.kind !== "cafe" || Object.entries(g.basket).some(([id,n]) => !activity.menu.some(item=>item.id===id) || !Number.isInteger(n) || Number(n)<0 || Number(n)>9))) return fresh;
+    if (g.path !== undefined && (!Array.isArray(g.path) || activity?.kind !== "map" || g.path.length>12 || !g.path.every(d=>["up","down","left","right"].includes(d)))) return fresh;
     if (s.view === "challenge" && (s.answers.length !== s.quizIndex || s.submitted)) return fresh;
     if (s.view === "result" && (s.answers.length !== unit.quiz.questions.length || !s.submitted)) return fresh;
     return s as unknown as GuidedState;

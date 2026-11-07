@@ -11,6 +11,9 @@ jobs:
   review:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
     env:
       NEXT_TELEMETRY_DISABLED: '1'
       YO_QA_DIR: /tmp/yo-guided-qa
@@ -18,20 +21,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Full repository TypeScript
-        run: npx tsc --noEmit
-      - name: Guided course tests and targeted lint
+      - name: Types, lint and both generations of player tests
         run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npx eslint components/yo/personalized lib/yo/personalized components/yo/italian/guided lib/yo/italian/course/guidedItalian.ts app/yo/langues/italien/parcours
           node --import tsx tests/yo/yopratiqoGuidedItalian.test.ts
           node --import tsx tests/yo/yopratiqoGuidedItalianPlayer.test.tsx
-          npx eslint components/yo/italian/guided lib/yo/italian/course/guidedItalian.ts app/yo/langues/italien/parcours/page.tsx 'app/yo/langues/italien/parcours/[unitId]/page.tsx'
+          node --import tsx tests/yo/yopratiqoPersonalizedItalian.test.ts
+          node --import tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx
       - name: Course and launch regressions
         run: |
+          set -euo pipefail
           npm run test:yo-italian-course
           npm run test:yo-italian-pilot
           npm run test:yo-continuity
@@ -44,26 +51,32 @@ jobs:
         run: |
           python -m pip install playwright==1.57.0
           python -m playwright install --with-deps chromium
-      - name: Actual component browser walkthrough
+      - name: Actual personalized route walkthrough
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
-          YO_PREVIEW_URL: https://pratiqo-git-feat-yo-g-9c6e79-marcandretheberge-dotcoms-projects.vercel.app/yo/langues/italien/parcours/u01
         run: |
-          node --import tsx scripts/prepare_yo_guided_review.ts
+          set -euo pipefail
+          node --import tsx scripts/prepare_yo_personalized_review.ts
           ./node_modules/.bin/next dev .qa-guided --webpack -p 3129 > "$YO_QA_DIR/server.log" 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" || true' EXIT
           for attempt in $(seq 1 60); do
-            if curl --silent --fail http://127.0.0.1:3129/?lang=en >/dev/null; then break; fi
+            if curl --silent --fail http://127.0.0.1:3129/yo/langues/italien/parcours?lang=en >/dev/null; then break; fi
             sleep 2
           done
-          python tests/yo/yopratiqoGuidedItalian.browser.py | tee "$YO_QA_DIR/browser.log"
-          python tests/yo/yopratiqoGuidedItalianPreview.browser.py | tee "$YO_QA_DIR/preview.log"
+          python tests/yo/yopratiqoPersonalizedItalian.browser.py 2>&1 | tee "$YO_QA_DIR/browser.log"
+      - name: Deployed preview smoke with real recorded audio
+        env:
+          YO_PREVIEW_URL: https://pratiqo-git-feat-yo-g-9c6e79-marcandretheberge-dotcoms-projects.vercel.app/yo/langues/italien/parcours/u01
+        run: |
+          set -euo pipefail
+          python tests/yo/yopratiqoPersonalizedItalianPreview.browser.py 2>&1 | tee "$YO_QA_DIR/preview.log"
       - name: Record reviewed source hashes
         if: always()
         run: |
           mkdir -p "$YO_QA_DIR"
-          git ls-files -s components/yo/italian/guided lib/yo/italian/course/guidedItalian.ts app/yo/langues/italien/parcours tests/yo/yopratiqoGuidedItalian* > "$YO_QA_DIR/source-hashes.txt"
+          git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
+          git ls-files -s components/yo/personalized lib/yo/personalized components/yo/italian/guided lib/yo/italian/course/guidedItalian.ts app/yo/langues/italien/parcours > "$YO_QA_DIR/source-hashes.txt"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

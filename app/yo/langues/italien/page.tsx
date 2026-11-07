@@ -34,7 +34,7 @@ export default async function YoItalianLandingPage({
         eyebrow: lstr("Cours italien · Fondations A1", "Italian course · A1 foundations", "Curso de italiano · Bases A1"),
         href: buildYoLocaleHref("/yo/langues/italien/parcours", locale),
         title: lstr("Italien 1 · La vie en italien", "Italian 1 · Life in Italian", "Italiano 1 · La vida en italiano"),
-        body: lstr("Un cours progressif avec Yoppo : douze unités, trente-six leçons, des jeux, des lectures, des bilans et des projets écrits et oraux.", "A progressive course with Yoppo: twelve units, thirty-six lessons, games, readings, checkpoints and written and spoken projects.", "Un curso progresivo con Yoppo: doce unidades, treinta y seis lecciones, juegos, lecturas, balances y proyectos escritos y orales."),
+        body: lstr("Un cours progressif avec Yoppo : douze unités, trente-six leçons, des jeux, des lectures, des bilans et des missions guidées et un carnet imprimable.", "A progressive course with Yoppo: twelve units, thirty-six lessons, games, readings, checkpoints and guided missions and a printable word bank.", "Un curso progresivo con Yoppo: doce unidades, treinta y seis lecciones, juegos, lecturas, balances y misiones guiadas y un banco de palabras imprimible."),
         cta: lstr("Explorer le cours italien", "Explore the Italian course", "Explorar el curso de italiano"),
       }}
     />
