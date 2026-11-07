@@ -11,9 +11,9 @@ import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { beginLessonAudio } from "@/lib/yo/audio/lessonAudioActivity";
 
 const copy = {
-  fr: { play: "Écouter", stop: "Arrêter", slow: "Ralentir", aiVoice: "Voix IA", unavailable: "Cet enregistrement est indisponible. Utilise la transcription.", failed: "La lecture a été interrompue ou n’a pas démarré. Réessaie ou lis la transcription." },
-  en: { play: "Listen", stop: "Stop", slow: "Slow down", aiVoice: "AI voice", unavailable: "This recording is unavailable. Use the transcript.", failed: "Playback was interrupted or did not start. Try again or use the transcript." },
-  es: { play: "Escuchar", stop: "Detener", slow: "Más lento", aiVoice: "Voz IA", unavailable: "Esta grabación no está disponible. Usa la transcripción.", failed: "La reproducción se interrumpió o no comenzó. Reintenta o lee la transcripción." },
+  fr: { play: "Écouter", stop: "Arrêter", slow: "Ralentir", unavailable: "Cet enregistrement est indisponible. Utilise la transcription.", failed: "La lecture a été interrompue ou n’a pas démarré. Réessaie ou lis la transcription." },
+  en: { play: "Listen", stop: "Stop", slow: "Slow down", unavailable: "This recording is unavailable. Use the transcript.", failed: "Playback was interrupted or did not start. Try again or use the transcript." },
+  es: { play: "Escuchar", stop: "Detener", slow: "Más lento", unavailable: "Esta grabación no está disponible. Usa la transcripción.", failed: "La reproducción se interrumpió o no comenzó. Reintenta o lee la transcripción." },
 };
 
 type AudioSession = { audio: HTMLAudioElement; dispose: () => void };
@@ -146,7 +146,6 @@ export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianMod
       className="min-h-11 rounded-full px-2 text-xs font-medium text-slate-600 underline decoration-dotted underline-offset-4 focus-visible:outline focus-visible:outline-2">
       {slow ? "0.78×" : "1×"} · {copy[locale].slow}
     </button>
-    <span className="text-[10px] text-slate-500">{copy[locale].aiVoice}</span>
     {error ? <span role="status" className="basis-full text-xs text-amber-900">{copy[locale][error]}</span> : null}
   </span>;
 }
