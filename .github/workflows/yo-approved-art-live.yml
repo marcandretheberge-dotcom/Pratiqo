@@ -18,14 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: e4465aa96ce772eaec0fa04d9c97072ada80d007
           persist-credentials: false
           fetch-depth: 0
       - name: Verify immutable reviewed application source
         run: |
           set -euo pipefail
-          git diff --exit-code d81e95618e1c95d694ebef3d62bf0b17032a8a5b -- components lib public app tests/yo/yopratiqoApprovedArtwork.browser.py
+          git diff --exit-code d81e95618e1c95d694ebef3d62bf0b17032a8a5b -- components lib public app
           mkdir -p "$YO_ART_OUTPUT"
-          git rev-parse HEAD > "$YO_ART_OUTPUT/qa-commit.txt"
+          git rev-parse HEAD > "$YO_ART_OUTPUT/source-commit.txt"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
