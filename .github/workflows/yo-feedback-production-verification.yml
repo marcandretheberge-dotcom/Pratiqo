@@ -51,7 +51,6 @@ jobs:
            page.set_default_timeout(30000)
            errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
            # Instrument actual media state, not a counter affected by listener registration order.
-           # The product releases its audio-busy flag in its ended listener before later listeners.
            # No playback, vibration, response, or browser security setting is replaced.
            page.add_init_script('''
            window.__cues=[];window.__media=[];window.__heard=0;window.__overlap=0;window.__pauses=[];
@@ -90,17 +89,27 @@ jobs:
             page.wait_for_function('() => window.__heard>0')
             assert page.evaluate('() => window.__cues.length')==0
             click('Personnage portant le prénom Luca');click('Vérifier');assert page.evaluate('() => window.__cues.length')==0
-            click('Réessayer');click('Personnage portant le prénom Nina');click('Vérifier')
+            # Retry intentionally stops previous lesson audio. Start a new real recording, then
+            # validate while it is playing to measure whether success itself cuts/overlaps speech.
+            click('Réessayer');click('Personnage portant le prénom Nina')
+            prior_heard=page.evaluate('() => window.__heard')
+            click('Écouter : l’expression')
+            page.wait_for_function('(before) => window.__heard>before',arg=prior_heard)
+            assert page.evaluate('() => window.__media.some(m=>!m.paused&&!m.ended&&m.readyState>=2)')
+            pause_start=page.evaluate('() => window.__pauses.length')
+            click('Vérifier')
             page.wait_for_function('() => window.__cues.length===1')
             audio_evidence=page.evaluate('() => ({cues:window.__cues,overlap:window.__overlap,pauses:window.__pauses})')
+            audio_evidence['success_pause_start']=pause_start
             (root/'audio-evidence.json').write_text(json.dumps(audio_evidence,indent=2))
             assert audio_evidence['overlap']==0,audio_evidence
-            assert not any(not p['ended'] and not p['paused'] and p['time']>.02 and p['duration'] and p['time']<p['duration']-.05 for p in audio_evidence['pauses']),audio_evidence
+            success_pauses=audio_evidence['pauses'][pause_start:]
+            assert not any(not p['ended'] and not p['paused'] and p['time']>.02 and p['duration'] and p['time']<p['duration']-.05 for p in success_pauses),audio_evidence
             cue=audio_evidence['cues'][0];assert cue['samples']==35280 and abs(cue['peak']-.22)<.000001
             page.locator('[data-yoppo-success]').scroll_into_view_if_needed()
             page.wait_for_function("() => {const i=document.querySelector('[data-yoppo-success] img');return i && i.complete && i.naturalWidth>0}")
             page.screenshot(path=str(root/'production-correct-mobile.png'),full_page=True)
-            log('PASS public production: beginner onboarding, real recorded pronunciation, one correct-only wood cue with approved sample length/peak, no wrong-answer cue, no overlapping or cut-off pronunciation, original Yoppo image loaded.')
+            log('PASS public production: beginner onboarding, real recorded pronunciation, correct answer submitted during playback, one wood cue only after speech finishes, no wrong-answer cue, no overlapping or cut-off pronunciation from success, original Yoppo image loaded.')
             click('Yoppo et mes outils');dialog=page.get_by_role('dialog')
             settings_before=dialog.get_by_role('switch').evaluate_all('(items)=>items.map(i=>({label:i.getAttribute("aria-label")||i.textContent,value:i.getAttribute("aria-checked")}))')
             dialog.get_by_role('switch',name='Sons de réussite',exact=True).click()
