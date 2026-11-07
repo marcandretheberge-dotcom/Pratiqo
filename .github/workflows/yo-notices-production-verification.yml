@@ -1,0 +1,108 @@
+name: Yo notices production verification
+on:
+  push:
+    branches: [qa/yo-notices-production-20261107]
+    paths: [.github/workflows/yo-notices-production-verification.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ade5bb6072572c2f49e79f158d63b825b5fa8266
+      - name: Assert exact tested source tree
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^{tree})" = "$(git rev-parse d4d70c1524d615d280c7270f95168ce461cc4675^{tree})"
+          mkdir -p /tmp/yo-notices-production
+          git rev-parse HEAD HEAD^{tree} > /tmp/yo-notices-production/source.txt
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Verify actual production without backend writes
+        run: |
+          set -euo pipefail
+          python - <<'PY' 2>&1 | tee /tmp/yo-notices-production/result.log
+          import json
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          root=Path('/tmp/yo-notices-production')
+          host='https://www.pratiqo.ca'
+          removed=['Préférences sur cet appareil uniquement.', 'Rien n’est envoyé aux professeurs.', 'Aucun âge ni aucune nationalité personnelle demandés.', 'Preferences stay on this device.', 'Nothing is sent to teachers.', 'Las preferencias quedan en este dispositivo.']
+          badges=['Voix IA', 'AI voice', 'Voz IA', 'Voix de l’appareil · aperçu', 'Device voice · preview', 'Voz del dispositivo · vista previa']
+          report=[]
+          def log(s):
+           report.append(s);print(s,flush=True)
+          with sync_playwright() as pw:
+           browser=pw.chromium.launch()
+           try:
+            for lang in ['fr','en','es']:
+             context=browser.new_context(viewport={'width':390,'height':844},locale='en-CA',reduced_motion='reduce')
+             context.add_cookies([{'name':'pratiqo-locale','value':'en','url':host}])
+             page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.set_default_timeout(30000)
+             page.add_init_script("window.__played=0;const p=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(...a){this.addEventListener('playing',()=>{window.__played++},{once:true});return p.apply(this,a)};")
+             try:
+              response=page.goto(host+'/yo/langues/italien/parcours?lang='+lang,timeout=60000)
+              assert response and response.status==200
+              onboarding=page.locator('[data-yoppo-onboarding]');onboarding.wait_for()
+              text=onboarding.inner_text();assert not any(note in text for note in removed)
+              banner=page.get_by_test_id('cookie-consent-banner')
+              banner.wait_for();banner.get_by_role('button',name='Necessary only',exact=True).click();banner.wait_for(state='hidden')
+              page.screenshot(path=str(root/f'onboarding-{lang}.png'),full_page=True)
+              log(f'PASS {lang}: public onboarding loads without the removed preferences paragraph.')
+              if lang=='fr':
+               for name in ['Je pars de zéro','Voyager','Continuer','Commencer ici']:
+                later=page.get_by_role('button',name='Not now',exact=True)
+                if later.count() and later.is_visible():later.click()
+                onboarding.get_by_role('button',name=name,exact=True).click()
+               shell=page.locator('[data-guided-italian]');shell.wait_for()
+               for name in ['Passer la visite','Commencer ma mission','Construire mon vocabulaire']:
+                shell.get_by_role('button',name=name,exact=True).click()
+               page.locator('[data-visual-vocabulary]').wait_for()
+               page.wait_for_function('() => window.__played > 0')
+               text=shell.inner_text();assert not any(badge in text for badge in badges)
+               assert shell.get_by_role('button',name='1× · Ralentir',exact=True).count()==1
+               shell.get_by_role('button',name='Personnage portant le prénom Nina',exact=True).click()
+               shell.get_by_role('button',name='Vérifier',exact=True).click()
+               assert shell.get_by_text('Bien joué !',exact=True).count()==1
+               page.screenshot(path=str(root/'audio-and-correct-fr.png'),full_page=True)
+               log('PASS fr: real recording plays, audio badges absent, slow-down control retained, correct image still validates.')
+              context.add_cookies([{'name':'pratiqo-locale','value':lang,'url':host}])
+              response=page.goto(host+'/legal/confidentialite',timeout=60000);assert response and response.status==200
+              anchor=page.locator('#yopratiqo-voix-preferences');anchor.wait_for()
+              heading={'fr':'voix de synthèse','en':'synthetic voices','es':'voces sintéticas'}[lang]
+              assert heading in anchor.inner_text()
+              assert page.locator('a[href="#yopratiqo-voix-preferences"]').count()>0
+              h2=page.locator('h2').all_text_contents();assert len(h2)>=23
+              body=page.locator('body').inner_text()
+              assert {'fr':'intelligence artificielle','en':'artificial intelligence','es':'inteligencia artificial'}[lang] in body
+              anchor.scroll_into_view_if_needed();page.screenshot(path=str(root/f'privacy-{lang}.png'),full_page=True)
+              log(f'PASS {lang}: synthetic-voice disclosure and local preferences retained in privacy, stable section 23 anchor and table-of-contents link present.')
+              assert not errors,errors
+             except Exception:
+              page.screenshot(path=str(root/f'failure-{lang}.png'),full_page=True)
+              (root/f'failure-{lang}.txt').write_text(page.locator('body').inner_text())
+              raise
+             finally:context.close()
+            log('PASS zero uncaught browser errors; no audio fixtures, policy bypass, account or backend mutation.')
+           finally:browser.close()
+          (root/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-notices-production-ade5bb6
+          path: /tmp/yo-notices-production
+          retention-days: 7
