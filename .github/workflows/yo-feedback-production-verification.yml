@@ -1,0 +1,112 @@
+name: Yo feedback production verification
+on:
+  push:
+    branches: [qa/yo-feedback-production-20261107]
+    paths: [.github/workflows/yo-feedback-production-verification.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 334d05946a9aed060f3e42d0c73b9625deb53b23
+          persist-credentials: false
+      - name: Assert exact reviewed production source
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/yo-feedback-production
+          test "$(git rev-parse HEAD)" = "334d05946a9aed060f3e42d0c73b9625deb53b23"
+          test "$(git rev-parse HEAD^{tree})" = "c563ec37673f04abf6a3bbf7af4a04f7cac00d04"
+          sha256sum -c tests/yo/feedback-source.sha256 | tee /tmp/yo-feedback-production/source-checks.log
+          git rev-parse HEAD HEAD^{tree} > /tmp/yo-feedback-production/source.txt
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          set -euo pipefail
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Public production audio and settings smoke
+        run: |
+          set -euo pipefail
+          python - <<'PY' 2>&1 | tee /tmp/yo-feedback-production/result.log
+          import json
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          root=Path('/tmp/yo-feedback-production')
+          url='https://www.pratiqo.ca/yo/langues/italien/parcours?lang=fr'
+          results=[]
+          def log(message):
+           print(message,flush=True);results.append(message)
+          with sync_playwright() as pw:
+           browser=pw.chromium.launch()
+           page=browser.new_page(viewport={'width':390,'height':844},reduced_motion='reduce')
+           page.set_default_timeout(30000)
+           errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+           # Instrument real playback; never replace audio, vibration, or browser policy.
+           page.add_init_script('''window.__cues=[];window.__speech=0;window.__heard=0;window.__overlap=0;const start=AudioBufferSourceNode.prototype.start;AudioBufferSourceNode.prototype.start=function(...args){window.__cues.push({samples:this.buffer?.length,peak:Math.max(...this.buffer.getChannelData(0).map(Math.abs))});if(window.__speech>0)window.__overlap++;return start.apply(this,args)};const play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(...args){this.addEventListener('playing',()=>{window.__speech++;window.__heard++},{once:true});this.addEventListener('ended',()=>{window.__speech=Math.max(0,window.__speech-1)},{once:true});return play.apply(this,args)};''')
+           def click(label):page.get_by_role('button',name=label,exact=True).click()
+           try:
+            response=page.goto(url,timeout=60000);assert response and response.status==200
+            page.locator('[data-yoppo-onboarding]').wait_for(timeout=60000)
+            banner=page.get_by_test_id('cookie-consent-banner');banner.wait_for()
+            banner.get_by_role('button',name='Necessary only',exact=True).click();banner.wait_for(state='hidden')
+            def dismiss_install():
+             button=page.get_by_role('button',name='Not now',exact=True)
+             if button.count() and button.is_visible():button.click()
+            for label in ['Je pars de zéro','Voyager','Continuer','Commencer ici']:
+             dismiss_install();click(label)
+            page.locator('[data-guided-italian]').wait_for();click('Passer la visite');click('Commencer ma mission');click('Construire mon vocabulaire')
+            page.locator('[data-visual-vocabulary]').wait_for()
+            page.wait_for_function('window.__heard>0')
+            assert page.evaluate('window.__cues.length')==0
+            click('Personnage portant le prénom Luca');click('Vérifier');assert page.evaluate('window.__cues.length')==0
+            click('Réessayer');click('Personnage portant le prénom Nina');click('Vérifier')
+            page.wait_for_function('window.__cues.length===1')
+            assert page.evaluate('window.__overlap')==0
+            cue=page.evaluate('window.__cues[0]');assert cue['samples']==35280 and abs(cue['peak']-.22)<.000001
+            page.locator('[data-yoppo-success]').scroll_into_view_if_needed()
+            page.wait_for_function("() => {const i=document.querySelector('[data-yoppo-success] img');return i && i.complete && i.naturalWidth>0}")
+            page.screenshot(path=str(root/'production-correct-mobile.png'),full_page=True)
+            log('PASS public production: beginner onboarding, real recorded pronunciation, one correct-only wood cue with approved sample length/peak, no wrong-answer cue or pronunciation overlap, original Yoppo image loaded.')
+            click('Yoppo et mes outils');dialog=page.get_by_role('dialog')
+            settings_before=dialog.get_by_role('switch').evaluate_all('(items)=>items.map(i=>({label:i.getAttribute("aria-label")||i.textContent,value:i.getAttribute("aria-checked")}))')
+            dialog.get_by_role('switch',name='Sons de réussite',exact=True).click()
+            assert dialog.get_by_role('switch',name='Sons de réussite').get_attribute('aria-checked')=='false'
+            page.screenshot(path=str(root/'production-settings-mobile.png'),full_page=True)
+            page.keyboard.press('Escape');click('Continuer')
+            click('Une personne demande le prénom sur un porte-nom');click('Vérifier')
+            page.wait_for_timeout(600);assert page.evaluate('window.__cues.length')==1
+            page.reload();page.locator('[data-guided-italian]').wait_for();assert page.evaluate('window.__cues.length')==0
+            click('Yoppo et mes outils');assert page.get_by_role('switch',name='Sons de réussite').get_attribute('aria-checked')=='false'
+            page.keyboard.press('Escape')
+            log('PASS saved sound preference: muting suppresses later success sound; reload stays silent and retains mute. Browser haptic control only, no physical-device claim.')
+            for width in [320,390,1280]:
+             page.set_viewport_size({'width':width,'height':900})
+             assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),f'overflow at {width}'
+            log('PASS production map widths: 320, 390, 1280 px without horizontal overflow.')
+            for path in ['/', '/yo', '/yo/langues/italien', '/yo/langues/italien/parcours/u01/vocabulaire?lang=fr', '/yo/langues/italien/parcours/u01/vocabulaire?lang=en', '/yo/langues/italien/parcours/u01/vocabulaire?lang=es', '/trouver-un-prof?q=italien']:
+             result=page.request.get('https://www.pratiqo.ca'+path,timeout=60000)
+             assert result.status==200,(path,result.status)
+            assert not errors,errors
+            log('PASS homepage, language hub, Italian landing, three translated print banks and teacher search: HTTP 200. Zero uncaught page errors during the browser flow.')
+            (root/'report.json').write_text(json.dumps({'release':'334d05946a9aed060f3e42d0c73b9625deb53b23','url':url,'results':results,'cue':cue,'initial_settings':settings_before,'page_errors':errors},indent=2))
+           except Exception:
+            page.screenshot(path=str(root/'failure.png'),full_page=True)
+            (root/'failure.txt').write_text(page.locator('body').inner_text())
+            (root/'page-errors.json').write_text(json.dumps(errors,indent=2));raise
+           finally:browser.close()
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-feedback-production-334d059
+          path: /tmp/yo-feedback-production
+          retention-days: 7
