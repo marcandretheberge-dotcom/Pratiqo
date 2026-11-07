@@ -26,9 +26,9 @@ type View=ReturnType<typeof mount>;
 function solve(v:View,c:IntroCourse,e:Exercise){
  const box=within(v.container.querySelector("[data-intro-question]") as HTMLElement);
  if(e.kind==="listen")click(box.getByRole("button",{name:"Listen to the message"}));
- if(e.kind==="order"){const group=within(box.getByRole("group",{name:"Available words"}));for(const part of c.phrases.find(p=>p.id===e.answer)!.parts!){const b=group.getAllByRole("button",{name:part,exact:true}).find(b=>!(b as HTMLButtonElement).disabled)!;click(b);}}
+ if(e.kind==="order"){const group=within(box.getByRole("group",{name:"Available words"}));for(const part of c.phrases.find(p=>p.id===e.answer)!.parts!){const b=group.getAllByRole("button",{name:part}).find(b=>!(b as HTMLButtonElement).disabled)!;click(b);}}
  else click(box.getByRole("button",{name:(name:string)=>name.startsWith(c.phrases.find(p=>p.id===e.answer)!.text)}));
- click(box.getByRole("button",{name:"Check",exact:true}));click(box.getByRole("button",{name:"Continue",exact:true}));
+ click(box.getByRole("button",{name:"Check"}));click(box.getByRole("button",{name:"Continue"}));
 }
 let tests=0;
 for(const c of introCourses){
@@ -41,9 +41,9 @@ for(const c of introCourses){
  click(v.getByRole('button',{name:'Start my mission'}));
  for(const step of courseSteps(c)){
   const m=c.missions[step.mission];
-  if(step.kind==='visual'){const item=m.visuals[step.index%m.visuals.length];const group=within(v.getByRole('group',{name:'Four images'}));assert.equal(group.getAllByRole('button').length,4);click(group.getByRole('button',{name:item.pictures.find(p=>p.id===item.answer)!.alt.en}));click(v.getByRole('button',{name:'Check',exact:true}));click(v.getByRole('button',{name:'Continue',exact:true}));}
+  if(step.kind==='visual'){const item=m.visuals[step.index%m.visuals.length];const group=within(v.getByRole('group',{name:'Four images'}));assert.equal(group.getAllByRole('button').length,4);click(group.getByRole('button',{name:item.pictures.find(p=>p.id===item.answer)!.alt.en}));click(v.getByRole('button',{name:'Check'}));click(v.getByRole('button',{name:'Continue'}));}
   else if(step.kind==='exercise')solve(v,c,m.practice[step.index]);
-  else click(v.getByRole('button',{name:step.kind==='words'?'Enter the mission':'Continue',exact:true}));
+  else click(v.getByRole('button',{name:step.kind==='words'?'Enter the mission':'Continue'}));
   assert.equal(v.container.querySelectorAll('textarea,input[type=text],input[type=checkbox]').length,0);
  }
  for(const e of c.final)solve(v,c,e);
