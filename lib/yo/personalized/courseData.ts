@@ -1,3 +1,4 @@
+import { withApprovedArtwork } from "./approvedVocabulary";
 import { italianCourseUnits } from "../italian/course/courseData";
 import { firstMeetingUnit, firstMeetingBank, firstMeetingVisuals } from "./firstMeeting";
 import type { CourseCatalog, CourseUnit } from "../italian/course/courseTypes";
@@ -28,4 +29,5 @@ export function moduleBank(unit:CourseUnit):WordBankEntry[] {
  const phrases=unit.lessons.flatMap(l=>[...l.vocabulary,...l.grammar.examples]);
  return [...new Map(phrases.map(p=>[p.it,p])).values()].map(p=>({...p,group:"expressions" as const}));
 }
-export function moduleVisuals(unit:CourseUnit){return unit.id==="u01"?firstMeetingVisuals:{};}
+const approvedFirstMeetingVisuals = withApprovedArtwork(firstMeetingVisuals);
+export function moduleVisuals(unit:CourseUnit){return unit.id==="u01"?approvedFirstMeetingVisuals:{};}
