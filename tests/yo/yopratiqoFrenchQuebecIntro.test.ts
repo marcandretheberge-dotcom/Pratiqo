@@ -35,6 +35,9 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { getYoPublicLanguages } from "@/lib/yo/publicCatalog";
+import { findIntroCourse } from "@/lib/yo/shared/course";
+import { catalogRouteExists } from "./sharedRouteAssertion";
 
 const REPO_ROOT = process.cwd();
 function read(relativePath: string): string {
@@ -82,10 +85,14 @@ test("data file and page route both exist on disk", () => {
   assert.ok(exists(PAGE_PATH), `${PAGE_PATH} must exist`);
 });
 
-test("language hub links to the new Quebec French intro", () => {
+test("language hub opens the guided Quebec French entry and preserves the legacy intro", () => {
   assert.match(hubSrc, /<YoLanguageQuickStart locale=\{locale\}/);
   assert.match(read("components/yo/YoLanguageQuickStart.tsx"), /getYoPublicLanguages/);
-  assert.match(read("lib/yo/publicCatalog.ts"), /\/yo\/langues\/francais-quebec\/intro/);
+  const path = getYoPublicLanguages().find(c => c.slug === "francais-quebec")?.path;
+  assert.equal(path, "/yo/langues/francais-quebec/demarrer");
+  assert.ok(catalogRouteExists(path!));
+  assert.equal(findIntroCourse("francais-quebec")?.legacyPath, "/yo/langues/francais-quebec/intro");
+  assert.ok(exists(PAGE_PATH));
 });
 
 // ─── 2. Module shape ───────────────────────────────────────────────

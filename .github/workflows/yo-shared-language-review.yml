@@ -36,16 +36,27 @@ jobs:
       - name: Language and complete player checks
         run: |
           set -euo pipefail
-          node --import tsx tests/yo/yopratiqoSharedIntro.test.ts
-          node --import tsx tests/yo/yopratiqoSharedIntroPlayer.test.tsx
-          node --import tsx tests/yo/yopratiqoReadableLanguage.test.tsx
-          node --import tsx tests/yo/yopratiqoEasyOnboarding.test.tsx
-          node --import tsx tests/yo/yopratiqoLanguageCatalogAppShell.test.ts
-          node --import tsx tests/yo/yopratiqoAllLanguageIntrosConsistency.test.ts
-          node --import tsx tests/yo/yopratiqoSeoCatalog.test.ts
-          npm run test:yo-journey
-          npm run test:yo-continuity
-          npm run test:launch-critical
+          mkdir -p "$YO_QA_DIR/tests"
+          for test in yopratiqoSharedIntro.test.ts yopratiqoSharedIntroPlayer.test.tsx yopratiqoReadableLanguage.test.tsx yopratiqoEasyOnboarding.test.tsx yopratiqoLanguageCatalogAppShell.test.ts yopratiqoAllLanguageIntrosConsistency.test.ts yopratiqoSeoCatalog.test.ts; do
+            if node --import tsx "tests/yo/$test" > "$YO_QA_DIR/tests/$test.log" 2>&1; then
+              echo "PASS $test"
+              tail -n 3 "$YO_QA_DIR/tests/$test.log"
+            else
+              echo "FAIL $test"
+              tail -n 100 "$YO_QA_DIR/tests/$test.log"
+              exit 1
+            fi
+          done
+          for suite in test:yo-journey test:yo-continuity test:launch-critical; do
+            if npm run "$suite" > "$YO_QA_DIR/tests/${suite//:/-}.log" 2>&1; then
+              echo "PASS $suite"
+              tail -n 5 "$YO_QA_DIR/tests/${suite//:/-}.log"
+            else
+              echo "FAIL $suite"
+              tail -n 100 "$YO_QA_DIR/tests/${suite//:/-}.log"
+              exit 1
+            fi
+          done
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
