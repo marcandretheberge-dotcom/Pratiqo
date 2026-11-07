@@ -1,0 +1,46 @@
+name: Yo easy onboarding live verification
+on:
+  push:
+    branches: [qa/yo-easy-onboarding-live-20261107]
+    paths: [.github/workflows/yo-easy-onboarding-live.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        shell: bash
+    env:
+      YO_QA_DIR: /tmp/yo-onboarding-live
+      YO_ONBOARDING_URL: https://pratiqo-ity45j788-marcandretheberge-dotcoms-projects.vercel.app/yo/langues/italien/parcours
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 33c160bb6e0599555c981e9434a28be9d84104c1
+          persist-credentials: false
+      - name: Exact reviewed source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 33c160bb6e0599555c981e9434a28be9d84104c1
+          test "$(git hash-object components/yo/personalized/ItalianOnboarding.tsx)" = 8825f23d5b127255013da700e81018c2d28942bd
+          mkdir -p "$YO_QA_DIR"
+          git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Real deployed onboarding, no fixtures or policy bypass
+        run: |
+          set -euo pipefail
+          python tests/yo/yopratiqoEasyOnboarding.browser.py 2>&1 | tee "$YO_QA_DIR/live.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-easy-onboarding-live
+          path: /tmp/yo-onboarding-live
+          retention-days: 7
