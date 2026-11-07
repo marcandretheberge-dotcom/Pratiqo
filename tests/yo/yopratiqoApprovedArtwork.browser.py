@@ -60,6 +60,7 @@ with sync_playwright() as p:
   click(page,'Continuer')
   image=page.locator('[data-vocabulary-artwork] img').first
   image.dispatch_event('error')
+  page.locator('[data-artwork-unavailable]').wait_for(state='visible')
   assert page.locator('[data-artwork-unavailable]').count()==1
   assert page.locator('[data-choice-id]').count()==4
   log('Failed image keeps an explicit text alternative and four usable choices.')
