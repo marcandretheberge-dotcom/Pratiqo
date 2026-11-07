@@ -17,7 +17,7 @@ with sync_playwright() as pw:
  try:
   page.goto(base+'?lang=en');page.locator('[data-yoppo-onboarding]').wait_for(timeout=60000)
   for name in ['I’m starting from zero','Travel']:click(name)
-  page.get_by_role('radio',name='1 h / week',exact=True).check()
+  page.locator('[data-pace-choice="60"]').click()
   for name in ['Continue','Start here']:click(name)
   page.locator('[data-guided-italian]').wait_for();click('Skip the tour');click('Start my mission');click('Build my vocabulary')
   page.locator('[data-visual-vocabulary]').wait_for();page.wait_for_timeout(600)

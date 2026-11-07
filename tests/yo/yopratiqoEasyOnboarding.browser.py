@@ -32,7 +32,9 @@ with sync_playwright() as pw:
   browser=getattr(pw,engine).launch()
   for locale,(zero,goal,next_label,start,back,change,other,week) in texts.items():
    ctx=browser.new_context(viewport={'width':390,'height':660},has_touch=True,is_mobile=True,reduced_motion='reduce')
-   page=ctx.new_page();page.set_default_timeout(20000);errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+   page=ctx.new_page();page.set_default_timeout(20000);errors=[];failed_requests=[]
+   page.on('pageerror',lambda e:errors.append(str(e)))
+   page.on('requestfailed',lambda request:failed_requests.append({'url':request.url,'failure':request.failure}))
    try:
     page.goto(base+'?lang='+locale,timeout=60000);page.locator('[data-yoppo-onboarding]').wait_for(timeout=60000);notices(page)
     page.get_by_role('button',name=zero,exact=True).tap();page.get_by_role('button',name=goal,exact=True).tap()
@@ -80,10 +82,15 @@ with sync_playwright() as pw:
     profile=page.evaluate("() => JSON.parse(localStorage.getItem('yo.learning-profile.v1.it'))")
     assert profile['weeklyMinutes']==90 and profile['startUnitId']=='u01' and profile['goal']=='travel'
     assert page.evaluate("() => localStorage.getItem('yo.italian.course.first-meeting.v2')") is None
-    page.reload();page.locator('[data-guided-italian]').wait_for();assert page.locator('[data-yoppo-onboarding]').count()==0
+    # Let the newly opened course finish loading before the deliberate reload.
+    # Do not interrupt a just-started route prefetch and mistake its cancellation for the tested flow.
+    page.wait_for_load_state('networkidle')
+    page.reload();page.locator('[data-guided-italian]').wait_for();page.wait_for_load_state('networkidle')
+    assert page.locator('[data-yoppo-onboarding]').count()==0
     assert not errors,errors
     log(f'{engine}/{locale}: all pace cards respond to touch and keyboard, exact custom pace saved, optional picker, guide in view, responsive summary and silent resume passed.')
    except Exception:
+    (out/f'errors-{engine}-{locale}.json').write_text(json.dumps({'pageErrors':errors,'failedRequests':failed_requests},indent=2))
     page.screenshot(path=str(out/f'failure-{engine}-{locale}.png'),full_page=True)
     (out/f'failure-{engine}-{locale}.txt').write_text(page.locator('body').inner_text());raise
    finally:ctx.close()

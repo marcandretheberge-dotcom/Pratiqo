@@ -20,7 +20,7 @@ with sync_playwright() as pw:
   dismiss_install()
   for label in ['Je pars de zéro','Voyager']:
    dismiss_install();onb.get_by_role('button',name=label,exact=True).click()
-  onb.get_by_role('radio',name='1 h / semaine',exact=True).check()
+  onb.locator('[data-pace-choice="60"]').click()
   for label in ['Continuer','Commencer ici']:
    dismiss_install();onb.get_by_role('button',name=label,exact=True).click()
   shell=page.locator('[data-guided-italian]');shell.wait_for();shell.get_by_role('button',name='Passer la visite',exact=True).click()
