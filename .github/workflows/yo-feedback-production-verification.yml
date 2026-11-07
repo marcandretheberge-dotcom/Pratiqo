@@ -65,13 +65,14 @@ jobs:
              dismiss_install();click(label)
             page.locator('[data-guided-italian]').wait_for();click('Passer la visite');click('Commencer ma mission');click('Construire mon vocabulaire')
             page.locator('[data-visual-vocabulary]').wait_for()
-            page.wait_for_function('window.__heard>0')
-            assert page.evaluate('window.__cues.length')==0
-            click('Personnage portant le prénom Luca');click('Vérifier');assert page.evaluate('window.__cues.length')==0
+            # Function predicates work under CSP; string-expression predicates invoke eval.
+            page.wait_for_function('() => window.__heard>0')
+            assert page.evaluate('() => window.__cues.length')==0
+            click('Personnage portant le prénom Luca');click('Vérifier');assert page.evaluate('() => window.__cues.length')==0
             click('Réessayer');click('Personnage portant le prénom Nina');click('Vérifier')
-            page.wait_for_function('window.__cues.length===1')
-            assert page.evaluate('window.__overlap')==0
-            cue=page.evaluate('window.__cues[0]');assert cue['samples']==35280 and abs(cue['peak']-.22)<.000001
+            page.wait_for_function('() => window.__cues.length===1')
+            assert page.evaluate('() => window.__overlap')==0
+            cue=page.evaluate('() => window.__cues[0]');assert cue['samples']==35280 and abs(cue['peak']-.22)<.000001
             page.locator('[data-yoppo-success]').scroll_into_view_if_needed()
             page.wait_for_function("() => {const i=document.querySelector('[data-yoppo-success] img');return i && i.complete && i.naturalWidth>0}")
             page.screenshot(path=str(root/'production-correct-mobile.png'),full_page=True)
@@ -83,14 +84,14 @@ jobs:
             page.screenshot(path=str(root/'production-settings-mobile.png'),full_page=True)
             page.keyboard.press('Escape');click('Continuer')
             click('Une personne demande le prénom sur un porte-nom');click('Vérifier')
-            page.wait_for_timeout(600);assert page.evaluate('window.__cues.length')==1
-            page.reload();page.locator('[data-guided-italian]').wait_for();assert page.evaluate('window.__cues.length')==0
+            page.wait_for_timeout(600);assert page.evaluate('() => window.__cues.length')==1
+            page.reload();page.locator('[data-guided-italian]').wait_for();assert page.evaluate('() => window.__cues.length')==0
             click('Yoppo et mes outils');assert page.get_by_role('switch',name='Sons de réussite').get_attribute('aria-checked')=='false'
             page.keyboard.press('Escape')
             log('PASS saved sound preference: muting suppresses later success sound; reload stays silent and retains mute. Browser haptic control only, no physical-device claim.')
             for width in [320,390,1280]:
              page.set_viewport_size({'width':width,'height':900})
-             assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),f'overflow at {width}'
+             assert page.evaluate('() => document.documentElement.scrollWidth <= window.innerWidth'),f'overflow at {width}'
             log('PASS production map widths: 320, 390, 1280 px without horizontal overflow.')
             for path in ['/', '/yo', '/yo/langues/italien', '/yo/langues/italien/parcours/u01/vocabulaire?lang=fr', '/yo/langues/italien/parcours/u01/vocabulaire?lang=en', '/yo/langues/italien/parcours/u01/vocabulaire?lang=es', '/trouver-un-prof?q=italien']:
              result=page.request.get('https://www.pratiqo.ca'+path,timeout=60000)
