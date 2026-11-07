@@ -1,0 +1,21 @@
+name: Yo onboarding source snapshot
+on:
+  push:
+    branches: [fix/yo-readable-language-20261107]
+    paths: [.github/workflows/yo-onboarding-source.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: git archive --format=tar HEAD | gzip > /tmp/yo-onboarding-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yo-onboarding-source
+          path: /tmp/yo-onboarding-source.tar.gz
+          retention-days: 1
