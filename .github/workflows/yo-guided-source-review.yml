@@ -1,0 +1,22 @@
+name: Yo guided source review
+on:
+  push:
+    branches: [feat/yo-guided-italian-20261106]
+    paths: [.github/workflows/yo-guided-source-review.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Package tracked source only for local review
+        run: git archive --format=tar HEAD | gzip > /tmp/pratiqo-guided-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pratiqo-guided-source
+          path: /tmp/pratiqo-guided-source.tar.gz
+          retention-days: 1
