@@ -45,6 +45,9 @@ jobs:
           python -m pip install playwright==1.57.0
           python -m playwright install --with-deps chromium
       - name: Actual component browser walkthrough
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
+          YO_PREVIEW_URL: https://pratiqo-git-feat-yo-g-9c6e79-marcandretheberge-dotcoms-projects.vercel.app/yo/langues/italien/parcours/u01
         run: |
           node --import tsx scripts/prepare_yo_guided_review.ts
           ./node_modules/.bin/next dev .qa-guided --webpack -p 3129 > "$YO_QA_DIR/server.log" 2>&1 &
@@ -55,6 +58,7 @@ jobs:
             sleep 2
           done
           python tests/yo/yopratiqoGuidedItalian.browser.py | tee "$YO_QA_DIR/browser.log"
+          python tests/yo/yopratiqoGuidedItalianPreview.browser.py | tee "$YO_QA_DIR/preview.log"
       - name: Record reviewed source hashes
         if: always()
         run: |
