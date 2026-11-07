@@ -42,4 +42,7 @@ assert.match(page,/yopratiqoPrivacyAddendum\[lang\]/);
 assert.match(page,/id: addendum.id, label: addendum.label/);
 assert.match(page,/addendum.content/);
 count++;console.log("PASS privacy page wires the localized content, date and table-of-contents entry");
+assert.match(page,/<LegalMarkdownBody[\s\S]*?headingIds=\{toc\.map\(\(item\) => item\.id\)\}/);
+assert.match(page,/toc=\{toc\}/);
+count++;console.log("PASS server route explicitly shares anchors with the rendered markdown, without relying on client child identity");
 console.log(`${count} interface/privacy notice checks passed`);
