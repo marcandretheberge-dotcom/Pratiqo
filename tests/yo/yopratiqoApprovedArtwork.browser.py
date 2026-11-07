@@ -68,7 +68,9 @@ with sync_playwright() as p:
    page.goto(url+'/yo/langues/italien/parcours/u01?lang='+lang)
    page.locator('[data-guided-italian]').wait_for()
    click(page,'Continue my mission' if lang=='en' else 'Continuar mi misión')
-   assert page.get_by_role('group',name=choices_name,exact=True).locator('button').count()==4
+   group=page.get_by_role('group',name=choices_name,exact=True)
+   group.wait_for(state='visible')
+   assert group.locator('button').count()==4
   log('English and Spanish retain the same saved step and localized controls.')
   assert not errors,errors
   log('Zero uncaught browser errors. Course scores, account and paid access are not modified by artwork.')
