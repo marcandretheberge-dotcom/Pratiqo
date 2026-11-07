@@ -1,0 +1,134 @@
+name: Yo production verification 20261107
+on:
+  push:
+    branches: [chore/yo-production-verification-20261107]
+    paths: [.github/workflows/yo-production-verification-20261107.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        shell: bash
+    env:
+      YO_QA_DIR: /tmp/yo-production-verification
+      YO_PREVIEW_URL: https://www.pratiqo.ca/yo/langues/italien/parcours
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 071cfc32563b92b3e938df5d449f7d9457c68401
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          set -euo pipefail
+          mkdir -p "$YO_QA_DIR"
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Await public release and record exact reviewed source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 071cfc32563b92b3e938df5d449f7d9457c68401
+          test "$(git rev-parse HEAD^{tree})" = 349b69278dd5ea28313b86bc9c4b4810f2775644
+          git rev-parse HEAD HEAD^{tree} > "$YO_QA_DIR/source.txt"
+          python - <<'PY'
+          import time, urllib.request, urllib.error
+          url='https://www.pratiqo.ca/yo/langues/italien/parcours/u01/vocabulaire?lang=fr'
+          for attempt in range(60):
+              try:
+                  with urllib.request.urlopen(url, timeout=20) as response:
+                      text=response.read().decode('utf-8')
+                      if response.status == 200 and 'Quanti anni hai?' in text and 'chiamarsi' in text:
+                          print('Production vocabulary bank is available.', flush=True)
+                          break
+              except (urllib.error.URLError, TimeoutError):
+                  pass
+              time.sleep(5)
+          else:
+              raise RuntimeError('New production routes did not become available.')
+          PY
+      - name: Live beginner path and real audio
+        run: |
+          set -euo pipefail
+          python tests/yo/yopratiqoPersonalizedItalianPreview.browser.py 2>&1 | tee "$YO_QA_DIR/production-smoke.log"
+      - name: Live printable bank, experienced entry and general routes
+        run: |
+          set -euo pipefail
+          python - <<'PY' 2>&1 | tee "$YO_QA_DIR/production-additional.log"
+          import os, json, re
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          out=Path(os.environ['YO_QA_DIR'])
+          base='https://www.pratiqo.ca'
+          report=[]
+          def ok(message):
+              print(message,flush=True);report.append(message)
+          with sync_playwright() as pw:
+              browser=pw.chromium.launch()
+              context=browser.new_context(viewport={'width':390,'height':844},reduced_motion='reduce')
+              page=context.new_page();page.set_default_timeout(30000);page.set_default_navigation_timeout(60000)
+              errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+              try:
+                  for lang, heading in [('fr','Français'),('en','English'),('es','Español')]:
+                      response=page.goto(base+'/yo/langues/italien/parcours/u01/vocabulaire?lang='+lang)
+                      assert response.status==200
+                      article=page.locator('[data-word-bank-print]');article.wait_for()
+                      assert article.get_by_text('Quanti anni hai?',exact=True).count()==1
+                      assert article.get_by_text(re.compile('^avere —')).count()==1
+                      assert article.get_by_role('columnheader',name=heading,exact=True).count()>0
+                      assert 'noindex' in (page.locator('meta[name=robots]').get_attribute('content') or '')
+                      ok('Production printable bank '+lang+': HTTP 200, expressions, verb forms, translated columns and noindex verified.')
+                  page.goto(base+'/yo/langues/italien/parcours?lang=en')
+                  onb=page.locator('[data-yoppo-onboarding]');onb.wait_for()
+                  banner=page.get_by_test_id('cookie-consent-banner')
+                  if banner.count() and banner.is_visible():
+                      banner.get_by_role('button',name=re.compile('Necessary only|Nécessaires seulement|Seulement les nécessaires|Solo necesarias',re.I)).click()
+                  def dismiss():
+                      later=page.get_by_role('button',name=re.compile('^(Not now|Pas maintenant|Ahora no)$'))
+                      if later.count() and later.first.is_visible():later.first.click()
+                  for label in ['I have a background, but I’m rusty','Everyday conversation','Continue','Choose for myself']:
+                      dismiss();onb.get_by_role('button',name=label,exact=True).click()
+                  onb.get_by_role('combobox').select_option('u05')
+                  onb.get_by_role('button',name='Start here',exact=True).click()
+                  page.wait_for_url('**/u05?lang=en')
+                  shell=page.locator('[data-guided-italian]');shell.wait_for()
+                  tour=shell.get_by_role('button',name='Skip the tour',exact=True)
+                  if tour.count():tour.click()
+                  assert shell.get_by_text('0 learning points',exact=True).count()==1
+                  shell.get_by_role('button',name='Start my mission',exact=True).click()
+                  assert shell.locator('input[type=text],textarea,input[type=checkbox]').count()==0
+                  shell.get_by_role('button',name='Leave and save my place',exact=True).click()
+                  page.goto(base+'/yo/langues/italien/parcours?lang=en')
+                  page.wait_for_url('**/u05?lang=en');page.locator('[data-guided-italian]').wait_for()
+                  assert page.locator('[data-yoppo-onboarding]').count()==0
+                  ok('Production experienced entry: module 5 opens directly, no unearned points, and language home resumes without repeating onboarding.')
+                  for width in [320,390,1280]:
+                      page.set_viewport_size({'width':width,'height':900})
+                      assert page.evaluate('() => document.documentElement.scrollWidth <= innerWidth'),str(width)
+                  page.screenshot(path=str(out/'production-returning-map.png'),full_page=True)
+                  ok('Production guided map: no horizontal overflow at 320, 390, 1280 px.')
+                  for path in ['/', '/yo/langues', '/yo/langues/italien', '/trouver-un-prof?q=italien']:
+                      response=context.request.get(base+path)
+                      assert response.status==200,(path,response.status)
+                  ok('Homepage, language hub, Italian landing and teacher-search landing all respond HTTP 200.')
+                  assert not errors,errors
+                  ok('Zero uncaught browser page errors in additional production checks.')
+              except Exception:
+                  page.screenshot(path=str(out/'production-additional-failure.png'),full_page=True)
+                  (out/'production-additional-failure.txt').write_text(page.locator('body').inner_text())
+                  (out/'production-page-errors.json').write_text(json.dumps(errors,indent=2))
+                  raise
+              finally:
+                  browser.close()
+          (out/'production-report.json').write_text(json.dumps(report,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-production-verification-071cfc3
+          path: /tmp/yo-production-verification
+          retention-days: 7
