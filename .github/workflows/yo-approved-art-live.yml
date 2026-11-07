@@ -1,0 +1,45 @@
+name: Yo approved artwork live verification
+on:
+  push:
+    branches: [qa/yo-approved-art-live-20261107]
+    paths: [.github/workflows/yo-approved-art-live.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    env:
+      YO_ART_URL: https://pratiqo-5phj5dxkr-marcandretheberge-dotcoms-projects.vercel.app
+      YO_ART_OUTPUT: /tmp/yo-art-live
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Verify immutable reviewed application source
+        run: |
+          set -euo pipefail
+          git diff --exit-code d81e95618e1c95d694ebef3d62bf0b17032a8a5b -- components lib public app tests/yo/yopratiqoApprovedArtwork.browser.py
+          mkdir -p "$YO_ART_OUTPUT"
+          git rev-parse HEAD > "$YO_ART_OUTPUT/qa-commit.txt"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Actual public page, no audio fixture or security bypass
+        run: |
+          set -euo pipefail
+          python tests/yo/yopratiqoApprovedArtwork.browser.py 2>&1 | tee "$YO_ART_OUTPUT/browser.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-approved-art-live
+          path: /tmp/yo-art-live
+          retention-days: 7
