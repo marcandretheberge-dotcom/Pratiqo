@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight, Check, Compass, LockKeyhole, MapPin, Music2, Sparkles, Ticket } from "lucide-react";
+import { ItalianWorldAtlas } from "./ItalianWorldAtlas";
 import type { LearningJourney } from "@/lib/yo/learningJourney";
 import type { YoLocale } from "@/lib/yo/types";
 import { canUseItalianFlute, italianWorldForUnit, projectItalianWorlds } from "@/lib/yo/italian/worlds";
@@ -76,25 +76,7 @@ export function ItalianWorldNavigator({ journey, locale, currentUnitId, hrefForU
         </div>
         {world.passEarned ? <span className="inline-flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900"><Ticket size={17} aria-hidden />{c.pass}</span> : null}
       </div>
-      <ol className="relative mt-4 grid grid-cols-2 gap-3 md:grid-cols-4" data-yoppo-world-cities={world.id}>
-        {world.citiesWithProgress.map((city, index) => {
-          const current = city.unitId === currentUnitId;
-          const accessible = city.unlocked || canReview(city.unitId);
-          const content = <div className={`flex h-full min-h-32 flex-col rounded-xl border-2 p-3 text-left ${current ? "border-orange-500 bg-orange-50" : city.mastered ? "border-emerald-500 bg-emerald-50" : accessible ? "border-emerald-200 bg-white" : "border-stone-200 bg-stone-50 text-stone-500"}`}>
-            <span className="flex items-center justify-between gap-1 text-xs font-black">
-              <span>{index + 1}. {city.name}</span>
-              {city.mastered ? <Check size={16} aria-hidden /> : accessible ? <MapPin size={15} aria-hidden /> : <LockKeyhole size={15} aria-hidden />}
-            </span>
-            <span className="mt-2 line-clamp-2 text-sm font-semibold leading-5">{city.step?.unit.title[locale] ?? city.unitId}</span>
-            <span className="mt-auto pt-3 text-xs font-medium">{current ? c.here : city.mastered ? c.done : accessible ? c.open : c.unavailable}</span>
-            {accessible ? <ArrowRight size={15} aria-hidden className="mt-1 shrink-0" /> : null}
-          </div>;
-          return <li key={city.unitId} aria-current={current ? "step" : undefined}>
-            {accessible ? <Link href={hrefForUnit(city.unitId)} className="block h-full rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800" aria-label={`${c.open} : ${city.name} — ${city.step?.unit.title[locale] ?? city.unitId}`}>{content}</Link>
-              : <div aria-label={`${city.name} : ${c.unavailable}`}>{content}</div>}
-          </li>;
-        })}
-      </ol>
+      <ItalianWorldAtlas world={world} locale={locale} currentUnitId={currentUnitId} hrefForUnit={hrefForUnit} canReview={canReview} />
       {world.complete && selected < worlds.length - 1 ? <div data-yoppo-flute={world.id} className="mt-5 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-emerald-50 p-4">
         <div className="flex items-start gap-3">
           <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-amber-200 text-amber-950"><Music2 size={24} aria-hidden /></span>
