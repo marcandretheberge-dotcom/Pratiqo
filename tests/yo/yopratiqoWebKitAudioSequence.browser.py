@@ -30,13 +30,16 @@ def perform(p,with_effects):
  button(p,'Word notebook');dialog=p.get_by_role('dialog')
  row=dialog.locator('p[lang]').filter(has_text=re.compile(r'^Thank you!$')).first.locator('xpath=..')
  assert row.count()==1
- sound=row.get_by_role('button',name=re.compile('^Listen'))
- sound.click();row.locator('[data-pronunciation-state="playing"]').wait_for(timeout=15000)
- row.locator('[data-pronunciation-state="idle"]').wait_for(timeout=15000)
- row.get_by_role('button',name=re.compile('Slow down')).click()
- row.get_by_role('button',name=re.compile('^Listen')).click()
- row.locator('[data-pronunciation-state="playing"]').wait_for(timeout=15000)
- row.get_by_role('button',name=re.compile('^Listen')).wait_for(timeout=15000)
+ player=row.locator('[data-pronunciation-state]')
+ player.evaluate("""el=>{window.__yoAudioState=[];const track=()=>window.__yoAudioState.push({state:el.dataset.pronunciationState,at:performance.now()});new MutationObserver(track).observe(el,{attributes:true,attributeFilter:['data-pronunciation-state']});track();}""")
+ for slow in [False,True]:
+  if slow:row.get_by_role('button',name=re.compile('Slow down')).click()
+  p.evaluate('window.__yoAudioState=[]')
+  row.get_by_role('button',name=re.compile('^Listen')).click()
+  p.wait_for_function("window.__yoAudioState.some(x=>x.state==='playing')&&window.__yoAudioState.some(x=>x.state==='idle')",timeout=15000)
+  states=p.evaluate('window.__yoAudioState')
+  assert states[0]['state'] in ['loading','playing'],states
+  assert 'playing' in [x['state'] for x in states] and states[-1]['state']=='idle',states
  button(dialog,'Close')
 with sync_playwright() as pw:
  for engine in ['webkit','chromium']:
