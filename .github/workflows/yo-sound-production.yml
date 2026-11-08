@@ -1,0 +1,63 @@
+name: Yo sound production release smoke
+on:
+  push:
+    branches: [qa/yo-sound-production-20261108]
+    paths: [.github/workflows/yo-sound-production.yml]
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 13
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [italien, anglais, francais-quebec, espagnol, allemand, portugais-bresil, japonais, mandarin]
+    env:
+      YO_LANGUAGE: ${{ matrix.language }}
+      YO_TAP_URL: https://pratiqo-i84i7y1y2-marcandretheberge-dotcoms-projects.vercel.app
+      YO_TAP_FIXTURES: '0'
+      YO_QA_DIR: /tmp/yo-sound-production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify published source identity and safety
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = b07b3fd05a9acb31e39013804461838e1b14a048
+          mkdir -p "$YO_QA_DIR"
+          git rev-parse HEAD > "$YO_QA_DIR/release-sha.txt"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit > "$YO_QA_DIR/install.log" 2>&1 || { tail -n 80 "$YO_QA_DIR/install.log"; exit 1; }
+      - name: Wait for exact immutable Vercel production build
+        shell: bash
+        run: |
+          set -euo pipefail
+          code="none"
+          for n in $(seq 1 60); do
+            code=$(curl -L -s -o /dev/null -w '%{http_code}' "$YO_TAP_URL/yo/langues/anglais/demarrer?lang=en")
+            if [ "$code" = "200" ]; then break; fi
+            sleep 5
+          done
+          echo "Verified immutable deployment HTTP: $code"
+          test "$code" = "200"
+      - name: 48 real production browser flows, no audio simulations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u tests/yo/yopratiqoTapFlow.browser.py 2>&1 | tee "$YO_QA_DIR/tap.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-production-sound-${{ matrix.language }}
+          path: /tmp/yo-sound-production
+          retention-days: 5
