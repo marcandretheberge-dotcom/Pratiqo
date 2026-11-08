@@ -13,7 +13,7 @@ import { RecallQuestion, freshRecall, type RecallDraft } from "../learning/Recal
 // The public component/step IDs stay stable; the discarded portrait exercise has a new draft schema.
 export type VocabularyDraft = { version: 2; mode: "learn" | "check"; queue: number[]; at: number; study: boolean; done: boolean; answer: RecallDraft };
 export function freshVocabulary(count: number, mode: VocabularyDraft["mode"] = "learn", seed = "italian"): VocabularyDraft {
-  return { version: 2, mode, queue: recallQueue(count, seed), at: 0, study: true, done: false, answer: freshRecall() };
+  return { version: 2, mode, queue: recallQueue(count, seed, Math.min(3, count)), at: 0, study: true, done: false, answer: freshRecall() };
 }
 export function parseVocabulary(raw: string | null, words: VisualWord[]): VocabularyDraft | null {
   try {
@@ -31,7 +31,15 @@ export function parseVocabulary(raw: string | null, words: VisualWord[]): Vocabu
         !v.queue.every((n: unknown) => Number.isInteger(n) && Number(n) >= 0 && Number(n) < words.length) || !Number.isInteger(v.at) || v.at < 0 || v.at >= v.queue.length ||
         typeof v.study !== "boolean" || typeof v.done !== "boolean" || !v.answer || ![v.answer.checked, v.answer.correct, v.answer.heard, v.answer.transcript].every(x => typeof x === "boolean") ||
         !(v.answer.selected === null || allowed.some(w => w.id === v.answer.selected))) return null;
-    return v;
+    // Older rounds intentionally repeated two identical targets. Preserve the
+    // unique questions already answered, but never replay an identical target
+    // just because a legacy queue contains it twice.
+    const uniqueQueue: number[] = [...new Set(v.queue as number[])];
+    const answeredUnique = new Set((v.queue as number[]).slice(0, v.at)).size;
+    const done = v.done || answeredUnique >= uniqueQueue.length;
+    const at = Math.min(answeredUnique, uniqueQueue.length - 1);
+    return { ...v, queue: uniqueQueue, at, done,
+      answer: (v.queue as number[])[v.at] === uniqueQueue[at] ? v.answer : freshRecall() } as VocabularyDraft;
   } catch { return null; }
 }
 export function VisualVocabulary({ words, lessonId, locale, onReady, resetAt = 0, paused = false }: {
