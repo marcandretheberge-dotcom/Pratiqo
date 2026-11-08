@@ -34,7 +34,8 @@ const passage:ItalianWorldPassage={
 };
 type View=ReturnType<typeof render>;
 function flush(){for(let tries=0;tries<12&&frames.size;tries++){const tasks=[...frames.values()];frames.clear();act(()=>tasks.forEach(fn=>fn(0)));}}
-function click(node:HTMLElement){fireEvent.click(node);flush();}
+let clock=Date.now();Date.now=()=>clock;
+function click(node:HTMLElement){clock+=500;fireEvent.click(node);flush();}
 let travels:string[]=[];
 function mount(save=true){localStorage.setItem("yo.practice.auto-next.v1","off");const view=render(<ItalianAudioProvider paths={{}}><ItalianWorldPassageChallenge passage={passage} locale="en" targetCity="Napoli" onTravel={id=>{travels.push(id);return save;}}/></ItalianAudioProvider>);flush();return view;}
 function begin(view:View){
@@ -74,7 +75,7 @@ const checks:[string,()=>void][]=[
  ["failed local preference persistence leaves portal blocked",()=>{
   const v=mount(false);begin(v);finish(v);
   click(v.getByRole("button",{name:"Enter the portal"}));
-  assert.ok(v.getByRole("alert",{name:undefined}));
+  assert.ok(v.getByRole("alert"));
   assert.deepEqual(travels,["u05"]);
  }],
 ];
