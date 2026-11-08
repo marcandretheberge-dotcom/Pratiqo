@@ -1,4 +1,5 @@
 name: Yo audio after page changes, live WebKit
+# Re-run only after immutable preview is READY; original run hit the build splash.
 on:
   push:
     branches: [qa/yo-audio-transitions-mobile-20261108]
