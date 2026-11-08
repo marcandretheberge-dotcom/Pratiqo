@@ -30,12 +30,15 @@ function IntroPlayer({course,locale,audio}:Props){
  useEffect(()=>{return()=>stopLessonAudio();},[]);
  function save(next:IntroState){latest.current=next;setState(next);try{localStorage.setItem(key,JSON.stringify(next));setStored(true);}catch{setStored(false);}}
  function focus(){requestAnimationFrame(()=>{heading.current?.focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});});}
- function move(at:number){if(at<0||at>=steps.length)return;stopLessonAudio();save({...latest.current,view:'lesson',resume:'lesson',step:at,draft:emptyDraft()});focus();}
+ function move(at:number){if(at<0||at>=steps.length)return;const fromMap=latest.current.view==='map';stopLessonAudio();save({...latest.current,view:'lesson',resume:'lesson',step:at,draft:emptyDraft()});focus();if(fromMap)feedback.step();}
  function leave(){stopLessonAudio();save({...latest.current,view:'map',resume:latest.current.view==='final'?'final':latest.current.view==='lesson'?'lesson':latest.current.resume});focus();}
  function startFinal(){stopLessonAudio();save({...latest.current,view:'final',resume:'final',finalIndex:0,answers:[],draft:emptyDraft()});focus();}
  function advance(){const s=latest.current,step=steps[s.step];if((step.kind==='recall'||step.kind==='exercise')&&(!s.draft.checked||!s.draft.correct))return;
   const completed=(step.kind==='recall'||step.kind==='exercise')?[...new Set([...s.completed,step.id])]:s.completed;
   save({...s,completed,visited:[...new Set([...s.visited,step.id])]});if(s.step===steps.length-1)startFinal();else move(s.step+1);
+  const mission=course.missions[step.mission];
+  const boundary=s.step===steps.length-1||steps[s.step+1].mission!==step.mission;
+  if(boundary&&mission.practice.every(e=>completed.includes(e.id)))feedback.emit(`mission:${course.language}:${mission.id}`,'mission');
  }
  function nextFinal(){const s=latest.current;if(!s.draft.checked||s.answers.length!==s.finalIndex)return;stopLessonAudio();
   const answers=[...s.answers,{correct:s.draft.correct,assisted:s.draft.assisted}];
@@ -46,7 +49,7 @@ function IntroPlayer({course,locale,audio}:Props){
   // Editing the same starting point preserves the exact draft and every earned outcome.
   save({...existing,profile,...(existing.profile?.entry===profile.entry?{}:{step:entry,resume:'lesson' as const,draft:emptyDraft()}),view:'map'});setEditing(false);focus();
  }
- function resume(){const s=latest.current;if(s.resume){save({...s,view:s.resume});focus();}else move(steps.findIndex(x=>x.mission===(s.profile?.entry??0)));}
+ function resume(){const s=latest.current;if(s.resume){save({...s,view:s.resume});focus();feedback.step();}else move(steps.findIndex(x=>x.mission===(s.profile?.entry??0)));}
  function notebook(){if(state.view==='final')return;stopLessonAudio();if(state.view==='lesson'&&steps[state.step].kind==='exercise'&&!state.draft.checked)save({...latest.current,draft:{...latest.current.draft,assisted:true}});setPanel('notebook');}
  if(!ready)return <main className="p-8"><p role="status">{say('Yoppo prépare ton parcours…','Yoppo is preparing your journey…','Yoppo prepara tu recorrido…')}</p></main>;
  if(!state.profile||editing)return <IntroWelcome course={course} locale={locale} audio={audio} initial={state.profile} onComplete={profileDone} onCancel={state.profile?()=>setEditing(false):undefined}/>;

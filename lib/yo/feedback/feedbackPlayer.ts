@@ -4,6 +4,8 @@ import { SOUND_SAMPLE_RATE, woodSamples, type FeedbackCue } from "./woodSound";
 /** At most one short pending cue. Never stops, ducks or overlaps lesson speech. */
 export class FeedbackPlayer {
   private context?: AudioContext;
+  private gain?: GainNode;
+  private volume = 1;
   private voice?: AudioBufferSourceNode;
   private pending?: { kind: FeedbackCue; expires: number; epoch: number };
   private epoch = 0;
@@ -30,8 +32,23 @@ export class FeedbackPlayer {
     clearTimeout(this.timer); this.stopVoice();
   };
   private visibility = () => { if (document.visibilityState !== "visible") this.cancel(); };
+  setVolume(value: number) {
+    this.volume = Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 1;
+    if (this.gain) this.gain.gain.value = this.volume;
+    if (this.volume === 0) this.cancel();
+  }
+  /** Called only by a trusted pointer/keyboard interaction; emits no sound. */
+  async unlock() {
+    if (this.disposed) return;
+    try {
+      const Ctor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!Ctor) return;
+      this.context ??= new Ctor();
+      if (this.context.state === "suspended") await this.context.resume();
+    } catch { /* A denied user gesture does not affect learning. */ }
+  }
   async play(kind: FeedbackCue = "correct") {
-    if (this.disposed || document.visibilityState !== "visible") return;
+    if (this.disposed || this.volume === 0 || document.visibilityState !== "visible") return;
     this.cancel();
     const epoch = this.epoch;
     // AudioContext is created/resumed in a real answer or explicit sample button handler.
@@ -64,7 +81,10 @@ export class FeedbackPlayer {
       }
       this.stopVoice();
       const voice = context.createBufferSource();
-      voice.buffer = buffer; voice.connect(context.destination); this.voice = voice;
+      this.gain ??= context.createGain();
+      this.gain.gain.value = this.volume;
+      this.gain.disconnect(); this.gain.connect(context.destination);
+      voice.buffer = buffer; voice.connect(this.gain); this.voice = voice;
       voice.onended = () => { voice.disconnect(); if (this.voice === voice) this.voice = undefined; };
       voice.start();
     } catch { this.cancel(); }
@@ -74,6 +94,7 @@ export class FeedbackPlayer {
     this.events.forEach(event => window.removeEventListener(event, this.cancel));
     document.removeEventListener("visibilitychange", this.visibility);
     try { void this.context?.close().catch(() => {}); } catch { /* No usable context. */ }
+    this.gain?.disconnect(); this.gain = undefined;
     this.buffers.clear();
   }
 }

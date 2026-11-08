@@ -46,6 +46,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   const [overlay, setOverlay] = useState<"notebook" | "tools" | null>(null), [tour, setTour] = useState<number | null>(null);
   const [notebookMeanings, setNotebookMeanings] = useState(true);
   const feedback = useLearningFeedback();
+  const pendingUnlock = useRef(false);
   const [translation, setTranslation] = useState(false), [hint, setHint] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null), primaryAction = useRef<HTMLButtonElement>(null);
   const routeRequest = useRef("");
@@ -76,15 +77,17 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     // A direct exercise link must not bypass the vocabulary prerequisite.
     const preparation = steps.findIndex(s => s.lesson === steps[index].lesson && s.stage === "prepare");
     if (preparation >= 0 && !current.current.seen.includes(steps[preparation].id)) index = preparation;
+    const fromMap = current.current.view === "map";
     stop(); const destination = steps[index];
     commit({ ...current.current, view: "mission", resumeView: "mission", step: index, game: emptyGame() });
     setResume(unit.id, unit.lessons[destination.lesson].id, destination.activity?.id); focus();
+    if (fromMap) feedback.step();
   }
   function beginMission() {
     finishTour();
     const s = current.current;
     if (s.resumeView === "challenge" && !s.submitted) { commit({ ...s, view: "challenge" }); focus(); return; }
-    if (s.resumeView === "mission") { commit({ ...s, view: "mission" }); focus(); return; }
+    if (s.resumeView === "mission") { commit({ ...s, view: "mission" }); focus(); feedback.step(); return; }
     if (next < 0) { commit({ ...s, view: "challenge-intro" }); focus(); return; }
     move(next);
   }
@@ -93,6 +96,9 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     stop(); setOverlay(null);
     const s = current.current;
     commit({ ...s, view: "map", resumeView: s.view === "mission" || s.view === "challenge" ? s.view : s.resumeView }); focus();
+    if (s.view === "result" && pendingUnlock.current && nextUnit && journey.steps.some(item=>item.unit.id===nextUnit.id&&item.unlocked)) {
+      pendingUnlock.current=false; feedback.emit(`unlock:${unit.id}:${s.runStartedAt}`, "unlock");
+    }
   }
   function advance() {
     const s = current.current;
@@ -101,6 +107,8 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     commit({ ...s, seen });
     if (s.step === steps.length - 1) { stop(); commit({ ...current.current, view: "challenge-intro", resumeView: null, game: emptyGame() }); focus(); }
     else move(s.step + 1);
+    if ((s.step === steps.length - 1 || steps[s.step + 1].lesson !== step.lesson) && lessonDone(lesson, progress))
+      feedback.emit(`mission:${unit.id}:${lesson.id}`, "mission");
   }
   function startChallenge() {
     stop(); commit({ ...current.current, view: "challenge", resumeView: "challenge", quizIndex: 0, game: emptyGame(), answers: [], runStartedAt: Math.max(Date.now(), (progress.assessments[unit.quiz.id]?.last.completedAt ?? 0) + 1), submitted: false }); focus();
@@ -115,7 +123,10 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
       const previous = progress.assessments[unit.quiz.id];
       if (!previous || previous.last.completedAt < s.runStartedAt) recordAssessment(unit.quiz.id, correct, answers.length, assisted);
       commit({ ...s, view: "result", resumeView: null, answers, submitted: true, game: emptyGame() });
-      if (!assisted && correct / answers.length * 100 >= unit.quiz.passPercent) feedback.emit(`stamp:${unit.id}:${s.runStartedAt}`, "stamp");
+      if (!assisted && correct / answers.length * 100 >= unit.quiz.passPercent) {
+        pendingUnlock.current = !passed && Boolean(nextUnit);
+        feedback.emit(`stamp:${unit.id}:${s.runStartedAt}`, "stamp");
+      }
     } else commit({ ...s, quizIndex: s.quizIndex + 1, answers, game: emptyGame() });
     focus();
   }
