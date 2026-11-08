@@ -1,0 +1,54 @@
+name: Yo flute placement review
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/yo-flute-placement-review.yml
+      - app/yo/langues/italien/parcours/**
+      - components/yo/italian/guided/GuidedItalianCourse.tsx
+      - components/yo/italian/guided/ItalianWorldPassageChallenge.tsx
+      - components/yo/personalized/ItalianLearningEntry.tsx
+      - lib/yo/italian/worldPassage.ts
+      - tests/yo/yopratiqoItalianWorldPassage.test.ts
+      - tests/yo/yopratiqoItalianWorldPassagePlayer.test.tsx
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yo-flute-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flute-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: TypeScript, focused eslint and diff
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npx eslint lib/yo/italian/worldPassage.ts components/yo/italian/guided/ItalianWorldPassageChallenge.tsx components/yo/italian/guided/GuidedItalianCourse.tsx components/yo/personalized/ItalianLearningEntry.tsx app/yo/langues/italien/parcours
+          git diff --check
+      - name: Placement and interaction tests
+        run: |
+          set -euo pipefail
+          node --import tsx tests/yo/yopratiqoItalianWorldPassage.test.ts
+          node --import tsx tests/yo/yopratiqoItalianWorldPassagePlayer.test.tsx
+          node --import tsx tests/yo/yopratiqoItalianTriviaFlute.test.ts
+          node --import tsx tests/yo/yopratiqoItalianTriviaPlayer.test.tsx
+      - name: Canonical course and placement regressions
+        run: |
+          set -euo pipefail
+          npm run test:yo-italian-course
+          node --import tsx tests/yo/yopratiqoGuidedItalianPlayer.test.tsx
+          node --import tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx
+          npm run test:yo-journey
