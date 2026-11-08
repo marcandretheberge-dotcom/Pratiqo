@@ -219,9 +219,9 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
           </aside>
         </div>
         <div className="mb-5 md:hidden" data-yoppo-primary-mobile>
-          {passed && nextUnit ? <Link href={italianCourseHref(locale, nextUnit.id)} className={`${primary} w-full`}>{c.nextUnit}<ArrowRight size={18} aria-hidden /></Link>
-            : passed ? <button type="button" className={`${primary} w-full`} onClick={() => move(0)}>{c.practice}<ArrowRight size={18} aria-hidden /></button>
-              : <button type="button" className={`${primary} w-full`} onClick={beginMission}>{ui.resumeView === "challenge" ? c.challenge : next < 0 && !ui.resumeView ? c.begin : ui.resumeView ? c.resume : c.start}<ArrowRight size={18} aria-hidden /></button>}
+          {passed && nextUnit ? <Link href={italianCourseHref(locale, nextUnit.id)} className={`${primary} w-full`} aria-label={`${say("Depuis la carte : ", "From the map: ", "Desde el mapa: ")}${c.nextUnit}`}>{c.nextUnit}<ArrowRight size={18} aria-hidden /></Link>
+            : passed ? <button type="button" className={`${primary} w-full`} aria-label={`${say("Depuis la carte : ", "From the map: ", "Desde el mapa: ")}${c.practice}`} onClick={() => move(0)}>{c.practice}<ArrowRight size={18} aria-hidden /></button>
+              : <button type="button" className={`${primary} w-full`} aria-label={`${say("Depuis la carte : ", "From the map: ", "Desde el mapa: ")}${ui.resumeView === "challenge" ? c.challenge : next < 0 && !ui.resumeView ? c.begin : ui.resumeView ? c.resume : c.start}`} onClick={beginMission}>{ui.resumeView === "challenge" ? c.challenge : next < 0 && !ui.resumeView ? c.begin : ui.resumeView ? c.resume : c.start}<ArrowRight size={18} aria-hidden /></button>}
         </div>
         <ItalianWorldNavigator journey={journey} locale={locale} currentUnitId={unit.id} hrefForUnit={id => italianCourseHref(locale,id)} canReview={placedReview} />
       </> : null}
