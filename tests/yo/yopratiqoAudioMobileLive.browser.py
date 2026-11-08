@@ -54,7 +54,7 @@ with sync_playwright() as pw:
    if italian:
     answer=first
    else:
-    ix=int(first.rsplit('v',1)[-1]);answer=correct[ix]
+    ix=int(first.rsplit(':',1)[-1]);answer=correct[ix]
    p.locator('[data-answer-id="'+answer+'"]').first.tap()
    p.wait_for_function("([selector,old])=>document.querySelector(selector)?.getAttribute(selector==='[data-vocabulary-recall]'?'data-vocabulary-recall':'data-intro-question')!==old",arg=['[data-vocabulary-recall]' if italian else '[data-intro-question]',first],timeout=12000)
    p.wait_for_timeout(2400)
