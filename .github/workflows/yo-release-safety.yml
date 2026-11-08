@@ -3,7 +3,7 @@ on:
   push:
     branches: [feat/yo-shared-language-start-20261107]
   pull_request:
-    paths: [lib/yo/shared/releaseChoices.ts, components/yo/shared/IntroWelcome.tsx, components/yo/shared/IntroAudio.tsx, tests/yo/yopratiqoReleaseChoices.test.tsx]
+    paths: [lib/yo/shared/releaseChoices.ts, components/yo/shared/IntroWelcome.tsx, components/yo/shared/IntroAudio.tsx, components/yo/learning/LessonLink.tsx, components/yo/italian/guided/GuidedItalianCourse.tsx, tests/yo/yopratiqoReleaseChoices.test.tsx, tests/yo/yopratiqoLessonLink.test.tsx]
 permissions:
   contents: read
 jobs:
@@ -14,18 +14,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Pace selection and Mandarin fallback regressions
+      - name: Pace, Mandarin voice and on-demand navigation regressions
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/yo-release-safety
           node --import tsx tests/yo/yopratiqoReleaseChoices.test.tsx 2>&1 | tee /tmp/yo-release-safety/checks.log
-          npx eslint lib/yo/shared/releaseChoices.ts components/yo/shared/IntroWelcome.tsx components/yo/shared/IntroAudio.tsx
+          node --import tsx tests/yo/yopratiqoLessonLink.test.tsx
+          npx eslint lib/yo/shared/releaseChoices.ts components/yo/shared/IntroWelcome.tsx components/yo/shared/IntroAudio.tsx components/yo/learning/LessonLink.tsx components/yo/italian/guided/GuidedItalianCourse.tsx
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          p='components/yo/italian/guided/GuidedItalianCourse.tsx'
+          before=subprocess.check_output(['git','show','fd91f47f7a8192b551774b498b6659da2626c7d9:'+p]).decode()
+          assert Path(p).read_text()==before.replace('import Link from "next/link";', 'import Link from "../../learning/LessonLink";'), 'Italian player has unexpected changes beyond link import'
+          print('PASS: Italian logic, content and progression byte-for-byte unchanged except the link import.')
+          PY
           git rev-parse HEAD > /tmp/yo-release-safety/commit.txt
       - uses: actions/upload-artifact@v4
         if: always()
