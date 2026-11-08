@@ -12,13 +12,13 @@ export function recallChoices(words: readonly RecallWord[], target: RecallWord, 
     id: w.id, label: w.number ? { fr: w.number, en: w.number, es: w.number } : w.meaning,
   }));
 }
-/** Repeat retrieval, not a four-picture elimination cycle. The same target can recur,
- * with at least two intervening tasks and freshly selected distractors. */
-export function recallQueue(count: number, seed: string): number[] {
-  if (count < 1) return [];
+/** One exposure per concept in a short warmup. Spaced re-testing happens in the
+ * existing review engine, not by asking an identical question twice in one round.
+ * A smaller limit lets a six-word introduction use three quick recall challenges. */
+export function recallQueue(count: number, seed: string, limit = count): number[] {
+  if (!Number.isSafeInteger(count) || count < 1) return [];
   const base = scrambleItalianItems(Array.from({ length: count }, (_, i) => i), seed);
-  if (count < 4) return base;
-  return [...base.slice(0, 3), base[0], ...base.slice(3), base[1]];
+  return base.slice(0, Math.max(0, Math.min(count, Math.floor(limit))));
 }
 /** Abstract legacy art cannot leak into new vocabulary choices. Text lives outside artwork. */
 export function isObjectPicture(p: VocabularyPicture): boolean {

@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import * as React from "react";
 import { italianCourseUnits, italianCourseCatalog } from "@/lib/yo/italian/course/courseData";
 import { guidedSteps, GUIDED_KEY } from "@/lib/yo/italian/course/guidedItalian";
+import { guidedMissionOrder } from "@/lib/yo/italian/course/guidedMissionOrder";
 import { ITALIAN_COURSE_PROGRESS_KEY } from "@/lib/yo/italian/course/courseProgress";
 import { courseAudioPaths } from "@/lib/yo/italian/course/courseAudio.server";
 import { unitSpeech } from "@/lib/yo/italian/course/courseSpeech";
@@ -18,7 +19,7 @@ window.Audio=FakeAudio as unknown as typeof Audio;
 process.env.NEXT_PUBLIC_SUPABASE_URL="https://audio.example.test";
 const { GuidedItalianCourse } = require("@/components/yo/italian/guided/GuidedItalianCourse") as typeof import("@/components/yo/italian/guided/GuidedItalianCourse");
 const {render,cleanup,fireEvent,act,within}=require("@testing-library/react") as typeof import("@testing-library/react");
-const unit=italianCourseUnits[0],steps=guidedSteps(unit);
+const unit=italianCourseUnits[0],canonicalSteps=guidedSteps(unit),steps=guidedMissionOrder(canonicalSteps).map(index=>canonicalSteps[index]);
 type View=ReturnType<typeof render>;
 function flush(){for(let i=0;i<10&&frames.size;i++){const pending=[...frames.values()];frames.clear();act(()=>pending.forEach(fn=>fn(0)));}}
 let clock=Date.now();Date.now=()=>clock;
@@ -41,7 +42,7 @@ function solve(v:View,a:ItalianActivity,wrong=false){
  assert.equal(v.container.querySelectorAll("input,textarea").length,0);
 }
 const tests:[string,()=>void][]=[];
-tests.push(["first visit is skippable and starts a real mission",()=>{const v=mount();assert.ok(v.getByRole("button",{name:"Skip the tour"}));skip(v);click(v.getByRole("button",{name:"Start my mission"}));assert.ok(v.getByText(unit.lessons[0].reading.it,{exact:true}));assert.equal(v.getAllByRole("button",{name:"Continue"}).length,1);}]);
+tests.push(["first visit is skippable and starts a real mission",()=>{const v=mount();assert.ok(v.getByRole("button",{name:"Skip the tour"}));skip(v);click(v.getByRole("button",{name:"Start my mission"}));assert.ok(v.getByRole("heading",{name:"Word notebook"}),"the first mission starts with vocabulary before the scene");assert.equal(v.getAllByRole("button",{name:"Continue"}).length,1);}]);
 tests.push(["all 19 exercises finish sequentially with no typing or self-rating; final challenge follows",()=>{const v=mount();skip(v);click(v.getByRole("button",{name:"Start my mission"}));for(const step of steps){if(step.activity)solve(v,step.activity);click(v.getByRole("button",{name:"Continue"}));}assert.ok(v.getByRole("button",{name:"Start the final challenge"}));const p=JSON.parse(localStorage.getItem(ITALIAN_COURSE_PROGRESS_KEY)!);assert.equal(Object.values(p.activities).filter((a:unknown)=>(a as {completed:boolean}).completed).length,19);}]);
 tests.push(["four independent correct answers earn one stamp and unlock the next unit",()=>{const v=mount();skip(v);click(v.getByRole("button",{name:"Already confident? Try the final challenge"}));click(v.getByRole("button",{name:"Start the final challenge"}));unit.quiz.questions.forEach((q,i)=>{solve(v,q,i===4);click(v.getByRole("button",{name:i===4?"See my result":"Continue"}));});assert.ok(v.getByRole("heading",{name:"Your stamp is in your passport!"}));click(v.getByRole("button",{name:"Back to the map"}));assert.equal(v.getByRole("link",{name:"Continue to the next unit"}).getAttribute("href"),"/yo/langues/italien/parcours/u02?lang=en");const saved=localStorage.getItem(ITALIAN_COURSE_PROGRESS_KEY);cleanup();mount();assert.equal(localStorage.getItem(ITALIAN_COURSE_PROGRESS_KEY),saved);}]);
 tests.push(["notebook and reload preserve a selected response in an incoming exercise link",()=>{const props={initialLessonId:"it1-u01-l1",initialActivityId:"it1-u01-l1-read"};let v=mount(props);click(v.getByRole("button",{name:"Prego!"}));click(v.getByRole("button",{name:"Word notebook"}));assert.ok(v.getByRole("dialog"));click(within(v.getByRole("dialog")).getByRole("button",{name:"Close"}));assert.equal(v.getByRole("button",{name:"Prego!"}).getAttribute("aria-pressed"),"true");cleanup();v=mount(props);assert.equal(v.getByRole("button",{name:"Prego!"}).getAttribute("aria-pressed"),"true");}]);
