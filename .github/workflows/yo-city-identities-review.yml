@@ -11,7 +11,10 @@ on:
       - "components/yo/italian/guided/ItalianCityArrival.tsx"
       - "components/yo/italian/guided/ItalianAchievementPrintable.tsx"
       - "components/yo/italian/guided/ItalianWorldAtlas.tsx"
+      - "components/yo/italian/guided/ItalianAdventureLandscape.tsx"
+      - "components/yo/italian/guided/ItalianWorldNavigator.tsx"
       - "tests/yo/yopratiqoItalianCityIdentities.test.tsx"
+      - "tests/yo/yopratiqoAdventureMapRedesign.test.tsx"
 
 permissions:
   contents: read
@@ -35,11 +38,13 @@ jobs:
         run: npx tsc --noEmit
       - name: Twelve illustrated city identities and world unlocking
         run: node --import tsx tests/yo/yopratiqoItalianCityIdentities.test.tsx
+      - name: Storybook world map, accessible navigation and Yoppo guide
+        run: node --import tsx tests/yo/yopratiqoAdventureMapRedesign.test.tsx
       - name: Phase 3 illustrated world and boss regression
         run: node --import tsx tests/yo/yopratiqoItalianImmersivePhase3.test.tsx
       - name: Full Italian guided curriculum
         run: npm run test:yo-italian-course
       - name: Focused lint
-        run: npx eslint lib/yo/italian/cityIdentity.ts components/yo/italian/guided/ItalianCityArtwork.tsx components/yo/italian/guided/ItalianCityArrival.tsx components/yo/italian/guided/ItalianAchievementPrintable.tsx components/yo/italian/guided/ItalianWorldAtlas.tsx tests/yo/yopratiqoItalianCityIdentities.test.tsx
+        run: npx eslint lib/yo/italian/cityIdentity.ts components/yo/italian/guided/ItalianCityArtwork.tsx components/yo/italian/guided/ItalianCityArrival.tsx components/yo/italian/guided/ItalianAchievementPrintable.tsx components/yo/italian/guided/ItalianWorldAtlas.tsx components/yo/italian/guided/ItalianAdventureLandscape.tsx components/yo/italian/guided/ItalianWorldNavigator.tsx tests/yo/yopratiqoItalianCityIdentities.test.tsx tests/yo/yopratiqoAdventureMapRedesign.test.tsx
       - name: Whitespace check
         run: git diff --check origin/feat/yoppo-immersive-atlas-boss-20261108...HEAD
