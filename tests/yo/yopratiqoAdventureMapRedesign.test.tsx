@@ -64,7 +64,7 @@ worlds = projectItalianWorlds(buildCourseJourney(personalizedItalianCatalog, pro
 assert.equal(worlds[0].citiesWithProgress[1].unlocked, true);
 const nextHtml = getHtml(worlds[0], "fr", "u01");
 assert.equal((nextHtml.match(/<a /g) ?? []).length, 2, "reaching Parma requires authentic Bologna mastery");
-assert.ok(/aria-current="step"[^>]*>.*?data-yoppo-map-token="u02"/s.test(nextHtml),
+assert.ok(/aria-current="step"[^>]*>[\\s\\S]*?data-yoppo-map-token="u02"/.test(nextHtml),
   "Yoppo follows the first unmastered unlocked city, even on an older route");
 
 for (const unit of personalizedItalianCatalog.units.slice(1, 4)) {
