@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "../../learning/LessonLink";
-import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowRight, BookOpen, Check, HelpCircle, LockKeyhole, MapPin, Stamp, X } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
@@ -18,6 +18,7 @@ import { GUIDED_KEY, TOUR_KEY, emptyGame, initialGuided, parseGuided, guidedStep
 import { guidedMissionOrder, nextGuidedMissionStep, followingGuidedMissionStep, restoreGuidedMissionDraft } from "@/lib/yo/italian/course/guidedMissionOrder";
 import { italianWorldForUnit } from "@/lib/yo/italian/worlds";
 import { ItalianWorldNavigator } from "./ItalianWorldNavigator";
+import { ItalianTriviaCheckpoint } from "./ItalianTriviaCheckpoint";
 import { useItalianCourseProgress } from "../course/useItalianCourseProgress";
 import { ItalianAudioProvider } from "../ItalianAudioProvider";
 import { AdventureScenery } from "../../journey/AdventureScenery";
@@ -202,11 +203,11 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
             <p className="text-xs font-bold uppercase tracking-widest text-orange-800">{progressKey ? `${c.unit} ${unit.number} · Italiano` : c.preview}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-3xl font-black tracking-tight outline-none sm:text-4xl">{unit.id === "u01" ? "Ciao, Bologna." : unit.title[locale]}</h1><p className="mt-3 max-w-xl text-sm leading-6 text-stone-600">{unit.subtitle[locale]}</p>{wordBank ? <Link href={bankHref} className={`${secondary} mt-3 underline`} target="_blank" rel="noopener">{say("Voir / imprimer tous les mots et verbes", "View / print all words and verbs", "Ver / imprimir palabras y verbos")}</Link> : null}
             <div className="my-6 max-w-sm"><AdventureScenery world="italian" state={passed ? "mastered" : "progress"} /></div>
             <ol className="relative mx-auto max-w-md space-y-3 pb-4">
-              {unit.lessons.map((item, i) => { const complete = lessonDone(item, progress), at = order.find(index => steps[index].lesson === i) ?? -1, available = Boolean(profile && profile.experience !== "new" && placedReview(unit.id)) || i === 0 || lessonDone(unit.lessons[i - 1], progress) || item.activities.some(a => progress.activities[a.id]); const active = next >= 0 && steps[next].lesson === i; return <li key={item.id} className={`relative flex items-center gap-4 ${i % 2 ? "ml-7 sm:ml-12" : "mr-7 sm:mr-12"}`}>
+              {unit.lessons.map((item, i) => { const complete = lessonDone(item, progress), at = order.find(index => steps[index].lesson === i) ?? -1, available = Boolean(profile && profile.experience !== "new" && placedReview(unit.id)) || i === 0 || lessonDone(unit.lessons[i - 1], progress) || item.activities.some(a => progress.activities[a.id]); const active = next >= 0 && steps[next].lesson === i; return <Fragment key={item.id}><li className={`relative flex items-center gap-4 ${i % 2 ? "ml-7 sm:ml-12" : "mr-7 sm:mr-12"}`}>
                 {i < unit.lessons.length - 1 ? <div aria-hidden className="absolute left-7 top-14 h-20 border-l-4 border-dotted border-emerald-200" /> : null}
                 <button type="button" disabled={!available} aria-label={`${c.mission} ${i + 1} · ${item.title[locale]}${complete ? ` · ${c.completeMission}` : ""}`} aria-current={active ? "step" : undefined} className={`relative z-10 grid h-16 w-16 shrink-0 place-items-center rounded-full border-b-4 font-black focus-visible:outline-4 focus-visible:outline-offset-4 ${complete ? "border-emerald-900 bg-emerald-700 text-white" : active ? "border-orange-900 bg-orange-200 text-emerald-950" : "border-stone-300 bg-stone-100 text-stone-500"}`} onClick={() => { finishTour(); move(at); }}>{complete ? <Check aria-hidden /> : available ? i + 1 : <LockKeyhole size={20} aria-hidden />}</button>
                 <div className="min-w-0 py-4"><p className="text-xs font-bold text-emerald-700">{c.mission} {i + 1}</p><p className="mt-1 text-sm font-bold">{item.title[locale]}</p>{active ? <div className="mt-1"><CompanionAvatar visualId="travel" state="map" locale={locale} size="xs" compact /></div> : null}</div>
-              </li>; })}
+              </li>{i === Math.ceil(unit.lessons.length / 2) - 1 ? <li className="my-5 list-none"><ItalianTriviaCheckpoint unit={unit} locale={locale} progress={progress} /></li> : null}</Fragment>; })}
               <li className="relative flex items-center gap-4"><span className={`grid h-16 w-16 shrink-0 place-items-center rounded-full border-2 ${passed ? "border-emerald-700 bg-emerald-50" : "border-stone-200 bg-white"}`}><Stamp aria-hidden /></span><div><p className="font-bold">{c.challenge}</p><p className="mt-1 text-sm">{passed ? c.stampDone : `${minimumScore} / ${unit.quiz.questions.length}`}</p></div></li>
             </ol>
           </section>

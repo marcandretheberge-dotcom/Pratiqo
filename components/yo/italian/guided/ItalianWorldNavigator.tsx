@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, Check, Compass, LockKeyhole, MapPin, Ticket } from "lucide-react";
+import { ArrowRight, Check, Compass, LockKeyhole, MapPin, Music2, Sparkles, Ticket } from "lucide-react";
 import type { LearningJourney } from "@/lib/yo/learningJourney";
 import type { YoLocale } from "@/lib/yo/types";
-import { italianWorldForUnit, projectItalianWorlds } from "@/lib/yo/italian/worlds";
+import { canUseItalianFlute, italianWorldForUnit, projectItalianWorlds } from "@/lib/yo/italian/worlds";
+import { useLearningFeedback } from "../../feedback/LearningFeedback";
 
 type Props = {
   journey: LearningJourney;
@@ -23,6 +24,8 @@ export function ItalianWorldNavigator({ journey, locale, currentUnitId, hrefForU
   const worlds = projectItalianWorlds(journey);
   const initial = worlds.findIndex(world => world.cities.some(city => city.unitId === currentUnitId));
   const [selected, setSelected] = useState(Math.max(0, initial));
+  const [portalArrival, setPortalArrival] = useState<string | null>(null);
+  const feedback = useLearningFeedback();
   const c = {
     fr: { title: "Les mondes de Yoppo", intro: "Chaque ville est un module; ses missions t'apprennent à utiliser l'italien.", world: "Monde", pass: "Yoppo Pass gagné", complete: "Monde terminé", locked: "Termine le monde précédent", here: "Ta ville", done: "Défi validé", open: "Explorer la ville", unavailable: "Ville verrouillée", goal: "Dans cette ville", preview: "Les villes donnent un décor au cours; tes réussites réelles ouvrent la route." },
     en: { title: "Yoppo's worlds", intro: "Each city is a module; its missions teach you how to use Italian.", world: "World", pass: "Yoppo Pass earned", complete: "World completed", locked: "Finish the previous world", here: "Your city", done: "Challenge passed", open: "Explore the city", unavailable: "City locked", goal: "In this city", preview: "Cities give the course a setting; your real achievements open the path." },
@@ -35,6 +38,11 @@ export function ItalianWorldNavigator({ journey, locale, currentUnitId, hrefForU
   }
 
   const world = worlds[selected] ?? worlds[0];
+  const portal = {
+    fr: { flute: "La Flûte des horizons", found: "Les quatre villes sont maîtrisées : Yoppo t'offre une flûte magique pour rejoindre le prochain monde !", travel: "Jouer de la flûte et voyager", arrived: "Le portail s'illumine. Nouveau monde découvert !", denied: "Il faut réussir les quatre défis des villes; la flûte n'ouvre aucun niveau non acquis.", safe: "Pass et flûte : objets de collection, sans débit de crédits ni saut d'évaluation." },
+    en: { flute: "Flute of Horizons", found: "You mastered all four cities: Yoppo gives you a magic flute to travel to the next world!", travel: "Play the flute and travel", arrived: "The portal shines. A new world awaits!", denied: "Pass all four city challenges; the flute cannot open an unearned level.", safe: "Pass and flute are collectibles: no credits spent and no exams bypassed." },
+    es: { flute: "Flauta de los horizontes", found: "Dominaste las cuatro ciudades: ¡Yoppo te regala una flauta mágica para viajar al siguiente mundo!", travel: "Tocar la flauta y viajar", arrived: "El portal se ilumina. ¡Un mundo nuevo te espera!", denied: "Debes superar los cuatro retos de las ciudades; la flauta no abre niveles no ganados.", safe: "El Pass y la flauta son coleccionables: no consumen créditos ni saltan exámenes." },
+  }[locale];
   if (!world || !italianWorldForUnit(currentUnitId)) return null;
 
   return <section data-yoppo-world-map aria-label={c.title} className="mb-7 rounded-3xl border-2 border-emerald-200 bg-gradient-to-b from-[#edf5ed] to-[#fbf9f3] p-4 sm:p-6">
@@ -87,7 +95,26 @@ export function ItalianWorldNavigator({ journey, locale, currentUnitId, hrefForU
           </li>;
         })}
       </ol>
+      {world.complete && selected < worlds.length - 1 ? <div data-yoppo-flute={world.id} className="mt-5 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-emerald-50 p-4">
+        <div className="flex items-start gap-3">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-amber-200 text-amber-950"><Music2 size={24} aria-hidden /></span>
+          <div className="min-w-0 flex-1"><h4 className="font-bold text-emerald-950">{portal.flute}</h4><p className="mt-1 text-sm leading-6 text-stone-700">{portal.found}</p></div>
+        </div>
+        <button type="button" disabled={!canUseItalianFlute(worlds, selected)} onClick={() => {
+          if (!canUseItalianFlute(worlds, selected)) return;
+          const destination = worlds[selected + 1];
+          setSelected(selected + 1);
+          setPortalArrival(destination.id);
+          feedback.sample("unlock");
+        }} className="mt-4 inline-flex min-h-12 items-center gap-2 rounded-xl bg-emerald-800 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-900 focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-50">
+          <Sparkles size={18} aria-hidden />{portal.travel}<ArrowRight size={16} aria-hidden />
+        </button>
+        {!canUseItalianFlute(worlds, selected) ? <p className="mt-3 text-xs text-amber-900">{portal.denied}</p> : null}
+        <p className="mt-3 text-xs leading-5 text-stone-600">{portal.safe}</p>
+      </div> : null}
+      {portalArrival === world.id ? <div role="status" data-yoppo-portal-arrival={world.id} className="yo-portal-arrival mt-5 flex items-center gap-3 rounded-2xl bg-emerald-100 p-4 font-bold text-emerald-950"><Sparkles size={21} aria-hidden /><span>{portal.arrived}</span></div> : null}
       <p className="mt-4 text-xs leading-5 text-stone-600">{c.preview}</p>
+      <style>{`@keyframes yo-portal-shine{from{opacity:.2;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}@media(prefers-reduced-motion:no-preference){.yo-portal-arrival{animation:yo-portal-shine .55s ease-out}}`}</style>
     </div>
   </section>;
 }

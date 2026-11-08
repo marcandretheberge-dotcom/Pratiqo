@@ -80,3 +80,11 @@ export function projectItalianWorlds(journey: LearningJourney): ItalianWorldView
       open: citiesWithProgress.some(city => city.unlocked), passEarned: complete };
   });
 }
+
+/** A replayable, purely cosmetic portal. A completed world's earned Pass and
+ * the existing next-city gate are both required; it never grants access. */
+export function canUseItalianFlute(worlds: readonly ItalianWorldView[], fromIndex: number): boolean {
+  if (!Number.isInteger(fromIndex) || fromIndex < 0 || fromIndex >= worlds.length - 1) return false;
+  const source = worlds[fromIndex], destination = worlds[fromIndex + 1];
+  return Boolean(source?.complete && source.passEarned && destination?.open && destination.citiesWithProgress[0]?.unlocked);
+}

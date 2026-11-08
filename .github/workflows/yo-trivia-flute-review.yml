@@ -1,0 +1,47 @@
+name: Yo Trivia and magic flute review
+
+on:
+  push:
+    branches: [feat/yoppo-trivia-flute-20261108]
+  pull_request:
+    paths:
+      - '.github/workflows/yo-trivia-flute-review.yml'
+      - 'lib/yo/italian/trivia.ts'
+      - 'lib/yo/italian/worlds.ts'
+      - 'components/yo/italian/guided/ItalianTriviaCheckpoint.tsx'
+      - 'components/yo/italian/guided/ItalianWorldNavigator.tsx'
+      - 'components/yo/italian/guided/GuidedItalianCourse.tsx'
+      - 'tests/yo/yopratiqoItalianTriviaFlute.test.ts'
+      - 'tests/yo/yopratiqoItalianTriviaPlayer.test.tsx'
+      - 'docs/product/yoppo-worlds-v1.md'
+
+permissions:
+  contents: read
+
+jobs:
+  trivia-flute:
+    name: Trivia, flute, preserved mastery and course navigation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Trivia and flute invariants
+        run: node --import tsx tests/yo/yopratiqoItalianTriviaFlute.test.ts
+      - name: Interactive Trivia player and assisted audio
+        run: node --import tsx tests/yo/yopratiqoItalianTriviaPlayer.test.tsx
+      - name: All guided Italian regression tests
+        run: npm run test:yo-italian-course
+      - name: Targeted lint
+        run: npx eslint lib/yo/italian/trivia.ts lib/yo/italian/worlds.ts components/yo/italian/guided/ItalianTriviaCheckpoint.tsx components/yo/italian/guided/ItalianWorldNavigator.tsx components/yo/italian/guided/GuidedItalianCourse.tsx tests/yo/yopratiqoItalianTriviaFlute.test.ts tests/yo/yopratiqoItalianTriviaPlayer.test.tsx
+      - name: Diff safety
+        run: git diff --check origin/feat/yoppo-worlds-warmup-20261108...HEAD
