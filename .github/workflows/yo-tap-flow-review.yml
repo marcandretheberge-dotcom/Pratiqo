@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   code:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +50,7 @@ jobs:
       max-parallel: 4
       matrix:
         language: [anglais, francais-quebec, espagnol, allemand, portugais-bresil, japonais, mandarin, italien]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       YO_LANGUAGE: ${{ matrix.language }}
@@ -71,8 +71,9 @@ jobs:
         with:
           python-version: '3.12'
       - run: |
+          mkdir -p "$YO_QA_DIR"
           python -m pip install playwright==1.57.0
-          python -m playwright install --with-deps chromium webkit > /tmp/browser-install.log 2>&1
+          python -m playwright install --with-deps chromium webkit > "$YO_QA_DIR/browser-install.log" 2>&1 || { tail -n 100 "$YO_QA_DIR/browser-install.log"; exit 1; }
       - name: Real routes, real theme, explicit media fixtures
         shell: bash
         run: |
