@@ -6,6 +6,7 @@ import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { beginLessonAudio } from "@/lib/yo/audio/lessonAudioActivity";
 import { buildPublicAudioUrl } from "@/lib/yo/audio/audioUrl";
 import { L } from "@/lib/yo/shared/types";
+import { selectIntroVoice } from "@/lib/yo/shared/releaseChoices";
 
 /** Recordings first, correct-language device speech second. Failures never masquerade as listening. */
 export function IntroAudio({ text, speechLocale, path, locale, onListen, autoPlay = false }: {
@@ -41,9 +42,7 @@ export function IntroAudio({ text, speechLocale, path, locale, onListen, autoPla
     let speech: SpeechSynthesisUtterance | null = null;
     const speak = () => {
       if (run !== generation.current || speech) return;
-      const list = synth.getVoices();
-      const voice = list.find(v => v.lang.toLowerCase().replace("_", "-") === speechLocale.toLowerCase()) ??
-        (!['fr-CA','pt-BR'].includes(speechLocale) ? list.find(v => v.lang.split(/[-_]/)[0] === speechLocale.split('-')[0]) : undefined);
+      const voice = selectIntroVoice(synth.getVoices(), speechLocale);
       if (!voice) return;
       speech = new SpeechSynthesisUtterance(text); speech.lang = speechLocale; speech.voice = voice; speech.rate = .85;
       speech.onstart = ready; speech.onend = end; speech.onerror = fail;
