@@ -1,0 +1,93 @@
+name: Yo tap production verification
+on:
+  push:
+    branches: [qa/yo-tap-production-20261108]
+    paths: [.github/workflows/yo-tap-production.yml]
+permissions:
+  contents: read
+  statuses: read
+jobs:
+  ready:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Confirm the intended production build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import json, os, time, urllib.request
+          api='https://api.github.com/repos/marcandretheberge-dotcom/Pratiqo'
+          product='5d7edc9da2a35507b4da76b0d56f164168360097'
+          def get(path):
+              req=urllib.request.Request(api+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+              with urllib.request.urlopen(req,timeout=30) as r: return json.load(r)
+          for attempt in range(30):
+              assert get('/git/ref/heads/main')['object']['sha']==product, 'Production source moved; review the new head before testing.'
+              statuses=get('/commits/'+product+'/status')['statuses']
+              vercel=next((s for s in statuses if s['context']=='Vercel'),None)
+              if vercel and vercel['state']=='success':
+                  assert 'Dfvrouywgbfoa7c4SPd3LV3nxkBB' in vercel['target_url']
+                  print('Exact production commit has a successful Vercel deployment.');break
+              if vercel and vercel['state'] in ('error','failure'): raise RuntimeError('Production deployment failed.')
+              time.sleep(15)
+          else: raise RuntimeError('Production deployment did not become ready.')
+          PY
+  live:
+    needs: ready
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        language: [anglais, francais-quebec, espagnol, allemand, portugais-bresil, japonais, mandarin, italien]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      YO_LANGUAGE: ${{ matrix.language }}
+      YO_TAP_URL: https://www.pratiqo.ca
+      YO_TAP_FIXTURES: '0'
+      YO_QA_DIR: /tmp/yo-tap-production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 5d7edc9da2a35507b4da76b0d56f164168360097
+          persist-credentials: false
+      - name: Exact reviewed production identity
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 5d7edc9da2a35507b4da76b0d56f164168360097
+          test "$(git rev-parse HEAD^{tree})" = 550b722ec18375185d12cbe59c1cd96bbaca0cd2
+          test "$(git hash-object app/globals.css)" = 15c4b318d7f74a39f1d9e360dfeff428164e1c69
+          mkdir -p "$YO_QA_DIR"
+          git rev-parse HEAD > "$YO_QA_DIR/product-commit.txt"
+          git rev-parse HEAD^{tree} > "$YO_QA_DIR/product-tree.txt"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit > "$YO_QA_DIR/browser-install.log" 2>&1 || { tail -n 100 "$YO_QA_DIR/browser-install.log"; exit 1; }
+      - name: Real public-domain tap flow, no accounts or media fixtures
+        run: |
+          set -euo pipefail
+          python -u tests/yo/yopratiqoTapFlow.browser.py 2>&1 | tee "$YO_QA_DIR/live.log"
+      - name: Preserve Italian notebook and tools contrast
+        if: matrix.language == 'italien'
+        env:
+          YO_BASE_URL: https://www.pratiqo.ca
+          YO_LOCALES: fr
+          YO_QA_DIR: /tmp/yo-tap-production/dialogs
+        run: |
+          set -euo pipefail
+          mkdir -p "$YO_QA_DIR"
+          python -u tests/yo/yopratiqoDialogContrast.browser.py 2>&1 | tee "$YO_QA_DIR/dialog.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-tap-production-${{ matrix.language }}-${{ github.run_attempt }}
+          path: /tmp/yo-tap-production
+          retention-days: 7
