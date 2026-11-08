@@ -8,14 +8,18 @@ slug=os.environ['YO_LANGUAGE']
 recorded={'anglais':'Thank you!','francais-quebec':'Bonjour !','espagnol':'¡Hola!','allemand':'Wie heißt du?','portugais-bresil':'Como você se chama?','japonais':'こんにちは。','mandarin':'你好！','italien':'Ciao!'}
 observe="""(()=>{
  window.__soundAudit={buffers:[],media:[],gains:[]};
- const a=window.__soundAudit;
+ const a=window.__soundAudit,uploaded=new WeakMap();
  const C=window.AudioContext||window.webkitAudioContext;
  if(C){const gain=C.prototype.createGain;C.prototype.createGain=function(...args){const g=gain.apply(this,args);a.gains.push(g);return g;};}
+ const copy=AudioBuffer.prototype.copyToChannel;
+ AudioBuffer.prototype.copyToChannel=function(data,...args){
+  let hash=2166136261,peak=0;for(let i=0;i<data.length;i++){peak=Math.max(peak,Math.abs(data[i]));hash=Math.imul(hash^Math.round(data[i]*1000000),16777619);}
+  const result=copy.call(this,data,...args);uploaded.set(this,{hash:hash>>>0,peak,samples:data.length,rate:this.sampleRate});return result;
+ };
  const start=AudioBufferSourceNode.prototype.start;
  AudioBufferSourceNode.prototype.start=function(...args){
-  const result=start.apply(this,args),data=this.buffer?.getChannelData(0);
-  if(data){let hash=2166136261,peak=0;for(let i=0;i<data.length;i++){peak=Math.max(peak,Math.abs(data[i]));hash=Math.imul(hash^Math.round(data[i]*1000000),16777619);}
-  a.buffers.push({hash:hash>>>0,peak,samples:data.length,rate:this.buffer.sampleRate,state:this.context.state,volume:a.gains.at(-1)?.gain.value});}return result;
+  const meta=uploaded.get(this.buffer),result=start.apply(this,args);
+  if(meta)a.buffers.push({...meta,state:this.context.state,volume:a.gains.at(-1)?.gain.value});return result;
  };
  const play=HTMLMediaElement.prototype.play;
  HTMLMediaElement.prototype.play=function(...args){
@@ -23,8 +27,7 @@ observe="""(()=>{
   return play.apply(this,args);
  };
 })();"""
-# A player may release src/load during its pause callback at the natural end.
-# Observe the native ended flag in capture phase before that cleanup. A manual pause never qualifies.
+# Observe native completion before the application's source cleanup. Manual pauses never qualify.
 complete="window.__soundAudit.media.filter(e=>e.event==='ended'||(e.event==='pause'&&e.ended&&e.duration>0&&e.time>=e.duration-.02)).length"
 def click(p,name):p.get_by_role('button',name=name,exact=True).click()
 def count(p):return p.evaluate('window.__soundAudit.buffers.length')
@@ -36,16 +39,19 @@ def notices(p):
  later=p.get_by_role('button',name=re.compile('^(Not now|Pas maintenant|Ahora no)$'))
  if later.count() and later.first.is_visible():later.first.click()
 def sample(p,dialog,name):
+ print(f'CHECK {slug}/{engine}: '+name,flush=True)
  before=count(p);dialog.get_by_role('button',name=name,exact=True).click()
  p.wait_for_function('(n)=>window.__soundAudit.buffers.length===n+1',arg=before)
  item=p.evaluate('window.__soundAudit.buffers.at(-1)');assert item['state']=='running' and 0<item['peak']<.25
  p.wait_for_timeout(850);return item
 report=[]
 with sync_playwright() as pw:
- for engine in ['chromium','webkit']:
+ for engine in os.environ.get('YO_ENGINES','chromium,webkit').split(','):
   browser=getattr(pw,engine).launch();ctx=browser.new_context(viewport={'width':390,'height':844},has_touch=True,is_mobile=True,color_scheme='dark',reduced_motion='reduce')
-  ctx.add_init_script(observe);p=ctx.new_page();p.set_default_timeout(20000);errors=[];p.on('pageerror',lambda e:errors.append(str(e)))
+  ctx.add_init_script(observe);p=ctx.new_page();p.set_default_timeout(20000);errors=[];p.on('pageerror',lambda e:errors.append(str(e)));p.on('crash',lambda:errors.append('page crashed'))
   italian=slug=='italien';route=f'/yo/langues/{slug}/'+('parcours' if italian else 'demarrer')+'?lang=en'
+  stage='onboarding'
+  print(f'CHECK {slug}/{engine}: onboarding',flush=True)
   try:
    r=p.goto(base+route,wait_until='domcontentloaded',timeout=60000);assert r and r.status==200
    p.locator('[data-yoppo-onboarding]' if italian else '[data-shared-welcome]').wait_for();notices(p)
@@ -57,12 +63,14 @@ with sync_playwright() as pw:
    if tour.count():tour.click()
    click(p,'Yoppo and my tools' if italian else 'My tools');dialog=p.get_by_role('dialog');dialog.wait_for()
    assert count(p)==0,'Restoring a page/opening tools must be silent'
+   stage='effects'
    cues={'correct':sample(p,dialog,'Preview the soft wood sound')}
    dialog.get_by_role('button',name='Preview the other sounds',exact=True).click()
    for kind in ['step','mission','stamp','unlock']:
     dialog.get_by_role('combobox',name='Event',exact=True).select_option(kind)
     cues[kind]=sample(p,dialog,'Preview this effect')
    assert len({v['hash'] for v in cues.values()})==5,'All five cues must differ'
+   stage='volume'
    slider=dialog.get_by_role('slider',name=re.compile('Effects volume'))
    slider.focus();p.keyboard.press('Home')
    expect(slider).to_have_value('0');before=count(p)
@@ -74,6 +82,7 @@ with sync_playwright() as pw:
    expect(dialog.get_by_role('button',name='Preview this effect',exact=True)).to_be_disabled()
    p.screenshot(path=str(out/f'{slug}-{engine}-settings.png'),full_page=True)
    (out/f'{slug}-{engine}-effects.json').write_text(json.dumps({'cues':cues,'halfVolume':half,'muteAndZeroPassed':True},indent=2))
+   stage='restore'
    dialog.get_by_role('button',name='Close',exact=True).click();p.reload(wait_until='domcontentloaded')
    p.locator('[data-guided-italian]' if italian else '[data-shared-course]').wait_for();p.wait_for_timeout(1000)
    assert count(p)==0,'Reload must not replay effects'
@@ -83,6 +92,7 @@ with sync_playwright() as pw:
    dialog.get_by_role('button',name='Close',exact=True).click();click(p,'Word notebook');dialog=p.get_by_role('dialog')
    row=dialog.locator('p[lang]').filter(has_text=re.compile('^'+re.escape(recorded[slug])+'$')).first.locator('xpath=..')
    assert row.count()==1
+   stage='recorded pronunciation'
    starts=[]
    for slow in [False,True]:
     if slow:row.get_by_role('button',name=re.compile('Slow down')).click()
@@ -95,6 +105,7 @@ with sync_playwright() as pw:
     starts.append(played)
    assert count(p)==0,'Pronunciation with muted effects must not create a feedback sound'
    dialog.get_by_role('button',name='Close',exact=True).click()
+   stage='repair decode'
    repair=ctx.request.get(base+'/audio/yo/fr/tiens-tenez-v1.mp3')
    assert repair.status==200 and hashlib.sha256(repair.body()).hexdigest()=='47a45862fb14e3d764eb1d3b4a993c36003209fad4bb273eee602569dac70a17'
    decoded=p.evaluate("""async()=>{const data=await(await fetch('/audio/yo/fr/tiens-tenez-v1.mp3')).arrayBuffer();const C=window.AudioContext||window.webkitAudioContext;const c=new C();try{const b=await c.decodeAudioData(data);return {duration:b.duration,channels:b.numberOfChannels};}finally{await c.close();}}""")
@@ -103,8 +114,10 @@ with sync_playwright() as pw:
    report.append({'language':slug,'engine':engine,'cues':cues,'halfVolume':half['volume'],'recordedPlayback':starts,'repair':decoded,'passed':True})
    print(f'PASS {slug}/{engine}: 5 distinct native effects, volume/mute/reload, real normal/slow pronunciation independent of muted effects, repaired MP3 hash and decode.',flush=True)
   except Exception as e:
-   p.screenshot(path=str(out/f'{slug}-{engine}-failure.png'),full_page=True)
-   (out/f'{slug}-{engine}-failure.json').write_text(json.dumps({'error':str(e),'pageErrors':errors,'url':p.url},indent=2));raise
+   (out/f'{slug}-{engine}-failure.json').write_text(json.dumps({'error':str(e),'stage':stage,'pageErrors':errors,'url':p.url},indent=2))
+   try:p.screenshot(path=str(out/f'{slug}-{engine}-failure.png'),full_page=True,timeout=5000)
+   except Exception:pass
+   raise
   finally:
    try:(out/f'{slug}-{engine}-observed-media.json').write_text(json.dumps(p.evaluate('window.__soundAudit.media'),indent=2))
    except Exception:pass
