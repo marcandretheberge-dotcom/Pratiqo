@@ -29,7 +29,6 @@ export function ItalianCityArrival({ unitId, locale, mastered }: {
       </div>
       <div className="yo-yoppo-city-arrival relative rounded-full border-2 border-amber-300 bg-white p-1 shadow-lg" aria-hidden="true"><CompanionAvatar visualId="travel" state={mastered?"celebrating":"map"} size="sm" compact locale={locale}/></div>
     </div>
-    {identity ? <p className="sr-only" data-yoppo-city-cultural-motif={identity.motif}>{identity.inspiration[locale]}</p> : null}
     <style>{`@keyframes yo-yoppo-city-arrive{from{transform:translateX(-24px) translateY(12px);opacity:.5}to{transform:translateX(0) translateY(0);opacity:1}}@media(prefers-reduced-motion:no-preference){.yo-yoppo-city-arrival{animation:yo-yoppo-city-arrive .7s ease-out both}}`}</style>
   </section>;
 }
