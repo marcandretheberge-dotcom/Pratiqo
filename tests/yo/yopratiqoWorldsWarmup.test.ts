@@ -4,6 +4,8 @@ import { emptyCourseProgress, recordCourseAssessment } from "@/lib/yo/italian/co
 import { guidedSteps, initialGuided, migrateGuidedV2Draft } from "@/lib/yo/italian/course/guidedItalian";
 import { recallQueue } from "@/lib/yo/learning/vocabularyPractice";
 import { ITALIAN_WORLDS, italianWorldForUnit, projectItalianWorlds } from "@/lib/yo/italian/worlds";
+import { deriveItalianCityAchievement } from "@/lib/yo/italian/achievement";
+import { recordCourseActivity } from "@/lib/yo/italian/course/courseProgress";
 import { firstMeetingUnit, firstMeetingVisuals } from "@/lib/yo/personalized/firstMeeting";
 import { personalizedItalianCatalog, personalizedItalianUnits } from "@/lib/yo/personalized/courseData";
 import { freshVocabulary, parseVocabulary } from "@/components/yo/personalized/VisualVocabulary";
@@ -72,4 +74,20 @@ for (const unit of personalizedItalianUnits) {
   assert.equal(new Set(ids).size, ids.length, `duplicate assessed question ID in ${unit.id}`);
 }
 
-console.log("YoPratiqo worlds, warmup uniqueness, earned passes and draft migration: OK");
+const printableUnit = personalizedItalianCatalog.units[0];
+const emptyReport = deriveItalianCityAchievement(printableUnit, personalizedItalianCatalog, emptyCourseProgress());
+assert.equal(emptyReport.mastered, false, "a PDF cannot invent a earned stamp");
+assert.equal(emptyReport.best, null);
+assert.equal(emptyReport.practiced, 0);
+const independentlyPassed = recordCourseAssessment(emptyCourseProgress(), personalizedItalianCatalog,
+  printableUnit.quizId, 4, 5, false);
+assert.equal(deriveItalianCityAchievement(printableUnit, personalizedItalianCatalog, independentlyPassed).mastered, true);
+const assistedReport = recordCourseAssessment(emptyCourseProgress(), personalizedItalianCatalog,
+  printableUnit.quizId, 5, 5, true);
+assert.equal(deriveItalianCityAchievement(printableUnit, personalizedItalianCatalog, assistedReport).mastered, false);
+const practised = recordCourseActivity(emptyCourseProgress(), personalizedItalianCatalog,
+  printableUnit.activityIds[0], true, false);
+assert.equal(deriveItalianCityAchievement(printableUnit, personalizedItalianCatalog, practised).practiced, 1);
+assert.equal(deriveItalianCityAchievement(printableUnit, personalizedItalianCatalog, practised).mastered, false);
+
+console.log("YoPratiqo worlds, warmups, achievement report, passes and draft migration: OK");
