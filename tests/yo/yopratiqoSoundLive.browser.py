@@ -19,10 +19,13 @@ observe="""(()=>{
  };
  const play=HTMLMediaElement.prototype.play;
  HTMLMediaElement.prototype.play=function(...args){
-  if(!this.__observed){this.__observed=true;for(const event of ['playing','ended','error','pause'])this.addEventListener(event,()=>a.media.push({event,url:this.currentSrc||this.src,rate:this.playbackRate,time:this.currentTime,duration:this.duration}));}
+  if(!this.__observed){this.__observed=true;for(const event of ['playing','ended','error','pause'])this.addEventListener(event,()=>a.media.push({event,url:this.currentSrc||this.src,rate:this.playbackRate,time:this.currentTime,duration:this.duration,ended:this.ended,error:this.error?.code}),{capture:true});}
   return play.apply(this,args);
  };
 })();"""
+# A player may release src/load during its pause callback at the natural end.
+# Observe the native ended flag in capture phase before that cleanup. A manual pause never qualifies.
+complete="window.__soundAudit.media.filter(e=>e.event==='ended'||(e.event==='pause'&&e.ended&&e.duration>0&&e.time>=e.duration-.02)).length"
 def click(p,name):p.get_by_role('button',name=name,exact=True).click()
 def count(p):return p.evaluate('window.__soundAudit.buffers.length')
 def notices(p):
@@ -70,6 +73,7 @@ with sync_playwright() as pw:
    sound=dialog.get_by_role('switch',name='Success sounds',exact=True);sound.click();expect(sound).to_have_attribute('aria-checked','false')
    expect(dialog.get_by_role('button',name='Preview this effect',exact=True)).to_be_disabled()
    p.screenshot(path=str(out/f'{slug}-{engine}-settings.png'),full_page=True)
+   (out/f'{slug}-{engine}-effects.json').write_text(json.dumps({'cues':cues,'halfVolume':half,'muteAndZeroPassed':True},indent=2))
    dialog.get_by_role('button',name='Close',exact=True).click();p.reload(wait_until='domcontentloaded')
    p.locator('[data-guided-italian]' if italian else '[data-shared-course]').wait_for();p.wait_for_timeout(1000)
    assert count(p)==0,'Reload must not replay effects'
@@ -82,9 +86,9 @@ with sync_playwright() as pw:
    starts=[]
    for slow in [False,True]:
     if slow:row.get_by_role('button',name=re.compile('Slow down')).click()
-    before=p.evaluate("window.__soundAudit.media.filter(e=>e.event==='ended').length")
+    before=p.evaluate(complete)
     row.get_by_role('button',name=re.compile('^Listen')).click()
-    p.wait_for_function("(n)=>window.__soundAudit.media.filter(e=>e.event==='ended').length>n",arg=before,timeout=20000)
+    p.wait_for_function('(n)=>'+complete+'>n',arg=before,timeout=20000)
     events=p.evaluate('window.__soundAudit.media');played=[e for e in events if e['event']=='playing'][-1]
     assert abs(played['rate']-(.78 if slow else 1))<.001
     assert '/audio/yo/' in played['url'] or '/yopratiqo-audio/' in played['url']
@@ -102,5 +106,7 @@ with sync_playwright() as pw:
    p.screenshot(path=str(out/f'{slug}-{engine}-failure.png'),full_page=True)
    (out/f'{slug}-{engine}-failure.json').write_text(json.dumps({'error':str(e),'pageErrors':errors,'url':p.url},indent=2));raise
   finally:
+   try:(out/f'{slug}-{engine}-observed-media.json').write_text(json.dumps(p.evaluate('window.__soundAudit.media'),indent=2))
+   except Exception:pass
    (out/'sound-report.json').write_text(json.dumps(report,indent=2));ctx.close();browser.close()
 print('These are native playback/interaction checks, not subjective listening or physical-device certification.',flush=True)
