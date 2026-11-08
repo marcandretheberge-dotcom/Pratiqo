@@ -282,6 +282,8 @@ async function main() {
       finally { cleanup(); }
     }
   } finally {
+    // Flush queued React work before restoring jsdom globals.
+    await new Promise<void>(resolve => setImmediate(resolve));
     if (originalUrl === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
     else process.env.NEXT_PUBLIC_SUPABASE_URL = originalUrl;
     dom.window.close();
