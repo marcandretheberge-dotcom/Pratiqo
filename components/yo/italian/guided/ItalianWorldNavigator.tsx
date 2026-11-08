@@ -27,9 +27,9 @@ export function ItalianWorldNavigator({ journey, locale, currentUnitId, hrefForU
   const [portalArrival, setPortalArrival] = useState<string | null>(null);
   const feedback = useLearningFeedback();
   const c = {
-    fr: { title: "Les mondes de Yoppo", intro: "Chaque ville est un module; ses missions t'apprennent à utiliser l'italien.", world: "Monde", pass: "Yoppo Pass gagné", complete: "Monde terminé", locked: "Termine le monde précédent", here: "Ta ville", done: "Défi validé", open: "Explorer la ville", unavailable: "Ville verrouillée", goal: "Dans cette ville", preview: "Les villes donnent un décor au cours; tes réussites réelles ouvrent la route." },
-    en: { title: "Yoppo's worlds", intro: "Each city is a module; its missions teach you how to use Italian.", world: "World", pass: "Yoppo Pass earned", complete: "World completed", locked: "Finish the previous world", here: "Your city", done: "Challenge passed", open: "Explore the city", unavailable: "City locked", goal: "In this city", preview: "Cities give the course a setting; your real achievements open the path." },
-    es: { title: "Los mundos de Yoppo", intro: "Cada ciudad es un módulo; sus misiones te enseñan a usar el italiano.", world: "Mundo", pass: "Yoppo Pass obtenido", complete: "Mundo completado", locked: "Termina el mundo anterior", here: "Tu ciudad", done: "Reto superado", open: "Explorar la ciudad", unavailable: "Ciudad bloqueada", goal: "En esta ciudad", preview: "Las ciudades son el escenario del curso; tus logros reales abren el camino." },
+    fr: { title: "Les mondes de Yoppo", intro: "Quatre villes, des missions et un château à conquérir.", world: "Monde", pass: "Yoppo Pass gagné", complete: "Monde terminé", locked: "Termine le monde précédent", here: "Ta ville", done: "Défi validé", open: "Explorer la ville", unavailable: "Ville verrouillée", goal: "Dans cette ville", preview: "Les villes donnent un décor au cours; tes réussites réelles ouvrent la route." },
+    en: { title: "Yoppo's worlds", intro: "Four cities, exciting missions and a castle to unlock.", world: "World", pass: "Yoppo Pass earned", complete: "World completed", locked: "Finish the previous world", here: "Your city", done: "Challenge passed", open: "Explore the city", unavailable: "City locked", goal: "In this city", preview: "Cities give the course a setting; your real achievements open the path." },
+    es: { title: "Los mundos de Yoppo", intro: "Cuatro ciudades, misiones y un castillo por conquistar.", world: "Mundo", pass: "Yoppo Pass obtenido", complete: "Mundo completado", locked: "Termina el mundo anterior", here: "Tu ciudad", done: "Reto superado", open: "Explorar la ciudad", unavailable: "Ciudad bloqueada", goal: "En esta ciudad", preview: "Las ciudades son el escenario del curso; tus logros reales abren el camino." },
   }[locale];
 
   function canOpenWorld(index: number) {
@@ -45,58 +45,71 @@ export function ItalianWorldNavigator({ journey, locale, currentUnitId, hrefForU
   }[locale];
   if (!world || !italianWorldForUnit(currentUnitId)) return null;
 
-  return <section data-yoppo-world-map aria-label={c.title} className="mb-7 rounded-3xl border-2 border-emerald-200 bg-gradient-to-b from-[#edf5ed] to-[#fbf9f3] p-4 sm:p-6">
-    <div className="flex items-start gap-3">
-      <Compass size={25} className="mt-1 shrink-0 text-emerald-800" aria-hidden />
-      <div>
-        <h2 className="text-xl font-black text-emerald-950 sm:text-2xl">{c.title}</h2>
-        <p className="mt-1 text-sm leading-6 text-stone-700">{c.intro}</p>
+  return <section data-yoppo-world-map aria-label={c.title}
+    className="mb-8 rounded-[30px] border border-[#f4dfb9] bg-gradient-to-b from-[#fff9e9] via-[#eaf5e9] to-[#f9f6eb] p-2.5 shadow-sm sm:p-5">
+    <div className="flex items-center gap-3 px-2 py-3 sm:px-3">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[#236d67] text-[#ffecaf] shadow-[0_4px_0_#164d46]">
+        <Compass size={24} aria-hidden/>
+      </span>
+      <div className="min-w-0">
+        <h2 className="text-xl font-black tracking-tight text-[#183f39] sm:text-2xl">{c.title}</h2>
+        <p className="mt-0.5 text-xs leading-5 text-[#47635b] sm:text-sm">{c.intro}</p>
       </div>
     </div>
-    <nav aria-label={c.title} className="mt-5 grid grid-cols-3 gap-2">
+
+    <nav aria-label={c.title} className="my-2 grid grid-cols-3 gap-1.5 rounded-[22px] bg-[#d9e9d8] p-1.5 sm:gap-2 sm:p-2">
       {worlds.map((item, index) => {
         const accessible = canOpenWorld(index);
-        return <button key={item.id} type="button" disabled={!accessible} aria-current={selected === index ? "step" : undefined}
-          onClick={() => setSelected(index)}
-          className={`min-h-16 rounded-2xl border-2 p-2 text-left focus-visible:outline-2 focus-visible:outline-offset-2 ${selected === index ? "border-emerald-800 bg-white text-emerald-950 shadow-sm" : accessible ? "border-emerald-200 bg-emerald-50 text-stone-800" : "border-stone-200 bg-stone-100 text-stone-500"}`}>
-          <span className="flex items-center gap-1 text-xs font-black">
-            {item.complete ? <Check size={15} aria-hidden /> : accessible ? <MapPin size={15} aria-hidden /> : <LockKeyhole size={14} aria-hidden />}
+        const active = selected === index;
+        return <button key={item.id} type="button" disabled={!accessible}
+          aria-current={active ? "step" : undefined}
+          onClick={() => { setSelected(index); setPortalArrival(null); }}
+          className={"flex min-h-[66px] flex-col items-center justify-center gap-1 rounded-[17px] border-2 px-1.5 py-2 text-center shadow-sm transition-transform focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#ffb04a] disabled:opacity-60 sm:min-h-[71px] " +
+            (active ? "border-[#c98229] bg-[#fff2c4] text-[#583e1b] shadow-[0_3px_0_#ca9856] " :
+              accessible ? "border-white/75 bg-white text-[#255c53] hover:-translate-y-0.5 " :
+                "border-[#d1dfd7] bg-[#e5ebe5] text-[#70807a]")}>
+          <span className="flex items-center gap-1 text-[11px] font-black uppercase tracking-wide sm:text-xs">
+            {item.complete ? <Check size={14} aria-hidden/> : accessible ? <MapPin size={14} aria-hidden/> : <LockKeyhole size={13} aria-hidden/>}
             {c.world} {item.number}
           </span>
-          <span className="mt-1 block text-xs font-semibold leading-5">{item.title[locale]}</span>
+          <span className="line-clamp-1 text-[10px] font-semibold leading-4 sm:text-sm">{item.title[locale]}</span>
         </button>;
       })}
     </nav>
-    <div className="mt-5 rounded-2xl bg-white/80 p-3 sm:p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">{c.world} {world.number} / {worlds.length}</p>
-          <h3 className="mt-1 text-lg font-bold text-emerald-950">{world.title[locale]}</h3>
-          <p className="mt-1 text-sm text-stone-600">{world.description[locale]}</p>
+
+    <ItalianWorldAtlas world={world} locale={locale} currentUnitId={currentUnitId}
+      hrefForUnit={hrefForUnit} canReview={canReview}/>
+
+    {world.complete && selected < worlds.length - 1 ? <div data-yoppo-flute={world.id}
+      className="relative mx-1 mt-6 overflow-hidden rounded-3xl border-2 border-[#e7b450] bg-gradient-to-r from-[#fff1b7] via-[#ffe0a7] to-[#e6f5d6] p-4 shadow-[0_5px_0_#b48a43] sm:p-5">
+      <span className="pointer-events-none absolute -right-5 -top-9 h-32 w-32 rounded-full bg-white/55 blur-xl" aria-hidden/>
+      <div className="relative flex items-start gap-3">
+        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border-2 border-[#d3a24f] bg-[#fff6d5] text-[#9c5c1e] shadow-sm">
+          <Music2 size={28} aria-hidden/>
+        </span>
+        <div className="min-w-0 flex-1">
+          <h4 className="text-lg font-black text-[#573c1b]">{portal.flute}</h4>
+          <p className="mt-1 text-sm leading-6 text-[#654f2c]">{portal.found}</p>
         </div>
-        {world.passEarned ? <span className="inline-flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900"><Ticket size={17} aria-hidden />{c.pass}</span> : null}
       </div>
-      <ItalianWorldAtlas world={world} locale={locale} currentUnitId={currentUnitId} hrefForUnit={hrefForUnit} canReview={canReview} />
-      {world.complete && selected < worlds.length - 1 ? <div data-yoppo-flute={world.id} className="mt-5 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-emerald-50 p-4">
-        <div className="flex items-start gap-3">
-          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-amber-200 text-amber-950"><Music2 size={24} aria-hidden /></span>
-          <div className="min-w-0 flex-1"><h4 className="font-bold text-emerald-950">{portal.flute}</h4><p className="mt-1 text-sm leading-6 text-stone-700">{portal.found}</p></div>
-        </div>
-        <button type="button" disabled={!canUseItalianFlute(worlds, selected)} onClick={() => {
+      <button type="button" disabled={!canUseItalianFlute(worlds, selected)}
+        onClick={() => {
           if (!canUseItalianFlute(worlds, selected)) return;
           const destination = worlds[selected + 1];
           setSelected(selected + 1);
           setPortalArrival(destination.id);
           feedback.sample("unlock");
-        }} className="mt-4 inline-flex min-h-12 items-center gap-2 rounded-xl bg-emerald-800 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-900 focus-visible:outline-2 disabled:cursor-not-allowed disabled:opacity-50">
-          <Sparkles size={18} aria-hidden />{portal.travel}<ArrowRight size={16} aria-hidden />
-        </button>
-        {!canUseItalianFlute(worlds, selected) ? <p className="mt-3 text-xs text-amber-900">{portal.denied}</p> : null}
-        <p className="mt-3 text-xs leading-5 text-stone-600">{portal.safe}</p>
-      </div> : null}
-      {portalArrival === world.id ? <div role="status" data-yoppo-portal-arrival={world.id} className="yo-portal-arrival mt-5 flex items-center gap-3 rounded-2xl bg-emerald-100 p-4 font-bold text-emerald-950"><Sparkles size={21} aria-hidden /><span>{portal.arrived}</span></div> : null}
-      <p className="mt-4 text-xs leading-5 text-stone-600">{c.preview}</p>
-      <style>{`@keyframes yo-portal-shine{from{opacity:.2;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}@media(prefers-reduced-motion:no-preference){.yo-portal-arrival{animation:yo-portal-shine .55s ease-out}}`}</style>
-    </div>
+        }}
+        className="relative mt-4 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-[#195b4e] bg-[#237762] px-4 py-3 text-sm font-black text-white shadow-[0_5px_0_#154c3c] transition-transform hover:-translate-y-0.5 focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#ffbc53] disabled:opacity-55">
+        <Sparkles size={19} aria-hidden/>{portal.travel}<ArrowRight size={17} aria-hidden/>
+      </button>
+      {!canUseItalianFlute(worlds, selected) ? <p className="mt-3 text-xs text-[#7b5b27]">{portal.denied}</p> : null}
+      <p className="mt-3 text-xs leading-5 text-[#735d39]">{portal.safe}</p>
+    </div> : null}
+    {portalArrival === world.id ? <div role="status" data-yoppo-portal-arrival={world.id}
+      className="yo-portal-arrival mx-1 mt-4 flex items-center gap-3 rounded-2xl border border-[#b6dc9d] bg-[#e4f8d3] p-4 font-black text-[#275c43]">
+      <Sparkles size={22} aria-hidden/><span>{portal.arrived}</span>
+    </div> : null}
+    <style>{`@keyframes yo-portal-shine{from{opacity:.2;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}@media(prefers-reduced-motion:no-preference){.yo-portal-arrival{animation:yo-portal-shine .55s ease-out}}`}</style>
   </section>;
 }
