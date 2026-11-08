@@ -6,6 +6,7 @@ import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { IntroCourse, IntroProfile, Answer, Draft } from "@/lib/yo/shared/types";
 import { L } from "@/lib/yo/shared/types";
 import { emptyDraft, suggestedMission } from "@/lib/yo/shared/state";
+import { visibleIntroPace } from "@/lib/yo/shared/releaseChoices";
 import type { YoLocale } from "@/lib/yo/types";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { FeedbackSettings } from "../feedback/LearningFeedback";
@@ -20,8 +21,8 @@ export function IntroWelcome({course,locale,audio,initial,onComplete,onCancel}:{
  const latest=useRef({answers,draft});useLayoutEffect(()=>{latest.current={answers,draft};},[answers,draft]);
  const guide=useRef<HTMLDivElement>(null),heading=useRef<HTMLHeadingElement>(null);
  useLayoutEffect(()=>{const f=requestAnimationFrame(()=>{guide.current?.scrollIntoView({block:'start',behavior:'instant'});heading.current?.focus({preventScroll:true});});return()=>cancelAnimationFrame(f);},[step,answers.length]);
- const amount=custom?/^\d+$/.test(customText)?Number(customText):NaN:minutes;
- const valid=amount!==null&&Number.isInteger(amount)&&amount>=(custom?15:0)&&amount<=1200;
+ const amount=visibleIntroPace(minutes,custom,customText);
+ const valid=amount!==null;
  const titles={experience:say(`${course.greeting} ! Tu connais déjà quelques mots ?`,`${course.greeting}! Know a few words already?`,`${course.greeting}! ¿Ya sabes algunas palabras?`),goal:say('Qu’est-ce qui te donne envie d’apprendre ?','What makes you want to learn?','¿Qué te anima a aprender?'),pace:say('Quel rythme te convient ?','What pace suits you?','¿Qué ritmo te viene bien?'),choice:say('Trouvons ton point de départ.','Let’s find your starting point.','Busquemos tu punto de partida.'),check:say('Voyons ce que tu connais déjà.','Let’s see what you already know.','Veamos lo que ya sabes.'),result:say('Je te propose de commencer ici !','I suggest starting here!','¡Te propongo empezar aquí!')};
  function go(next:typeof step){stopLessonAudio();setStep(next);}
  function nextCheck(){const d=latest.current.draft,old=latest.current.answers;if(!d.checked||old.length>=course.final.length)return;const next=[...old,{correct:d.correct,assisted:d.assisted}];latest.current={answers:next,draft:emptyDraft()};setAnswers(next);setDraft(emptyDraft());if(next.length===course.final.length){setEntry(suggestedMission(next));go('result');}}

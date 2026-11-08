@@ -15,9 +15,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      YO_URL: https://pratiqo-ga19csukd-marcandretheberge-dotcoms-projects.vercel.app
+      YO_URL: https://pratiqo-2vgv9rpmq-marcandretheberge-dotcoms-projects.vercel.app
       YO_LANGUAGE: ${{ matrix.language }}
-      YO_PRODUCT: fd91f47f7a8192b551774b498b6659da2626c7d9
+      YO_PRODUCT: 51314ba59b25f61a14b709045e5f335e08d8ead1
       YO_QA_DIR: /tmp/yo-release
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           cat > /tmp/check-release.py <<'PY'
-          import os,json,re,time
+          import os,json,re,time,traceback
           from pathlib import Path
           from playwright.sync_api import sync_playwright, TimeoutError
           out=Path(os.environ['YO_QA_DIR']);out.mkdir(exist_ok=True)
@@ -56,8 +56,7 @@ jobs:
           results=[]
           def notices(p):
             banner=p.get_by_test_id('cookie-consent-banner')
-            if banner.is_visible():
-              banner.get_by_role('button',name=re.compile('Necessary only|Nécessaires seulement|Nécessaires uniquement|Solo necesarias',re.I)).click()
+            if banner.is_visible():banner.get_by_role('button',name=re.compile('Necessary only|Nécessaires seulement|Nécessaires uniquement|Solo necesarias',re.I)).click()
             later=p.get_by_role('button',name=re.compile('^(Not now|Pas maintenant|Ahora no)$'))
             if later.count() and later.first.is_visible():later.first.click()
           with sync_playwright() as pw:
@@ -78,26 +77,22 @@ jobs:
                   except TimeoutError:pass
                   notices(page)
                   if italian:
-                    # Parent's real onboarding: use semantic controls in each language.
                     candidates={'fr':['Je pars de zéro'],'en':['I’m starting from zero','I’m a beginner','I’m starting from scratch'],'es':['Empiezo de cero']}[locale]
-                    buttons=welcome.get_by_role('button');names=buttons.all_text_contents()
-                    selected=next((x for x in candidates if x in names),None)
+                    names=welcome.get_by_role('button').all_text_contents();selected=next((x for x in candidates if x in names),None)
                     if selected is None:raise AssertionError('Italian experience labels: '+repr(names))
                     welcome.get_by_role('button',name=selected,exact=True).click();notices(page)
-                    travel=welcome.get_by_role('button',name=re.compile('^(Voyager|Travel|Viajar)$'));travel.click()
+                    welcome.get_by_role('button',name=re.compile('^(Voyager|Travel|Viajar)$')).click()
                     radios=welcome.locator('input[type=radio]');radios.first.wait_for(state='attached')
                     choice=radios.locator('xpath=..').filter(has_text=re.compile('2\s*h')).first
                     if choice.count()==0:choice=radios.nth(2).locator('xpath=..')
                     choice.tap();assert welcome.locator('input[type=radio]:checked').count()==1
                     welcome.get_by_role('button',name=nxt,exact=True).click()
-                    page.screenshot(path=str(out/name+'-recommendation.png') if False else str(out/f'{name}-recommendation.png'),full_page=True)
+                    page.screenshot(path=str(out/f'{name}-recommendation.png'),full_page=True)
                     welcome.get_by_role('button',name=start,exact=True).click();page.locator('[data-guided-italian]').wait_for()
-                    page.reload(wait_until='domcontentloaded');page.locator('[data-guided-italian]').wait_for()
-                    assert page.locator('[data-yoppo-onboarding]').count()==0
+                    page.reload(wait_until='domcontentloaded');page.locator('[data-guided-italian]').wait_for();assert page.locator('[data-yoppo-onboarding]').count()==0
                   else:
                     welcome.get_by_role('button',name=zero,exact=True).click();notices(page)
-                    welcome.get_by_role('button',name=goal,exact=True).click()
-                    assert welcome.get_by_role('button',name=nxt,exact=True).is_disabled()
+                    welcome.get_by_role('button',name=goal,exact=True).click();assert welcome.get_by_role('button',name=nxt,exact=True).is_disabled()
                     page.locator('[data-shared-pace="120"]').tap();assert page.locator('input[type=radio][value="120"]').is_checked()
                     welcome.get_by_role('button',name=nxt,exact=True).click();assert page.get_by_role('combobox').count()==0
                     page.screenshot(path=str(out/f'{name}-recommendation.png'),full_page=True)
@@ -114,25 +109,41 @@ jobs:
                     page.get_by_role('button',name=begin,exact=True).click();assert page.get_by_role('button',name=nxt,exact=True).is_enabled()
                     assert page.get_by_role('button',name=answer,exact=True).get_attribute('aria-pressed')=='true'
                   for width in [320,390,1280]:
-                    page.set_viewport_size({'width':width,'height':844});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+                    page.set_viewport_size({'width':width,'height':844});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),f'overflow at {width}'
                   bankpath=f'/yo/langues/{slug}/'+('parcours/u01/vocabulaire' if italian else 'demarrer/vocabulaire')
-                  r=page.goto(base+bankpath+'?lang='+locale,wait_until='domcontentloaded');assert r and r.status==200
-                  if not italian:
-                    page.locator('[data-shared-print]').wait_for();assert page.locator('tbody tr').count()==len(course['phrases'])+len(course['glossary'])
-                    assert page.get_by_text(target,exact=True).count()==1
+                  if italian:
+                    # Exercise the real new-tab bank link, not just a direct GET.
+                    with ctx.expect_page() as opened:page.locator('a[href*="/u01/vocabulaire"]').first.click()
+                    bank=opened.value;bank.set_default_timeout(15000);bank.wait_for_load_state('domcontentloaded');assert bankpath in bank.url
+                    bank.locator('table').first.wait_for()
+                    # Verify the actual catalogue navigation with no prefetch-policy bypass.
+                    page.locator('a[href^="/yo/langues"]').filter(has_text='YoPratiqo').first.click()
+                    page.wait_for_url(re.compile(r'/yo/langues(?:\?|$)'));page.get_by_test_id('yo-language-quick-start').wait_for()
+                  else:
+                    r=page.goto(base+bankpath+'?lang='+locale,wait_until='domcontentloaded');assert r and r.status==200
+                    page.locator('[data-shared-print]').wait_for();rows=page.locator('tbody tr')
+                    assert rows.count()==len(course['phrases'])+len(course['glossary']), 'bank row coverage'
+                    # Match the target column only. The translation may deliberately be identical,
+                    # and Japanese/Mandarin put reading aids inside the same target cell.
+                    for i,phrase in enumerate(course['phrases']):
+                      cell=rows.nth(i).locator('td').nth(0)
+                      direct=cell.evaluate('(e)=>Array.from(e.childNodes).filter(n=>n.nodeType===Node.TEXT_NODE).map(n=>n.textContent).join("").trim()')
+                      assert direct==phrase[1],f'target phrase {i}: {direct!r}'
+                      assert rows.nth(i).locator('td').nth(1).inner_text().strip()==phrase[2][locale],f'translation {i}'
+                      if phrase[3]:assert cell.locator('span').inner_text().strip()==phrase[3],f'reading {i}'
                   assert not errors,errors
                   results.append({'case':name,'passed':True,'seconds':round(time.monotonic()-t,2),'consoleErrors':console,'failedRequests':failed})
                   print('PASS '+name,flush=True)
                 except Exception as e:
-                  results.append({'case':name,'passed':False,'error':str(e),'pageErrors':errors,'consoleErrors':console,'failedRequests':failed})
+                  trace=traceback.format_exc();results.append({'case':name,'passed':False,'error':str(e),'traceback':trace,'pageErrors':errors,'consoleErrors':console,'failedRequests':failed})
                   try:page.screenshot(path=str(out/f'{name}-failure.png'),full_page=True);(out/f'{name}-failure.txt').write_text(page.locator('body').inner_text())
                   except Exception:pass
-                  print('FAIL '+name+': '+str(e),flush=True)
+                  print('FAIL '+name+': '+trace,flush=True)
                 finally:
                   (out/'results.json').write_text(json.dumps(results,ensure_ascii=False,indent=2));ctx.close()
               browser.close()
           if not all(r['passed'] for r in results) or len(results)!=6:raise SystemExit(1)
-          print('All six live entry/resume cases passed. Audio and speech are real, but pronunciation is not certified by these interaction checks.',flush=True)
+          print('All six real entry/resume cases passed. Device-voice pronunciation and physical-device playback are not certified by these interaction checks.',flush=True)
           PY
           python -u /tmp/check-release.py 2>&1 | tee "$YO_QA_DIR/live.log"
       - uses: actions/upload-artifact@v4

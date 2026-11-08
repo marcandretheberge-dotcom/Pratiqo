@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "../../learning/LessonLink";
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowRight, BookOpen, Check, HelpCircle, LockKeyhole, MapPin, Stamp, X } from "lucide-react";
