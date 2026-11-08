@@ -1,0 +1,52 @@
+name: Yo audio final exact-head mobile verification
+# Re-run only after immutable preview is READY; original run hit the build splash.
+on:
+  push:
+    branches: [qa/yo-audio-final-20261108]
+    paths: [.github/workflows/yo-audio-mobile-live.yml, tests/yo/yopratiqoAudioMobileLive.browser.py]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        language: [italien, anglais, francais-quebec, espagnol, allemand, portugais-bresil, japonais, mandarin]
+    env:
+      YO_LANGUAGE: ${{ matrix.language }}
+      YO_PREVIEW_URL: https://pratiqo-o62svl4ps-marcandretheberge-dotcoms-projects.vercel.app
+      YO_QA_DIR: /tmp/yo-audio-transition-live
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Confirm exact application product identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code d017d4df0d0b62e994424505aa9206982a516c8e HEAD -- app components lib public package.json package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browsers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$YO_QA_DIR"
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit > "$YO_QA_DIR/install.log" 2>&1
+      - name: No fixture, real audio transition on immutable Vercel preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u tests/yo/yopratiqoAudioMobileLive.browser.py 2>&1 | tee "$YO_QA_DIR/check.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-audio-transitions-${{ matrix.language }}
+          path: /tmp/yo-audio-transition-live
+          retention-days: 5
