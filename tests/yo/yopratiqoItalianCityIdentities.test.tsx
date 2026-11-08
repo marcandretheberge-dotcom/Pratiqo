@@ -9,6 +9,7 @@ import { buildCourseJourney } from "@/lib/yo/courseJourney";
 import { personalizedItalianCatalog } from "@/lib/yo/personalized/courseData";
 import { ItalianCityArtwork } from "@/components/yo/italian/guided/ItalianCityArtwork";
 import { ItalianCityArrival } from "@/components/yo/italian/guided/ItalianCityArrival";
+import { ItalianAchievementPrintable } from "@/components/yo/italian/guided/ItalianAchievementPrintable";
 import { ItalianWorldAtlas } from "@/components/yo/italian/guided/ItalianWorldAtlas";
 
 const render = (element: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(element);
@@ -37,6 +38,13 @@ for(const identity of ITALIAN_CITY_IDENTITIES) {
     const decorative = render(createElement(ItalianCityArtwork,{unitId:identity.unitId,locale,decorative:true}));
     assert.ok(decorative.includes('aria-hidden="true"'), "repeated atlas art is decorative");
     assert.ok(!decorative.includes('role="img"'), "decorative art may not repeat screen reader captions");
+    const printable = render(createElement(ItalianAchievementPrintable,{
+      unit:personalizedItalianCatalog.units.find(item=>item.id===identity.unitId)!,
+      catalog:personalizedItalianCatalog,locale,
+    }));
+    assert.ok(printable.includes(`data-yoppo-printed-postcard="${identity.unitId}"`));
+    assert.ok(printable.includes(`data-city-motif="${identity.motif}"`));
+    assert.ok(visibleText(printable).includes(identity.inspiration[locale]));
     const arrival = render(createElement(ItalianCityArrival,{unitId:identity.unitId,locale,mastered:false}));
     assert.ok(arrival.includes(`data-yoppo-city-arrival="${identity.unitId}"`));
     assert.ok(arrival.includes(`data-city-motif="${identity.motif}"`));
