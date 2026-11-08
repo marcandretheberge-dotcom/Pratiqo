@@ -6,6 +6,7 @@ import { FeedbackPlayer, vibrateSuccess } from "@/lib/yo/feedback/feedbackPlayer
 import type { FeedbackCue } from "@/lib/yo/feedback/woodSound";
 import type { YoLocale } from "@/lib/yo/types";
 import { secondary } from "../italian/guided/copy";
+import { PracticeAdvanceSettings } from "../learning/PracticeAdvance";
 export const HAPTICS_KEY = "yopratiqo.haptics.enabled";
 type Options = { sound: boolean; haptics: boolean };
 type Feedback = Options & {
@@ -83,6 +84,7 @@ export function FeedbackSettings({ locale, compact = false }: { locale: YoLocale
     es: { title: "Sonidos y vibraciones", sound: "Sonidos de acierto", haptic: "Vibraciones", sample: "Escuchar el sonido de madera suave", no: "Las vibraciones no están disponibles en este navegador.", voice: "El audio del curso se controla por separado.", session: "Los ajustes duran solo esta sesión.", on: "Activados", off: "Desactivados" },
   }[locale];
   const controls = <div className="space-y-2" data-feedback-settings>
+    <PracticeAdvanceSettings locale={locale}/>
     <button type="button" role="switch" aria-label={c.sound} aria-checked={feedback.sound} className={`${secondary} w-full justify-between border border-stone-200`} onClick={() => feedback.set({ sound: !feedback.sound })}><span>{c.sound}</span><span>{feedback.sound ? c.on : c.off}</span></button>
     <button type="button" role="switch" aria-label={c.haptic} aria-checked={feedback.haptics && feedback.supported} disabled={!feedback.supported} className={`${secondary} w-full justify-between border border-stone-200 disabled:opacity-50`} onClick={() => feedback.set({ haptics: !feedback.haptics })}><span>{c.haptic}</span><span>{feedback.haptics && feedback.supported ? c.on : c.off}</span></button>
     {!feedback.supported ? <p className="text-xs text-stone-600">{c.no}</p> : null}

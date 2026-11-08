@@ -23,7 +23,7 @@ test("six bounded individual assets match the exact approved binary blobs", () =
   assert.ok(total < 55000);
   assert.equal(readdirSync("public/images/yo/vocabulary/v1").filter(f => /\.(png|jpe?g|avif|webp)$/.test(f)).length,6);
 });
-test("actual route uses approved artwork without changing any target or audio text", () => {
+test("legacy artwork projection remains intact without changing any target or audio text", () => {
   for (const [id, words] of Object.entries(firstMeetingVisuals)) {
     assert.equal(approved[id].length, words.length);
     words.forEach((word, i) => {
@@ -49,7 +49,7 @@ test("feeling alternatives do not include a second smiling traveller or a mismat
   assert.match(old.alt.fr,/café/);assert.equal(old.label,"");
   assert.ok(!Object.values(approved).flat().some(w=>w.correctId==="asleep"));
 });
-test("nationality, city, name and age are explicit fictional facts, not inferred visual attributes", () => {
+test("archived nationality, city, name and age facts remain explicit for legacy compatibility", () => {
   for(const word of Object.values(approved).flat()) for(const p of word.choices) {
     if(p.kind!=="profile" && p.kind!=="age") continue;
     assert.ok(p.label); assert.ok(p.caption);
@@ -62,18 +62,18 @@ test("nationality, city, name and age are explicit fictional facts, not inferred
 });
 test("existing in-progress vocabulary selections survive the art upgrade", () => {
   for(const [id,words] of Object.entries(approved)) {
-    const draft={...freshVocabulary(words.length),selected:words[0].choices[3].id};
+    const draft={...freshVocabulary(words.length),answer:{selected:words[0].id,checked:true,correct:true,heard:true,transcript:false}};
     assert.deepEqual(parseVocabulary(JSON.stringify(draft),words),draft,id);
     assert.equal(parseVocabulary(JSON.stringify({...draft,done:true}),words)?.done,true);
   }
 });
-test("all alternatives receive the same renderer and status is drawn only after checking", () => {
+test("active preparation no longer renders legacy captioned portraits", () => {
   const scene=readFileSync("components/yo/personalized/VocabularyScene.tsx","utf8");
   const player=readFileSync("components/yo/personalized/VisualVocabulary.tsx","utf8");
   assert.match(scene,/from "next\/image"/);
   assert.match(scene,/onError=/);assert.match(scene,/Image indisponible/);
   assert.doesNotMatch(scene,/correctId|response\.correct|recordActivity|fetch\(/);
-  assert.match(player,/draft\.checked&&draft\.correct&&draft\.selected===p\.id/);
-  assert.match(player,/motion-reduce:transition-none/);
+  assert.doesNotMatch(player,/<VocabularyScene|<img/);
+  assert.match(player,/<RecallQuestion/);
 });
 console.log(`${count} approved-artwork checks passed`);

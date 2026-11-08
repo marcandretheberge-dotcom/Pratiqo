@@ -3,18 +3,19 @@ import { t } from "../italian/course/courseAuthoring";
 
 /** Individual artwork regions from the founder-approved mockups, never whole UI screenshots. */
 export const vocabularyArtwork = {
-  meeting: { file: "meeting", width: 343, height: 246, sha: "112031b8724c462ae9eb7557d6e3f63f344e88b6" },
-  traveller: { file: "traveller", width: 343, height: 236, sha: "f4125efa669115b22827d046d493f683b9e304d3" },
-  well: { file: "feeling-well", width: 343, height: 246, sha: "f1c5f98713a32908af60c5b8f1fdaa541ddce73d" },
-  tired: { file: "feeling-tired", width: 339, height: 246, sha: "5f759472dada6bf1112bbf670613dbff38835918" },
-  unsure: { file: "feeling-unsure", width: 343, height: 236, sha: "f459addf7d918d2c203b7493b3d36b80ac1f4314" },
-  coffee: { file: "coffee", width: 343, height: 246, sha: "2f2030977d572ef5f0a3d3dc4b094940db8e781a" },
+  meeting: { subject: "scene", file: "meeting", width: 343, height: 246, sha: "112031b8724c462ae9eb7557d6e3f63f344e88b6" },
+  traveller: { subject: "person", file: "traveller", width: 343, height: 236, sha: "f4125efa669115b22827d046d493f683b9e304d3" },
+  well: { subject: "person", file: "feeling-well", width: 343, height: 246, sha: "f1c5f98713a32908af60c5b8f1fdaa541ddce73d" },
+  tired: { subject: "person", file: "feeling-tired", width: 339, height: 246, sha: "5f759472dada6bf1112bbf670613dbff38835918" },
+  unsure: { subject: "person", file: "feeling-unsure", width: 343, height: 236, sha: "f459addf7d918d2c203b7493b3d36b80ac1f4314" },
+  coffee: { subject: "object", file: "coffee", width: 343, height: 246, sha: "2f2030977d572ef5f0a3d3dc4b094940db8e781a" },
 } as const;
 export type VocabularyArtworkId = keyof typeof vocabularyArtwork;
 export const artworkPath = (key: VocabularyArtworkId) => `/images/yo/vocabulary/v1/${vocabularyArtwork[key].file}.avif`;
 
 /** Illustrations supply context; written fictional facts, not appearance, supply identity/age/origin. */
 export function approvedPicture(p: VocabularyPicture): VocabularyPicture {
+  if (p.kind === "object") return { ...p, label: "", detail: undefined, caption: undefined };
   if (p.kind === "feeling") {
     if (p.mood === "happy") return { ...p, artwork: "well", alt: t("Une personne souriante et détendue, qui se sent bien", "A smiling, relaxed person who feels well", "Una persona sonriente y relajada que se siente bien") };
     if (p.mood === "neutral") return { ...p, artwork: "unsure", alt: t("Une personne hésitante : ni très bien ni très mal", "An uncertain person: neither very well nor very unwell", "Una persona indecisa: ni muy bien ni muy mal") };

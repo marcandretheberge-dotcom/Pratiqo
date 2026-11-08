@@ -1,44 +1,81 @@
 "use client";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { VisualWord } from "@/lib/yo/personalized/types";
+import { firstMeetingVisuals } from "@/lib/yo/personalized/firstMeeting";
 import type { YoLocale } from "@/lib/yo/types";
-import { scrambleItalianItems } from "@/lib/yo/italian/italianModuleLogic";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
+import { recallChoices, recallQueue, type RecallWord } from "@/lib/yo/learning/vocabularyPractice";
 import { LearningAudio } from "./LearningAudio";
-import { VocabularyScene } from "./VocabularyScene";
-import { primary, secondary } from "../italian/guided/copy";
-import { t } from "@/lib/yo/italian/course/courseAuthoring";
-import { BookOpen, Check } from "lucide-react";
-import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
-import { useAnswerFeedback, YoppoAnswerReaction } from "../feedback/LearningFeedback";
-export type VocabularyDraft={version:1;mode:"learn"|"check";queue:number[];at:number;selected:string|null;checked:boolean;correct:boolean;heard:boolean;showText:boolean;done:boolean};
-export function freshVocabulary(count:number,mode:VocabularyDraft["mode"]="learn"):VocabularyDraft{return {version:1,mode,queue:Array.from({length:count*(mode==="learn"?2:1)},(_,i)=>i%count),at:0,selected:null,checked:false,correct:false,heard:false,showText:false,done:false};}
-export function parseVocabulary(raw:string|null,words:VisualWord[]):VocabularyDraft|null{
- try{if(!raw||raw.length>6000)return null;const v=JSON.parse(raw);if(!v||v.version!==1||!["learn","check"].includes(v.mode)||!Array.isArray(v.queue)||v.queue.length<words.length||v.queue.length>words.length*3||!v.queue.every((n:unknown)=>Number.isInteger(n)&&Number(n)>=0&&Number(n)<words.length)||!Number.isInteger(v.at)||v.at<0||v.at>=v.queue.length||![v.checked,v.correct,v.heard,v.showText,v.done].every(x=>typeof x==="boolean")||!(v.selected===null||words[v.queue[v.at]].choices.some(c=>c.id===v.selected)))return null;return v;}catch{return null;}
+import { primary } from "../italian/guided/copy";
+import { PracticeAdvanceNotice } from "../learning/PracticeAdvance";
+import { RecallQuestion, freshRecall, type RecallDraft } from "../learning/RecallQuestion";
+
+// The public component/step IDs stay stable; the discarded portrait exercise has a new draft schema.
+export type VocabularyDraft = { version: 2; mode: "learn" | "check"; queue: number[]; at: number; study: boolean; done: boolean; answer: RecallDraft };
+export function freshVocabulary(count: number, mode: VocabularyDraft["mode"] = "learn", seed = "italian"): VocabularyDraft {
+  return { version: 2, mode, queue: recallQueue(count, seed), at: 0, study: true, done: false, answer: freshRecall() };
 }
-export function VisualVocabulary({words,lessonId,locale,onReady,experienced=false,resetAt=0}:{words:VisualWord[];lessonId:string;locale:YoLocale;onReady:()=>void;experienced?:boolean;resetAt?:number}){
- const response=useAnswerFeedback();
- const key=`yo.visual-vocabulary.v1.${lessonId}.${resetAt}`, [draft,setDraft]=useState<VocabularyDraft|null>(null),[loaded,setLoaded]=useState(false),[stored,setStored]=useState(true);
- const latest=useRef(draft);useLayoutEffect(()=>{latest.current=draft;},[draft]);
- const title=useRef<HTMLHeadingElement>(null);
- useEffect(()=>{const f=requestAnimationFrame(()=>{try{setDraft(parseVocabulary(localStorage.getItem(key),words));}catch{setStored(false);}setLoaded(true);});return()=>cancelAnimationFrame(f);},[key,words]);
- const say=(fr:string,en:string,es:string)=>t(fr,en,es)[locale];
- function save(v:VocabularyDraft){latest.current=v;setDraft(v);try{localStorage.setItem(key,JSON.stringify(v));setStored(true);}catch{setStored(false);}}
- function check(){const d=latest.current;if(!d||d.checked||!d.selected)return;const correct=d.selected===words[d.queue[d.at]].correctId;save({...d,checked:true,correct});if(correct)response.correct(`${lessonId}:${d.at}`);}
- function next(){const d=latest.current;if(!d?.checked)return;stopLessonAudio();if(!d.correct){save({...d,selected:null,checked:false,heard:false,showText:true});return;}if(d.at+1===d.queue.length){save({...d,done:true});return;}save({...d,at:d.at+1,selected:null,checked:false,correct:false,heard:false,showText:false});requestAnimationFrame(()=>title.current?.focus());}
- if(!loaded)return <p role="status">{say("Préparation…","Preparing…","Preparando…")}</p>;
- if(!draft)return <section data-visual-preparation><h2 className="text-2xl font-bold">{say("Les mots avant la mission","Words before the mission","Palabras antes de la misión")}</h2><p className="my-4 leading-7">{say("Écoute une expression, puis choisis l’image correspondante. Nous préparons les mots dont tu auras besoin.","Listen to an expression, then choose the matching image. Prepare the words you will need.","Escucha una expresión y elige la imagen correspondiente. Prepara las palabras que necesitarás.")}</p><button type="button" className={`${primary} w-full`} onClick={()=>save(freshVocabulary(words.length))}>{say("Construire mon vocabulaire","Build my vocabulary","Construir mi vocabulario")}</button>{experienced?<button type="button" className={`${secondary} mt-3 w-full`} onClick={()=>save(freshVocabulary(words.length,"check"))}>{say("Je connais déjà ces mots : vérifier","I know these words: quick check","Ya conozco estas palabras: comprobar")}</button>:null}</section>;
- if(draft.done)return <section data-visual-ready><h2 className="text-2xl font-bold">{say("Ton vocabulaire est prêt !","Your vocabulary is ready!","¡Tu vocabulario está listo!")}</h2><p className="my-4 leading-7">{say("Utilise maintenant ces expressions dans une vraie situation.","Now use these expressions in a meaningful situation.","Ahora usa estas expresiones en una situación concreta.")}</p><button type="button" className={`${primary} w-full`} onClick={onReady}>{say("Entrer dans la mission","Enter the mission","Entrar en la misión")}</button></section>;
- const word=words[draft.queue[draft.at]],audioRound=draft.mode==="check"||draft.at>=words.length, visible=!audioRound||draft.showText||draft.checked;
- const choices=scrambleItalianItems(word.choices,`${lessonId}:${draft.at}`);
- return <section data-visual-vocabulary={word.id} data-approved-vocabulary>
-  <div className="mb-4 flex items-center justify-between gap-3"><p className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900"><BookOpen size={16} aria-hidden/>{say("Préparation","Preparation","Preparación")} · {draft.at+1}/{draft.queue.length}</p><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="sm" compact/></div>
-  <h2 ref={title} tabIndex={-1} className="mb-4 text-xl font-bold tracking-tight text-emerald-950 outline-none sm:text-2xl">{say("Choisis la bonne image","Choose the matching image","Elige la imagen correcta")}</h2>
-  <div className="mb-5 flex min-h-28 flex-col items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-100/60 px-4 py-5 text-center">{visible?<p lang="it" className="mb-3 text-3xl font-bold leading-tight tracking-tight text-emerald-950 sm:text-4xl">{word.it}</p>:null}<LearningAudio autoPlay key={word.id+draft.at} text={word.it} locale={locale} label={say("l’expression","the expression","la expresión")} onListen={()=>{const d=latest.current;if(d&&!d.checked)save({...d,heard:true});}}/>{audioRound&&!visible?<button type="button" className={`${secondary} mt-2`} onClick={()=>save({...draft,showText:true})}>{say("Lire plutôt qu’écouter","Read instead of listen","Leer en vez de escuchar")}</button>:null}</div>
-  <div role="group" aria-label={say("Quatre images","Four images","Cuatro imágenes")} className="grid grid-cols-2 items-stretch gap-3 sm:gap-4">{choices.map(p=><button key={p.id} type="button" disabled={draft.checked} aria-pressed={draft.selected===p.id} aria-label={p.alt[locale]} data-choice-id={p.id} className={`relative min-w-0 overflow-hidden rounded-2xl border-[3px] text-left shadow-sm transition-[border-color,box-shadow] focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-teal-700 motion-reduce:transition-none ${draft.selected===p.id?"border-teal-700 ring-2 ring-teal-100":"border-transparent bg-white hover:border-teal-300"}`} onClick={()=>save({...draft,selected:p.id})}><VocabularyScene picture={p} locale={locale}/>{draft.checked&&draft.correct&&draft.selected===p.id?<span aria-hidden className="absolute right-2 top-2 grid h-7 w-7 place-items-center rounded-full bg-emerald-800 text-white shadow"><Check size={18}/></span>:null}</button>)}</div>
-  <YoppoAnswerReaction revision={draft.checked && draft.correct ? response.reaction : 0} locale={locale}/>
-  {draft.checked?<div role="status" className={`mt-4 rounded-xl p-3 ${draft.correct?"bg-emerald-50":"bg-amber-50"}`}><p className="font-bold">{draft.correct?say("Bien joué !","Well done!","¡Bien hecho!"):say("Regarde la situation, puis réessaie.","Look at the situation, then try again.","Observa la situación y vuelve a intentarlo.")}</p><p className="mt-1 text-sm">{word.meaning[locale]}</p></div>:null}
-  <button type="button" className={`${primary} mt-5 w-full`} disabled={!draft.checked&&(!draft.selected||(audioRound&&!draft.heard&&!draft.showText))} onClick={draft.checked?next:check}>{draft.checked?(draft.correct?say("Continuer","Continue","Continuar"):say("Réessayer","Try again","Reintentar")):say("Vérifier","Check","Comprobar")}</button>
-  {!stored?<p role="status" className="mt-3 text-xs text-amber-900">{say("Progression conservée seulement dans cette session.","Progress is kept only for this session.","El progreso se conserva solo en esta sesión.")}</p>:null}
- </section>;
+export function parseVocabulary(raw: string | null, words: VisualWord[]): VocabularyDraft | null {
+  try {
+    if (!raw || raw.length > 6000) return null;
+    const v = JSON.parse(raw);
+    // Old completed preparation remains completed. An obsolete unsubmitted picture choice is discarded,
+    // without changing canonical lesson progress, points, stamps or any legacy storage value.
+    if (v?.version === 1 && Array.isArray(v.queue) && v.queue.every((n: unknown) => Number.isInteger(n) && Number(n) >= 0 && Number(n) < words.length) && typeof v.done === "boolean") {
+      return { ...freshVocabulary(words.length), study: !v.done, done: v.done };
+    }
+    const lessons = Object.values(firstMeetingVisuals);
+    const knownLesson = lessons.findIndex(list => list.length === words.length && list.every((w, i) => w.id === words[i].id));
+    const allowed = knownLesson < 0 ? words : lessons.slice(0, knownLesson + 1).flat();
+    if (v?.version !== 2 || !["learn", "check"].includes(v.mode) || !Array.isArray(v.queue) || v.queue.length < 1 || v.queue.length > words.length * 3 ||
+        !v.queue.every((n: unknown) => Number.isInteger(n) && Number(n) >= 0 && Number(n) < words.length) || !Number.isInteger(v.at) || v.at < 0 || v.at >= v.queue.length ||
+        typeof v.study !== "boolean" || typeof v.done !== "boolean" || !v.answer || ![v.answer.checked, v.answer.correct, v.answer.heard, v.answer.transcript].every(x => typeof x === "boolean") ||
+        !(v.answer.selected === null || allowed.some(w => w.id === v.answer.selected))) return null;
+    return v;
+  } catch { return null; }
+}
+export function VisualVocabulary({ words, lessonId, locale, onReady, resetAt = 0, paused = false }: {
+  words: VisualWord[]; lessonId: string; locale: YoLocale; onReady: () => void; experienced?: boolean; resetAt?: number; paused?: boolean;
+}) {
+  const key = `yo.vocabulary-recall.v2.${lessonId}.${resetAt}`;
+  const [draft, setDraft] = useState<VocabularyDraft | null>(null), [stored, setStored] = useState(true);
+  const latest = useRef(draft), heading = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => { latest.current = draft; }, [draft]);
+  useEffect(() => {
+    const f = requestAnimationFrame(() => {
+      let d = freshVocabulary(words.length, "learn", lessonId);
+      try { d = parseVocabulary(localStorage.getItem(key), words) ?? parseVocabulary(localStorage.getItem(`yo.visual-vocabulary.v1.${lessonId}.${resetAt}`), words) ?? d; } catch { setStored(false); }
+      latest.current = d; setDraft(d);
+    });
+    return () => cancelAnimationFrame(f);
+  }, [key, words, lessonId, resetAt]);
+  const say = (fr: string, en: string, es: string) => ({ fr, en, es })[locale];
+  const asRecall = (w: VisualWord): RecallWord => ({ id: w.id, text: w.it, meaning: w.meaning, ...(/^age\d+$/.test(w.id) ? { number: w.id.slice(3) } : {}) });
+  const targets = words.map(asRecall);
+  const lessonIndex = Object.keys(firstMeetingVisuals).indexOf(lessonId);
+  // The age lesson has only one non-number target. Previously taught expressions supply
+  // meaningful distractors rather than a one-button "question" with an obvious answer.
+  const choicePool = lessonIndex < 0 ? targets : Object.values(firstMeetingVisuals).slice(0, lessonIndex + 1).flat().map(asRecall);
+  function save(d: VocabularyDraft) { latest.current = d; setDraft(d); try { localStorage.setItem(key, JSON.stringify(d)); } catch { setStored(false); } }
+  function next() {
+    const d = latest.current;
+    if (!d || !d.answer.checked || !d.answer.correct) return;
+    stopLessonAudio();
+    if (d.at + 1 === d.queue.length) { save({ ...d, done: true }); return; }
+    save({ ...d, at: d.at + 1, answer: freshRecall() });
+    requestAnimationFrame(() => heading.current?.focus());
+  }
+  if (!draft) return <p role="status">{say("Préparation…", "Preparing…", "Preparando…")}</p>;
+  if (draft.done) return <section data-visual-ready><h2 className="text-2xl font-bold">{say("Prêt pour la rencontre !", "Ready for the conversation!", "¡Todo listo para el encuentro!")}</h2><button type="button" className={`${primary} mt-5 w-full`} onClick={onReady}>{say("Entrer dans la mission", "Enter the mission", "Entrar en la misión")}</button></section>;
+  if (draft.study) return <section data-vocabulary-study><h2 className="text-2xl font-bold">{say("Les expressions avant la mission", "Expressions before the mission", "Expresiones antes de la misión")}</h2>
+    <PracticeAdvanceNotice locale={locale}/><div className="space-y-4">{targets.map(w => <div key={w.id} className="border-b border-stone-200 pb-3"><p lang="it" className="text-lg font-semibold">{w.text}</p><p className="my-2 text-stone-600">{w.meaning[locale]}</p><LearningAudio text={w.text} locale={locale}/></div>)}</div>
+    <button type="button" className={`${primary} mt-5 w-full`} onClick={() => { stopLessonAudio(); save({ ...draft, study: false }); }}>{say("Passer à la pratique", "Let’s practise", "Vamos a practicar")}</button></section>;
+  const word = targets[draft.queue[draft.at]], token = `${lessonId}:${draft.at}`;
+  return <section data-vocabulary-preparation>
+    <h2 ref={heading} tabIndex={-1} className="mb-4 text-sm font-bold text-emerald-800 outline-none">{say("Préparation", "Preparation", "Preparación")} · {draft.at + 1}/{draft.queue.length}</h2>
+    <RecallQuestion key={token} token={token} word={word} choices={recallChoices(choicePool, word, token)} locale={locale} targetLanguage="it" paused={paused} value={draft.answer}
+      onChange={answer => { if (latest.current) save({ ...latest.current, answer }); }} onNext={next}
+      audio={onListen => <LearningAudio text={word.text} locale={locale} label={say("l’expression", "the expression", "la expresión")} autoPlay onListen={onListen}/>}/>
+    {!stored && <p role="status" className="mt-3 text-sm text-amber-900">{say("La sauvegarde est indisponible dans ce navigateur.", "Saving is unavailable in this browser.", "No se puede guardar en este navegador.")}</p>}
+  </section>;
 }
