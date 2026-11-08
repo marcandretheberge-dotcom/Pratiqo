@@ -1,0 +1,31 @@
+name: Yo WebKit real audio sequence
+on:
+  push:
+    branches: [qa/yo-sound-live-20261108]
+    paths: [.github/workflows/yo-webkit-audio-sequence.yml, tests/yo/yopratiqoWebKitAudioSequence.browser.py]
+permissions:
+  contents: read
+jobs:
+  real:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      YO_QA_DIR: /tmp/yo-audio-sequence
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          mkdir -p "$YO_QA_DIR"
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit > "$YO_QA_DIR/install.log" 2>&1
+      - run: python -u tests/yo/yopratiqoWebKitAudioSequence.browser.py | tee "$YO_QA_DIR/test.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-real-audio-sequence
+          path: /tmp/yo-audio-sequence
+          retention-days: 3
