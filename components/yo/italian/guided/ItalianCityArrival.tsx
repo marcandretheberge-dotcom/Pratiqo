@@ -21,7 +21,8 @@ export function ItalianCityArrival({ unitId, locale, mastered }: {
     es: { start: "Yoppo llega a", again: "Destino explorado", detail: "Continúa tu viaje lingüístico, misión a misión." },
   }[locale];
   return <section data-yoppo-city-arrival={unitId} className="relative isolate min-w-0 overflow-hidden rounded-3xl border-2 border-emerald-200 bg-white shadow-sm" aria-label={`${say.start} ${city.name}`}>
-    <ItalianCityArtwork unitId={unitId} locale={locale} className="block h-auto min-h-40 w-full" />    <div className="absolute inset-x-4 bottom-3 flex items-end justify-between gap-3 sm:bottom-5">
+    <ItalianCityArtwork unitId={unitId} locale={locale} className="block h-auto min-h-40 w-full" />
+    {identity ? <p className="absolute left-3 top-3 max-w-[75%] rounded-xl border border-white/80 bg-white/90 px-3 py-1.5 text-[11px] font-semibold leading-4 text-emerald-950 shadow-sm sm:text-xs">{identity.inspiration[locale]}</p> : null}    <div className="absolute inset-x-4 bottom-3 flex items-end justify-between gap-3 sm:bottom-5">
       <div className="rounded-2xl border border-emerald-100 bg-[#fffaf0]/95 px-3 py-2 text-emerald-950 shadow-sm sm:px-4 sm:py-3">
         <p className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide sm:text-xs"><Compass size={14} aria-hidden />{mastered?say.again:say.start}</p>
         <p className="mt-1 flex items-center gap-1 font-serif text-xl font-black sm:text-2xl"><MapPin size={17} aria-hidden/>{city.name}</p>
