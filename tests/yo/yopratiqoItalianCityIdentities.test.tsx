@@ -12,6 +12,7 @@ import { ItalianCityArrival } from "@/components/yo/italian/guided/ItalianCityAr
 import { ItalianWorldAtlas } from "@/components/yo/italian/guided/ItalianWorldAtlas";
 
 const render = (element: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(element);
+const visibleText = (html:string) => html.replace(/&#x27;|&#39;|&apos;/g, "\u0027").replace(/&quot;/g, '"').replace(/&amp;/g, "&");
 const units = personalizedItalianCatalog.units.map(unit => unit.id);
 assert.equal(ITALIAN_CITY_IDENTITIES.length, 12, "each of 12 modules gets an identity");
 assert.deepEqual(ITALIAN_CITY_IDENTITIES.map(city => city.unitId), units, "city identities preserve canonical unit IDs");
@@ -29,7 +30,7 @@ for(const identity of ITALIAN_CITY_IDENTITIES) {
       assert.ok(html.includes(`data-yoppo-city-art="${identity.unitId}"`));
       assert.ok(html.includes(`data-city-motif="${identity.motif}"`));
       assert.ok(html.includes(`data-italian-landmark="${identity.motif}"`));
-      assert.ok(html.includes(identity.inspiration[locale]));
+      assert.ok(visibleText(html).includes(identity.inspiration[locale]), `${identity.unitId}: locale text survives HTML escaping`);
       assert.ok(html.includes('viewBox="0 0 640 220"'));
       assert.ok(!html.includes('http'), "art must not call external image hosts");
     }
@@ -39,7 +40,7 @@ for(const identity of ITALIAN_CITY_IDENTITIES) {
     const arrival = render(createElement(ItalianCityArrival,{unitId:identity.unitId,locale,mastered:false}));
     assert.ok(arrival.includes(`data-yoppo-city-arrival="${identity.unitId}"`));
     assert.ok(arrival.includes(`data-city-motif="${identity.motif}"`));
-    assert.ok(arrival.includes(identity.inspiration[locale]));
+    assert.ok(visibleText(arrival).includes(identity.inspiration[locale]));
     assert.ok(arrival.includes("yo-yoppo-city-arrival"), "arrival animation remains");
     assert.ok(arrival.includes("prefers-reduced-motion"), "arrival respects accessibility settings");
   }
