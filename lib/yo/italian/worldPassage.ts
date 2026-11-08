@@ -77,9 +77,10 @@ export function profileAfterItalianWorldPassage(
   const from = orderedUnitIds.indexOf(profile.startUnitId);
   const to = orderedUnitIds.indexOf(passage.targetUnitId);
   const expected = ITALIAN_WORLDS.findIndex(world => world.id === passage.sourceWorldId);
+  const sourceEntry = expected >= 0 ? orderedUnitIds.indexOf(ITALIAN_WORLDS[expected].cities[0].unitId) : -1;
   if (profile.language !== "it" || expected < 0 || expected >= ITALIAN_WORLDS.length - 1 ||
     ITALIAN_WORLDS[expected + 1].id !== passage.targetWorldId ||
     ITALIAN_WORLDS[expected + 1].cities[0]?.unitId !== passage.targetUnitId ||
-    from < 0 || to <= from || !Number.isFinite(now) || now < 0) return null;
+    from < sourceEntry || to <= from || !Number.isFinite(now) || now < 0) return null;
   return { ...profile, startUnitId: passage.targetUnitId, placement: "check", updatedAt: now };
 }
