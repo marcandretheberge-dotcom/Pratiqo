@@ -197,7 +197,6 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
       {(!learning.storageAvailable || !storageAvailable) ? <p role="status" className="mb-5 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{c.unsaved}</p> : null}
       {ui.view === "map" ? <>
         {tour !== null ? <aside aria-label={c.tourTitle} className="mb-6 flex items-start gap-4 rounded-3xl border-2 border-emerald-700 bg-white p-5 shadow-sm"><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="sm" compact /><div className="min-w-0 flex-1"><p className="text-xs font-bold text-emerald-700">YOPPO · {tour + 1}/3</p><h2 className="mt-1 font-bold">{c.tourTitle}</h2><p className="mt-2 text-sm leading-6">{[c.tourPath, wordBank ? say("Ton Carnet contient déjà tous les mots et verbes du module. Tu peux aussi l’imprimer.","Your notebook already contains the module’s words and verbs. You can print it too.","Tu cuaderno ya contiene las palabras y los verbos del módulo. También puedes imprimirlo.") : c.tourWords, c.tourStart][tour]}</p><div className="mt-3 flex flex-wrap gap-2"><button type="button" className={primary} onClick={() => { if (tour < 2) setTour(tour + 1); else beginMission(); }}>{tour === 2 ? c.start : c.next}</button><button type="button" className={secondary} onClick={finishTour}>{c.skip}</button></div></div></aside> : null}
-        <ItalianWorldNavigator journey={journey} locale={locale} currentUnitId={unit.id} hrefForUnit={id => italianCourseHref(locale,id)} canReview={placedReview} />
         <div className="grid items-start gap-7 md:grid-cols-[minmax(0,1fr)_320px]">
           <section className={`order-2 md:order-1 ${tour === 0 ? "rounded-3xl ring-4 ring-orange-300" : ""}`}>
             <p className="text-xs font-bold uppercase tracking-widest text-orange-800">{progressKey ? `${c.unit} ${unit.number} · Italiano` : c.preview}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-3xl font-black tracking-tight outline-none sm:text-4xl">{unit.id === "u01" ? "Ciao, Bologna." : unit.title[locale]}</h1><p className="mt-3 max-w-xl text-sm leading-6 text-stone-600">{unit.subtitle[locale]}</p>{wordBank ? <Link href={bankHref} className={`${secondary} mt-3 underline`} target="_blank" rel="noopener">{say("Voir / imprimer tous les mots et verbes", "View / print all words and verbs", "Ver / imprimir palabras y verbos")}</Link> : null}
@@ -219,6 +218,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
             {passed ? <button type="button" className={`${secondary} mt-3`} onClick={() => move(0)}>{c.practice}</button> : <button type="button" className="mt-5 min-h-11 text-left text-xs text-stone-600 underline" onClick={() => { finishTour(); stop(); commit({ ...current.current, view: "challenge-intro", resumeView: null, game: emptyGame() }); focus(); }}>{c.finalShortcut}</button>}
           </aside>
         </div>
+        <ItalianWorldNavigator journey={journey} locale={locale} currentUnitId={unit.id} hrefForUnit={id => italianCourseHref(locale,id)} canReview={placedReview} />
       </> : null}
 
       {ui.view === "mission" ? <div className="mx-auto max-w-2xl">
