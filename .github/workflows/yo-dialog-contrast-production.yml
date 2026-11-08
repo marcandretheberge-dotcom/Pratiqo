@@ -1,0 +1,49 @@
+name: Yo dialog contrast production verification
+on:
+  push:
+    branches: [qa/yo-dialog-contrast-production-20261107]
+    paths: [.github/workflows/yo-dialog-contrast-production.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        shell: bash
+    env:
+      YO_QA_DIR: /tmp/yo-dialog-production
+      YO_BASE_URL: https://www.pratiqo.ca
+      YO_LOCALES: fr
+      YO_ENGINES: chromium,webkit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 1c65a0f8885dd263e425c8bccb01ca364c12531c
+          persist-credentials: false
+      - name: Exact production source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = 1c65a0f8885dd263e425c8bccb01ca364c12531c
+          test "$(git rev-parse HEAD^{tree})" = 1e3fa71dd43494d60bf6116e4deb6fcee7a52dba
+          test "$(git hash-object app/globals.css)" = 15c4b318d7f74a39f1d9e360dfeff428164e1c69
+          mkdir -p "$YO_QA_DIR"
+          git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Public production dialogs, light and dark, two units
+        run: |
+          set -euo pipefail
+          python tests/yo/yopratiqoDialogContrast.browser.py 2>&1 | tee "$YO_QA_DIR/production.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-dialog-contrast-production
+          path: /tmp/yo-dialog-production
+          retention-days: 7
