@@ -1,0 +1,44 @@
+name: Yo city identities review
+
+on:
+  push:
+    branches: [feat/yoppo-city-identities-20261108]
+  pull_request:
+    paths:
+      - ".github/workflows/yo-city-identities-review.yml"
+      - "lib/yo/italian/cityIdentity.ts"
+      - "components/yo/italian/guided/ItalianCityArtwork.tsx"
+      - "components/yo/italian/guided/ItalianCityArrival.tsx"
+      - "components/yo/italian/guided/ItalianWorldAtlas.tsx"
+      - "tests/yo/yopratiqoItalianCityIdentities.test.tsx"
+
+permissions:
+  contents: read
+
+jobs:
+  city-identities:
+    name: 12 city illustrations, locale, unlock and accessibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Twelve illustrated city identities and world unlocking
+        run: node --import tsx tests/yo/yopratiqoItalianCityIdentities.test.tsx
+      - name: Phase 3 illustrated world and boss regression
+        run: node --import tsx tests/yo/yopratiqoItalianImmersivePhase3.test.tsx
+      - name: Full Italian guided curriculum
+        run: npm run test:yo-italian-course
+      - name: Focused lint
+        run: npx eslint lib/yo/italian/cityIdentity.ts components/yo/italian/guided/ItalianCityArtwork.tsx components/yo/italian/guided/ItalianCityArrival.tsx components/yo/italian/guided/ItalianWorldAtlas.tsx tests/yo/yopratiqoItalianCityIdentities.test.tsx
+      - name: Whitespace check
+        run: git diff --check origin/feat/yoppo-immersive-atlas-boss-20261108...HEAD
