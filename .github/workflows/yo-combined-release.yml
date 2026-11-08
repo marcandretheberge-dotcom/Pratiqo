@@ -1,0 +1,93 @@
+name: Yo combined release verification
+on:
+  push:
+    branches: [qa/yo-combined-release-20261108]
+    paths: [.github/workflows/yo-combined-release.yml]
+permissions:
+  contents: read
+jobs:
+  live:
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        language: [anglais, francais-quebec, espagnol, allemand, portugais-bresil, japonais, mandarin, italien]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      YO_URL: https://pratiqo-bgv940l8w-marcandretheberge-dotcoms-projects.vercel.app
+      YO_LANGUAGE: ${{ matrix.language }}
+      YO_PRODUCT: d18101ee3b61e0bb2ed6d63727054a56895db80a
+      YO_QA_DIR: /tmp/yo-combined
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Exact combined product identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code "$YO_PRODUCT" HEAD -- app components lib public package.json package-lock.json
+          git diff --exit-code 51314ba59b25f61a14b709045e5f335e08d8ead1 "$YO_PRODUCT" -- components lib public package.json package-lock.json
+          test "$(git hash-object app/globals.css)" = 15c4b318d7f74a39f1d9e360dfeff428164e1c69
+          git merge-base --is-ancestor 1c65a0f8885dd263e425c8bccb01ca364c12531c "$YO_PRODUCT"
+          mkdir -p "$YO_QA_DIR"
+          echo "$YO_PRODUCT" > "$YO_QA_DIR/product-commit.txt"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit > /tmp/browser-install.log 2>&1
+      - name: Preserve existing release assertions and add real dark-mode notebook check
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import ast, pathlib, subprocess, textwrap
+          yml=subprocess.check_output(['git','show','2ee1ca177da63b1f4ec88ab7fb0ce7f7eb6b36b4:.github/workflows/yo-multilingual-release.yml'],text=True)
+          marker="          cat > /tmp/check-release.py <<'PY'\n"
+          assert yml.count(marker)==1
+          script=textwrap.dedent(yml.split(marker,1)[1].split('\n          PY\n',1)[0])
+          # Test the real production theme, not a theme-free review shell.
+          assert script.count("reduced_motion='reduce')")==1
+          script=script.replace("reduced_motion='reduce')", "reduced_motion='reduce',color_scheme='dark')")
+          original=ast.parse(pathlib.Path('tests/yo/yopratiqoDialogContrast.browser.py').read_text())
+          measure=next(ast.literal_eval(n.value) for n in original.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='measure' for t in n.targets))
+          script='contrast_measure='+repr(measure)+'\n'+script
+          needle="d=page.get_by_role('dialog');d.wait_for()"
+          assert script.count(needle)==1
+          script=script.replace(needle,needle+";contrast=d.evaluate(contrast_measure);assert min(s['contrast'] for s in contrast['samples'])>=4.5,contrast")
+          # Return from the printable bank before testing the course's catalogue link.
+          # No assertions, page errors, network policies or product routes are removed.
+          needle="bank.locator('table').first.wait_for()"
+          assert script.count(needle)==1
+          script=script.replace(needle,needle+";bank.close();page.bring_to_front()")
+          # Assert the destination DOM, not the completion of unrelated page resources.
+          needle="page.wait_for_url(re.compile(r'/yo/langues(?:\\?|$)'))"
+          assert script.count(needle)==1
+          script=script.replace(needle,"page.wait_for_url(re.compile(r'/yo/langues(?:\\?|$)'),wait_until='domcontentloaded')")
+          compile(script,'check-release.py','exec')
+          pathlib.Path('/tmp/check-release.py').write_text(script)
+          pathlib.Path('/tmp/yo-combined/check-release.py').write_text(script)
+          PY
+          python -u /tmp/check-release.py 2>&1 | tee "$YO_QA_DIR/live.log"
+      - name: Italian notebook and tools regression on the combined deployment
+        if: matrix.language == 'italien'
+        env:
+          YO_BASE_URL: https://pratiqo-bgv940l8w-marcandretheberge-dotcoms-projects.vercel.app
+          YO_LOCALES: fr
+          YO_QA_DIR: /tmp/yo-combined/dialogs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$YO_QA_DIR"
+          python tests/yo/yopratiqoDialogContrast.browser.py 2>&1 | tee "$YO_QA_DIR/dialog.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-combined-${{ matrix.language }}-${{ github.run_attempt }}
+          path: /tmp/yo-combined
+          retention-days: 7
