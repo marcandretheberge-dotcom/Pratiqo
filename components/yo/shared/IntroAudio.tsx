@@ -61,7 +61,9 @@ export function IntroAudio({ text, speechLocale, path, locale, onListen, autoPla
           if (!voice) return;
           utterance = new SpeechSynthesisUtterance(text); utterance.lang = speechLocale; utterance.voice = voice; utterance.rate = slow ? .66 : .85;
           utterance.onstart = ready; utterance.onend = end; utterance.onerror = event => fail(event?.error === "not-allowed");
-          arm(fail); synth.speak(utterance);
+          // Some iOS voices accept speak() yet never emit onstart after automatic navigation.
+          // Offer a real tap promptly instead of leaving the exercise locked for 12 seconds.
+          arm(fail, automatic ? 3500 : 9000); synth.speak(utterance);
         } catch { fail(); }
       };
       voiceCleanup = () => { synth.removeEventListener("voiceschanged", speak); if (utterance) { utterance.onstart = null; utterance.onend = null; utterance.onerror = null; try { synth.cancel(); } catch { /* cleanup */ } } };
