@@ -1,0 +1,57 @@
+name: Yo sound live verification
+on:
+  push:
+    branches: [qa/yo-sound-live-20261108]
+    paths: [.github/workflows/yo-sound-live.yml, tests/yo/yopratiqoSoundLive.browser.py]
+permissions:
+  contents: read
+jobs:
+  live:
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        language: [anglais, francais-quebec, espagnol, allemand, portugais-bresil, japonais, mandarin, italien]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      YO_LANGUAGE: ${{ matrix.language }}
+      YO_SOUND_URL: https://pratiqo-g9p8vv4ag-marcandretheberge-dotcoms-projects.vercel.app
+      YO_TAP_URL: https://pratiqo-g9p8vv4ag-marcandretheberge-dotcoms-projects.vercel.app
+      YO_TAP_FIXTURES: '0'
+      YO_QA_DIR: /tmp/yo-sound-live
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Exact preview product identity
+        run: |
+          set -e
+          git diff --exit-code ea7f88c37f0a234de3e4bf6b851855e655bfebda HEAD -- app components lib public package.json package-lock.json
+          mkdir -p "$YO_QA_DIR"
+          echo ea7f88c37f0a234de3e4bf6b851855e655bfebda > "$YO_QA_DIR/product-commit.txt"
+          git rev-parse HEAD > "$YO_QA_DIR/qa-commit.txt"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit > "$YO_QA_DIR/browser-install.log" 2>&1 || { tail -n 80 "$YO_QA_DIR/browser-install.log"; exit 1; }
+      - name: Native effects and real recordings, no media replacements
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u tests/yo/yopratiqoSoundLive.browser.py 2>&1 | tee "$YO_QA_DIR/sound.log"
+      - name: Existing multilingual tap-flow regressions on the same preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u tests/yo/yopratiqoTapFlow.browser.py 2>&1 | tee "$YO_QA_DIR/tap.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-sound-live-${{ matrix.language }}
+          path: /tmp/yo-sound-live
+          retention-days: 7
