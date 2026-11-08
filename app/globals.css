@@ -194,7 +194,6 @@ h3 {
   text-transform: uppercase;
   color: var(--color-teal-800);
   background: rgb(80 190 178 / 0.14);
-  border: 1px solid rgb(80 190 178 / 0.25);
 }
 
 .ds-search {
@@ -266,4 +265,15 @@ h3 {
 
 .font-yo-app-script {
   font-family: var(--yo-app-script), Caveat, cursive;
+}
+
+/* YoPratiqo's cream learning dialogs are rendered in a portal under body,
+   outside the course's text-stone-800 wrapper. Give this fixed light surface
+   its own foreground instead of inheriting the site's dark-mode body text.
+   Scope to the existing surface token: other dialogs and page themes stay intact. */
+@layer components {
+  [role="dialog"][class~="bg-[#fbf9f3]"] {
+    color: #292524;
+    color-scheme: light;
+  }
 }
