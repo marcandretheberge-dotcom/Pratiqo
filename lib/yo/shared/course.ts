@@ -12,10 +12,11 @@ type Definition = Omit<IntroCourse, "missions" | "final" | "phrases" | "glossary
  phrases: [string, string, Text, string | null, string[] | null][];
  glossary: [string, Text, "words" | "verbs" | "numbers"][];
  concepts: Concept[]; names: VocabularyGroup; origins: VocabularyGroup;
+ missionCopy: Record<string, { title: Text; goal: Text; prompts: Record<string, Text> }>;
 };
 /** Rehydrate original language content on the server; the browser gets only its selected course. */
 export const introCourses: IntroCourse[] = (definitions as unknown as Definition[]).map(d => {
- const { names, origins, concepts, ...base } = d;
+ const { names, origins, concepts, missionCopy, ...base } = d;
  const phrases: Phrase[] = d.phrases.map(([id,text,meaning,reading,parts]) => ({id,text,meaning,...(reading?{reading}:{}),...(parts?{parts}:{})}));
  const visual = (phrase:string, pictures:VocabularyGroup, answer:string) => ({phrase,pictures,answer});
  const sets = [
@@ -23,7 +24,16 @@ export const introCourses: IntroCourse[] = (definitions as unknown as Definition
    [visual("canada",origins,"canada"),visual("local",origins,"local")],
    [20,21,28,30].map(n=>visual(`age${n}`,shared.ages as VocabularyGroup,String(n))),
  ];
- const missions: Mission[] = (shared.flow as Omit<Mission,"concepts"|"visuals"|"remember">[]).map((m,i)=>({...m,visuals:sets[i],concepts:i===0?concepts.slice(0,2):[concepts[i+1]],remember:concepts[i===0?1:i+1].body}));
+ // Keep stable exercise IDs, answer semantics and step order for saved progress.
+ // Characters and contextual prompts belong to each authored language, not the shared engine.
+ const missions: Mission[] = (shared.flow as Omit<Mission,"concepts"|"visuals"|"remember">[]).map((m,i) => {
+   const copy = missionCopy[m.id];
+   if (!copy) throw new Error(`Missing mission copy: ${d.slug}/${m.id}`);
+   return { ...m, title: copy.title, goal: copy.goal,
+     practice: m.practice.map(e => ({ ...e, prompt: copy.prompts[e.id] ?? e.prompt })),
+     visuals: sets[i], concepts: i===0 ? concepts.slice(0,2) : [concepts[i+1]],
+     remember: concepts[i===0?1:i+1].body };
+ });
  const final = [[0,0],[0,4],[1,0],[1,3],[2,1],[2,2]].map(([m,q],i)=>({...missions[m].practice[q],id:`final-${i+1}`}));
  return {...base,phrases,glossary:d.glossary.map(([text,meaning,group])=>({text,meaning,group})),missions,final};
 });

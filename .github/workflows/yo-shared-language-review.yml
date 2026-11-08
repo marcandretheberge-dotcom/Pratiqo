@@ -37,7 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$YO_QA_DIR/tests"
-          for test in yopratiqoSharedIntro.test.ts yopratiqoSharedIntroPlayer.test.tsx yopratiqoReadableLanguage.test.tsx yopratiqoEasyOnboarding.test.tsx yopratiqoLanguageCatalogAppShell.test.ts yopratiqoAllLanguageIntrosConsistency.test.ts yopratiqoSeoCatalog.test.ts; do
+          for test in yopratiqoLocalizedCharacters.test.ts yopratiqoSharedIntro.test.ts yopratiqoSharedIntroPlayer.test.tsx yopratiqoReadableLanguage.test.tsx yopratiqoEasyOnboarding.test.tsx yopratiqoLanguageCatalogAppShell.test.ts yopratiqoAllLanguageIntrosConsistency.test.ts yopratiqoSeoCatalog.test.ts; do
             if node --import tsx "tests/yo/$test" > "$YO_QA_DIR/tests/$test.log" 2>&1; then
               echo "PASS $test"
               tail -n 3 "$YO_QA_DIR/tests/$test.log"
