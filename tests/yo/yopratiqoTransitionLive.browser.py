@@ -12,6 +12,8 @@ def consent(page):
  try:banner.wait_for(timeout=4000)
  except Exception:pass
  if banner.count() and banner.is_visible():banner.get_by_role('button',name=re.compile('Necessary only|Nécessaires seulement|Solo necesarias',re.I)).click()
+ later=page.get_by_role('button',name=re.compile('^(Not now|Pas maintenant|Ahora no)$'))
+ if later.count() and later.first.is_visible():later.first.click()
 with sync_playwright() as pw:
  for engine in ['webkit','chromium']:
   browser=getattr(pw,engine).launch()
@@ -32,6 +34,7 @@ with sync_playwright() as pw:
    ck(page,'Commencer ma mission')
    tour=page.get_by_role('button',name=re.compile('^(Passer la visite|Skip the tour|Omitir la visita)$'))
    if tour.count() and tour.first.is_visible():tour.first.click()
+   consent(page)
    ck(page,'Passer à la pratique')
    first=page.locator('[data-intro-question]');first.wait_for()
    first_id=first.get_attribute('data-intro-question')
