@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { buildCourseJourney } from "@/lib/yo/courseJourney";
 import { emptyCourseProgress, recordCourseAssessment } from "@/lib/yo/italian/course/courseProgress";
-import { guidedSteps, initialGuided, migrateGuidedV2Draft } from "@/lib/yo/italian/course/guidedItalian";
+import { guidedSteps, initialGuided } from "@/lib/yo/italian/course/guidedItalian";
+import { guidedMissionOrder, nextGuidedMissionStep, followingGuidedMissionStep, restoreGuidedMissionDraft } from "@/lib/yo/italian/course/guidedMissionOrder";
 import { recallQueue } from "@/lib/yo/learning/vocabularyPractice";
 import { ITALIAN_WORLDS, italianWorldForUnit, projectItalianWorlds } from "@/lib/yo/italian/worlds";
 import { deriveItalianCityAchievement } from "@/lib/yo/italian/achievement";
@@ -55,19 +56,24 @@ assert.equal(new Set(updated.queue).size, updated.queue.length, "legacy repeats 
 assert.equal(updated.queue[updated.at], 3, "resume at the next unseen target");
 
 const prepared = Object.keys(firstMeetingVisuals);
-const newSteps = guidedSteps(firstMeetingUnit, prepared);
-assert.deepEqual(newSteps.filter(step => step.lesson === 0).slice(0, 4).map(step => step.stage),
+const originalSteps = guidedSteps(firstMeetingUnit, prepared);
+const preparedOrder = guidedMissionOrder(originalSteps);
+assert.deepEqual(preparedOrder.map(i => originalSteps[i]).filter(step => step.lesson === 0).slice(0, 4).map(step => step.stage),
   ["prepare", "scene", "language", "sounds"], "no duplicate word lecture after vocabulary preparation");
 const regularSteps = guidedSteps(personalizedItalianUnits[1]);
-assert.deepEqual(regularSteps.filter(step => step.lesson === 0).slice(0, 4).map(step => step.stage),
-  ["words", "scene", "language", "sounds"], "all other modules start with vocabulary");
-const oldDraft = { ...initialGuided(), step: 3, view: "map" as const, resumeView: "mission" as const,
-  seen: [`${firstMeetingUnit.lessons[0].id}:prepare`, `${firstMeetingUnit.lessons[0].id}:scene`, `${firstMeetingUnit.lessons[0].id}:words`] };
-const migrated = migrateGuidedV2Draft(JSON.stringify(oldDraft), firstMeetingUnit, 0, prepared)!;
-assert.ok(migrated, "existing draft should migrate");
-assert.equal(newSteps[migrated.step].stage, "language");
-assert.equal(migrated.seen.includes(`${firstMeetingUnit.lessons[0].id}:words`), false);
-assert.equal(migrateGuidedV2Draft("{invalid", firstMeetingUnit, 0, prepared), null);
+const regularOrder = guidedMissionOrder(regularSteps);
+assert.deepEqual(regularOrder.map(i => regularSteps[i]).filter(step => step.lesson === 0).slice(0, 4).map(step => step.stage),
+  ["words", "scene", "language", "sounds"], "other modules show vocabulary before the scene");
+assert.equal(new Set(preparedOrder).size, preparedOrder.length);
+assert.equal(new Set(regularOrder).size, regularOrder.length);
+const oldDraft = { ...initialGuided(), step: 2, view: "map" as const, resumeView: "mission" as const,
+  seen: [`${firstMeetingUnit.lessons[0].id}:prepare`, `${firstMeetingUnit.lessons[0].id}:scene`] };
+const restored = restoreGuidedMissionDraft(oldDraft, originalSteps, preparedOrder);
+assert.equal(originalSteps[restored.step].stage, "language", "old redundant word-page resumes at its explanation");
+assert.deepEqual(restored.seen, oldDraft.seen, "draft evidence and progress are preserved");
+const first = nextGuidedMissionStep(originalSteps, preparedOrder, initialGuided(), emptyCourseProgress());
+assert.equal(originalSteps[first].stage, "prepare");
+assert.equal(followingGuidedMissionStep(preparedOrder, first), preparedOrder[1]);
 
 for (const unit of personalizedItalianUnits) {
   const ids = unit.quiz.questions.map(question => question.id);
