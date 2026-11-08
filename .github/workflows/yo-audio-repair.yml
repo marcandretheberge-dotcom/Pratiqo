@@ -8,8 +8,10 @@ permissions:
 jobs:
   assemble:
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 6
     steps:
+      - name: Install offline audio assembly tooling
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Reuse two exact public source recordings, no synthesis or storage writes
         shell: bash
         run: |
@@ -30,6 +32,7 @@ jobs:
           ffprobe -v error -show_entries format=duration,size -of json tiens-tenez-v1.mp3 > probe.json
           sha256sum tiens-tenez-v1.mp3 > sha256.txt
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: yo-quebec-recording-repair
           path: /tmp/yo-repair
