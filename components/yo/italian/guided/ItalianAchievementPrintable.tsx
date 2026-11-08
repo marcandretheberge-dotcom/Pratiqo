@@ -11,6 +11,8 @@ import type { CourseCatalog, CourseUnitSummary } from "@/lib/yo/italian/course/c
 import type { YoLocale } from "@/lib/yo/types";
 import { italianWorldForUnit } from "@/lib/yo/italian/worlds";
 import { deriveItalianCityAchievement } from "@/lib/yo/italian/achievement";
+import { italianCityIdentity } from "@/lib/yo/italian/cityIdentity";
+import { ItalianCityArtwork } from "./ItalianCityArtwork";
 
 type Status = { ready: boolean; mastered: boolean; best: number | null; practiced: number; total: number };
 export function ItalianAchievementPrintable({ unit, catalog, locale }: {
@@ -34,6 +36,7 @@ export function ItalianAchievementPrintable({ unit, catalog, locale }: {
     es: { heading: "Mis logros de viaje", city: "Ciudad explorada", subtitle: "Lo que he aprendido a practicar", earned: "Reto superado · sello obtenido", pending: "Aún no has superado el reto final sin ayuda", score: "Mejor reto sin ayuda", done: "Actividades practicadas", advice: "¡Sigue estudiando!", review: "Repasa estas expresiones y practícalas regularmente en tu cuaderno para recordarlas mejor.", disclaimer: "Balance personal basado en evaluaciones completadas. No es un certificado oficial de nivel.", notebook: "Mi ficha de palabras", back: "Volver a la ciudad", loading: "Cargando mis logros…" },
   }[locale];
   const city = italianWorldForUnit(unit.id)?.cities.find(item => item.unitId === unit.id)?.name ?? unit.title[locale];
+  const cityArt = italianCityIdentity(unit.id);
   const link = italianCourseHref(locale, unit.id);
   return <main lang={locale} className="mx-auto min-h-screen max-w-3xl bg-white px-5 pb-12 pt-8 text-stone-900 sm:px-10" data-yoppo-achievement-print>
     <nav aria-label={c.heading} className="yo-achievement-controls mb-8 flex flex-wrap items-center gap-3 border-b border-stone-200 pb-5">
@@ -46,6 +49,7 @@ export function ItalianAchievementPrintable({ unit, catalog, locale }: {
       <h1 className="mt-3 font-serif text-4xl font-bold">{c.heading}</h1>
       <p className="mt-4 flex items-center gap-2 text-xl font-bold text-emerald-950"><MapPin size={20} aria-hidden />{city}</p>
       <p className="mt-2 text-base text-stone-700">{unit.title[locale]}</p>
+      {cityArt ? <figure className="mt-5 overflow-hidden rounded-2xl border border-stone-200" data-yoppo-printed-postcard={unit.id}><ItalianCityArtwork unitId={unit.id} locale={locale} compact className="block h-auto max-h-40 w-full"/><figcaption className="px-3 py-2 text-xs text-stone-700">{cityArt.inspiration[locale]}</figcaption></figure> : null}
     </header>
     {!status.ready ? <p role="status" className="mt-6">{c.loading}</p> : <>
       <section className="mt-7">
@@ -70,6 +74,6 @@ export function ItalianAchievementPrintable({ unit, catalog, locale }: {
       <p className="mt-2 text-sm leading-7">{c.review}</p>
     </section>
     <footer className="mt-10 border-t border-stone-200 pt-5 text-xs leading-5 text-stone-600">{c.disclaimer}</footer>
-    <style>{`@media print{@page{size:auto;margin:14mm}body{background:white!important}.yo-achievement-controls{display:none!important}[data-yoppo-achievement-print]{width:100%;max-width:none;padding:0!important;min-height:auto}a{color:inherit!important}}`}</style>
+    <style>{`@media print{@page{size:auto;margin:14mm}body{background:white!important}.yo-achievement-controls{display:none!important}[data-yoppo-achievement-print]{width:100%;max-width:none;padding:0!important;min-height:auto}[data-yoppo-printed-postcard]{break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact}a{color:inherit!important}}`}</style>
   </main>;
 }
