@@ -48,3 +48,26 @@ La même illustration devient aussi la **carte postale de ville sur le bilan imp
 7. Contrôles automatisés : `npx tsc --noEmit`, 12 villes en 3 langues, tests phase 3, régressions italiennes, ESLint ciblé et diff.
 
 Cette branche est empilée sur la phase 3. Elle reste en **PR brouillon sans déploiement production**, notamment pendant le blocage de quota de construction Vercel.
+
+## Refonte de l'atlas après revue visuelle mobile
+
+Le retour utilisateur sur la prévisualisation montrait un **tableau de quatre grandes cartes opaque**, presque entièrement superposé au paysage. Les décorations n'offraient ni chemin perceptible, ni sentiment de progression. Cette composition n'est pas acceptable comme expérience de jeu.
+
+### Contrat d'expérience modifié
+
+- **Une vraie route verticale qui serpente** à travers chaque monde, entièrement visible entre les escales; la progression se lit naturellement du haut vers le bas sur mobile.
+- **Quatre petits jetons de destination illustrés**, décalés le long de la route, remplacent les grandes cartes 2×2. Les silhouettes culturelles uniques de chaque ville sont réutilisées, en miniature.
+- **Yoppo suit la prochaine ville réellement accessible et non maîtrisée**, même si l'élève revoit une ancienne unité. Le jeton de destination à jouer porte une lueur et une animation douce; les deux effets s'arrêtent en réduction des animations.
+- **Château du monde dessiné dans le paysage** : ses portes ne s'ouvrent visuellement qu'avec quatre évaluations indépendantes réussies. Les droits restent ceux du moteur de progression d'origine.
+- **Trois ambiances** : premiers pas en forêt lumineuse, vie italienne en bord de mer, indépendance dans un crépuscule montagneux. Ciels, végétation, rivière, marché, pont, route et château sont dessinés en SVG originaux.
+- **Une seule action claire par ville accessible** : toucher son jeton pour accéder aux missions existantes. Une ville verrouillée reste visible, mais ne devient jamais un lien. Le bouton principal « Continuer ma mission » de la page reste au-dessus de cette carte.
+- **Navigateur allégé** : trois petits onglets de mondes, le titre de monde et la progression au sein du paysage. Les panneaux de texte répétitifs sont supprimés.
+
+### Vérifications supplémentaires
+
+- Contrôler le placement à 320, 375, 390 et 430 px : la première destination ne doit pas recouvrir la bannière, les escales ne doivent pas se toucher, le chemin et le château doivent rester lisibles.
+- `data-yoppo-map-token` : exactement quatre escales; `data-yoppo-world-cities` : monde actif; aucun lien vers les villes verrouillées, aucune création de maîtrise, de Pass, de crédit ou de droit.
+- Ambiance et mouvement : gradients et ombres sobres dans la page mais **carte lumineuse et ludique**; aucune animation bloquante, aucune musique auto-jouée, réduction du mouvement respectée.
+- FR/EN/ES, navigation clavier, lecteur d'écran, état « prochaine mission », maîtrise des 4 villes, flûte et bouton de reprise.
+
+Cette refonte reste sur la PR #446 et attend la validation visuelle de sa nouvelle prévisualisation. Elle ne peut être fusionnée en production par les tests seuls.
