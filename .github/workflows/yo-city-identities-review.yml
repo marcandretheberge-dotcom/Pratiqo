@@ -9,6 +9,7 @@ on:
       - "lib/yo/italian/cityIdentity.ts"
       - "components/yo/italian/guided/ItalianCityArtwork.tsx"
       - "components/yo/italian/guided/ItalianCityArrival.tsx"
+      - "components/yo/italian/guided/ItalianAchievementPrintable.tsx"
       - "components/yo/italian/guided/ItalianWorldAtlas.tsx"
       - "tests/yo/yopratiqoItalianCityIdentities.test.tsx"
 
@@ -39,6 +40,6 @@ jobs:
       - name: Full Italian guided curriculum
         run: npm run test:yo-italian-course
       - name: Focused lint
-        run: npx eslint lib/yo/italian/cityIdentity.ts components/yo/italian/guided/ItalianCityArtwork.tsx components/yo/italian/guided/ItalianCityArrival.tsx components/yo/italian/guided/ItalianWorldAtlas.tsx tests/yo/yopratiqoItalianCityIdentities.test.tsx
+        run: npx eslint lib/yo/italian/cityIdentity.ts components/yo/italian/guided/ItalianCityArtwork.tsx components/yo/italian/guided/ItalianCityArrival.tsx components/yo/italian/guided/ItalianAchievementPrintable.tsx components/yo/italian/guided/ItalianWorldAtlas.tsx tests/yo/yopratiqoItalianCityIdentities.test.tsx
       - name: Whitespace check
         run: git diff --check origin/feat/yoppo-immersive-atlas-boss-20261108...HEAD
