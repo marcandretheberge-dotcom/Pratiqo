@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { VisualWord } from "@/lib/yo/personalized/types";
+import { firstMeetingVisuals } from "@/lib/yo/personalized/firstMeeting";
 import type { YoLocale } from "@/lib/yo/types";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { recallChoices, recallQueue, type RecallWord } from "@/lib/yo/learning/vocabularyPractice";
@@ -23,10 +24,13 @@ export function parseVocabulary(raw: string | null, words: VisualWord[]): Vocabu
     if (v?.version === 1 && Array.isArray(v.queue) && v.queue.every((n: unknown) => Number.isInteger(n) && Number(n) >= 0 && Number(n) < words.length) && typeof v.done === "boolean") {
       return { ...freshVocabulary(words.length), study: !v.done, done: v.done };
     }
+    const lessons = Object.values(firstMeetingVisuals);
+    const knownLesson = lessons.findIndex(list => list.length === words.length && list.every((w, i) => w.id === words[i].id));
+    const allowed = knownLesson < 0 ? words : lessons.slice(0, knownLesson + 1).flat();
     if (v?.version !== 2 || !["learn", "check"].includes(v.mode) || !Array.isArray(v.queue) || v.queue.length < 1 || v.queue.length > words.length * 3 ||
         !v.queue.every((n: unknown) => Number.isInteger(n) && Number(n) >= 0 && Number(n) < words.length) || !Number.isInteger(v.at) || v.at < 0 || v.at >= v.queue.length ||
         typeof v.study !== "boolean" || typeof v.done !== "boolean" || !v.answer || ![v.answer.checked, v.answer.correct, v.answer.heard, v.answer.transcript].every(x => typeof x === "boolean") ||
-        !(v.answer.selected === null || words.some(w => w.id === v.answer.selected))) return null;
+        !(v.answer.selected === null || allowed.some(w => w.id === v.answer.selected))) return null;
     return v;
   } catch { return null; }
 }
@@ -46,7 +50,12 @@ export function VisualVocabulary({ words, lessonId, locale, onReady, resetAt = 0
     return () => cancelAnimationFrame(f);
   }, [key, words, lessonId, resetAt]);
   const say = (fr: string, en: string, es: string) => ({ fr, en, es })[locale];
-  const targets: RecallWord[] = words.map(w => ({ id: w.id, text: w.it, meaning: w.meaning, ...(/^age\d+$/.test(w.id) ? { number: w.id.slice(3) } : {}) }));
+  const asRecall = (w: VisualWord): RecallWord => ({ id: w.id, text: w.it, meaning: w.meaning, ...(/^age\d+$/.test(w.id) ? { number: w.id.slice(3) } : {}) });
+  const targets = words.map(asRecall);
+  const lessonIndex = Object.keys(firstMeetingVisuals).indexOf(lessonId);
+  // The age lesson has only one non-number target. Previously taught expressions supply
+  // meaningful distractors rather than a one-button "question" with an obvious answer.
+  const choicePool = lessonIndex < 0 ? targets : Object.values(firstMeetingVisuals).slice(0, lessonIndex + 1).flat().map(asRecall);
   function save(d: VocabularyDraft) { latest.current = d; setDraft(d); try { localStorage.setItem(key, JSON.stringify(d)); } catch { setStored(false); } }
   function next() {
     const d = latest.current;
@@ -64,7 +73,7 @@ export function VisualVocabulary({ words, lessonId, locale, onReady, resetAt = 0
   const word = targets[draft.queue[draft.at]], token = `${lessonId}:${draft.at}`;
   return <section data-vocabulary-preparation>
     <h2 ref={heading} tabIndex={-1} className="mb-4 text-sm font-bold text-emerald-800 outline-none">{say("Préparation", "Preparation", "Preparación")} · {draft.at + 1}/{draft.queue.length}</h2>
-    <RecallQuestion key={token} token={token} word={word} choices={recallChoices(targets, word, token)} locale={locale} targetLanguage="it" paused={paused} value={draft.answer}
+    <RecallQuestion key={token} token={token} word={word} choices={recallChoices(choicePool, word, token)} locale={locale} targetLanguage="it" paused={paused} value={draft.answer}
       onChange={answer => { if (latest.current) save({ ...latest.current, answer }); }} onNext={next}
       audio={onListen => <LearningAudio text={word.text} locale={locale} label={say("l’expression", "the expression", "la expresión")} autoPlay onListen={onListen}/>}/>
     {!stored && <p role="status" className="mt-3 text-sm text-amber-900">{say("La sauvegarde est indisponible dans ce navigateur.", "Saving is unavailable in this browser.", "No se puede guardar en este navegador.")}</p>}
