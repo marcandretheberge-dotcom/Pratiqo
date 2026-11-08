@@ -25,6 +25,8 @@ Chaque ville possède une palette propre (ciel, édifices, toits, accent, eau, t
 
 La même scène est réutilisée sans téléchargement additionnel dans l'atlas (vignette décorative) et dans le panneau d'arrivée de Yoppo (illustration avec description accessible). La grille conserve ses liens et ses états verrouillés : aucune ville cachée ne devient cliquable.
 
+La même illustration devient aussi la **carte postale de ville sur le bilan imprimable**. Le visuel reste décoratif : le tampon et les compétences affichés proviennent exclusivement des résultats évalués.
+
 ## Contraintes non négociables
 
 - Les modules conservent les identifiants `u01` à `u12`. Le parcours, le score, la médaille Trivia, le tampon de ville et le Yoppo Pass ne changent pas.
