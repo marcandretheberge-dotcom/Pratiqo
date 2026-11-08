@@ -36,7 +36,7 @@ def perform(p,with_effects):
   if slow:row.get_by_role('button',name=re.compile('Slow down')).click()
   p.evaluate('window.__yoAudioState=[]')
   row.get_by_role('button',name=re.compile('^Listen')).click()
-  p.wait_for_function("window.__yoAudioState.some(x=>x.state==='playing')&&window.__yoAudioState.some(x=>x.state==='idle')",timeout=15000)
+  p.wait_for_function("() => window.__yoAudioState.some(x=>x.state==='playing')&&window.__yoAudioState.some(x=>x.state==='idle')",timeout=15000)
   states=p.evaluate('window.__yoAudioState')
   assert states[0]['state'] in ['loading','playing'],states
   assert 'playing' in [x['state'] for x in states] and states[-1]['state']=='idle',states
