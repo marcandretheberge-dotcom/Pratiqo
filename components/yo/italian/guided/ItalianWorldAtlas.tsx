@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Check, Castle, Flag, LockKeyhole, MapPin, Sparkles } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
+import { ItalianCityArtwork } from "./ItalianCityArtwork";
 import type { ItalianWorldView } from "@/lib/yo/italian/worlds";
 import type { YoLocale } from "@/lib/yo/types";
 
@@ -72,6 +73,7 @@ export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, c
         const icon=city.mastered?<Check size={25} aria-hidden/>:available?<MapPin size={22} aria-hidden/>:<LockKeyhole size={21} aria-hidden/>;
         const node=<div className={`relative mx-auto flex min-h-28 w-full max-w-40 flex-col items-center rounded-2xl border-2 px-2 py-2 text-center shadow-sm backdrop-blur-[3px] ${active?"border-orange-500 bg-amber-50/95":city.mastered?"border-emerald-700 bg-emerald-50/95":available?"border-amber-500 bg-white/90":"border-stone-300 bg-white/65 text-stone-600"}`}>
           <span className={`relative grid h-12 w-12 shrink-0 place-items-center rounded-full border-[3px] ${city.mastered?"border-emerald-900 bg-emerald-700 text-white":available?"border-amber-800 bg-amber-100 text-emerald-900":"border-stone-300 bg-stone-100 text-stone-500"}`}>{icon}</span>
+          <span className={`mt-2 h-14 w-full overflow-hidden rounded-xl border border-stone-100 ${available?"":"grayscale opacity-70"}`} aria-hidden="true"><ItalianCityArtwork unitId={city.unitId} locale={locale} compact decorative className="h-full w-full" /></span>
           <span className="mt-1 break-words text-xs font-black leading-5 sm:text-sm">{city.name}</span>
           <span className="mt-auto text-[10px] font-medium leading-4 sm:text-xs">{city.mastered?c.mastered:available?c.available:c.locked}</span>
           {active?<span className="absolute -right-2 -top-5 rounded-full bg-white p-1 shadow-sm" aria-label={c.current}><CompanionAvatar visualId="travel" state="map" size="xs" compact locale={locale}/></span>:null}
