@@ -56,13 +56,10 @@ export function ItalianModuleAudio({ text, locale, onListen, label, autoPlay = f
   }, []);
 
   useLayoutEffect(() => {
-    let cancelled = false;
-    queueMicrotask(() => { if (!cancelled) setError(null); });
     const visibility = () => { if (document.visibilityState !== "visible") stop(); };
     window.addEventListener(ITALIAN_MODULE_AUDIO_STOP_EVENT, stop);
     document.addEventListener("visibilitychange", visibility);
     return () => {
-      cancelled = true;
       window.removeEventListener(ITALIAN_MODULE_AUDIO_STOP_EVENT, stop);
       document.removeEventListener("visibilitychange", visibility);
       stop();
