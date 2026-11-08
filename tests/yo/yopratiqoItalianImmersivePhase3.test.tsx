@@ -76,6 +76,6 @@ assert.match(atlasNavigator, /<ItalianWorldAtlas world=\{world\}/);
 const player = readFileSync("components/yo/italian/guided/GuidedItalianCourse.tsx", "utf8");
 assert.match(player, /<ItalianCityArrival unitId=\{unit.id\} locale=\{locale\} mastered=\{passed\}/);
 assert.match(player, /variant="challenge"/);
-assert.match(player, /resultPassed\?<div[^>]*><ItalianCityBossGate unitId=\{unit.id\}/,
+assert.match(player, /resultPassed && passed\?<div[^>]*><ItalianCityBossGate unitId=\{unit.id\}/,
   "boss-victory scene is only rendered after a verified, current independent pass");
 console.log("YoPratiqo phase 3: 3 original world atlases, 12 arrival scenes, boss gate victory, unlock security and FR/EN/ES: PASS");
