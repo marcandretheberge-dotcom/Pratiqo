@@ -38,7 +38,10 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   const stamp = unit.id === "u01" ? guidedCopy[locale].stamp
     : city ? t(`Tampon de ${city}`, `${city} stamp`, `Sello de ${city}`)[locale]
     : `${guidedCopy[locale].unit} ${unit.number}`;
-  const c = { ...guidedCopy[locale], stamp }, learning = useItalianCourseProgress(catalog, progressKey), { progress, ready, recordActivity, recordAssessment, setResume } = learning;
+  const minimumScore = Math.ceil(unit.quiz.questions.length * unit.quiz.passPercent / 100);
+  const stampRule = unit.quiz.questions.length === 5 ? guidedCopy[locale].stampRule
+    : t(`Réussis au moins ${minimumScore} questions sur ${unit.quiz.questions.length} sans indice pour gagner ton tampon.`, `Answer at least ${minimumScore} of ${unit.quiz.questions.length} correctly without hints to earn your stamp.`, `Acierta al menos ${minimumScore} de ${unit.quiz.questions.length} sin pistas para ganar tu sello.`)[locale];
+  const c = { ...guidedCopy[locale], stamp, stampRule }, learning = useItalianCourseProgress(catalog, progressKey), { progress, ready, recordActivity, recordAssessment, setResume } = learning;
   const steps = guidedSteps(unit, Object.keys(visualWords));
   const uiKey = progressKey ? `yo.italian.guided.v3.${unit.id}` : GUIDED_KEY;
   const say = (fr: string, en: string, es: string) => t(fr,en,es)[locale];
@@ -169,7 +172,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     const request = `${initialLessonId}/${initialActivityId ?? ""}`;
     if (routeRequest.current === request) return;
     routeRequest.current = request;
-    const at = steps.findIndex(s => unit.lessons[s.lesson].id === initialLessonId && (initialActivityId ? s.id === initialActivityId : s.stage === "scene"));
+    const at = steps.findIndex(s => unit.lessons[s.lesson].id === initialLessonId && (initialActivityId ? s.id === initialActivityId : (s.stage === (Object.keys(visualWords).includes(initialLessonId) ? "prepare" : "words"))));
     if (at >= 0) {
       finishTour();
       const saved = current.current;
@@ -203,7 +206,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
                 <button type="button" disabled={!available} aria-label={`${c.mission} ${i + 1} · ${item.title[locale]}${complete ? ` · ${c.completeMission}` : ""}`} aria-current={active ? "step" : undefined} className={`relative z-10 grid h-16 w-16 shrink-0 place-items-center rounded-full border-b-4 font-black focus-visible:outline-4 focus-visible:outline-offset-4 ${complete ? "border-emerald-900 bg-emerald-700 text-white" : active ? "border-orange-900 bg-orange-200 text-emerald-950" : "border-stone-300 bg-stone-100 text-stone-500"}`} onClick={() => { finishTour(); move(at); }}>{complete ? <Check aria-hidden /> : available ? i + 1 : <LockKeyhole size={20} aria-hidden />}</button>
                 <div className="min-w-0 py-4"><p className="text-xs font-bold text-emerald-700">{c.mission} {i + 1}</p><p className="mt-1 text-sm font-bold">{item.title[locale]}</p>{active ? <div className="mt-1"><CompanionAvatar visualId="travel" state="map" locale={locale} size="xs" compact /></div> : null}</div>
               </li>; })}
-              <li className="relative flex items-center gap-4"><span className={`grid h-16 w-16 shrink-0 place-items-center rounded-full border-2 ${passed ? "border-emerald-700 bg-emerald-50" : "border-stone-200 bg-white"}`}><Stamp aria-hidden /></span><div><p className="font-bold">{c.challenge}</p><p className="mt-1 text-sm">{passed ? c.stampDone : "4 / 5"}</p></div></li>
+              <li className="relative flex items-center gap-4"><span className={`grid h-16 w-16 shrink-0 place-items-center rounded-full border-2 ${passed ? "border-emerald-700 bg-emerald-50" : "border-stone-200 bg-white"}`}><Stamp aria-hidden /></span><div><p className="font-bold">{c.challenge}</p><p className="mt-1 text-sm">{passed ? c.stampDone : `${minimumScore} / ${unit.quiz.questions.length}`}</p></div></li>
             </ol>
           </section>
           <aside className="order-1 rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 md:order-2 md:sticky md:top-6">
