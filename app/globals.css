@@ -194,6 +194,7 @@ h3 {
   text-transform: uppercase;
   color: var(--color-teal-800);
   background: rgb(80 190 178 / 0.14);
+  border: 1px solid rgb(80 190 178 / 0.25);
 }
 
 .ds-search {
