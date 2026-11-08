@@ -1,0 +1,46 @@
+name: Yo native audio diagnostic
+on:
+  push:
+    branches: [qa/yo-sound-live-20261108]
+    paths: [.github/workflows/yo-native-audio-diagnostic.yml, tests/yo/yopratiqoWebAudioBaseline.browser.py]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      YO_QA_DIR: /tmp/yo-native-audio-diagnostic
+      YO_LANGUAGE: anglais
+      YO_TAP_URL: https://pratiqo-g9p8vv4ag-marcandretheberge-dotcoms-projects.vercel.app
+      YO_TAP_FIXTURES: '0'
+      DEBUG: pw:browser
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          mkdir -p "$YO_QA_DIR"
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit > "$YO_QA_DIR/install.log" 2>&1 || { tail -n 80 "$YO_QA_DIR/install.log"; exit 1; }
+      - name: Independent oscillator baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u tests/yo/yopratiqoWebAudioBaseline.browser.py 2>&1 | tee "$YO_QA_DIR/baseline.log"
+      - name: Actual preview without native API observation
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u tests/yo/yopratiqoTapFlow.browser.py 2>&1 | tee "$YO_QA_DIR/tap.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-native-audio-diagnostic
+          path: /tmp/yo-native-audio-diagnostic
+          retention-days: 7
