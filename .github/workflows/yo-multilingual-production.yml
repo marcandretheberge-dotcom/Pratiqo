@@ -1,0 +1,95 @@
+name: Yo multilingual production verification
+on:
+  push:
+    branches: [qa/yo-multilingual-production-20261108]
+    paths: [.github/workflows/yo-multilingual-production.yml]
+permissions:
+  contents: read
+jobs:
+  ready:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Wait for the new public English bank
+        run: |
+          python - <<'PY'
+          import time, urllib.request, urllib.error
+          url='https://www.pratiqo.ca/yo/langues/anglais/demarrer/vocabulaire?lang=fr'
+          for attempt in range(60):
+              try:
+                  with urllib.request.urlopen(url,timeout=10) as response:
+                      html=response.read().decode('utf-8')
+                      if response.status==200 and 'My name is Emily.' in html and 'data-shared-print' in html:
+                          print('New public vocabulary bank is ready.');break
+              except (urllib.error.URLError,TimeoutError):
+                  pass
+              time.sleep(5)
+          else:
+              raise SystemExit('The new public release did not become ready in time.')
+          PY
+  live:
+    needs: ready
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        language: [anglais, francais-quebec, espagnol, allemand, portugais-bresil, japonais, mandarin, italien]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      YO_URL: https://www.pratiqo.ca
+      YO_LANGUAGE: ${{ matrix.language }}
+      YO_PRODUCT: 9b9c0fff7701b3daa7ef080f406820ba1bb64d7e
+      YO_QA_DIR: /tmp/yo-combined
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Published source equals the reviewed combined tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code "$YO_PRODUCT" HEAD -- app components lib public package.json package-lock.json
+          test "$(git rev-parse "$YO_PRODUCT^{tree}")" = 7bf04939ea55170b908c248c89d2b33d88bba621
+          test "$(git hash-object app/globals.css)" = 15c4b318d7f74a39f1d9e360dfeff428164e1c69
+          mkdir -p "$YO_QA_DIR"
+          echo "$YO_PRODUCT" > "$YO_QA_DIR/product-commit.txt"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tools
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit > /tmp/browser-install.log 2>&1
+      - name: Reuse the exact successful preview checks against production
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess,textwrap,pathlib
+          yml=subprocess.check_output(['git','show','5b6779de36662144c06389f8c95801ffa70295a0:.github/workflows/yo-combined-release.yml'],text=True)
+          marker="          python - <<'PY'\n"
+          assert yml.count(marker)==1
+          generator=textwrap.dedent(yml.split(marker,1)[1].split('\n          PY\n',1)[0])
+          pathlib.Path('/tmp/yo-combined/preview-test-generator.py').write_text(generator)
+          exec(compile(generator,'pinned-preview-test-generator.py','exec'))
+          PY
+          python -u /tmp/check-release.py 2>&1 | tee "$YO_QA_DIR/live.log"
+      - name: Preserve notebook and tools contrast on public production
+        if: matrix.language == 'italien'
+        env:
+          YO_BASE_URL: https://www.pratiqo.ca
+          YO_LOCALES: fr
+          YO_QA_DIR: /tmp/yo-combined/dialogs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$YO_QA_DIR"
+          python tests/yo/yopratiqoDialogContrast.browser.py 2>&1 | tee "$YO_QA_DIR/dialog.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-production-${{ matrix.language }}-${{ github.run_attempt }}
+          path: /tmp/yo-combined
+          retention-days: 7
