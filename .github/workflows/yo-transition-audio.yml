@@ -1,0 +1,46 @@
+name: Yo transition audio regression
+on:
+  push:
+    branches: [fix/yo-transition-audio-20261108]
+  pull_request:
+    branches: [main]
+    paths: [components/yo/shared/IntroAudio.tsx, components/yo/italian/ItalianModuleAudio.tsx, components/yo/personalized/LearningAudio.tsx, tests/yo/yopratiqoPageTransitionAudio.test.tsx, tests/yo/yopratiqoItalianModuleAudio.test.ts, .github/workflows/yo-transition-audio.yml]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install audited dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Type check and lint
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/yo-transition
+          npx tsc --noEmit
+          npx eslint components/yo/shared/IntroAudio.tsx components/yo/italian/ItalianModuleAudio.tsx components/yo/personalized/LearningAudio.tsx tests/yo/yopratiqoPageTransitionAudio.test.tsx
+          git diff --check b07b3fd05a9acb31e39013804461838e1b14a048 HEAD
+          git diff --exit-code b07b3fd05a9acb31e39013804461838e1b14a048 HEAD -- lib/yo/italian/course/courseProgress.ts lib/yo/italian/course/guidedItalian.ts lib/yo/shared/state.ts lib/yo/personalized/profile.ts
+      - name: Audio, full learning journeys and release tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in yopratiqoPageTransitionAudio.test.tsx yopratiqoItalianModuleAudio.test.ts yopratiqoPronunciationSession.test.tsx yopratiqoSharedIntroPlayer.test.tsx yopratiqoGuidedItalianPlayer.test.tsx yopratiqoTapFlow.test.tsx yopratiqoReleaseChoices.test.tsx yopratiqoItalianCourseAudio.test.ts; do
+            node --import tsx "tests/yo/$file" > "/tmp/yo-transition/$file.log" 2>&1 || { tail -n 100 "/tmp/yo-transition/$file.log"; exit 1; }
+            echo "PASS $file";tail -n 2 "/tmp/yo-transition/$file.log"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-transition-audio-review
+          path: /tmp/yo-transition
+          retention-days: 7
