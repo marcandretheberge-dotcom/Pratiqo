@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import { Loader2, Volume2, Square } from "lucide-react";
 import { buildPublicAudioUrl } from "@/lib/yo/audio/audioUrl";
 import { getItalianBolognaAudioItem } from "@/lib/yo/audio/italianBolognaAudio";
@@ -28,18 +28,20 @@ export interface ItalianModuleAudioProps {
   onListen?: () => void;
   /** Generic label for listening questions: do not put the answer in an accessible name. */
   label?: string;
+  autoPlay?: boolean;
 }
 
-export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianModuleAudioProps) {
+export function ItalianModuleAudio({ text, locale, onListen, label, autoPlay = false }: ItalianModuleAudioProps) {
   const coursePath = useItalianAudioPath(text);
   const language = useCourseLanguage();
   const [state, setState] = useState<PlaybackState>("idle");
   const [slow, setSlow] = useState(false);
   const [error, setError] = useState<"unavailable" | "failed" | null>(null);
+  const [needsTap, setNeedsTap] = useState(false);
   const root = useRef<HTMLSpanElement>(null);
   const session = useRef<AudioSession | null>(null);
   const latestOnListen = useRef(onListen);
-  latestOnListen.current = onListen;
+  useLayoutEffect(() => { latestOnListen.current = onListen; }, [onListen]);
 
   const stop = useCallback(() => {
     const active = session.current;
@@ -53,21 +55,25 @@ export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianMod
     setState("idle");
   }, []);
 
-  useEffect(() => {
-    setError(null);
+  useLayoutEffect(() => {
+    let cancelled = false;
+    queueMicrotask(() => { if (!cancelled) setError(null); });
     const visibility = () => { if (document.visibilityState !== "visible") stop(); };
     window.addEventListener(ITALIAN_MODULE_AUDIO_STOP_EVENT, stop);
     document.addEventListener("visibilitychange", visibility);
     return () => {
+      cancelled = true;
       window.removeEventListener(ITALIAN_MODULE_AUDIO_STOP_EVENT, stop);
       document.removeEventListener("visibilitychange", visibility);
       stop();
     };
   }, [text, coursePath, stop]);
 
-  function play() {
+  // Start in the same activation window as a deliberate page transition when possible.
+  // Headless/timer navigation and iOS may still reject autoplay; leave a single visible tap.
+  function play(automatic = false) {
     if (session.current) { stop(); return; }
-    setError(null);
+    setError(null); setNeedsTap(false);
     const item = language === "it" ? getItalianBolognaAudioItem(text) : undefined;
     const storagePath = coursePath ?? item?.storagePath;
     const bundledGerman = language === "de" && storagePath &&
@@ -101,7 +107,7 @@ export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianMod
       audio.removeEventListener("error", onError);
     } };
     const isCurrent = () => session.current === active;
-    const fail = () => { if (!isCurrent()) return; stop(); setError("failed"); };
+    const fail = (blocked = false) => { if (!isCurrent()) return; stop(); if (blocked || automatic) setNeedsTap(true); else setError("failed"); };
     const armTimeout = () => { clearTimeout(timer); timer = setTimeout(fail, BUFFER_TIMEOUT_MS); };
     const onPlaying = () => {
       if (!isCurrent()) return;
@@ -132,13 +138,20 @@ export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianMod
     }
     setState("loading");
     armTimeout();
-    try { void audio.play()?.catch(fail); }
-    catch { fail(); }
+    try { void audio.play()?.catch(error => fail(error instanceof Error && error.name === "NotAllowedError")); }
+    catch (error) { fail(error instanceof Error && error.name === "NotAllowedError"); }
   }
 
+  const startAutomatic = useEffectEvent(() => play(true));
+  useLayoutEffect(() => {
+    if (!autoPlay) return;
+    let cancelled = false;
+    queueMicrotask(() => { if (!cancelled) startAutomatic(); });
+    return () => { cancelled = true; };
+  }, [text, coursePath, autoPlay]);
   const active = state !== "idle";
   return <span ref={root} className="inline-flex max-w-full flex-wrap items-center gap-2 align-middle" data-no-deck-swipe data-no-deck-tap>
-    <button type="button" onClick={(event) => { event.stopPropagation(); play(); }} aria-label={(active ? copy[locale].stop : copy[locale].play) + " : " + (label ?? text)}
+    <button type="button" onClick={(event) => { event.stopPropagation(); play(false); }} aria-label={(active ? copy[locale].stop : copy[locale].play) + " : " + (label ?? text)}
       className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
       {state === "loading" ? <Loader2 size={15} className="motion-safe:animate-spin" aria-hidden /> : active ? <Square size={13} aria-hidden /> : <Volume2 size={15} aria-hidden />}{active ? copy[locale].stop : copy[locale].play}
     </button>
@@ -146,6 +159,7 @@ export function ItalianModuleAudio({ text, locale, onListen, label }: ItalianMod
       className="min-h-11 rounded-full px-2 text-xs font-medium text-slate-600 underline decoration-dotted underline-offset-4 focus-visible:outline focus-visible:outline-2">
       {slow ? "0.78×" : "1×"} · {copy[locale].slow}
     </button>
+    {needsTap ? <span role="status" className="basis-full text-xs font-medium text-amber-900" data-audio-tap-required>{{fr:"Lecture automatique bloquée. Touche Écouter pour entendre la phrase.",en:"Autoplay was blocked. Tap Listen to hear the phrase.",es:"La reproducción automática está bloqueada. Toca Escuchar para escuchar la frase."}[locale]}</span> : null}
     {error ? <span role="status" className="basis-full text-xs text-amber-900">{copy[locale][error]}</span> : null}
   </span>;
 }
