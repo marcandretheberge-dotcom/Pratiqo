@@ -26,7 +26,7 @@ for (const [index, passage] of passageChecks.entries()) {
     questions.map(q => personalizedItalianUnits.find(unit => unit.quiz.questions.some(candidate => candidate.id === q.id))?.id),
   );
   assert.deepEqual([...coverage].sort(), [...sourceCities].sort(), "each of four prerequisite cities is checked");
-  assert.ok(questions.every(q => q.options.length >= 2 || q.kind === "type"));
+  assert.ok(questions.every(q => q.kind === "type" || q.options.length >= 2));
   assert.ok(questions.every(q => sourceCities.some(id =>
     personalizedItalianUnits.find(unit => unit.id === id)?.quiz.questions.some(candidate => candidate.id === q.id))));
 }
@@ -55,8 +55,9 @@ assert.equal(after.placement, "check");
 assert.deepEqual(after.reviewUnitIds, profile.reviewUnitIds);
 assert.equal(parseProfile(JSON.stringify(after), "it", ids)?.startUnitId, "u05");
 assert.equal(profile.startUnitId, "u01", "no mutation of the previous learner preferences");
-assert.equal(profileAfterItalianWorldPassage(profile, passageChecks[1], ids, 200)?.startUnitId, "u09",
-  "direct future-world requests need a UI prerequisite gate");
+assert.equal(profileAfterItalianWorldPassage(profile, passageChecks[1], ids, 200), null,
+  "future-world passages cannot be used before reaching the source world");
+assert.equal(profileAfterItalianWorldPassage({...profile,startUnitId:"u05"}, passageChecks[1], ids, 200)?.startUnitId,"u09");
 assert.equal(profileAfterItalianWorldPassage({...profile, startUnitId:"u09"}, passage, ids, 200), null,
   "cannot use a flute to regress a learner's entry point");
 assert.equal(profileAfterItalianWorldPassage({...profile, language:"es"}, passage, ids, 200), null);
