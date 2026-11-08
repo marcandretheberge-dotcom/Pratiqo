@@ -20,7 +20,7 @@ Object.defineProperty(globalThis,"setTimeout",{value:(fn:()=>void,ms=0)=>{timers
 Object.defineProperty(globalThis,"clearTimeout",{value:(id:number)=>timers.delete(id),configurable:true,writable:true});
 Date.now=()=>now;
 let sounds=0, nexts=0, attempts: { correct:boolean;assisted:boolean }[]=[];
-class AudioContextStub {state="running";destination={};createBuffer(){return{copyToChannel(){}};}createBufferSource(){return{buffer:null,onended:null,connect(){},disconnect(){},stop(){},start(){sounds++;}};}resume(){return Promise.resolve();}close(){return Promise.resolve();}}
+class AudioContextStub {state="running";destination={};createGain(){return{gain:{value:1},connect(){},disconnect(){}};}createBuffer(){return{copyToChannel(){}};}createBufferSource(){return{buffer:null,onended:null,connect(){},disconnect(){},stop(){},start(){sounds++;}};}resume(){return Promise.resolve();}close(){return Promise.resolve();}}
 Object.defineProperty(window,"AudioContext",{value:AudioContextStub});
 class Speech {text:string;lang="";voice:unknown;rate=1;onstart:(()=>void)|null=null;onend:(()=>void)|null=null;onerror:(()=>void)|null=null;constructor(text:string){this.text=text;}}
 Object.defineProperty(globalThis,"SpeechSynthesisUtterance",{value:Speech,configurable:true});

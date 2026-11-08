@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import * as React from "react";
+import { woodSamples, type FeedbackCue } from "@/lib/yo/feedback/woodSound";
 import { introCourses } from "@/lib/yo/shared/course";
 import { courseSteps } from "@/lib/yo/shared/steps";
 import { introKey } from "@/lib/yo/shared/state";
@@ -18,6 +19,16 @@ const {render,cleanup,fireEvent,act,within}=require("@testing-library/react") as
 class Speech { text:string;lang="";voice:unknown;rate=1;onstart:(()=>void)|null=null;onend:(()=>void)|null=null;onerror:(()=>void)|null=null;constructor(text:string){this.text=text;} }
 Object.defineProperty(globalThis,"SpeechSynthesisUtterance",{value:Speech,configurable:true});
 Object.defineProperty(window,"speechSynthesis",{value:{speaking:false,pending:false,getVoices:()=>introCourses.map(c=>({lang:c.speechLocale,name:c.nativeName})),speak:(u:Speech)=>{u.onstart?.();u.onend?.();},cancel:()=>{},addEventListener:()=>{},removeEventListener:()=>{}},configurable:true});
+const cues:FeedbackCue[]=[];
+const samples=(["correct","stamp","step","mission","unlock"] as const).map(kind=>({kind,data:woodSamples(kind)}));
+class SoundContext {
+ state="running";destination={};
+ createBuffer(){const buffer:{kind?:FeedbackCue;copyToChannel:(data:Float32Array)=>void}={copyToChannel(data){buffer.kind=samples.find(s=>s.data.length===data.length&&s.data.every((n,i)=>n===data[i]))?.kind;assert.ok(buffer.kind);}};return buffer;}
+ createGain(){return{gain:{value:1},connect(){},disconnect(){}};}
+ createBufferSource(){const source:{buffer:{kind:FeedbackCue}|null;onended:unknown;connect:()=>void;disconnect:()=>void;start:()=>void;stop:()=>void}={buffer:null,onended:null,connect(){},disconnect(){},start(){cues.push(source.buffer!.kind);},stop(){}};return source;}
+ close(){return Promise.resolve();}resume(){return Promise.resolve();}
+}
+Object.defineProperty(window,"AudioContext",{value:SoundContext,configurable:true});
 const {SharedIntro}=require("@/components/yo/shared/SharedIntro") as typeof import("@/components/yo/shared/SharedIntro");
 function flush(){for(let i=0;i<20&&frames.size;i++){const f=[...frames.values()];frames.clear();act(()=>f.forEach(fn=>fn(0)));}}
 let clock=Date.now();Date.now=()=>clock;
@@ -35,7 +46,7 @@ function solve(v:View,c:IntroCourse,e:Exercise){
 }
 let tests=0;
 for(const c of introCourses){
- cleanup();localStorage.clear();frames.clear();localStorage.setItem('legacy-progress-sentinel','do-not-change');localStorage.setItem('yo.practice.auto-next.v1','off');
+ cleanup();localStorage.clear();frames.clear();cues.length=0;localStorage.setItem('legacy-progress-sentinel','do-not-change');localStorage.setItem('yo.practice.auto-next.v1','off');
  let v=mount(c);click(v.getByRole('button',{name:'I’m starting from zero'}));click(v.getByRole('button',{name:'Travel'}));
  assert.equal((v.getByRole('button',{name:'Continue'}) as HTMLButtonElement).disabled,true);
  click(v.getByRole('radio',{name:'120 min'}));assert.equal((v.getByRole('radio',{name:'120 min'}) as HTMLInputElement).checked,true);
@@ -51,7 +62,7 @@ for(const c of introCourses){
  }
  for(const e of c.final)solve(v,c,e);
  assert.ok(v.getByRole('heading',{name:'Your stamp is in your passport!'}));click(v.getByRole('button',{name:'Back to my journey'}));
- assert.ok(v.getByText('250 learning points',{exact:true}));const before=localStorage.getItem(introKey(c.language));cleanup();v=mount(c);assert.ok(v.getByText('250 learning points',{exact:true}));assert.equal(localStorage.getItem(introKey(c.language)),before);assert.equal(localStorage.getItem('legacy-progress-sentinel'),'do-not-change');
+ assert.ok(v.getByText('250 learning points',{exact:true}));assert.equal(cues.filter(k=>k==='step').length,1);assert.equal(cues.filter(k=>k==='mission').length,3);assert.equal(cues.filter(k=>k==='stamp').length,1);const cueCount=cues.length;const before=localStorage.getItem(introKey(c.language));cleanup();v=mount(c);assert.ok(v.getByText('250 learning points',{exact:true}));assert.equal(localStorage.getItem(introKey(c.language)),before);assert.equal(localStorage.getItem('legacy-progress-sentinel'),'do-not-change');assert.equal(cues.length,cueCount,'reload must not replay rewards');
  console.log(`PASS ${c.slug}: onboarding, all study/listening/teaching/practice steps, independent final, bank, reload and untouched legacy`);tests++;
 }
 cleanup();console.log(`${tests} complete language journeys passed`);

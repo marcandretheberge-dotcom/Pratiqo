@@ -1,0 +1,41 @@
+name: Yo sound and pronunciation review
+on:
+  push:
+    branches: [feat/yo-sound-audio-review-20261108]
+    paths: ['components/yo/**', 'lib/yo/**', 'tests/yo/**', 'app/yo/langues/**', 'public/audio/yo/**', .github/workflows/yo-sound-review.yml]
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Types, audio behavior and unchanged canonical evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/yo-sound-review
+          npx tsc --noEmit
+          npx eslint components/yo/shared/IntroAudio.tsx components/yo/personalized/LearningAudio.tsx components/yo/feedback/LearningFeedback.tsx lib/yo/feedback components/yo/shared/SharedIntro.tsx components/yo/italian/guided/GuidedItalianCourse.tsx
+          for name in yopratiqoPronunciationSession.test.tsx yopratiqoFeedback.test.tsx yopratiqoSharedIntroPlayer.test.tsx yopratiqoGuidedItalianPlayer.test.tsx yopratiqoTapFlow.test.tsx yopratiqoReleaseChoices.test.tsx yopratiqoItalianModuleAudio.test.ts yopratiqoItalianCourseAudio.test.ts yopratiqoAudio.test.ts; do
+            node --import tsx "tests/yo/$name" > "/tmp/yo-sound-review/$name.log" 2>&1 || { tail -n 80 "/tmp/yo-sound-review/$name.log"; exit 1; }
+            tail -n 2 "/tmp/yo-sound-review/$name.log"
+          done
+          git diff --exit-code 5d7edc9da2a35507b4da76b0d56f164168360097 HEAD -- lib/yo/italian/course/courseProgress.ts lib/yo/italian/course/guidedItalian.ts lib/yo/shared/state.ts lib/yo/personalized/profile.ts
+          git diff --check 5d7edc9da2a35507b4da76b0d56f164168360097
+          git rev-parse HEAD > /tmp/yo-sound-review/commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-sound-review
+          path: /tmp/yo-sound-review
+          retention-days: 7

@@ -20,6 +20,7 @@
  * resulting public read URL matches the one this helper builds.
  */
 
+import { BUNDLED_AUDIO_REPAIRS } from "./bundledRepairs";
 import { YOPRATIQO_AUDIO_BUCKET_DEFAULT } from "@/lib/yo/audio/audioManifest.types-internal";
 // Keep URL construction independent of every language's recording registry.
 
@@ -73,7 +74,7 @@ export function buildPublicAudioUrl(
   // could pass a custom path in future).
   const normalisedPath = storagePath.replace(/^\/+/, "");
 
-  const base = `${origin}/storage/v1/object/public/${bucket}/${normalisedPath}`;
+  const base = (bucket === YOPRATIQO_AUDIO_BUCKET_DEFAULT && BUNDLED_AUDIO_REPAIRS[normalisedPath]) || `${origin}/storage/v1/object/public/${bucket}/${normalisedPath}`;
   if (options.version) {
     const sep = base.includes("?") ? "&" : "?";
     return `${base}${sep}${YOPRATIQO_AUDIO_VERSION_PARAM}=${encodeURIComponent(

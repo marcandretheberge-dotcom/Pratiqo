@@ -9,9 +9,10 @@ const require = createRequire(`${process.cwd()}/package.json`), { JSDOM } = requ
 const dom = new JSDOM("<html><body></body></html>", { url: "https://example.test", pretendToBeVisual: true });
 const frames = new Map<number, FrameRequestCallback>(); let frame = 0;
 for (const [key, value] of Object.entries({ window: dom.window, document: dom.window.document, navigator: dom.window.navigator, HTMLElement: dom.window.HTMLElement, Element: dom.window.Element, Node: dom.window.Node, NodeFilter: dom.window.NodeFilter, DocumentFragment: dom.window.DocumentFragment, HTMLInputElement: dom.window.HTMLInputElement, CustomEvent: dom.window.CustomEvent, Event: dom.window.Event, MutationObserver: dom.window.MutationObserver, getComputedStyle: dom.window.getComputedStyle, localStorage: dom.window.localStorage, requestAnimationFrame: (fn: FrameRequestCallback) => { frames.set(++frame,fn); return frame; }, cancelAnimationFrame: (id:number) => frames.delete(id), IS_REACT_ACT_ENVIRONMENT: true })) Object.defineProperty(globalThis,key,{value,configurable:true,writable:true});
-let starts=0,stops=0,closes=0; const vibrations: (number|number[])[]=[];
+let starts=0,stops=0,closes=0; const gains: {value:number}[]=[]; const vibrations: (number|number[])[]=[];
 class Context {
  state="running";destination={};
+ createGain(){const gain={value:1};gains.push(gain);return{gain,connect(){},disconnect(){}};}
  createBuffer(_channels:number,length:number){return{copyToChannel:(data:Float32Array)=>assert.equal(data.length,length)};}
  createBufferSource(){return {buffer:null,onended:null,connect(){},disconnect(){},start(){starts++;},stop(){stops++;}};}
  resume(){return Promise.resolve();}close(){closes++;return Promise.resolve();}
@@ -57,5 +58,25 @@ test("lesson speech is never interrupted: cue waits, no backlog, cancellation su
 test("a longer spoken phrase still receives its queued success cue",async()=>{const p=new FeedbackPlayer(),release=beginLessonAudio();try{await p.play();clock+=5000;assert.equal(starts,0);release();assert.equal(starts,1);}finally{release();p.dispose();}});
 test("hidden page and disposal cancel queued feedback",async()=>{const p=new FeedbackPlayer(),release=beginLessonAudio();await p.play();Object.defineProperty(document,'visibilityState',{value:'hidden',configurable:true});document.dispatchEvent(new Event('visibilitychange'));release();assert.equal(starts,0);Object.defineProperty(document,'visibilityState',{value:'visible',configurable:true});await p.play();assert.equal(starts,1);p.dispose();await p.play();assert.equal(starts,1);assert.ok(closes>0);});
 test("late AudioContext resume cannot play after cancellation",async()=>{const ctor=window.AudioContext;let resume!:()=>void;class Suspended extends Context {state="suspended";resume(){return new Promise<void>(r=>{resume=()=>{this.state='running';r();};});}}Object.defineProperty(window,'AudioContext',{value:Suspended,writable:true});const p=new FeedbackPlayer();try{const wait=p.play();p.cancel();resume();await wait;assert.equal(starts,0);}finally{p.dispose();Object.defineProperty(window,'AudioContext',{value:ctor,writable:true});}});
+test("movement, mission and unlock use distinct restrained wooden cues",()=>{
+ const kinds=["correct","stamp","step","mission","unlock"] as const;
+ const arrays=kinds.map(kind=>woodSamples(kind));
+ for(let i=0;i<arrays.length;i++){assert.ok(arrays[i].every(Number.isFinite));assert.ok(arrays[i].every(n=>Math.abs(n)<=.220001));for(let j=i+1;j<arrays.length;j++)assert.notDeepEqual(arrays[i],arrays[j]);}
+ assert.ok(woodSamples("step").every(n=>Math.abs(n)<=.090001));
+});
+test("volume changes affect active effects only; zero cancels a queued cue",async()=>{
+ const p=new FeedbackPlayer();try{p.setVolume(.35);await p.play("mission");assert.equal(gains.at(-1)?.value,.35);p.setVolume(.1);assert.equal(gains.at(-1)?.value,.1);
+ const release=beginLessonAudio();await p.play("stamp");const before=starts;p.setVolume(0);release();assert.equal(starts,before);await p.play("unlock");assert.equal(starts,before);
+ }finally{p.dispose();}
+});
+test("gesture preparation is silent and does not play a stale reward",async()=>{
+ const p=new FeedbackPlayer();try{await p.unlock();assert.equal(starts,0);await p.play("unlock");assert.equal(starts,1);p.dispose();await p.unlock();assert.equal(starts,1);}finally{p.dispose();}
+});
+test("effect samples and volume persist without altering learning progress",()=>{
+ localStorage.setItem('yo.shared-intro.v1.en','unchanged');const v=render(<LearningFeedbackProvider><EventHarness/></LearningFeedbackProvider>);flush();
+ fireEvent.change(v.getByRole('slider'),{target:{value:'40'}});assert.equal(localStorage.getItem('yopratiqo.audio.effects-volume.v1'),'0.4');
+ click(v.getByRole('button',{name:'Preview the other sounds'}));const vibrationCount=vibrations.length;
+ fireEvent.change(v.getByRole('combobox'),{target:{value:'unlock'}});click(v.getByRole('button',{name:'Preview this effect'}));assert.equal(starts,1);assert.equal(vibrations.length,vibrationCount);assert.equal(localStorage.getItem('yo.shared-intro.v1.en'),'unchanged');
+});
 async function main(){let failures=0;for(const[name,fn]of tests){cleanup();localStorage.clear();frames.clear();localStorage.setItem("yo.practice.auto-next.v1","off");starts=0;stops=0;closes=0;vibrations.length=0;try{await fn();await tick();console.log(`PASS ${name}`);}catch(e){failures++;console.error(`FAIL ${name}`,e);}finally{cleanup();frames.clear();}}console.log(`${tests.length-failures}/${tests.length} feedback checks passed`);if(failures)process.exitCode=1;}
 void main();
