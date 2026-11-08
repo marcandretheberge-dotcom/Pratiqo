@@ -5,8 +5,37 @@ on:
     paths: [.github/workflows/yo-tap-live.yml]
 permissions:
   contents: read
+  statuses: read
 jobs:
+  ready:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - name: Require successful deployment of the unchanged feature head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, time, urllib.request
+          base='https://api.github.com/repos/marcandretheberge-dotcom/Pratiqo/'
+          sha='0878169bf8dd9cc2bc16ee2cf30feebe2465cf06'
+          def get(path):
+            req=urllib.request.Request(base+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
+            with urllib.request.urlopen(req,timeout=30) as r:return json.load(r)
+          for attempt in range(30):
+            assert get('git/ref/heads/feat/yo-tap-flow-20261108')['object']['sha']==sha,'Feature branch changed; do not test another release'
+            states=get('commits/'+sha+'/status')['statuses']
+            vercel=next((s for s in states if s['context']=='Vercel'),None)
+            if vercel and vercel['state']=='success':
+              print('PASS: unchanged reviewed head has successful Vercel status:',sha,vercel['target_url']);break
+            if vercel and vercel['state'] in ['error','failure']:raise RuntimeError('Deployment failed')
+            time.sleep(8)
+          else:raise RuntimeError('Deployment did not become ready')
+          PY
   live:
+    needs: ready
     strategy:
       fail-fast: false
       max-parallel: 4
@@ -16,26 +45,27 @@ jobs:
     timeout-minutes: 12
     env:
       YO_LANGUAGE: ${{ matrix.language }}
-      YO_TAP_URL: https://pratiqo-6nv0fau5i-marcandretheberge-dotcoms-projects.vercel.app
+      YO_TAP_URL: https://pratiqo-git-feat-yo-t-8dc9b7-marcandretheberge-dotcoms-projects.vercel.app
       YO_TAP_FIXTURES: '0'
       YO_QA_DIR: /tmp/yo-tap-live
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: b560c6015ed1d0e04c39aeed5cf0d2bb6b26b7a4
+          ref: 0878169bf8dd9cc2bc16ee2cf30feebe2465cf06
           persist-credentials: false
       - name: Exact product identity
         run: |
-          test "$(git rev-parse HEAD)" = b560c6015ed1d0e04c39aeed5cf0d2bb6b26b7a4
+          test "$(git rev-parse HEAD)" = 0878169bf8dd9cc2bc16ee2cf30feebe2465cf06
           mkdir -p "$YO_QA_DIR"
           git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
+          echo "$YO_TAP_URL" > "$YO_QA_DIR/preview-url.txt"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: |
           python -m pip install playwright==1.57.0
           python -m playwright install --with-deps chromium webkit > "$YO_QA_DIR/browser-install.log" 2>&1 || { tail -n 100 "$YO_QA_DIR/browser-install.log"; exit 1; }
-      - name: Actual preview, no accounts or media fixtures
+      - name: Actual branch preview, no accounts or media fixtures
         shell: bash
         run: |
           set -euo pipefail
