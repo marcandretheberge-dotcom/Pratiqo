@@ -10,6 +10,7 @@ Cette phase apporte des scènes illustrées originales au parcours existant (tro
 - Les cartes illustrent les destinations avec un chemin sinueux, un décor propre à chaque monde, des étapes ouvertes et fermées et Yoppo à l'étape actuelle.
 - Chaque ville affiche une courte scène originale d'arrivée de Yoppo, **non bloquante** et sans audio automatique.
 - Le défi final existant se présente comme une porte de château. La scène de victoire n'apparaît **qu'après le résultat indépendant du défi actuel**; elle n'attribue aucun point ni aucun tampon.
+- Pendant les cinq questions du boss, une jauge de **pierres de savoir** s'allume uniquement selon les réponses réellement enregistrées dans la manche. L'écran rappelle le seuil de réussite et signale clairement si une aide a été utilisée. Aucun exercice supplémentaire ni point fictif.
 
 ## Choix de conception
 
@@ -25,7 +26,7 @@ Cette phase apporte des scènes illustrées originales au parcours existant (tro
 2. Joueur neuf : une seule ville réellement accessible; les trois suivantes restent verrouillées et impossibles à ouvrir.
 3. Après quatre évaluations indépendantes réussies : quatre villes marquées maîtrisées, porte du monde ouverte; le monde suivant reste régi par ses vrais prérequis.
 4. Yoppo apparaît au bon endroit dans chacune des douze villes, sans interrompre le bouton principal « Continuer ma mission ».
-5. La porte de boss ne change aucune réponse, aucun score ni aucune disponibilité du défi. Un résultat échoué ou assisté ne déclenche pas la scène de victoire.
+5. La porte de boss ne change aucune réponse, aucun score ni aucune disponibilité du défi. Un résultat échoué ou assisté ne déclenche pas la scène de victoire. La jauge reflète fidèlement les bonnes réponses sans récompenser un apprenant sur une simple animation.
 6. Audio activé/désactivé, navigation clavier, lecteur d'écran et réduction des mouvements fonctionnels.
 7. Tests : TypeScript, test de rendu des trois mondes/douze villes, suite italienne guidée, ESLint et `git diff --check`.
 
