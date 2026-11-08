@@ -9,6 +9,7 @@ on:
       - "components/yo/italian/guided/ItalianWorldAtlas.tsx"
       - "components/yo/italian/guided/ItalianCityArrival.tsx"
       - "components/yo/italian/guided/ItalianCityBossGate.tsx"
+      - "components/yo/italian/guided/ItalianBossBattleHud.tsx"
       - "components/yo/italian/guided/ItalianWorldNavigator.tsx"
       - "components/yo/italian/guided/GuidedItalianCourse.tsx"
       - "tests/yo/yopratiqoItalianImmersivePhase3.test.tsx"
@@ -38,6 +39,6 @@ jobs:
       - name: Guided Italian regressions
         run: npm run test:yo-italian-course
       - name: Targeted lint
-        run: npx eslint components/yo/italian/guided/ItalianWorldAtlas.tsx components/yo/italian/guided/ItalianCityArrival.tsx components/yo/italian/guided/ItalianCityBossGate.tsx components/yo/italian/guided/ItalianWorldNavigator.tsx components/yo/italian/guided/GuidedItalianCourse.tsx tests/yo/yopratiqoItalianImmersivePhase3.test.tsx
+        run: npx eslint components/yo/italian/guided/ItalianWorldAtlas.tsx components/yo/italian/guided/ItalianCityArrival.tsx components/yo/italian/guided/ItalianCityBossGate.tsx components/yo/italian/guided/ItalianBossBattleHud.tsx components/yo/italian/guided/ItalianWorldNavigator.tsx components/yo/italian/guided/GuidedItalianCourse.tsx tests/yo/yopratiqoItalianImmersivePhase3.test.tsx
       - name: Diff integrity
         run: git diff --check origin/main...HEAD
