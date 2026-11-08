@@ -213,10 +213,15 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
           <aside className="order-1 rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 md:order-2 md:sticky md:top-6">
             <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-800"><MapPin size={16} aria-hidden />{passed ? c.stamp : c.remaining}</p><h2 className="mt-3 text-xl font-bold">{passed ? c.stampDone : ui.resumeView === "challenge" ? c.challenge : next < 0 ? c.challenge : unit.lessons[steps[ui.resumeView === "mission" ? ui.step : next].lesson].title[locale]}</h2>
             <p className="mt-3 text-sm leading-6">{c.stampRule}</p><p className="mt-4 text-sm font-semibold">{done}/{unit.lessons.length} {c.progress}</p>
-            {passed && nextUnit ? <Link href={italianCourseHref(locale, nextUnit.id)} className={`${primary} mt-5 w-full`}>{c.nextUnit}<ArrowRight size={18} aria-hidden /></Link> : <button ref={primaryAction} type="button" className={`${primary} mt-5 w-full ${tour === 2 ? "ring-4 ring-orange-300 ring-offset-4" : ""}`} onClick={beginMission}>{ui.resumeView === "challenge" ? c.challenge : next < 0 && !ui.resumeView ? c.begin : ui.resumeView ? c.resume : c.start}<ArrowRight size={18} aria-hidden /></button>}
+            {passed && nextUnit ? <Link href={italianCourseHref(locale, nextUnit.id)} className={`${primary} mt-5 hidden w-full md:inline-flex`}>{c.nextUnit}<ArrowRight size={18} aria-hidden /></Link> : <button ref={primaryAction} type="button" className={`${primary} mt-5 hidden w-full md:inline-flex ${tour === 2 ? "ring-4 ring-orange-300 ring-offset-4" : ""}`} onClick={beginMission}>{ui.resumeView === "challenge" ? c.challenge : next < 0 && !ui.resumeView ? c.begin : ui.resumeView ? c.resume : c.start}<ArrowRight size={18} aria-hidden /></button>}
             <p className="mt-4 text-sm font-bold text-emerald-800">{guidedPoints(unit, progress)} {c.points}</p><p className="mt-3 text-xs text-stone-500">{learning.storageAvailable && storageAvailable ? c.saved : c.unsaved}</p>
             {passed ? <button type="button" className={`${secondary} mt-3`} onClick={() => move(0)}>{c.practice}</button> : <button type="button" className="mt-5 min-h-11 text-left text-xs text-stone-600 underline" onClick={() => { finishTour(); stop(); commit({ ...current.current, view: "challenge-intro", resumeView: null, game: emptyGame() }); focus(); }}>{c.finalShortcut}</button>}
           </aside>
+        </div>
+        <div className="mb-5 md:hidden" data-yoppo-primary-mobile>
+          {passed && nextUnit ? <Link href={italianCourseHref(locale, nextUnit.id)} className={`${primary} w-full`}>{c.nextUnit}<ArrowRight size={18} aria-hidden /></Link>
+            : passed ? <button type="button" className={`${primary} w-full`} onClick={() => move(0)}>{c.practice}<ArrowRight size={18} aria-hidden /></button>
+              : <button type="button" className={`${primary} w-full`} onClick={beginMission}>{ui.resumeView === "challenge" ? c.challenge : next < 0 && !ui.resumeView ? c.begin : ui.resumeView ? c.resume : c.start}<ArrowRight size={18} aria-hidden /></button>}
         </div>
         <ItalianWorldNavigator journey={journey} locale={locale} currentUnitId={unit.id} hrefForUnit={id => italianCourseHref(locale,id)} canReview={placedReview} />
       </> : null}
