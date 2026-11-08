@@ -1,0 +1,43 @@
+name: Yo worlds pilot QA
+
+on:
+  push:
+    branches: [feat/yoppo-worlds-warmup-20261108]
+  pull_request:
+    paths:
+      - '.github/workflows/yo-worlds-pilot-qa.yml'
+      - 'components/yo/italian/guided/**'
+      - 'components/yo/personalized/VisualVocabulary.tsx'
+      - 'lib/yo/italian/**'
+      - 'lib/yo/learning/vocabularyPractice.ts'
+      - 'tests/yo/yopratiqoWorldsWarmup.test.ts'
+      - 'tests/yo/yopratiqoGuidedItalian.test.ts'
+      - 'app/yo/langues/italien/parcours/**'
+      - 'docs/product/yoppo-worlds-v1.md'
+
+permissions:
+  contents: read
+
+jobs:
+  worlds-pilot:
+    name: Guided Italian, world traversal, printable progress
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Italian course, warmup and regression tests
+        run: npm run test:yo-italian-course
+      - name: Targeted lint
+        run: npx eslint components/yo/italian/guided/ItalianWorldNavigator.tsx components/yo/italian/guided/ItalianAchievementPrintable.tsx components/yo/italian/guided/GuidedItalianCourse.tsx components/yo/personalized/VisualVocabulary.tsx lib/yo/italian/worlds.ts lib/yo/italian/achievement.ts lib/yo/italian/course/guidedItalian.ts lib/yo/learning/vocabularyPractice.ts app/yo/langues/italien/parcours/'[unitId]'/bilan/page.tsx tests/yo/yopratiqoWorldsWarmup.test.ts
+      - name: Diff whitespace safety
+        run: git diff --check origin/main...HEAD
