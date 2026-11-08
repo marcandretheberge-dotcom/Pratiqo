@@ -50,8 +50,8 @@ async function audioChecks(){
  check('Cantonese-only device shows audio failure without fake listening',()=>{assert.equal(spoken,0);assert.equal(heard,0);assert.match(v.getByRole('status').textContent??'',/Audio is unavailable/);});
  cleanup();const c=introCourses.find(c=>c.language==='zh-Hans')!,e=c.final.find(e=>e.kind==='listen')!;let last:Draft=emptyDraft();
  function Question(){const [d,setD]=React.useState(emptyDraft);return <LearningFeedbackProvider><IntroQuestion course={c} locale="en" audio={{}} exercise={e} assessment value={d} onChange={v=>{last=v;setD(v);}} onContinue={()=>{}}/></LearningFeedbackProvider>;}
- const q=render(<Question/>);click(q.getByRole('button',{name:'Read the message'}));const text=c.phrases.find(p=>p.id===e.answer)!.text;
- click(q.getByRole('button',{name:(name:string)=>name.startsWith(text)}));click(q.getByRole('button',{name:'Check'}));
+ const q=render(<Question/>);click(q.getByRole('button',{name:'Read instead of listen'}));const text=c.phrases.find(p=>p.id===e.answer)!.text;
+ click(q.getByRole('button',{name:(name:string)=>name.startsWith(text)}));assert.equal(q.queryByRole('button',{name:'Check'}),null);
  check('unavailable-audio transcript remains assisted, not independent mastery',()=>{assert.equal(last.correct,true);assert.equal(last.assisted,true);assert.equal(last.heard,false);assert.equal(independentScore([last]),0);});
  cleanup();dom.window.close();console.log(`${count} release safety checks passed`);
 }

@@ -3,7 +3,7 @@ on:
   push:
     branches: [feat/yo-shared-language-start-20261107]
   pull_request:
-    paths: [lib/yo/shared/releaseChoices.ts, components/yo/shared/IntroWelcome.tsx, components/yo/shared/IntroAudio.tsx, components/yo/learning/LessonLink.tsx, components/yo/italian/guided/GuidedItalianCourse.tsx, tests/yo/yopratiqoReleaseChoices.test.tsx, tests/yo/yopratiqoLessonLink.test.tsx]
+    paths: [.github/workflows/yo-release-safety.yml, lib/yo/shared/releaseChoices.ts, components/yo/shared/IntroWelcome.tsx, components/yo/shared/IntroAudio.tsx, components/yo/learning/LessonLink.tsx, components/yo/italian/guided/GuidedItalianCourse.tsx, tests/yo/yopratiqoReleaseChoices.test.tsx, tests/yo/yopratiqoLessonLink.test.tsx]
 permissions:
   contents: read
 jobs:
@@ -33,8 +33,10 @@ jobs:
           from pathlib import Path
           p='components/yo/italian/guided/GuidedItalianCourse.tsx'
           before=subprocess.check_output(['git','show','fd91f47f7a8192b551774b498b6659da2626c7d9:'+p]).decode()
-          assert Path(p).read_text()==before.replace('import Link from "next/link";', 'import Link from "../../learning/LessonLink";'), 'Italian player has unexpected changes beyond link import'
-          print('PASS: Italian logic, content and progression byte-for-byte unchanged except the link import.')
+          current=Path(p).read_text()
+          assert current.count(" paused={overlay!==null}")==3, "Expected three explicit overlay-pause props"
+          assert current.replace(" paused={overlay!==null}", "")==before.replace('import Link from "next/link";', 'import Link from "../../learning/LessonLink";'), 'Italian player has unexpected changes beyond the reviewed link import and three overlay pause props'
+          print('PASS: Italian logic, content and progression byte-for-byte unchanged except the link import and three explicit overlay pause props.')
           PY
           git rev-parse HEAD > /tmp/yo-release-safety/commit.txt
       - uses: actions/upload-artifact@v4
