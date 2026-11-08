@@ -43,7 +43,7 @@ export function migrateGuidedV2Draft(raw: string | null, unit: CourseUnit, reset
   try {
     const candidate: unknown = JSON.parse(raw);
     if (!object(candidate) || candidate.version !== 1 || candidate.resetAt !== resetAt ||
-      !Number.isInteger(candidate.step) || !Array.isArray(candidate.seen) ||
+      (typeof candidate.step !== "number" || !Number.isInteger(candidate.step)) || !Array.isArray(candidate.seen) ||
       !candidate.seen.every(id => typeof id === "string")) return null;
     const previousSteps: GuidedStep[] = unit.lessons.flatMap((lesson, index) => [
       ...(preparedLessons.includes(lesson.id) ? [{ id: `${lesson.id}:prepare`, lesson: index, stage: "prepare" as const }] : []),
