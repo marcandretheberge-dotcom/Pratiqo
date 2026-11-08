@@ -1,5 +1,3 @@
-import type { CSSProperties } from "react";
-
 type AdventurePalette = {
   sky: string; horizon: string; hill: string; forest: string;
   grass: string; deep: string; path: string; pathEdge: string;
@@ -48,7 +46,7 @@ export function ItalianAdventureLandscape({ worldId, complete }: {
   const isCoast = worldId === "daily-life";
   const isNight = worldId === "independence";
   const windyPath = "M119 133 C119 213 376 204 347 295 C321 366 135 325 131 444 C125 521 382 490 350 601 C325 681 219 657 244 748";
-  return <svg viewBox="0 0 480 840" preserveAspectRatio="xMidYMid slice"
+  return <svg viewBox="0 0 480 840" preserveAspectRatio="none"
     className="pointer-events-none absolute inset-0 h-full w-full select-none"
     data-atlas-landscape={worldId} aria-hidden="true" focusable="false">
     <defs>
