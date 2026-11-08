@@ -1,8 +1,8 @@
-import json,re
+import os,json,re
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 out=Path('/tmp/yo-webkit-state');out.mkdir(parents=True,exist_ok=True)
-url='https://pratiqo-g9p8vv4ag-marcandretheberge-dotcoms-projects.vercel.app/yo/langues/anglais/demarrer?lang=en'
+url=os.environ.get('YO_PROBE_URL','https://pratiqo-g9p8vv4ag-marcandretheberge-dotcoms-projects.vercel.app')+'/yo/langues/anglais/demarrer?lang=en'
 def click(p,t):p.get_by_role('button',name=t,exact=True).click()
 with sync_playwright() as pw:
  for engine in ['webkit','chromium']:
@@ -18,7 +18,7 @@ with sync_playwright() as pw:
    if banner.count() and banner.is_visible():banner.get_by_role('button',name=re.compile('Necessary only|Nécessaires seulement|Solo necesarias')).click()
    click(p,'I’m starting from zero');click(p,'Travel');p.locator('[data-shared-pace="120"]').tap();click(p,'Continue');click(p,'Start here');click(p,'Word notebook')
    dialog=p.get_by_role('dialog');row=dialog.locator('p[lang]').filter(has_text=re.compile('^Thank you!$')).first.locator('xpath=..')
-   logs.append({'t':'before','html':row.inner_text(),'state':row.locator('[data-pronunciation-state]').get_attribute('data-pronunciation-state')})
+   logs.append({'t':'before','html':row.inner_text(),'state':(row.locator('[data-pronunciation-state]').get_attribute('data-pronunciation-state') if row.locator('[data-pronunciation-state]').count() else 'legacy-not-exposed')})
    row.get_by_role('button',name=re.compile('^Listen')).click()
    for tick in [0.1,0.3,0.8,1.7,2.5,4.5,10]:
     p.wait_for_timeout(int(tick*1000))
