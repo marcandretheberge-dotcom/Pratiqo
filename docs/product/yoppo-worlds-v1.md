@@ -14,7 +14,7 @@
 1. Un navigateur de trois mondes montre les villes disponibles, validées et verrouillées dans le parcours italien guidé.
 2. Chaque mission commence par une introduction de vocabulaire. Les missions du module d'accueil utilisent la préparation visuelle; les autres affichent une sélection de huit expressions maximum avant la scène. La liste complète reste dans le carnet imprimable.
 3. Une préparation visuelle présente tous ses mots puis propose au maximum trois questions de rappel **uniques**. Les révisions espacées sont conservées dans le moteur d'apprentissage existant.
-4. Le doublon « préparation visuelle puis longue liste des mêmes mots » est supprimé. Les brouillons d'interface v2 sont migrés vers v3 par ID d'étape; l'ancien stockage n'est pas effacé.
+4. Le doublon « préparation visuelle puis longue liste des mêmes mots » est supprimé. Les brouillons d'interface v2, leurs index et leurs identifiants sont conservés. Le nouvel ordre d'affichage passe directement à la suite si un ancien brouillon était arrêté sur la page de vocabulaire redondante.
 5. La fiche imprimable fournit le vocabulaire et les objectifs; le résultat du défi montre les compétences travaillées et encourage la révision. La fiche ne prétend pas certifier des résultats personnels.
 6. Aucune modification à Stripe, aux paiements, aux comptes, aux récompenses financières, aux certifications ou à la base de données.
 
@@ -23,7 +23,7 @@
 - Nouveau joueur, téléphone : trois écrans de visite de Yoppo (passables), puis une seule action principale pour commencer.
 - Bologna : mots + audio, trois questions distinctes, puis scène, explication, sons et exercices; pas de deuxième longue liste des mêmes mots.
 - Plus tard (u02, etc.) : huit expressions maximum avant la scène; accès au carnet complet.
-- Reprendre un brouillon v2 : même exercice ou étape équivalente, et aucun tampon/point dupliqué.
+- Reprendre un brouillon v2 : même activité ou étape suivante sans vocabulaire redondant, et aucun tampon/point dupliqué.
 - Terminer une ville sans aide : tampon, résumé des acquis, fiche imprimable et ville suivante ouverte.
 - Réussite avec indice : aucun nouveau tampon ni Pass.
 - Terminer les quatre villes d'un monde : Pass visuel obtenu et monde suivant accessible via les règles normales du parcours.
