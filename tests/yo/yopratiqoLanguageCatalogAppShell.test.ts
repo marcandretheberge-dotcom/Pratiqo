@@ -6,6 +6,7 @@ import * as React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { YoLanguageQuickStart } from "@/components/yo/YoLanguageQuickStart";
 import { yopratiqoProductConfig } from "@/lib/yo/yopratiqoProductConfig";
+import { catalogRouteExists } from "./sharedRouteAssertion";
 import { getYoPublicLanguages } from "@/lib/yo/publicCatalog";
 
 const read = (file: string) => readFileSync(file, "utf8");
@@ -13,11 +14,11 @@ const catalog = read("app/yo/langues/page.tsx");
 const quick = read("components/yo/YoLanguageQuickStart.tsx");
 const publicCatalog = read("lib/yo/publicCatalog.ts");
 const { JSDOM } = createRequire(import.meta.url)("jsdom");
-const expected = ["/yo/langues/anglais/intro", "/yo/langues/francais-quebec/intro",
- "/yo/langues/espagnol/intro", "/yo/langues/japonais/parcours", "/yo/langues/italien/parcours",
- "/yo/langues/allemand/parcours", "/yo/langues/portugais-bresil/parcours", "/yo/langues/mandarin/parcours"];
+const expected = ["/yo/langues/anglais/demarrer", "/yo/langues/francais-quebec/demarrer",
+ "/yo/langues/espagnol/demarrer", "/yo/langues/japonais/demarrer", "/yo/langues/italien/parcours",
+ "/yo/langues/allemand/demarrer", "/yo/langues/portugais-bresil/demarrer", "/yo/langues/mandarin/demarrer"];
 
-for (const locale of ["fr", "en", "es"] as const) test(`${locale}: all available languages are real SSR links, without a welcome gate`, () => {
+for (const locale of ["fr", "en", "es"] as const) test(`${locale}: all available languages have real SSR learning-entry links`, () => {
  const html = renderToStaticMarkup(React.createElement(YoLanguageQuickStart, {locale}));
  const document = new JSDOM(html).window.document as Document;
  const cards = Array.from(document.querySelectorAll("ul > li"));
@@ -32,7 +33,7 @@ for (const locale of ["fr", "en", "es"] as const) test(`${locale}: all available
  for (const href of hrefs) {
    const url = new URL(href, "https://www.pratiqo.ca");
    assert.equal(url.searchParams.get("lang"), locale === "fr" ? null : locale);
-   assert.ok(existsSync(`app${url.pathname}/page.tsx`), href);
+   assert.ok(catalogRouteExists(url.pathname), href);
  }
  assert.match(html, /Yoppo/);
  assert.equal(document.querySelector("a[hidden], a[aria-disabled=true], a[href*=checkout]"), null);

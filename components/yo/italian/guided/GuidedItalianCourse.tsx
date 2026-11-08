@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "../../learning/LessonLink";
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowRight, BookOpen, Check, HelpCircle, LockKeyhole, MapPin, Stamp, X } from "lucide-react";
@@ -25,6 +25,7 @@ import type { VisualWord, WordBankEntry } from "@/lib/yo/personalized/types";
 import { VisualVocabulary } from "../../personalized/VisualVocabulary";
 import { LearningAudio } from "../../personalized/LearningAudio";
 import { guidedCopy, primary, secondary } from "./copy";
+import { LanguageExplanation } from "../../learning/LanguageExplanation";
 
 const EMPTY_VISUALS: Record<string, VisualWord[]> = {};
 type Props = { profile?: LearningProfile; onConfigure?: () => void; progressKey?: string; wordBank?: WordBankEntry[]; visualWords?: Record<string, VisualWord[]>; unit: CourseUnit; catalog: CourseCatalog; locale: YoLocale; audioPaths: Record<string, string>; initialLessonId?: string; initialActivityId?: string };
@@ -201,7 +202,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
             <div className="mb-5 flex items-start gap-3"><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="xs" compact /><p className="pt-2 text-sm leading-6">{lesson.goal[locale]}</p></div>
             {step.stage === "scene" ? <><p className="mb-4 text-xs font-bold uppercase text-emerald-800">{c.scene}</p><LearningAudio text={lesson.reading.it} locale={locale} /><p lang="it" className="my-5 whitespace-pre-line text-xl leading-9">{lesson.reading.it}</p><button className={secondary} type="button" aria-expanded={translation} onClick={() => setTranslation(!translation)}>{c.translation}</button>{translation ? <p className="mt-3 text-sm leading-7">{lesson.reading.meaning[locale]}</p> : null}</> : null}
             {step.stage === "words" ? <><h2 className="mb-5 text-xl font-bold">{c.notebook}</h2><div className="space-y-4">{lesson.vocabulary.map(p => <div key={p.it} className="border-b border-stone-100 pb-4"><p lang="it" className="text-lg font-semibold">{p.it}</p><p className="my-2 text-sm text-stone-600">{p.meaning[locale]}</p><LearningAudio text={p.it} locale={locale} /></div>)}</div><p className="mt-4 text-sm text-stone-600">{c.learnedWords}</p></> : null}
-            {step.stage === "language" ? <><p className="mb-2 text-xs font-bold uppercase text-emerald-800">{c.language}</p><h2 className="mb-4 text-xl font-bold">{lesson.grammar.title[locale]}</h2><p className="whitespace-pre-line text-base leading-8">{lesson.grammar.body[locale]}</p><div className="mt-5 space-y-3">{lesson.grammar.examples.slice(0, 3).map(p => <div key={p.it} className="rounded-2xl bg-emerald-50 p-4"><p lang="it" className="font-bold">{p.it}</p><p className="mt-1 text-sm">{p.meaning[locale]}</p></div>)}</div></> : null}
+            {step.stage === "language" ? <LanguageExplanation lesson={lesson} locale={locale}/> : null}
             {step.stage === "sounds" ? <><h2 className="mb-4 text-xl font-bold">{c.pronunciation}</h2><p className="text-base leading-7">{lesson.pronunciation.body[locale]}</p><div className="mt-5 space-y-4">{lesson.pronunciation.practice.map(text => <div key={text}><p lang="it" className="mb-2 text-lg font-semibold">{text}</p><LearningAudio text={text} locale={locale} /></div>)}</div></> : null}
             <button type="button" className={`${primary} mt-7 w-full`} onClick={advance}>{c.next}<ArrowRight size={18} aria-hidden /></button>
           </> : <>

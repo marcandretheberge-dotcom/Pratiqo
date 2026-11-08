@@ -18,7 +18,10 @@ with sync_playwright() as pw:
    later=page.get_by_role('button',name='Not now',exact=True)
    if later.count() and later.is_visible():later.click()
   dismiss_install()
-  for label in ['Je pars de zéro','Voyager','Continuer','Commencer ici']:
+  for label in ['Je pars de zéro','Voyager']:
+   dismiss_install();onb.get_by_role('button',name=label,exact=True).click()
+  onb.locator('[data-pace-choice="60"]').click()
+  for label in ['Continuer','Commencer ici']:
    dismiss_install();onb.get_by_role('button',name=label,exact=True).click()
   shell=page.locator('[data-guided-italian]');shell.wait_for();shell.get_by_role('button',name='Passer la visite',exact=True).click()
   page.screenshot(path=str(root/'deployed-map-fr.png'),full_page=True)

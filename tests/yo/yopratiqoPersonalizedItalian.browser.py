@@ -39,7 +39,7 @@ with sync_playwright() as pw:
  try:
   page.goto(base+'?lang=en');page.locator('[data-yoppo-onboarding]').wait_for(timeout=60000)
   page.screenshot(path=str(root/'onboarding-mobile.png'),full_page=True)
-  click(page,'I’m starting from zero');click(page,'Travel');click(page,'2 h / week');click(page,'Continue');click(page,'Start here')
+  click(page,'I’m starting from zero');click(page,'Travel');page.locator('[data-pace-choice="120"]').click();click(page,'Continue');click(page,'Start here')
   page.locator('[data-guided-italian]').wait_for();click(page,'Skip the tour')
   assert page.evaluate("() => JSON.parse(localStorage.getItem('yo.learning-profile.v1.it')).weeklyMinutes")==120
   click(page,'Word notebook');dialog=page.get_by_role('dialog');assert dialog.get_by_text('Quanti anni hai?',exact=True).count()==1
@@ -89,7 +89,7 @@ with sync_playwright() as pw:
   log('Complete translated word/verb bank prints in FR/EN/ES; Letter and A4 PDFs generated.')
   # Fresh experienced learner chooses later content: no forged earlier assessments.
   page.goto(base+'?lang=en');page.evaluate('() => localStorage.clear()');page.reload();page.locator('[data-yoppo-onboarding]').wait_for()
-  click(page,'I have a background, but I’m rusty');click(page,'Everyday conversation');click(page,'Continue');click(page,'Choose for myself');page.get_by_role('combobox').select_option('u05');click(page,'Start here')
+  click(page,'I have a background, but I’m rusty');click(page,'Everyday conversation');page.locator('[data-pace-choice="60"]').click();click(page,'Continue');click(page,'Choose for myself');page.get_by_role('combobox').select_option('u05');click(page,'Start here')
   page.wait_for_url('**/u05?lang=en');page.locator('[data-guided-italian]').wait_for();tour=page.get_by_role('button',name='Skip the tour',exact=True)
   if tour.count():tour.click()
   assert page.get_by_text('0 learning points',exact=True).count()==1
@@ -98,8 +98,10 @@ with sync_playwright() as pw:
   log('Experienced learner starts at module 5, resumes there from language home, and receives no unearned stamp or points.')
   # Adaptive check, independent answers. Existing recorded questions use the same deterministic fixture.
   page.evaluate('() => localStorage.clear()');page.goto(base+'?lang=en');page.locator('[data-yoppo-onboarding]').wait_for()
-  click(page,'I can have simple conversations');click(page,'Work or studies');click(page,'Continue');click(page,'Find my starting point')
+  click(page,'I can have simple conversations');click(page,'Work or studies');page.locator('[data-pace-choice="60"]').click();click(page,'Continue');click(page,'Find my starting point')
   for check in data['checks']:solve(page,check['activity']);click(page,'Continue')
+  assert page.get_by_role('combobox').count()==0
+  click(page,'Change mission')
   assert page.get_by_role('combobox').input_value()=='u07'
   assert page.evaluate("() => localStorage.getItem('yo.italian.course.first-meeting.v2')") is None
   log('All nine placement answers recommend module 7, without writing any learning assessment or reward.')
