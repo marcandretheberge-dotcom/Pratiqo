@@ -21,10 +21,10 @@ type Props = {
  * milestone tokens let players see the landscape and where to go next.
  * None of the visual effects can change the canonical journey gate. */
 const stops = [
-  { x: "25%", y: "16%" },
-  { x: "73%", y: "35%" },
-  { x: "27%", y: "53%" },
-  { x: "73%", y: "72%" },
+  { x: "25%", y: "21%" },
+  { x: "73%", y: "37%" },
+  { x: "27%", y: "57%" },
+  { x: "73%", y: "76%" },
 ] as const;
 
 export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, canReview }: Props) {
@@ -57,7 +57,7 @@ export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, c
   const completed = world.citiesWithProgress.filter(city => city.mastered).length;
   const nextStop = world.citiesWithProgress.find(city => city.unlocked && !city.mastered);
   const selectedStop = world.citiesWithProgress.find(city => city.unitId === currentUnitId);
-  const guideId = selectedStop?.unlocked ? currentUnitId : nextStop?.unitId ?? world.citiesWithProgress.find(city => city.unlocked)?.unitId;
+  const guideId = nextStop?.unitId ?? (selectedStop?.unlocked ? currentUnitId : world.citiesWithProgress.find(city => city.unlocked)?.unitId);
 
   return <section data-yoppo-immersive-atlas={world.id} aria-label={copy.title + ": " + world.title[locale]}
     className="relative isolate mt-4 w-full overflow-hidden rounded-[28px] border-[4px] border-[#f9e2a4] bg-[#5fc2b2] shadow-[0_12px_0_#987350,0_22px_40px_rgba(33,67,59,.24)]">
