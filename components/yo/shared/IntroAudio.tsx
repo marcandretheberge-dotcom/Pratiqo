@@ -60,7 +60,7 @@ export function IntroAudio({ text, speechLocale, path, locale, onListen, autoPla
           const voice = selectIntroVoice(synth.getVoices(), speechLocale);
           if (!voice) return;
           utterance = new SpeechSynthesisUtterance(text); utterance.lang = speechLocale; utterance.voice = voice; utterance.rate = slow ? .66 : .85;
-          utterance.onstart = ready; utterance.onend = end; utterance.onerror = event => fail(event.error === "not-allowed");
+          utterance.onstart = ready; utterance.onend = end; utterance.onerror = event => fail(event?.error === "not-allowed");
           arm(fail); synth.speak(utterance);
         } catch { fail(); }
       };
