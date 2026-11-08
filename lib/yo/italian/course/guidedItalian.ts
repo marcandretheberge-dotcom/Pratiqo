@@ -22,13 +22,48 @@ export type GuidedState = {
 };
 export const initialGuided = (resetAt = 0): GuidedState => ({ version: 1, resetAt, step: 0, seen: [], view: "map", resumeView: null, game: emptyGame(), quizIndex: 0, answers: [], runStartedAt: 0, submitted: false });
 
-/** The unit is still taught in full. The written/self-rated workshop is not a prerequisite. */
+/** Start with vocabulary, then encounter it in context. A visual warmup already
+ * teaches the words, so repeating a long separate word screen adds no value. */
 export function guidedSteps(unit: CourseUnit, preparedLessons: readonly string[] = []): GuidedStep[] {
-  return unit.lessons.flatMap((lesson, index) => [
-    ...(preparedLessons.includes(lesson.id) ? [{ id: `${lesson.id}:prepare`, lesson: index, stage: "prepare" as const }] : []),
-    ...(["scene", "words", "language", "sounds"] as const).map(stage => ({ id: `${lesson.id}:${stage}`, lesson: index, stage })),
-    ...lesson.activities.map(activity => ({ id: activity.id, lesson: index, stage: "exercise" as const, activity })),
-  ]);
+  return unit.lessons.flatMap((lesson, index) => {
+    const stages: GuidedStage[] = preparedLessons.includes(lesson.id)
+      ? ["prepare", "scene", "language", "sounds"]
+      : ["words", "scene", "language", "sounds"];
+    return [
+      ...stages.map(stage => ({ id: `${lesson.id}:${stage}`, lesson: index, stage })),
+      ...lesson.activities.map(activity => ({ id: activity.id, lesson: index, stage: "exercise" as const, activity })),
+    ];
+  });
+}
+
+/** The old v2 draft uses numeric step indexes, not identifiers. Translate these
+ * indexes once into the new order without changing scored activities or stamps. */
+export function migrateGuidedV2Draft(raw: string | null, unit: CourseUnit, resetAt: number, preparedLessons: readonly string[] = []): GuidedState | null {
+  if (!raw || raw.length > 50000) return null;
+  try {
+    const candidate: unknown = JSON.parse(raw);
+    if (!object(candidate) || candidate.version !== 1 || candidate.resetAt !== resetAt ||
+      !Number.isInteger(candidate.step) || !Array.isArray(candidate.seen) ||
+      !candidate.seen.every(id => typeof id === "string")) return null;
+    const previousSteps: GuidedStep[] = unit.lessons.flatMap((lesson, index) => [
+      ...(preparedLessons.includes(lesson.id) ? [{ id: `${lesson.id}:prepare`, lesson: index, stage: "prepare" as const }] : []),
+      ...(["scene", "words", "language", "sounds"] as const).map(stage => ({ id: `${lesson.id}:${stage}`, lesson: index, stage })),
+      ...lesson.activities.map(activity => ({ id: activity.id, lesson: index, stage: "exercise" as const, activity })),
+    ]);
+    if (!index(candidate.step, previousSteps.length)) return null;
+    const newSteps = guidedSteps(unit, preparedLessons);
+    const original = previousSteps[candidate.step];
+    // A removed, redundant words page proceeds to its language explanation.
+    const wantedId = original.stage === "words" && preparedLessons.includes(unit.lessons[original.lesson].id)
+      ? `${unit.lessons[original.lesson].id}:language` : original.id;
+    const step = newSteps.findIndex(item => item.id === wantedId);
+    if (step < 0) return null;
+    const allowed = new Set(newSteps.filter(item => !item.activity).map(item => item.id));
+    const migrated = { ...candidate, step, seen: [...new Set((candidate.seen as string[]).filter(id => allowed.has(id)))] };
+    const parsed = parseGuided(JSON.stringify(migrated), unit, resetAt, preparedLessons);
+    // parseGuided returns a fresh state for invalid data. Do not silently accept it.
+    return parsed.step === step && parsed.view === candidate.view ? parsed : null;
+  } catch { return null; }
 }
 export function lessonDone(lesson: CourseLesson, progress: CourseProgress) { return lesson.activities.every(a => progress.activities[a.id]?.completed); }
 export function nextGuidedStep(steps: GuidedStep[], state: GuidedState, progress: CourseProgress): number {
