@@ -1,0 +1,21 @@
+name: Yo instant practice source
+on:
+  push:
+    branches: [feat/yo-instant-practice-20261108]
+    paths: [.github/workflows/yo-instant-source.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: git archive --format=tar HEAD | gzip > /tmp/yo-instant-source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: yo-instant-source
+          path: /tmp/yo-instant-source.tar.gz
+          retention-days: 1
