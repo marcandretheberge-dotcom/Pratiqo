@@ -1,0 +1,47 @@
+name: Yo worlds and vocabulary review
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/yo-worlds-review.yml
+      - components/yo/italian/guided/**
+      - components/yo/personalized/VisualVocabulary.tsx
+      - lib/yo/italian/worlds.ts
+      - lib/yo/italian/course/guidedMissionOrder.ts
+      - lib/yo/learning/vocabularyPractice.ts
+      - app/yo/langues/italien/parcours/**
+      - tests/yo/yopratiqoWorldsWarmup.test.ts
+      - package.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yo-worlds-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Typecheck and focused lint
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npx eslint components/yo/italian/guided/GuidedItalianCourse.tsx components/yo/italian/guided/ItalianWorldNavigator.tsx components/yo/personalized/VisualVocabulary.tsx lib/yo/italian/worlds.ts lib/yo/italian/course/guidedMissionOrder.ts lib/yo/learning/vocabularyPractice.ts app/yo/langues/italien/parcours
+      - name: Italian course, world map, and preserved player regressions
+        run: |
+          set -euo pipefail
+          npm run test:yo-italian-course
+          node --import tsx tests/yo/yopratiqoGuidedItalianPlayer.test.tsx
+          node --import tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx
+          node --import tsx tests/yo/yopratiqoTapFlow.test.tsx
