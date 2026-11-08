@@ -13,7 +13,7 @@ test("all 19 canonical exercise identifiers are retained once", () => {
  assert.equal(new Set(steps.map(s => s.id)).size, steps.length);
 });
 test("every mission retains scene, vocabulary, grammar and pronunciation before its exercises", () => {
- unit.lessons.forEach((_, i) => assert.deepEqual(steps.filter(s => s.lesson === i).slice(0, 4).map(s => s.stage), ["words", "scene", "language", "sounds"]));
+ unit.lessons.forEach((_, i) => assert.deepEqual(steps.filter(s => s.lesson === i).slice(0, 4).map(s => s.stage), ["scene", "words", "language", "sounds"]));
 });
 test("all six written practice tasks plus final question have a keyboard-free answer", () => {
  const typed = [...unit.lessons.flatMap(l => l.activities), ...unit.quiz.questions].filter(a => a.kind === "type");
