@@ -22,11 +22,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - name: Verify published source identity and safety
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = b07b3fd05a9acb31e39013804461838e1b14a048
+          git diff --exit-code b07b3fd05a9acb31e39013804461838e1b14a048 HEAD -- app components lib public package.json package-lock.json
           mkdir -p "$YO_QA_DIR"
           git rev-parse HEAD > "$YO_QA_DIR/release-sha.txt"
       - uses: actions/setup-python@v5
