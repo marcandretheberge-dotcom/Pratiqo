@@ -1,0 +1,30 @@
+name: Yo repaired audio production integrity
+on:
+  push:
+    branches: [qa/yo-sound-production-20261108]
+    paths: [.github/workflows/yo-production-audio-integrity.yml]
+permissions:
+  contents: read
+jobs:
+  integrity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - name: Verify public repaired Québec recording
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://www.pratiqo.ca/audio/yo/fr/tiens-tenez-v1.mp3"
+          for n in $(seq 1 24); do
+            if curl --fail --location --silent --show-error --max-time 15 "$url" --output /tmp/tiens-tenez.mp3; then break; fi
+            sleep 5
+          done
+          test -s /tmp/tiens-tenez.mp3
+          echo "47a45862fb14e3d764eb1d3b4a993c36003209fad4bb273eee602569dac70a17  /tmp/tiens-tenez.mp3" | sha256sum --check
+          python - <<'PY'
+          import pathlib
+          raw=pathlib.Path('/tmp/tiens-tenez.mp3').read_bytes()
+          assert len(raw)>10000
+          assert raw[:3]==b'ID3' or raw[:2] in [b'\\xff\\xfb',b'\\xff\\xf3']
+          print('PASS: real production recording, verified exact SHA-256 and MP3 header')
+          PY
