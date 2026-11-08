@@ -39,7 +39,7 @@ export class FeedbackPlayer {
       const Ctor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctor) return;
       this.context ??= new Ctor();
-      this.pending = { kind, expires: Date.now() + 2500, epoch };
+      this.pending = { kind, expires: Date.now() + 15000, epoch };
       if (this.context.state === "suspended") await this.context.resume();
       if (this.disposed || epoch !== this.epoch) return;
       this.flush();

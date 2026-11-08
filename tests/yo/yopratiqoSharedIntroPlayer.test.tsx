@@ -20,19 +20,22 @@ Object.defineProperty(globalThis,"SpeechSynthesisUtterance",{value:Speech,config
 Object.defineProperty(window,"speechSynthesis",{value:{speaking:false,pending:false,getVoices:()=>introCourses.map(c=>({lang:c.speechLocale,name:c.nativeName})),speak:(u:Speech)=>{u.onstart?.();u.onend?.();},cancel:()=>{},addEventListener:()=>{},removeEventListener:()=>{}},configurable:true});
 const {SharedIntro}=require("@/components/yo/shared/SharedIntro") as typeof import("@/components/yo/shared/SharedIntro");
 function flush(){for(let i=0;i<20&&frames.size;i++){const f=[...frames.values()];frames.clear();act(()=>f.forEach(fn=>fn(0)));}}
-function click(el:HTMLElement){fireEvent.click(el);flush();}
+let clock=Date.now();Date.now=()=>clock;
+function click(el:HTMLElement){clock+=500;fireEvent.click(el);flush();}
 function mount(c:IntroCourse){const v=render(<SharedIntro course={c} locale="en" audio={{}}/>);flush();return v;}
 type View=ReturnType<typeof mount>;
 function solve(v:View,c:IntroCourse,e:Exercise){
  const box=within(v.container.querySelector("[data-intro-question]") as HTMLElement);
- if(e.kind==="listen")click(box.getByRole("button",{name:"Listen to the message"}));
+ if(["listen","meaning","number"].includes(e.kind))click(box.getByRole("button",{name:"Listen to the message"}));
  if(e.kind==="order"){const group=within(box.getByRole("group",{name:"Available words"}));for(const part of c.phrases.find(p=>p.id===e.answer)!.parts!){const b=group.getAllByRole("button",{name:part}).find(b=>!(b as HTMLButtonElement).disabled)!;click(b);}}
- else click(box.getByRole("button",{name:(name:string)=>name.startsWith(c.phrases.find(p=>p.id===e.answer)!.text)}));
- click(box.getByRole("button",{name:"Check"}));click(box.getByRole("button",{name:"Continue"}));
+ else click(box.getByRole("button",{name:(name:string)=>name.startsWith(e.kind==='number'?e.answer.replace(/^age/,''):e.kind==='meaning'?c.phrases.find(p=>p.id===e.answer)!.meaning.en:c.phrases.find(p=>p.id===e.answer)!.text)}));
+ if(e.kind==='order')click(box.getByRole("button",{name:"Check sentence"}));
+ else assert.equal(box.queryByRole("button",{name:"Check"}),null);
+ click(box.getByRole("button",{name:"Continue"}));
 }
 let tests=0;
 for(const c of introCourses){
- cleanup();localStorage.clear();frames.clear();localStorage.setItem('legacy-progress-sentinel','do-not-change');
+ cleanup();localStorage.clear();frames.clear();localStorage.setItem('legacy-progress-sentinel','do-not-change');localStorage.setItem('yo.practice.auto-next.v1','off');
  let v=mount(c);click(v.getByRole('button',{name:'I’m starting from zero'}));click(v.getByRole('button',{name:'Travel'}));
  assert.equal((v.getByRole('button',{name:'Continue'}) as HTMLButtonElement).disabled,true);
  click(v.getByRole('radio',{name:'120 min'}));assert.equal((v.getByRole('radio',{name:'120 min'}) as HTMLInputElement).checked,true);
@@ -41,14 +44,14 @@ for(const c of introCourses){
  click(v.getByRole('button',{name:'Start my mission'}));
  for(const step of courseSteps(c)){
   const m=c.missions[step.mission];
-  if(step.kind==='visual'){const item=m.visuals[step.index%m.visuals.length];const group=within(v.getByRole('group',{name:'Four images'}));assert.equal(group.getAllByRole('button').length,4);click(group.getByRole('button',{name:item.pictures.find(p=>p.id===item.answer)!.alt.en}));click(v.getByRole('button',{name:'Check'}));click(v.getByRole('button',{name:'Continue'}));}
+  if(step.kind==='recall'){assert.equal(v.container.querySelectorAll('[data-intro-question] img').length,0);solve(v,c,m.preparation[step.index-1]);}
   else if(step.kind==='exercise')solve(v,c,m.practice[step.index]);
-  else click(v.getByRole('button',{name:step.kind==='words'?'Enter the mission':'Continue'}));
+  else click(v.getByRole('button',{name:step.kind==='study'?'Let’s practise':step.kind==='words'?'Enter the mission':'Continue'}));
   assert.equal(v.container.querySelectorAll('textarea,input[type=text],input[type=checkbox]').length,0);
  }
  for(const e of c.final)solve(v,c,e);
  assert.ok(v.getByRole('heading',{name:'Your stamp is in your passport!'}));click(v.getByRole('button',{name:'Back to my journey'}));
  assert.ok(v.getByText('250 learning points',{exact:true}));const before=localStorage.getItem(introKey(c.language));cleanup();v=mount(c);assert.ok(v.getByText('250 learning points',{exact:true}));assert.equal(localStorage.getItem(introKey(c.language)),before);assert.equal(localStorage.getItem('legacy-progress-sentinel'),'do-not-change');
- console.log(`PASS ${c.slug}: onboarding, all visual/teaching/practice steps, independent final, bank, reload and untouched legacy`);tests++;
+ console.log(`PASS ${c.slug}: onboarding, all study/listening/teaching/practice steps, independent final, bank, reload and untouched legacy`);tests++;
 }
 cleanup();console.log(`${tests} complete language journeys passed`);

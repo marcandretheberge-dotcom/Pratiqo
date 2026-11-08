@@ -1,0 +1,96 @@
+name: Yo tap flow review
+on:
+  push:
+    branches: [feat/yo-tap-flow-20261108]
+permissions:
+  contents: read
+concurrency:
+  group: yo-tap-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  code:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Types and lint
+        run: |
+          npx tsc --noEmit
+          npx eslint components/yo/learning/PracticeAdvance.tsx components/yo/learning/RecallQuestion.tsx components/yo/feedback/LearningFeedback.tsx components/yo/italian/guided components/yo/personalized/VisualVocabulary.tsx components/yo/shared lib/yo/shared lib/yo/learning lib/yo/personalized/approvedVocabulary.ts
+      - name: New behavior and preserved regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/yo-tap-tests
+          for test in yopratiqoTapFlow.test.tsx yopratiqoSharedIntro.test.ts yopratiqoSharedIntroPlayer.test.tsx yopratiqoGuidedItalian.test.ts yopratiqoGuidedItalianPlayer.test.tsx yopratiqoPersonalizedItalianPlayer.test.tsx yopratiqoApprovedArtwork.test.tsx yopratiqoFeedback.test.tsx yopratiqoLocalizedCharacters.test.ts yopratiqoReadableLanguage.test.tsx yopratiqoEasyOnboarding.test.tsx yopratiqoReleaseChoices.test.tsx yopratiqoLanguageCatalogAppShell.test.ts yopratiqoSeoCatalog.test.ts; do
+            node --import tsx "tests/yo/$test" > "/tmp/yo-tap-tests/$test.log" 2>&1 || { tail -n 80 "/tmp/yo-tap-tests/$test.log"; exit 1; }
+            tail -n 2 "/tmp/yo-tap-tests/$test.log"
+          done
+          for suite in test:yo-journey test:yo-continuity test:launch-critical; do
+            npm run "$suite" > "/tmp/yo-tap-tests/${suite//:/-}.log" 2>&1 || { tail -n 80 "/tmp/yo-tap-tests/${suite//:/-}.log"; exit 1; }
+            tail -n 3 "/tmp/yo-tap-tests/${suite//:/-}.log"
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-tap-code
+          path: /tmp/yo-tap-tests
+          retention-days: 7
+  browser:
+    needs: code
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        language: [anglais, francais-quebec, espagnol, allemand, portugais-bresil, japonais, mandarin, italien]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      YO_LANGUAGE: ${{ matrix.language }}
+      YO_QA_DIR: /tmp/yo-tap-browser
+      YO_TAP_FIXTURES: '1'
+      NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit > /tmp/browser-install.log 2>&1
+      - name: Real routes, real theme, explicit media fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$YO_QA_DIR"
+          node --import tsx scripts/prepare_yo_shared_review.ts
+          ./node_modules/.bin/next dev .qa-guided --webpack -p 3129 > "$YO_QA_DIR/server.log" 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl -fsS 'http://127.0.0.1:3129/yo/langues/anglais/demarrer?lang=en' >/dev/null; then break; fi
+            sleep 2
+          done
+          python -u tests/yo/yopratiqoTapFlow.browser.py 2>&1 | tee "$YO_QA_DIR/browser.log"
+          git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-tap-browser-${{ matrix.language }}
+          path: /tmp/yo-tap-browser
+          retention-days: 7

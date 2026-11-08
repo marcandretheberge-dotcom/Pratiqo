@@ -16,14 +16,14 @@ for(const c of introCourses){
   for(const m of c.missions){
    m.phrases.forEach(id=>{assert.ok(phrases.has(id));taught.add(id);});
    for(const v of m.visuals){assert.ok(taught.has(v.phrase));assert.equal(v.pictures.length,4);assert.equal(new Set(v.pictures.map(p=>p.id)).size,4);assert.equal(v.pictures.filter(p=>p.id===v.answer).length,1);for(const p of v.pictures){assert.ok(p.artwork);assert.ok(existsSync('public'+artworkPath(p.artwork!)));}}
-   for(const e of m.practice){assert.ok(taught.has(e.answer),e.id);assert.ok(e.options.every(id=>taught.has(id)),e.id);if(e.cue)assert.ok(taught.has(e.cue));if(e.kind==='order'){const p=phrases.get(e.answer)!;assert.ok(p.parts?.length);assert.equal(p.parts!.join('').replace(/\s/g,''),p.text.replace(/\s/g,''));}else assert.equal(e.options.filter(id=>id===e.answer).length,1);}
+   for(const e of [...m.preparation,...m.practice]){assert.ok(taught.has(e.answer),e.id);assert.ok(e.options.every(id=>taught.has(id)),e.id);if(e.cue)assert.ok(taught.has(e.cue));if(e.kind==='order'){const p=phrases.get(e.answer)!;assert.ok(p.parts?.length);assert.equal(p.parts!.join('').replace(/\s/g,''),p.text.replace(/\s/g,''));}else assert.equal(e.options.filter(id=>id===e.answer).length,1);}
    for(const s of m.concepts)for(const lang of ['fr','en','es'] as const){assert.ok(s.body[lang].length>30);assert.ok(s.title[lang]);assert.ok(s.examples.every(id=>taught.has(id)));}
   }
   for(const p of c.phrases){assert.ok(taught.has(p.id));for(const l of ['fr','en','es']as const)assert.ok(p.meaning[l]);if(['ja','zh-Hans'].includes(c.language))assert.ok(p.reading);}
  });
  test(`${c.slug}: preparation precedes real teaching and evidence stays language-scoped`,()=>{
   const steps=courseSteps(c);assert.equal(new Set(steps.map(s=>s.id)).size,steps.length);
-  for(let i=0;i<3;i++){const p=steps.filter(s=>s.mission===i);assert.equal(p[0].kind,'visual');assert.ok(p.findIndex(s=>s.kind==='words')<p.findIndex(s=>s.kind==='scene'));}
+  for(let i=0;i<3;i++){const p=steps.filter(s=>s.mission===i);assert.equal(p[0].kind,'study');assert.ok(p.findIndex(s=>s.kind==='study')<p.findIndex(s=>s.kind==='recall'));assert.ok(p.findIndex(s=>s.kind==='words')<p.findIndex(s=>s.kind==='scene'));}
   const s=freshIntro(c);assert.deepEqual(parseIntro(JSON.stringify(s),c),s);assert.equal(introPoints(c,s),0);
   assert.deepEqual(parseIntro('{bad',c),s);assert.deepEqual(parseIntro(JSON.stringify({...s,language:'WRONG'}),c),s);assert.deepEqual(parseIntro(JSON.stringify({...s,step:99999}),c),s);
   s.completed=c.missions.flatMap(m=>m.practice.map(e=>e.id));s.best=6;assert.equal(introPoints(c,s),250);s.completed.push(s.completed[0]);assert.equal(introPoints(c,s),250);
