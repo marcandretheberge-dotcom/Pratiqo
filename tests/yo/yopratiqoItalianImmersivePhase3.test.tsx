@@ -9,6 +9,7 @@ import { projectItalianWorlds } from "@/lib/yo/italian/worlds";
 import { ItalianWorldAtlas } from "@/components/yo/italian/guided/ItalianWorldAtlas";
 import { ItalianCityArrival } from "@/components/yo/italian/guided/ItalianCityArrival";
 import { ItalianCityBossGate } from "@/components/yo/italian/guided/ItalianCityBossGate";
+import { ItalianBossBattleHud } from "@/components/yo/italian/guided/ItalianBossBattleHud";
 
 const render = (component: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(component);
 const href = (id: string) => `/yo/langues/italien/parcours/${id}`;
@@ -61,7 +62,22 @@ const opened = render(createElement(ItalianWorldAtlas, {
 assert.ok(opened.includes('data-yoppo-world-gate="open"'));
 assert.equal((opened.match(/<a /g) ?? []).length, 4);
 
+for (const locale of ["fr","en","es"] as const) {
+  const emptyBattle = render(createElement(ItalianBossBattleHud,
+    { locale, correct: 0, answered: 0, total: 5, passPercent: 80, assisted: false }));
+  const advanced = render(createElement(ItalianBossBattleHud,
+    { locale, correct: 4, answered: 5, total: 5, passPercent: 80, assisted: false }));
+  const assisted = render(createElement(ItalianBossBattleHud,
+    { locale, correct: 5, answered: 5, total: 5, passPercent: 80, assisted: true }));
+  assert.ok(emptyBattle.includes('data-boss-stones-lit="0"'));
+  assert.ok(advanced.includes('data-boss-stones-lit="4"'));
+  assert.ok(advanced.includes('aria-valuenow="4"'));
+  assert.equal((advanced.match(/yo-boss-stone-lit/g) ?? []).length, 5, "four lit tiles plus CSS rule");
+  assert.ok(assisted.includes('data-boss-stones-lit="5"'));
+  assert.notEqual(assisted, advanced, "help must be transparent without changing canonical score");
+}
 const sourceFiles = [
+ "components/yo/italian/guided/ItalianBossBattleHud.tsx",
  "components/yo/italian/guided/ItalianWorldAtlas.tsx",
  "components/yo/italian/guided/ItalianCityArrival.tsx",
  "components/yo/italian/guided/ItalianCityBossGate.tsx",
@@ -76,6 +92,7 @@ assert.match(atlasNavigator, /<ItalianWorldAtlas world=\{world\}/);
 const player = readFileSync("components/yo/italian/guided/GuidedItalianCourse.tsx", "utf8");
 assert.match(player, /<ItalianCityArrival unitId=\{unit.id\} locale=\{locale\} mastered=\{passed\}/);
 assert.match(player, /variant="challenge"/);
+assert.match(player, /<ItalianBossBattleHud locale=\{locale\} correct=\{ui.answers.filter/);
 assert.match(player, /resultPassed && passed\?<div[^>]*><ItalianCityBossGate unitId=\{unit.id\}/,
   "boss-victory scene is only rendered after a verified, current independent pass");
 console.log("YoPratiqo phase 3: 3 original world atlases, 12 arrival scenes, boss gate victory, unlock security and FR/EN/ES: PASS");
