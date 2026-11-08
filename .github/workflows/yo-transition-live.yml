@@ -1,0 +1,39 @@
+name: Yo transition live browser verification
+on:
+  push:
+    branches: [qa/yo-transition-audio-live-20261108]
+    paths: [.github/workflows/yo-transition-live.yml, tests/yo/yopratiqoTransitionLive.browser.py]
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      YO_PREVIEW: https://pratiqo-gasbkrv86-marcandretheberge-dotcoms-projects.vercel.app
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Assert exact reviewed product code
+        run: |
+          set -euo pipefail
+          git diff --exit-code cde1c1a529af45abbbc49727430f01de0ab925d5 HEAD -- app components lib public package.json package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          mkdir -p /tmp/yo-transition-live
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit > /tmp/yo-transition-live/install.log 2>&1
+      - name: Real WebKit and Chromium audio across a question boundary
+        run: |
+          set -euo pipefail
+          python -u tests/yo/yopratiqoTransitionLive.browser.py 2>&1 | tee /tmp/yo-transition-live/live.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-transition-live
+          path: /tmp/yo-transition-live
+          retention-days: 7
