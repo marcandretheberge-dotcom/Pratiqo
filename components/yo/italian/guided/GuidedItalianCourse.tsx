@@ -18,6 +18,8 @@ import { GUIDED_KEY, TOUR_KEY, emptyGame, initialGuided, parseGuided, guidedStep
 import { guidedMissionOrder, nextGuidedMissionStep, followingGuidedMissionStep, restoreGuidedMissionDraft } from "@/lib/yo/italian/course/guidedMissionOrder";
 import { italianWorldForUnit } from "@/lib/yo/italian/worlds";
 import { ItalianWorldNavigator } from "./ItalianWorldNavigator";
+import { ItalianWorldPassageChallenge } from "./ItalianWorldPassageChallenge";
+import type { ItalianWorldPassage } from "@/lib/yo/italian/worldPassage";
 import { ItalianTriviaCheckpoint } from "./ItalianTriviaCheckpoint";
 import { useItalianCourseProgress } from "../course/useItalianCourseProgress";
 import { ItalianAudioProvider } from "../ItalianAudioProvider";
@@ -32,10 +34,10 @@ import { guidedCopy, primary, secondary } from "./copy";
 import { LanguageExplanation } from "../../learning/LanguageExplanation";
 
 const EMPTY_VISUALS: Record<string, VisualWord[]> = {};
-type Props = { profile?: LearningProfile; onConfigure?: () => void; progressKey?: string; wordBank?: WordBankEntry[]; visualWords?: Record<string, VisualWord[]>; unit: CourseUnit; catalog: CourseCatalog; locale: YoLocale; audioPaths: Record<string, string>; initialLessonId?: string; initialActivityId?: string };
+type Props = { profile?: LearningProfile; onConfigure?: () => void; onWorldPlacement?: (unitId:string)=>boolean; worldPassage?: ItalianWorldPassage; progressKey?: string; wordBank?: WordBankEntry[]; visualWords?: Record<string, VisualWord[]>; unit: CourseUnit; catalog: CourseCatalog; locale: YoLocale; audioPaths: Record<string, string>; initialLessonId?: string; initialActivityId?: string };
 
 /** Reference pilot. Learning evidence stays in the existing store; this store holds UI drafts only. */
-export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initialLessonId, initialActivityId, profile, onConfigure, progressKey, wordBank, visualWords = EMPTY_VISUALS }: Props) {
+export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initialLessonId, initialActivityId, profile, onConfigure, onWorldPlacement, worldPassage, progressKey, wordBank, visualWords = EMPTY_VISUALS }: Props) {
   const city = italianWorldForUnit(unit.id)?.cities.find(item => item.unitId === unit.id)?.name;
   const stamp = unit.id === "u01" ? guidedCopy[locale].stamp
     : city ? t(`Tampon de ${city}`, `${city} stamp`, `Sello de ${city}`)[locale]
@@ -225,6 +227,13 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
               : <button type="button" className={`${primary} w-full`} aria-label={`${say("Depuis la carte : ", "From the map: ", "Desde el mapa: ")}${ui.resumeView === "challenge" ? c.challenge : next < 0 && !ui.resumeView ? c.begin : ui.resumeView ? c.resume : c.start}`} onClick={beginMission}>{ui.resumeView === "challenge" ? c.challenge : next < 0 && !ui.resumeView ? c.begin : ui.resumeView ? c.resume : c.start}<ArrowRight size={18} aria-hidden /></button>}
         </div>
         <ItalianWorldNavigator journey={journey} locale={locale} currentUnitId={unit.id} hrefForUnit={id => italianCourseHref(locale,id)} canReview={placedReview} />
+        {profile && worldPassage && onWorldPlacement &&
+          worldPassage.sourceWorldId === italianWorldForUnit(unit.id)?.id &&
+          !journey.steps.some(destination => destination.unit.id === worldPassage.targetUnitId && destination.unlocked) &&
+          !placedReview(worldPassage.targetUnitId) ?
+          <ItalianWorldPassageChallenge locale={locale} passage={worldPassage}
+            targetCity={italianWorldForUnit(worldPassage.targetUnitId)?.cities[0]?.name ?? worldPassage.targetUnitId}
+            onTravel={onWorldPlacement}/> : null}
       </> : null}
 
       {ui.view === "mission" ? <div className="mx-auto max-w-2xl">
