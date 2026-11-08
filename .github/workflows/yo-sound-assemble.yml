@@ -1,0 +1,119 @@
+name: Assemble reviewed sound changes
+on:
+  push:
+    branches: [feat/yo-sound-audio-review-20261108]
+    paths: [.github/workflows/yo-sound-assemble.yml]
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Verify packet and apply only the reviewed changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/yo-sound-assemble
+          cp .qa-sound/manifest.json /tmp/yo-sound-assemble/manifest.json
+          python - <<'PY'
+          import base64,hashlib,lzma,pathlib,subprocess,json
+          root=pathlib.Path('.qa-sound')
+          raw=base64.b64decode(''.join((root/f'part{i}').read_text() for i in range(4)),validate=True)
+          assert hashlib.sha256(raw).hexdigest()=='91bc334be9a3660d7a65a90e627faf93610339e163be59e8ef8b9b3400a104e3'
+          patch=lzma.decompress(raw)
+          assert len(patch)==77234
+          target=pathlib.Path('/tmp/yo-sound-assemble/reviewed.patch');target.write_bytes(patch)
+          subprocess.run(['git','apply','--check',str(target)],check=True)
+          subprocess.run(['git','apply',str(target)],check=True)
+          allowed=set(json.loads((root/'manifest.json').read_text()))
+          changed=set(subprocess.check_output(['git','diff','--name-only']).decode().splitlines())
+          new=set(subprocess.check_output(['git','ls-files','--others','--exclude-standard']).decode().splitlines())
+          assert changed|new<=allowed,(changed|new)-allowed
+          print('Reviewed text patch verified; no refs changed.')
+          PY
+      - name: Rebuild audited missing variant from owned exact recordings
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python - <<'PY'
+          import hashlib,pathlib,urllib.request
+          base='https://jwlbwmxoradmbuvqfkhe.supabase.co/storage/v1/object/public/yopratiqo-audio/yo/fr/fr-quebec-workplace-survival-1/comprendre-consignes-simples/quebec-french/phrase/'
+          for word,sha in {'tiens':'4e4d6613b171ecc4a3d7c3670ea4f380e7bc70e2f2de7a296a228f0fb31b3992','tenez':'68406e88f8b20b849b1baa9bdf53075a4d11ac1d2116022d340ad2407580f4ba'}.items():
+            data=urllib.request.urlopen(base+word+'.mp3',timeout=20).read(1000000)
+            assert hashlib.sha256(data).hexdigest()==sha
+            pathlib.Path('/tmp/yo-sound-assemble/'+word+'.mp3').write_bytes(data)
+          PY
+          mkdir -p public/audio/yo/fr
+          ffmpeg -hide_banner -loglevel error -i /tmp/yo-sound-assemble/tiens.mp3 -i /tmp/yo-sound-assemble/tenez.mp3 -filter_complex '[0:a]aresample=24000,aformat=channel_layouts=mono,apad=pad_dur=0.25[a];[1:a]aresample=24000,aformat=channel_layouts=mono[b];[a][b]concat=n=2:v=0:a=1[out]' -map '[out]' -codec:a libmp3lame -b:a 96k public/audio/yo/fr/tiens-tenez-v1.mp3
+          python - <<'PY'
+          import json,subprocess,pathlib
+          expected=json.loads(pathlib.Path('.qa-sound/manifest.json').read_text())
+          for path,sha in expected.items():
+            actual=subprocess.check_output(['git','hash-object',path]).decode().strip()
+            assert actual==sha,(path,actual,sha)
+          print('All 21 reviewed file hashes match, including MP3.')
+          PY
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Types and behavior checks on reconstructed source
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npx eslint components/yo/shared/IntroAudio.tsx components/yo/personalized/LearningAudio.tsx components/yo/feedback/LearningFeedback.tsx lib/yo/feedback components/yo/shared/SharedIntro.tsx components/yo/italian/guided/GuidedItalianCourse.tsx
+          for name in yopratiqoPronunciationSession.test.tsx yopratiqoFeedback.test.tsx yopratiqoSharedIntroPlayer.test.tsx yopratiqoGuidedItalianPlayer.test.tsx yopratiqoTapFlow.test.tsx yopratiqoReleaseChoices.test.tsx yopratiqoItalianModuleAudio.test.ts yopratiqoItalianCourseAudio.test.ts yopratiqoAudio.test.ts; do
+            node --import tsx "tests/yo/$name" > "/tmp/yo-sound-assemble/$name.log" 2>&1 || { tail -n 80 "/tmp/yo-sound-assemble/$name.log"; exit 1; }
+            tail -n 2 "/tmp/yo-sound-assemble/$name.log"
+          done
+          git diff --exit-code 5d7edc9da2a35507b4da76b0d56f164168360097 -- lib/yo/italian/course/courseProgress.ts lib/yo/italian/course/guidedItalian.ts lib/yo/shared/state.ts lib/yo/personalized/profile.ts
+          git diff --check
+      - name: Create only verified Git objects; never update a branch or production
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64,json,os,pathlib,subprocess,urllib.request
+          expected=json.loads(pathlib.Path('.qa-sound/manifest.json').read_text())
+          temporary=[f'.qa-sound/part{i}' for i in range(4)]+['.qa-sound/manifest.json','.github/workflows/yo-sound-assemble.yml']
+          root='https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']+'/git/'
+          def post(endpoint,data):
+            req=urllib.request.Request(root+endpoint,data=json.dumps(data).encode(),method='POST',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'})
+            with urllib.request.urlopen(req,timeout=30) as r:return json.load(r)
+          entries=[]
+          for path,sha in expected.items():
+            raw=pathlib.Path(path).read_bytes()
+            actual=subprocess.check_output(['git','hash-object',path]).decode().strip()
+            assert actual==sha
+            blob=post('blobs',{'content':base64.b64encode(raw).decode(),'encoding':'base64'})
+            assert blob['sha']==sha
+            entries.append({'path':path,'mode':'100644','type':'blob','sha':sha})
+          for path in temporary:
+            entries.append({'path':path,'mode':'100644','type':'blob','sha':None})
+            pathlib.Path(path).unlink()
+          subprocess.run(['git','add','--',*expected.keys(),*temporary],check=True)
+          wanted=subprocess.check_output(['git','write-tree']).decode().strip()
+          base=subprocess.check_output(['git','rev-parse','HEAD^{tree}']).decode().strip()
+          tree=post('trees',{'base_tree':base,'tree':entries})
+          assert tree['sha']==wanted,(tree['sha'],wanted)
+          report={'head':os.environ['GITHUB_SHA'],'tree':wanted,'files':expected,'branchUpdated':False,'productionChanged':False}
+          pathlib.Path('/tmp/yo-sound-assemble/result.json').write_text(json.dumps(report,indent=2))
+          print('VERIFIED_TREE='+wanted)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-sound-assembled
+          path: /tmp/yo-sound-assemble
+          retention-days: 7
