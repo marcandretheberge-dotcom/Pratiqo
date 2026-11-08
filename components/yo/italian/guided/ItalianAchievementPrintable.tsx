@@ -10,6 +10,7 @@ import { italianCourseHref } from "@/lib/yo/italian/course/courseLinks";
 import type { CourseCatalog, CourseUnitSummary } from "@/lib/yo/italian/course/courseTypes";
 import type { YoLocale } from "@/lib/yo/types";
 import { italianWorldForUnit } from "@/lib/yo/italian/worlds";
+import { deriveItalianCityAchievement } from "@/lib/yo/italian/achievement";
 
 type Status = { ready: boolean; mastered: boolean; best: number | null; practiced: number; total: number };
 export function ItalianAchievementPrintable({ unit, catalog, locale }: {
@@ -20,10 +21,7 @@ export function ItalianAchievementPrintable({ unit, catalog, locale }: {
     const read = () => {
       try {
         const data = parseCourseProgress(localStorage.getItem(GUIDED_PROGRESS_KEY), catalog);
-        const exam = catalog.assessments.find(item => item.id === unit.quizId);
-        const best = data.assessments[unit.quizId]?.bestIndependent ?? null;
-        setStatus({ ready: true, best, mastered: exam !== undefined && best !== null && best >= exam.passPercent,
-          practiced: unit.activityIds.filter(id => data.activities[id]?.completed).length, total: unit.activityIds.length });
+        setStatus({ ready: true, ...deriveItalianCityAchievement(unit, catalog, data) });
       } catch { setStatus(state => ({ ...state, ready: true })); }
     };
     read();
