@@ -43,3 +43,32 @@ Une flûte rare pourra ouvrir un portail vers un autre monde, dans l'esprit des 
 6. Ajouter scènes de voyage, checkpoint trivia, boss et sons via progression versionnée et tests automatisés avant tout déploiement.
 
 Une réalisation ultérieure pourra réutiliser ce modèle de monde dans les parcours japonais, français, espagnol, portugais, allemand et mandarin, sans remplacer les contenus linguistiques existants.
+
+## Phase 2 — Checkpoints Trivia et Flûte des horizons (PR empilée, non déployée)
+
+### Trivia pédagogique, à mi-chemin de chaque ville italienne
+
+- Le checkpoint est visible après la moitié des missions de la ville. Il se déverrouille quand les activités des premières leçons ont été réalisées; un élève qui a déjà validé le défi final peut également revenir y jouer.
+- Cinq questions originales sont générées **uniquement à partir du vocabulaire effectivement enseigné dans les premières leçons**. Chaque question vise une expression distincte, avec quatre choix dont les libellés sont différents en FR/EN/ES.
+- Le jeu alterne compréhension du vocabulaire, écoute avec son enregistré ou synthèse vocale existante, et récupération d'une expression italienne.
+- Si l'appareil ne peut pas produire le son, la transcription reste accessible comme aide. La médaille exige au moins quatre bonnes réponses et **aucune aide** dans la partie.
+- La médaille Trivia est un souvenir local cosmétique validé strictement. Un changement de génération de progression ne réutilise pas la médaille précédente. Il ne confère **ni accès, ni tampon de maîtrise, ni crédit, ni Yoppo Pass**.
+- Aucun changement de réponses ni de notes dans les évaluations officielles : le Trivia ne réutilise pas les questions des défis finaux et ne remplace pas l'épreuve de ville.
+
+### Flûte et portes des mondes
+
+- Après validation **sans aide des quatre défis de ville**, le monde affiche un Yoppo Pass gagné et une Flûte des horizons.
+- Le bouton « Jouer de la flûte et voyager » conduit visuellement à la carte du monde suivant, avec une transition et un effet sonore original soumis aux réglages du joueur.
+- Le nouveau monde **doit déjà être accessible par les règles de progression existantes**. La flûte ne crée pas de déblocage, ne saute aucune évaluation et n'est pas consommée.
+- Les effets respectent la préférence d'animation réduite et les réglages de son; le parcours reste praticable sans audio.
+- Aucune écriture en base de données, pas de création de wallet, pas de dépendance aux crédits Pratiqo.
+- La future flûte rare consommable et les vrais raccourcis conditionnels demandent une révision séparée (autorisation côté serveur, défi de placement, transactions idempotentes et contrôle anti-rejeu).
+
+### QA de cette phase
+
+- Vérifier les cinq questions de **chacun des douze modules**, et aucune question reprise deux fois dans la même manche.
+- Tester le checkpoint indisponible, puis disponible après la moitié des missions; réessayer et conserver uniquement le meilleur résultat visuel.
+- Tester un score de 4/5 sans aide (médaille), 5/5 avec une transcription affichée (pas de médaille), retour puis actualisation, et réinitialisation de progression.
+- Tester la flûte à 3/4 villes (indisponible), puis 4/4 (portail accessible), mais aucun passage vers un monde qui ne serait pas déjà ouvert.
+- Tester la navigation mobile 320–430 px, clavier, lecteurs d'écran, FR/EN/ES, sons activés/désactivés et `prefers-reduced-motion`.
+- Garder les PR en brouillon; l'approbation humaine est obligatoire avant toute fusion ou publication.
