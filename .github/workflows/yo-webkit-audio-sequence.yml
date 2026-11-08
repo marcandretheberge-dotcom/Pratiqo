@@ -22,7 +22,9 @@ jobs:
           mkdir -p "$YO_QA_DIR"
           python -m pip install playwright==1.57.0
           python -m playwright install --with-deps chromium webkit > "$YO_QA_DIR/install.log" 2>&1
-      - run: python -u tests/yo/yopratiqoWebKitAudioSequence.browser.py | tee "$YO_QA_DIR/test.log"
+      - run: |
+          set -euo pipefail
+          python -u tests/yo/yopratiqoWebKitAudioSequence.browser.py 2>&1 | tee "$YO_QA_DIR/test.log"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
