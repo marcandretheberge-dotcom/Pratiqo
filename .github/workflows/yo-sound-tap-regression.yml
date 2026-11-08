@@ -1,0 +1,46 @@
+name: Yo sound preview independent learning regression
+on:
+  push:
+    branches: [qa/yo-sound-live-20261108]
+    paths: [.github/workflows/yo-sound-tap-regression.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [italien, anglais, francais-quebec, espagnol, allemand, portugais-bresil, japonais, mandarin]
+    env:
+      YO_LANGUAGE: ${{ matrix.language }}
+      YO_TAP_URL: https://pratiqo-g9p8vv4ag-marcandretheberge-dotcoms-projects.vercel.app
+      YO_TAP_FIXTURES: '0'
+      YO_QA_DIR: /tmp/yo-tap-sound
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Confirm exact reviewed product source
+        shell: bash
+        run: |
+          git diff --exit-code ea7f88c37f0a234de3e4bf6b851855e655bfebda HEAD -- app components lib public package.json package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browsers
+        run: |
+          mkdir -p "$YO_QA_DIR"
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit > "$YO_QA_DIR/install.log" 2>&1
+      - name: Reverify actual learning with audio changes
+        run: |
+          set -euo pipefail
+          python -u tests/yo/yopratiqoTapFlow.browser.py 2>&1 | tee "$YO_QA_DIR/tap.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-sound-unchanged-learning-${{ matrix.language }}
+          path: /tmp/yo-tap-sound
+          retention-days: 3
