@@ -65,6 +65,10 @@ for (const [viewportWidth, viewportHeight] of [[375, 812], [390, 844], [430, 932
   assert.ok(height <= viewportHeight, "world board fits within standard laptop/phone viewport");
 }
 assert.match(guidedSource, /data-yoppo-printables-trigger/);
+assert.match(guidedSource, /onClick=\{openPrintables\} disabled=\{challengeMode\}/,
+  "reference material is disabled while the final challenge is in progress");
+assert.match(guidedSource, /function openStudyMaterial[\s\S]*?ui\.view === "mission" && exercise && !ui\.game\.complete[\s\S]*?assisted: true/,
+  "reading study material during a live exercise is explicitly assisted");
 assert.match(guidedSource, /<ItalianPrintableMenu locale=\{locale\}/, "map printables open in the existing accessible dialog");
 assert.match(guidedSource, /Imprimer les mots avant de commencer/, "learner receives the printable at mission start");
 assert.match(guidedSource, /Imprimer mon bilan/, "achievement sheet remains available on final victory");
