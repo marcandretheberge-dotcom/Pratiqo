@@ -60,6 +60,20 @@ function assertNoFakeMastery() {
   assert.equal(Object.keys(current.activities).length, 0, "opening and closing cannot complete exercises");
 }
 const tests: [string, () => void][] = [
+  ["printables are one tap from the map, before any mission or earned stamp", () => {
+    const view = mount();
+    const map = view.container.querySelector("[data-yoppo-world-map]");
+    click(view.getByRole("button", { name: "My printable sheets" }));
+    const dialog = document.querySelector("[data-yoppo-tools-dialog]") as HTMLElement;
+    assert.ok(dialog && dialog.querySelector("[data-yoppo-printables-menu]"), "printable resources are in a real dialog");
+    assert.equal(dialog.querySelector("[data-yoppo-printable-vocabulary]")?.getAttribute("href"), "/yo/langues/italien/parcours/u01/vocabulaire?lang=en");
+    assert.equal(dialog.querySelector("[data-yoppo-printable-achievement]")?.getAttribute("href"), "/yo/langues/italien/parcours/u01/bilan?lang=en");
+    assert.ok(within(dialog).getByText(/no stamp unless you pass/), "unearned stamps are not implied");
+    assert.equal(map, view.container.querySelector("[data-yoppo-world-map]"), "printables never replace the map");
+    assertNoFakeMastery();
+    click(within(dialog).getByRole("button", { name: "Close" }));
+    assert.equal(document.querySelector("[data-yoppo-tools-dialog]"), null);
+  }],
   ["world map is the whole landing screen; Yoppo guides the next city", () => {
     const view = mount();
     assert.equal(view.container.querySelectorAll("[data-yoppo-world-map]").length, 1);
