@@ -64,8 +64,8 @@ export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, c
   const guideId = nextStop?.unitId ?? (selectedStop?.unlocked ? currentUnitId : world.citiesWithProgress.find(city => city.unlocked)?.unitId);
 
   return <section data-yoppo-immersive-atlas={world.id} aria-label={copy.title + ": " + world.title[locale]}
-    className="relative isolate mt-4 w-full overflow-hidden rounded-[28px] border-[4px] border-[#f9e2a4] bg-[#5fc2b2] shadow-[0_12px_0_#987350,0_22px_40px_rgba(33,67,59,.24)]">
-    <div className="relative h-[calc(100dvh-90px)] min-h-[650px] max-h-[850px] w-full sm:h-[min(85dvh,850px)] sm:min-h-[700px]">
+    className="relative isolate aspect-[4/7] w-full overflow-hidden rounded-[28px] border-[4px] border-[#f9e2a4] bg-[#5fc2b2] shadow-[0_12px_0_#987350,0_22px_40px_rgba(33,67,59,.24)]">
+    <div className="absolute inset-0 h-full w-full">
       <ItalianAdventureLandscape worldId={world.id} complete={world.complete}/>
       <div className="absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-[#173d49]/45 via-[#173d49]/15 to-transparent" aria-hidden="true"/>
       <header className="absolute inset-x-3 top-3 z-20 flex items-start justify-between gap-2 sm:inset-x-5 sm:top-5">
