@@ -59,3 +59,41 @@ contenu**. Le monde semblait être une section secondaire au lieu d'être le jeu
 
 Cette révision appartient à la PR #446 basée sur #445 et doit rester en
 brouillon jusqu'à sa revue esthétique et fonctionnelle.
+
+
+## Correctif du 9 novembre — ordinateur et fiches imprimables
+
+### Carte sans déformation sur ordinateur
+
+Le rendu initial étirait le dessin vertical de `480 × 840` dans un conteneur
+horizontal. Cela déformait les arbres, les bâtiments, le chemin et l'échelle des
+villes; il n'était pas satisfaisant sur ordinateur.
+
+- Téléphone/tablette : décor portrait original **480 × 840**, `aspect-[4/7]`.
+- Ordinateur (≥ 1024 px) : **nouvelle composition dessinée séparément**
+  **960 × 640**, `lg:aspect-[3/2]`, avec chemin et quatre arrêts correspondants.
+- SVG `preserveAspectRatio="xMidYMid meet"` sur les deux compositions :
+  aucun écrasement/étirement non uniforme.
+- Le plateau se centre et s'ajuste en largeur selon la hauteur du navigateur;
+  les repères, le château et les villes restent sur le plateau, sans modifier
+  les permissions.
+- Contrôler en vrai sur 375 × 812, 390 × 844, 430 × 932, 1024 × 768,
+  1440 × 760 et 1920 × 1080. Les tests statiques assurent la géométrie, mais
+  ne remplacent pas une validation visuelle sur Safari/Chrome.
+
+### « Mes fiches » retrouvées
+
+- Un seul bouton **Mes fiches** dans la barre supérieure ouvre, depuis la carte
+  ou une mission, deux **vraies pages imprimables**, en FR/EN/ES :
+  1. **Fiche de vocabulaire** : `/yo/langues/italien/parcours/[unitId]/vocabulaire`,
+     accessible dès l'arrivée;
+  2. **Bilan de voyage** : `/yo/langues/italien/parcours/[unitId]/bilan`,
+     consultable à tout moment et affichant uniquement les acquis réels,
+     sans prétendre qu'un tampon a été gagné avant la réussite.
+- La fiche de vocabulaire est aussi proposée dans le briefing d'une nouvelle
+  mission; les deux liens restent présents après réussite du défi final.
+- Imprimer / enregistrer en PDF se fait **sur la page de destination**,
+  pas au moyen de faux fichiers à télécharger.
+- **Sécurité pédagogique :** ouvrir les supports durant un exercice inachevé
+  marque cet exercice comme aidé; le bouton est désactivé pendant le défi final.
+- Aucun changement de crédit, de Pass, de tampons ou de progression financière.
