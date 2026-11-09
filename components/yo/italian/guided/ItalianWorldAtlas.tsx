@@ -6,6 +6,7 @@ import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { ItalianWorldView } from "@/lib/yo/italian/worlds";
 import type { YoLocale } from "@/lib/yo/types";
 import { ItalianAdventureLandscape } from "./ItalianAdventureLandscape";
+import { ItalianAdventureLandscapeWide } from "./ItalianAdventureLandscapeWide";
 import { ItalianCityArtwork } from "./ItalianCityArtwork";
 
 type Props = {
@@ -64,9 +65,10 @@ export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, c
   const guideId = nextStop?.unitId ?? (selectedStop?.unlocked ? currentUnitId : world.citiesWithProgress.find(city => city.unlocked)?.unitId);
 
   return <section data-yoppo-immersive-atlas={world.id} aria-label={copy.title + ": " + world.title[locale]}
-    className="relative isolate aspect-[4/7] w-full overflow-hidden rounded-[28px] border-[4px] border-[#f9e2a4] bg-[#5fc2b2] shadow-[0_12px_0_#987350,0_22px_40px_rgba(33,67,59,.24)]">
+    className="relative isolate aspect-[4/7] w-full overflow-hidden lg:aspect-[3/2] rounded-[28px] border-[4px] border-[#f9e2a4] bg-[#5fc2b2] shadow-[0_12px_0_#987350,0_22px_40px_rgba(33,67,59,.24)]">
     <div className="absolute inset-0 h-full w-full">
-      <ItalianAdventureLandscape worldId={world.id} complete={world.complete}/>
+      <div className="absolute inset-0 lg:hidden" data-yoppo-portrait-art><ItalianAdventureLandscape worldId={world.id} complete={world.complete}/></div>
+      <div className="absolute inset-0 hidden lg:block" data-yoppo-desktop-art><ItalianAdventureLandscapeWide worldId={world.id} complete={world.complete}/></div>
       <div className="absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-[#173d49]/45 via-[#173d49]/15 to-transparent" aria-hidden="true"/>
       <header className="absolute inset-x-3 top-3 z-20 flex items-start justify-between gap-2 sm:inset-x-5 sm:top-5">
         <div className="min-w-0 rounded-2xl border border-white/40 bg-[#173f47]/90 px-3 py-2.5 text-white shadow-lg backdrop-blur-sm">
