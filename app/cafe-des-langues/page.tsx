@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowDown, ArrowRight, BookOpen, CheckCircle2, Coffee, Globe2, HeartHandshake,
-  Languages, LockKeyhole, MessageCircle, Mic2, ShieldCheck, Sparkles, Users, Volume2,
+  Languages, LockKeyhole, MessageCircle, Mic2, ShieldCheck, Users, Volume2,
 } from "lucide-react";
 import { CafePilotInterest } from "@/components/cafe/CafePilotInterest";
 import { getYoLocale } from "@/lib/yo/localize";
