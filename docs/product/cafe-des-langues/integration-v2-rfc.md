@@ -8,7 +8,7 @@
 
 Le Café est un échange entre pairs **gratuit**, animé et distinct d'un cours. Les participants découvrent d'abord un café; les éventuelles relations de pratique 1:1 n'apparaissent **qu'après** la preuve de demande et une revue de sûreté.
 
-Pilote : FR↔ES, adultes 18+, 5 à 8 places, 45 minutes chaque semaine pendant 8 semaines, animé, caméra facultative, audio non enregistré. Plateforme vidéo externe. Aucune date ni outil vidéo n'est confirmé à ce stade.
+Pilote : FR↔ES, adultes 18+, 5 à 8 places, 30 minutes chaque semaine (option 45 minutes seulement après validation) pendant 8 semaines, animé, caméra facultative, audio non enregistré. Plateforme vidéo externe. Aucune date ni outil vidéo n'est confirmé à ce stade.
 
 ## Ordre d'implémentation (ne pas tout activer ensemble)
 
@@ -31,7 +31,7 @@ Pilote : FR↔ES, adultes 18+, 5 à 8 places, 45 minutes chaque semaine pendant 
 
 Entités envisagées, à ajuster à l'architecture réelle et à la migration existante :
 
-- `language_cafe_sessions`: id, language_pair, theme, starts_at (UTC), timezone (IANA), duration_minutes=45, capacity (5..8), host_id, status (draft/published/cancelled/completed), external_meeting_secret_reference (jamais dans réponse publique), created_at.
+- `language_cafe_sessions`: id, language_pair, theme, starts_at (UTC), timezone (IANA), duration_minutes=30, capacity (5..8), host_id, status (draft/published/cancelled/completed), external_meeting_secret_reference (jamais dans réponse publique), created_at.
 - `language_cafe_reservations`: id, session_id, attendee_user_id, state (confirmed/waitlisted/cancelled/attended/no_show), accepted_rules_version, adult_attested_at, pilot_contact_consent_at, created_at, cancelled_at. Unicité de réservation active par personne/séance.
 - Pas de champs date de naissance, téléphone, adresse, localisation exacte, genre, vidéo enregistrée ou coordonnées des autres participants.
 - Prévoir purge/rétention configurables, séparation des autorisations hôte/admin et accès minimal. Éviter de surcharger les comptes/profils existants.
