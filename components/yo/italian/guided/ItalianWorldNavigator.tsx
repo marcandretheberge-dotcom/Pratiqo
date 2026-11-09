@@ -73,7 +73,8 @@ export function ItalianWorldNavigator({
   const canTravel = canUseItalianFlute(worlds, selected);
 
   return <section data-yoppo-world-map aria-label={copy.choose}
-    className="relative mx-auto w-full max-w-5xl" data-yoppo-map-only>
+    className="relative mx-auto max-w-full" data-yoppo-map-only
+    style={{ width: "min(100%, 480px, max(320px, calc((100dvh - 96px) * 0.5714286)))" }}>
     <ItalianWorldAtlas world={world} locale={locale} currentUnitId={currentUnitId}
       hrefForUnit={hrefForUnit} canReview={canReview}
       onPlayCurrentCity={currentWorld ? onPlayCurrentCity : undefined}
