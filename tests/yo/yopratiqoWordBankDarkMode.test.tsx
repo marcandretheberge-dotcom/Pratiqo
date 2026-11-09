@@ -22,6 +22,7 @@ function verifySurface(html: string, label: string, articleMarker: string) {
   assert.match(html, /lang="it"/, `${label}: Italian speech columns tagged appropriately`);
 }
 
+async function main() {
 for (const locale of ["fr", "en", "es"] as Localized[]) {
   for (const unitId of ["u01", "u02", "u05"]) {
     const output = await ItalianWordBankPage({
@@ -56,3 +57,5 @@ for (const language of ["espagnol", "francais-quebec", "japonais"]) {
   }
 }
 console.log("Word-bank light surfaces: 18 localized route renderings passed (iPhone dark appearance + print semantics)");
+}
+main().catch(error => { console.error(error); process.exitCode = 1; });
