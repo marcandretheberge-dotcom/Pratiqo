@@ -14,6 +14,10 @@ type Props = {
   currentUnitId: string;
   hrefForUnit: (unitId: string) => string;
   canReview: (unitId: string) => boolean;
+  /** The current city opens its lesson without replacing the world map. */
+  onPlayCurrentCity?: () => void;
+  currentActionLabel?: string;
+  guideMessage?: string;
 };
 
 /** One winding path, four illustrated destinations, one final castle.
@@ -27,7 +31,7 @@ const stops = [
   { x: "73%", y: "76%" },
 ] as const;
 
-export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, canReview }: Props) {
+export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, canReview, onPlayCurrentCity, currentActionLabel, guideMessage }: Props) {
   const copy = {
     fr: {
       title: "Carte d'aventure", level: "Ton aventure", mastered: "Villes maîtrisées",
@@ -61,7 +65,7 @@ export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, c
 
   return <section data-yoppo-immersive-atlas={world.id} aria-label={copy.title + ": " + world.title[locale]}
     className="relative isolate mt-4 w-full overflow-hidden rounded-[28px] border-[4px] border-[#f9e2a4] bg-[#5fc2b2] shadow-[0_12px_0_#987350,0_22px_40px_rgba(33,67,59,.24)]">
-    <div className="relative h-[770px] w-full sm:h-[790px] lg:h-[805px]">
+    <div className="relative h-[calc(100dvh-90px)] min-h-[650px] max-h-[850px] w-full sm:h-[min(85dvh,850px)] sm:min-h-[700px]">
       <ItalianAdventureLandscape worldId={world.id} complete={world.complete}/>
       <div className="absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-[#173d49]/45 via-[#173d49]/15 to-transparent" aria-hidden="true"/>
       <header className="absolute inset-x-3 top-3 z-20 flex items-start justify-between gap-2 sm:inset-x-5 sm:top-5">
@@ -108,17 +112,24 @@ export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, c
             </span> : <span className="mt-2 text-[10px] font-bold text-[#354e45]">{status}</span>}
             {isGuide ? <span className="yo-yoppo-map-guide absolute -right-5 -top-8 grid h-12 w-12 place-items-center rounded-full border-[3px] border-[#fff1a7] bg-white shadow-[0_6px_14px_rgba(30,61,44,.3)] sm:-right-6 sm:-top-9" aria-label={copy.current}>
               <CompanionAvatar visualId="travel" state="map" locale={locale} size="xs" compact/>
+              {city.unitId === currentUnitId && guideMessage ? <span aria-hidden="true" className="absolute -right-1 top-[46px] w-[124px] rounded-2xl border-2 border-amber-300 bg-white px-2 py-1.5 text-center text-[11px] font-black leading-4 text-emerald-950 shadow-lg">{guideMessage}</span> : null}
             </span> : null}
           </div>;
           return <li key={city.unitId} aria-current={isGuide ? "step" : undefined}
             className="absolute z-10 flex items-center justify-center"
             style={{ left: position.x, top: position.y, transform: "translate(-50%, -50%)" }}>
             {accessible
-              ? <Link href={hrefForUnit(city.unitId)}
-                  aria-label={copy.explore + " " + city.name + " — " + (city.step?.unit.title[locale] ?? city.unitId)}
-                  className="rounded-3xl outline-offset-[5px] focus-visible:outline-4 focus-visible:outline-[#fff8bf]">
-                  {node}
-                </Link>
+              ? city.unitId === currentUnitId && onPlayCurrentCity
+                ? <button type="button" data-yoppo-current-mission={city.unitId} onClick={onPlayCurrentCity}
+                    aria-label={currentActionLabel ?? (copy.open + " " + city.name)}
+                    className="rounded-3xl outline-offset-[5px] focus-visible:outline-4 focus-visible:outline-[#fff8bf]">
+                    {node}
+                  </button>
+                : <Link href={hrefForUnit(city.unitId)}
+                    aria-label={copy.explore + " " + city.name + " — " + (city.step?.unit.title[locale] ?? city.unitId)}
+                    className="rounded-3xl outline-offset-[5px] focus-visible:outline-4 focus-visible:outline-[#fff8bf]">
+                    {node}
+                  </Link>
               : <div aria-label={city.name + ": " + copy.lockHint} title={copy.lockHint}>{node}</div>}
           </li>;
         })}
@@ -135,9 +146,11 @@ export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, c
     </div>
     <style>{`
       @media (prefers-reduced-motion:no-preference) {
-        .yo-yoppo-map-guide { animation:yo-yoppo-map-float 2.8s ease-in-out infinite; }
+        .yo-yoppo-map-guide { animation:yo-yoppo-guide-arrive .85s cubic-bezier(.2,.8,.2,1) both; }
+        .yo-yoppo-map-guide img { animation:yo-yoppo-map-float 2.8s ease-in-out 1s infinite; }
         .yo-map-pulse { animation:yo-adventure-pulse 2.8s ease-in-out infinite; }
       }
+      @keyframes yo-yoppo-guide-arrive { from { transform:translate(-56px,38px) scale(.8);opacity:.1; } to { transform:translate(0,0) scale(1);opacity:1; } }
       @keyframes yo-yoppo-map-float { 0%,100%{transform:translateY(0) rotate(-4deg)} 50%{transform:translateY(-8px) rotate(4deg)} }
       @keyframes yo-adventure-pulse { 0%,100%{opacity:.45} 50%{opacity:.9} }
     `}</style>
