@@ -88,8 +88,7 @@ const TEXT = {
   },
 } as const;
 
-/** Intentionally no API, localStorage, analytics or new PII store.
- * This control only asks the browser to open the visitor's mail client. */
+/** Intentionally only local React state; this control hands off to the visitor's mail client. */
 export function CafePilotInterest({ locale }: { locale: YoLocale }) {
   const c = TEXT[locale];
   const [pair, setPair] = useState<Pair>("fr-to-es");
