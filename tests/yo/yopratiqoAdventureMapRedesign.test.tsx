@@ -42,7 +42,7 @@ for (const locale of ["fr", "en", "es"] as const) {
       "four mini landmarks, not four huge cards obscuring the road");
     assert.ok(!html.includes("grid-cols-2"), "no dashboard-like card grid");
     assert.ok(!html.includes("min-h-28"), "no large destination cards");
-    assert.ok(html.includes("h-[770px]"), "mobile-first illustrated path must have room to breathe");
+    assert.ok(html.includes("h-[calc(100dvh-90px)]") && html.includes("min-h-[650px]"), "the atlas occupies the usable phone viewport instead of sitting below a dashboard");
     assert.ok(html.includes('data-yoppo-world-gate="closed"'));
     assert.equal((html.match(/<a /g) ?? []).length, world.id === "discover" ? 1 : 0,
       "no unlocked-by-animation exploit");
