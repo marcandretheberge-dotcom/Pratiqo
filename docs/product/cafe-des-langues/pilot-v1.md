@@ -22,7 +22,7 @@
 
 1. Une page de présentation **/cafe-des-langues**, FR/EN/ES, avec règles courtes, état « inscriptions sur invitation », confidentialité et contact explicite.
 2. Contact d'intérêt **par courriel intentionnellement rédigé par le candidat** : bouton `mailto:info@pratiqo.ca` ; ne pas inventer une confirmation ou un faux formulaire opérationnel. Aucun nouveau système de stockage des participants.
-3. Un seul créneau hebdomadaire proposé, **45 minutes**, 5 à 8 personnes; premier horaire à confirmer par l'organisateur avant toute publication.
+3. Un seul créneau hebdomadaire proposé, **30 minutes** (45 minutes seulement si le groupe le demande après le pilote), 5 à 8 personnes; premier horaire à confirmer par l'organisateur avant toute publication.
 4. Animateur responsable des tours de parole, d'une séance sans enregistrement, des incidents, et du lien de réunion envoyé **uniquement aux inscrits**.
 5. Une feuille pédagogique facultative de 8 à 12 expressions utiles envoyée après le café par le canal approuvé, jamais par liste publique de destinataires.
 6. Mesure des rencontres réellement tenues et des présences; vérifier le retour dans les trois semaines.
@@ -77,11 +77,11 @@ Horaire **proposé seulement : jeudi 19 novembre 2026, 19 h Québec / 21 h Monte
 
 | Minutes | Activité | Résultat attendu |
 |---|---|---|
-| 00–05 | Accueil, sécurité et règles | Cams facultatives, écouter permis, droit de passer |
-| 05–20 | **Français** : comment se présenter, parler de ses intérêts | Chaque personne a une occasion de prendre la parole |
-| 20–35 | **Espagnol** : mêmes thèmes, rôles inversés | Échange véritable, pas une leçon magistrale |
-| 35–43 | Jeu oral léger : « une surprise culturelle de chez moi » | Découverte, échange libre mais tour de parole |
-| 43–45 | Conclusion, prochaine séance, retour facultatif | Demander si la personne souhaite revenir |
+| 00–03 | Accueil, sécurité et règles | Cams facultatives, écouter permis, droit de passer |
+| 03–13 | **Français** : comment se présenter, parler de ses intérêts | Chaque personne a une occasion de prendre la parole |
+| 13–23 | **Espagnol** : mêmes thèmes, rôles inversés | Échange véritable, pas une leçon magistrale |
+| 23–28 | Jeu oral léger : « une surprise culturelle de chez moi » | Découverte, échange libre mais tour de parole |
+| 28–30 | Conclusion, prochaine séance, retour facultatif | Demander si la personne souhaite revenir |
 
 Questions simples FR/ES :
 - **Comment aimes-tu passer ton dimanche ? / ¿Cómo te gusta pasar el domingo?**
