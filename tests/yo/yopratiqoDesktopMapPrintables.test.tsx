@@ -18,6 +18,9 @@ const atlasSource = source("components/yo/italian/guided/ItalianWorldAtlas.tsx")
 const navigatorSource = source("components/yo/italian/guided/ItalianWorldNavigator.tsx");
 const guidedSource = source("components/yo/italian/guided/GuidedItalianCourse.tsx");
 const printsSource = source("components/yo/italian/guided/ItalianPrintableMenu.tsx");
+const achievementSource = source("components/yo/italian/guided/ItalianAchievementPrintable.tsx");
+assert.match(achievementSource, /status\.mastered \? c\.subtitle : c\.upcoming/,
+  "a pre-completion printout must show learning goals, not pretend they were mastered");
 
 assert.match(atlasSource, /aspect-\[4\/7\]/, "mobile map stays proportional to 480x840 artwork");
 assert.match(atlasSource, /lg:aspect-\[3\/2\]/, "desktop board is composed at 960x640, not stretched");
