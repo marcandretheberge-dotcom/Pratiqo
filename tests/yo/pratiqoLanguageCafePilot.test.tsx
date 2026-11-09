@@ -39,7 +39,7 @@ async function main() {
     assert.match(html, /data-cafe-concept-scene/);
     assert.match(html, /data-cafe-interest/, "interest UI renders in all 3 languages");
     assert.ok(html.includes("18+"), "adult-only character must be visible");
-    assert.ok(html.includes("45 min"), "pilot session has a defined format");
+    assert.ok(html.includes("30 min"), "pilot session has a defined format");
     assert.ok(html.includes("5"), "group capacity must be specified");
     assert.ok(html.includes("info@pratiqo.ca"), "actual support address");
     assert.match(html, /href="#participer"/);
@@ -66,7 +66,7 @@ async function main() {
   }
 
   assert.match(plan, /8 semaines/);
-  assert.match(plan, /45 minutes/);
+  assert.match(plan, /30 minutes/);
   assert.match(plan, /5 à 8/);
   assert.match(plan, /français–espagnol/);
   assert.match(plan, /Aucune messagerie privée/);
