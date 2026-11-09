@@ -152,12 +152,14 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     focus();
   }
   function updateGame(game: GameDraft) { commit({ ...current.current, game }); }
-  function openNotebook() {
-    if (challengeMode) return;
+  function openStudyMaterial(kind: "notebook" | "printables") {
+    if (challengeMode) return; // No reference material during the independent final challenge.
     stopLessonAudio();
     if (ui.view === "mission" && exercise && !ui.game.complete) updateGame({ ...current.current.game, assisted: true });
-    setOverlay("notebook");
+    setOverlay(kind);
   }
+  function openNotebook() { openStudyMaterial("notebook"); }
+  function openPrintables() { openStudyMaterial("printables"); }
   useEffect(() => listenForAdventureInterruptions(), []);
   useEffect(() => {
     if (!ready || loadedReset.current === progress.resetAt) return;
@@ -201,8 +203,8 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
       <Link href={`/yo/langues${locale !== "fr" ? `?lang=${locale}` : ""}`} className="text-lg font-black text-emerald-900">Yo<span className="text-orange-700">Pratiqo</span></Link>
       <span className="text-sm font-bold text-emerald-900">Italiano · A1</span>
       <div className="flex gap-1"><button type="button" className={`${secondary} ${tour === 1 ? "ring-4 ring-orange-300" : ""}`} onClick={openNotebook} disabled={challengeMode} title={challengeMode ? c.noHints : c.notebook} aria-label={c.notebook}><BookOpen size={21} aria-hidden /><span className="hidden sm:inline">{c.notebook}</span></button>
-      <button type="button" data-yoppo-printables-trigger className={secondary} onClick={() => { stopLessonAudio(); setOverlay("printables"); }}
-        aria-label={say("Mes fiches à imprimer", "My printable sheets", "Mis fichas para imprimir")} title={say("Mes fiches", "My printables", "Mis fichas")}>
+      <button type="button" data-yoppo-printables-trigger className={secondary} onClick={openPrintables} disabled={challengeMode}
+        aria-label={say("Mes fiches à imprimer", "My printable sheets", "Mis fichas para imprimir")} title={challengeMode ? c.noHints : say("Mes fiches", "My printables", "Mis fichas")}>
         <Printer size={20} aria-hidden/><span className="hidden sm:inline">{say("Mes fiches", "My printables", "Mis fichas")}</span>
       </button>
       <button type="button" className={secondary} onClick={() => { stopLessonAudio(); setOverlay("tools"); }} aria-label={c.help}><HelpCircle size={21} aria-hidden /></button></div>
