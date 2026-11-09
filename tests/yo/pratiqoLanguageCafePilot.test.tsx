@@ -11,8 +11,10 @@ const rules = readFileSync("docs/product/cafe-des-langues/community-rules.md", "
 const safety = readFileSync("docs/product/cafe-des-langues/moderation-privacy-checklist.md", "utf8");
 
 async function main() {
-  assert.equal(metadata.robots?.index, false, "pilot preview must not be indexed before safety signoff");
-  assert.equal(metadata.robots?.follow, false);
+  assert.equal(typeof metadata.robots, "object", "pilot should have explicit robots meta directives");
+  if (typeof metadata.robots !== "object" || metadata.robots === null) throw new Error("missing robots directives");
+  assert.equal(metadata.robots.index, false, "pilot preview must not be indexed before safety signoff");
+  assert.equal(metadata.robots.follow, false);
   assert.match(page, /getYoLocale/, "language query is validated");
   assert.match(page, /lang=\$\{value\}/, "language links remain within pilot page");
   assert.match(page, /id="regles"/, "community rules must be presented before interest action");
