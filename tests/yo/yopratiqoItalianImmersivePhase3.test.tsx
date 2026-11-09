@@ -90,7 +90,8 @@ for(const file of sourceFiles) {
 const atlasNavigator = readFileSync("components/yo/italian/guided/ItalianWorldNavigator.tsx", "utf8");
 assert.match(atlasNavigator, /<ItalianWorldAtlas world=\{world\}/);
 const player = readFileSync("components/yo/italian/guided/GuidedItalianCourse.tsx", "utf8");
-assert.match(player, /<ItalianCityArrival unitId=\{unit.id\} locale=\{locale\} mastered=\{passed\}/);
+assert.match(player, /<ItalianWorldNavigator journey=\{journey\}/, "the adventure map is now the sole persistent course screen");
+assert.match(player, /data-yoppo-mission-window/, "the city lesson opens above the mounted map");
 assert.match(player, /variant="challenge"/);
 assert.match(player, /<ItalianBossBattleHud locale=\{locale\} correct=\{ui.answers.filter/);
 assert.match(player, /resultPassed && passed\?<div[^>]*><ItalianCityBossGate unitId=\{unit.id\}/,
