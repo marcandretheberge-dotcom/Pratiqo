@@ -48,8 +48,8 @@ for (const locale of ["fr", "en", "es"] as const) {
       "no unlocked-by-animation exploit");
     if (world.id === "discover") {
       assert.ok(html.includes('aria-current="step"'));
-      assert.equal((html.match(/yo-yoppo-map-guide/g) ?? []).length, 2,
-        "one Yoppo guide plus its style rule");
+      assert.equal((html.match(/class="yo-yoppo-map-guide /g) ?? []).length, 1,
+        "one Yoppo guide, regardless of the number of animation rules");
       assert.ok(html.includes('data-yoppo-map-token="u01"'));
     }
   }
