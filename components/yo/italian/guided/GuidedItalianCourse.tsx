@@ -14,7 +14,7 @@ import { getYoPratiqoModuleBySlug } from "@/lib/yo/yopratiqoProductConfig";
 import { listenForAdventureInterruptions } from "@/lib/yo/adventureSound";
 import { FeedbackSettings, useLearningFeedback } from "../../feedback/LearningFeedback";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
-import { GUIDED_KEY, TOUR_KEY, emptyGame, initialGuided, parseGuided, guidedSteps, guidedPassed, guidedPoints, lessonDone, type GuidedState, type GameDraft } from "@/lib/yo/italian/course/guidedItalian";
+import { GUIDED_KEY, TOUR_KEY, emptyGame, initialGuided, parseGuided, guidedSteps, guidedPassed, lessonDone, type GuidedState, type GameDraft } from "@/lib/yo/italian/course/guidedItalian";
 import { guidedMissionOrder, nextGuidedMissionStep, followingGuidedMissionStep, restoreGuidedMissionDraft } from "@/lib/yo/italian/course/guidedMissionOrder";
 import { italianWorldForUnit } from "@/lib/yo/italian/worlds";
 import { ItalianWorldNavigator } from "./ItalianWorldNavigator";
@@ -64,10 +64,11 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   const feedback = useLearningFeedback();
   const pendingUnlock = useRef(false);
   const [translation, setTranslation] = useState(false), [hint, setHint] = useState(false);
-  const heading = useRef<HTMLHeadingElement>(null), primaryAction = useRef<HTMLButtonElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const missionContent = useRef<HTMLDivElement>(null);
   const routeRequest = useRef("");
   const step = steps[ui.step], lesson = unit.lessons[step.lesson], exercise = step.activity;
-  const passed = guidedPassed(unit, progress), done = unit.lessons.filter(l => lessonDone(l, progress)).length;
+  const passed = guidedPassed(unit, progress);
   const next = nextGuidedMissionStep(steps, order, ui, progress);
   const challengeMode = ui.view === "challenge", question = unit.quiz.questions[ui.quizIndex];
   const completedAnswers = ui.answers.filter(a => a.correct).length, resultHelp = ui.answers.some(a => a.assisted);
@@ -86,7 +87,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     try { localStorage.setItem(uiKey, JSON.stringify(nextState)); setStorageAvailable(true); }
     catch { setStorageAvailable(false); }
   }
-  function focus() { requestAnimationFrame(() => heading.current?.focus({ preventScroll: true })); }
+  function focus() { requestAnimationFrame(() => { heading.current?.focus({ preventScroll: true }); if (missionContent.current) missionContent.current.scrollTop = 0; }); }
   function stop() { stopLessonAudio(); setTranslation(false); setHint(false); }
   function move(index: number, withBriefing = false) {
     if (index < 0 || index >= steps.length) return;
@@ -107,6 +108,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     if (next < 0) { setBriefingOpen(false); commit({ ...s, view: "challenge-intro" }); focus(); return; }
     move(next, true);
   }
+  function playFromMap() { finishTour(); if (passed) { move(0, true); return; } beginMission(); }
   function finishTour() { setTour(null); try { localStorage.setItem(TOUR_KEY, "seen"); } catch { /* Guidance remains usable without storage. */ } }
   function leave() {
     stop(); setOverlay(null); setBriefingOpen(false);
@@ -194,24 +196,24 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   const teacherUrl = getYoPratiqoModuleBySlug("italien")?.teacherSearchUrl ?? "/trouver-un-prof?q=italien";
   return <ItalianAudioProvider paths={audioPaths}><div lang={locale} className="min-h-screen bg-[#fbf9f3] text-stone-800" data-guided-italian>
     <header className="border-b border-stone-200 bg-white"><div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-      {ui.view === "map" ? <Link href={`/yo/langues${locale !== "fr" ? `?lang=${locale}` : ""}`} className="text-lg font-black text-emerald-900">Yo<span className="text-orange-700">Pratiqo</span></Link> : <button type="button" onClick={leave} className={secondary} aria-label={c.leave}><X size={21} aria-hidden /><span className="hidden sm:inline">{c.home}</span></button>}
+      <Link href={`/yo/langues${locale !== "fr" ? `?lang=${locale}` : ""}`} className="text-lg font-black text-emerald-900">Yo<span className="text-orange-700">Pratiqo</span></Link>
       <span className="text-sm font-bold text-emerald-900">Italiano · A1</span>
       <div className="flex gap-1"><button type="button" className={`${secondary} ${tour === 1 ? "ring-4 ring-orange-300" : ""}`} onClick={openNotebook} disabled={challengeMode} title={challengeMode ? c.noHints : c.notebook} aria-label={c.notebook}><BookOpen size={21} aria-hidden /><span className="hidden sm:inline">{c.notebook}</span></button><button type="button" className={secondary} onClick={() => { stopLessonAudio(); setOverlay("tools"); }} aria-label={c.help}><HelpCircle size={21} aria-hidden /></button></div>
     </div></header>
-    <main className="mx-auto max-w-5xl px-4 pb-12 pt-5 sm:px-6 sm:pt-8">
+    <main className="mx-auto w-full max-w-5xl px-2 pb-2 pt-1 sm:px-5 sm:pt-3">
       {(!learning.storageAvailable || !storageAvailable) ? <p role="status" className="mb-5 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{c.unsaved}</p> : null}
       <ItalianWorldNavigator journey={journey} locale={locale} currentUnitId={unit.id}
         hrefForUnit={id => italianCourseHref(locale,id)} canReview={placedReview}
-        onPlayCurrentCity={beginMission}
+        onPlayCurrentCity={playFromMap}
         currentActionLabel={passed ? c.practice : ui.resumeView === "challenge" ? c.challenge : ui.resumeView === "mission" ? c.resume : next < 0 ? c.begin : c.start}
         missionHint={passed ? c.reviewLabel : ui.resumeView === "challenge" || next < 0 ? c.challenge : next >= 0 ? `${c.mission} ${steps[ui.resumeView === "mission" ? ui.step : next].lesson + 1}` : c.start}
         triviaAvailable={canPlayItalianTrivia(unit, progress)} onOpenTrivia={() => { finishTour(); stopLessonAudio(); setCheckpointOpen(true); }}
-        showGuide={tour !== null} onDismissGuide={finishTour}/>
+        showGuide={tour !== null && !canPlayItalianTrivia(unit, progress)} onDismissGuide={finishTour}/>
     </main>
     <Dialog.Root open={ui.view !== "map"} onOpenChange={open => { if (!open) leave(); }}>
       <Dialog.Portal>
         <Dialog.Overlay data-yoppo-mission-backdrop className="fixed inset-0 z-40 bg-[#16382f]/55 backdrop-blur-[2px]"/>
-        <Dialog.Content data-yoppo-mission-window aria-describedby={undefined}
+        <Dialog.Content ref={missionContent} data-yoppo-mission-window aria-describedby={undefined}
           className="fixed inset-x-0 bottom-0 z-50 max-h-[92dvh] overflow-y-auto overscroll-contain rounded-t-[30px] border-t-4 border-amber-300 bg-[#fffdf7] px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 text-stone-800 shadow-[0_-12px_55px_rgba(15,56,46,.25)] outline-none sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%_-_2rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border-4 sm:p-6">
           <header className="sticky -top-4 z-20 mb-4 flex items-center justify-between gap-2 border-b border-stone-200 bg-[#fffdf7]/95 pb-3 pt-1 backdrop-blur-sm">
             <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">YOPPO · {city}</p>
@@ -274,7 +276,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
         <Dialog.Overlay className="fixed inset-0 z-[60] bg-[#16382f]/55 backdrop-blur-[2px]"/>
         <Dialog.Content data-yoppo-trivia-window aria-describedby={undefined}
           className="fixed inset-x-0 bottom-0 z-[70] max-h-[92dvh] overflow-y-auto rounded-t-[30px] border-t-4 border-amber-300 bg-[#fffdf7] p-4 text-stone-800 shadow-2xl outline-none sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%_-_2rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
-          <div className="mb-4 flex items-center justify-between"><Dialog.Title className="font-black text-emerald-950">{say("Haltе Trivia avec Yoppo", "Trivia with Yoppo", "Trivia con Yoppo")}</Dialog.Title>
+          <div className="mb-4 flex items-center justify-between"><Dialog.Title className="font-black text-emerald-950">{say("Halte Trivia avec Yoppo", "Trivia with Yoppo", "Trivia con Yoppo")}</Dialog.Title>
             <Dialog.Close asChild><button type="button" aria-label={c.leave} className="grid h-11 w-11 place-items-center rounded-full bg-white text-stone-800"><X size={20} aria-hidden/></button></Dialog.Close>
           </div>
           <ItalianTriviaCheckpoint unit={unit} locale={locale} progress={progress}/>
