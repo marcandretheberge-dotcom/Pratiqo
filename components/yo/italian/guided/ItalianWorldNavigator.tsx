@@ -73,8 +73,7 @@ export function ItalianWorldNavigator({
   const canTravel = canUseItalianFlute(worlds, selected);
 
   return <section data-yoppo-world-map aria-label={copy.choose}
-    className="relative mx-auto max-w-full" data-yoppo-map-only
-    style={{ width: "min(100%, 480px, max(320px, calc((100dvh - 96px) * 0.5714286)))" }}>
+    className="yo-adventure-board relative mx-auto max-w-full" data-yoppo-map-only>
     <ItalianWorldAtlas world={world} locale={locale} currentUnitId={currentUnitId}
       hrefForUnit={hrefForUnit} canReview={canReview}
       onPlayCurrentCity={currentWorld ? onPlayCurrentCity : undefined}
@@ -127,6 +126,13 @@ export function ItalianWorldNavigator({
       className="yo-portal-arrival absolute bottom-16 right-3 z-20 flex items-center gap-2 rounded-full bg-[#e4f8d3] px-3 py-2 text-xs font-bold text-emerald-950 shadow-xl">
       <Sparkles size={18} aria-hidden/>{copy.arrived}
     </div> : null}
-    <style>{`@keyframes yo-portal-shine{from{opacity:.2;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:no-preference){.yo-portal-arrival{animation:yo-portal-shine .5s ease-out}}`}</style>
+    <style>{`
+      /* The SVG artwork is never stretched. On laptops a separately composed
+         wide board fills the viewport; portrait devices keep the original map. */
+      .yo-adventure-board { width:min(100%,480px,max(320px,calc((100dvh - 96px)*0.5714286))); }
+      @media(min-width:1024px) { .yo-adventure-board { width:min(100%,960px,calc((100dvh - 96px)*1.5)); } }
+      @keyframes yo-portal-shine{from{opacity:.2;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+      @media(prefers-reduced-motion:no-preference){.yo-portal-arrival{animation:yo-portal-shine .5s ease-out}}
+    `}</style>
   </section>;
 }
