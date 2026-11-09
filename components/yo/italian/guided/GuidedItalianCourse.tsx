@@ -3,7 +3,7 @@
 import Link from "../../learning/LessonLink";
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowRight, BookOpen, HelpCircle, Stamp, X } from "lucide-react";
+import { ArrowRight, BookOpen, HelpCircle, Printer, Stamp, X } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { YoLocale } from "@/lib/yo/types";
 import type { CourseCatalog, CourseUnit } from "@/lib/yo/italian/course/courseTypes";
@@ -19,6 +19,7 @@ import { guidedMissionOrder, nextGuidedMissionStep, followingGuidedMissionStep, 
 import { italianWorldForUnit } from "@/lib/yo/italian/worlds";
 import { ItalianWorldNavigator } from "./ItalianWorldNavigator";
 import { ItalianTriviaCheckpoint } from "./ItalianTriviaCheckpoint";
+import { ItalianPrintableMenu } from "./ItalianPrintableMenu";
 import { useItalianCourseProgress } from "../course/useItalianCourseProgress";
 import { ItalianAudioProvider } from "../ItalianAudioProvider";
 import { canPlayItalianTrivia } from "@/lib/yo/italian/trivia";
@@ -51,6 +52,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   const uiKey = progressKey ? `yo.italian.guided.v2.${unit.id}` : GUIDED_KEY;
   const say = (fr: string, en: string, es: string) => t(fr,en,es)[locale];
   const bankHref = `/yo/langues/italien/parcours/${unit.id}/vocabulaire?lang=${locale}`;
+  const reportHref = `/yo/langues/italien/parcours/${unit.id}/bilan?lang=${locale}`;
   const rhythm = profile ? weeklyRhythm(profile.weeklyMinutes) : null;
   const [ui, setUi] = useState<GuidedState>(() => initialGuided());
   const [briefingOpen, setBriefingOpen] = useState(false);
@@ -59,7 +61,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   useLayoutEffect(() => { current.current = ui; }, [ui]);
   const loadedReset = useRef<number | null>(null);
   const [loaded, setLoaded] = useState(false), [storageAvailable, setStorageAvailable] = useState(true);
-  const [overlay, setOverlay] = useState<"notebook" | "tools" | null>(null), [tour, setTour] = useState<number | null>(null);
+  const [overlay, setOverlay] = useState<"notebook" | "tools" | "printables" | null>(null), [tour, setTour] = useState<number | null>(null);
   const [notebookMeanings, setNotebookMeanings] = useState(true);
   const feedback = useLearningFeedback();
   const pendingUnlock = useRef(false);
@@ -198,7 +200,12 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     <header className="border-b border-stone-200 bg-white"><div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
       <Link href={`/yo/langues${locale !== "fr" ? `?lang=${locale}` : ""}`} className="text-lg font-black text-emerald-900">Yo<span className="text-orange-700">Pratiqo</span></Link>
       <span className="text-sm font-bold text-emerald-900">Italiano · A1</span>
-      <div className="flex gap-1"><button type="button" className={`${secondary} ${tour === 1 ? "ring-4 ring-orange-300" : ""}`} onClick={openNotebook} disabled={challengeMode} title={challengeMode ? c.noHints : c.notebook} aria-label={c.notebook}><BookOpen size={21} aria-hidden /><span className="hidden sm:inline">{c.notebook}</span></button><button type="button" className={secondary} onClick={() => { stopLessonAudio(); setOverlay("tools"); }} aria-label={c.help}><HelpCircle size={21} aria-hidden /></button></div>
+      <div className="flex gap-1"><button type="button" className={`${secondary} ${tour === 1 ? "ring-4 ring-orange-300" : ""}`} onClick={openNotebook} disabled={challengeMode} title={challengeMode ? c.noHints : c.notebook} aria-label={c.notebook}><BookOpen size={21} aria-hidden /><span className="hidden sm:inline">{c.notebook}</span></button>
+      <button type="button" data-yoppo-printables-trigger className={secondary} onClick={() => { stopLessonAudio(); setOverlay("printables"); }}
+        aria-label={say("Mes fiches à imprimer", "My printable sheets", "Mis fichas para imprimir")} title={say("Mes fiches", "My printables", "Mis fichas")}>
+        <Printer size={20} aria-hidden/><span className="hidden sm:inline">{say("Mes fiches", "My printables", "Mis fichas")}</span>
+      </button>
+      <button type="button" className={secondary} onClick={() => { stopLessonAudio(); setOverlay("tools"); }} aria-label={c.help}><HelpCircle size={21} aria-hidden /></button></div>
     </div></header>
     <main className="mx-auto w-full max-w-5xl px-2 pb-2 pt-1 sm:px-5 sm:pt-3">
       {(!learning.storageAvailable || !storageAvailable) ? <p role="status" className="mb-5 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{c.unsaved}</p> : null}
@@ -232,6 +239,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
         <h1 ref={heading} tabIndex={-1} className="mt-2 text-2xl font-black text-emerald-950 outline-none">{lesson.title[locale]}</h1>
         <p className="mt-4 text-base leading-7 text-stone-700">{lesson.goal[locale]}</p>
         <p className="mt-3 text-sm leading-6 text-stone-600">{say("Yoppo t'accompagne. Commence par le vocabulaire, puis avance une étape à la fois.", "Yoppo is here to help. Warm up with vocabulary, then follow each step.", "Yoppo te acompaña. Empieza con vocabulario y sigue cada paso.")}</p>
+        <Link href={bankHref} target="_blank" rel="noopener" className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-bold text-emerald-900 underline"><Printer size={17} aria-hidden/>{say("Imprimer les mots avant de commencer", "Print my vocabulary before starting", "Imprimir mis palabras antes de empezar")}</Link>
         <button type="button" className={`${primary} mt-7 w-full`} onClick={() => { setBriefingOpen(false); focus(); }}>
           {c.start}<ArrowRight size={18} aria-hidden/>
         </button>
@@ -265,7 +273,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
         <h2 className="text-lg font-bold text-emerald-950">{say("Ce que tu sais maintenant pratiquer", "What you can now practise", "Lo que ya puedes practicar")}</h2>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6">{unit.objectives.map((goal,index) => <li key={index}>{goal[locale]}</li>)}</ul>
         <p className="mt-4 text-sm text-stone-700">{say("Continue d'étudier ces expressions et révise-les dans ton carnet pour les retenir longtemps.", "Keep studying these expressions and review them in your notebook for long-term memory.", "Sigue estudiando estas expresiones y repásalas en tu cuaderno para recordarlas.")}</p>
-        <div className="mt-3 flex flex-wrap gap-2"><Link href={`/yo/langues/italien/parcours/${unit.id}/bilan?lang=${locale}`} target="_blank" rel="noopener" className={`${secondary} underline`}>{say("Imprimer mon bilan", "Print my achievements", "Imprimir mis logros")}</Link><Link href={bankHref} target="_blank" rel="noopener" className={`${secondary} underline`}>{say("Imprimer mes mots", "Print my vocabulary", "Imprimir mis palabras")}</Link></div>
+        <div className="mt-3 flex flex-wrap gap-2"><Link href={reportHref} target="_blank" rel="noopener" className={`${secondary} underline`}>{say("Imprimer mon bilan", "Print my achievements", "Imprimir mis logros")}</Link><Link href={bankHref} target="_blank" rel="noopener" className={`${secondary} underline`}>{say("Imprimer mes mots", "Print my vocabulary", "Imprimir mis palabras")}</Link></div>
       </section> : null}<p className="mt-5 text-sm leading-6 text-stone-600">{c.finishNotice}</p>{resultPassed ? <button type="button" className={`${primary} mt-6 w-full`} onClick={leave}>{c.map}<ArrowRight size={18} aria-hidden /></button> : <><button type="button" className={`${primary} mt-6 w-full`} onClick={() => move(0)}>{c.practice}</button><button type="button" className={`${secondary} mt-3 w-full`} onClick={startChallenge}>{c.retry}</button></>}</section> : null}
 
         </Dialog.Content>
@@ -283,8 +291,8 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-    <Dialog.Root open={overlay !== null} onOpenChange={open => { if (!open) { stopLessonAudio(); setOverlay(null); } }}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-[90] bg-stone-950/50" /><Dialog.Content data-yoppo-tools-dialog className="fixed left-1/2 top-1/2 z-[100] max-h-[85dvh] w-[calc(100%_-_2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl bg-[#fbf9f3] p-5 text-stone-800 shadow-xl sm:p-7" aria-describedby={undefined}><div className="flex items-start justify-between gap-4"><Dialog.Title className="text-xl font-bold text-emerald-950">{overlay === "notebook" ? c.notebook : c.tools}</Dialog.Title><Dialog.Close className={secondary} aria-label={c.close}><X size={21} aria-hidden /></Dialog.Close></div>
-      {overlay === "notebook" ? <><p className="my-4 text-sm leading-6">{wordBank ? say("Toute la banque du module, disponible dès le début. Ouvre-la librement pendant la pratique.","The whole module bank, available from the beginning. Use it freely during practice.","Todo el banco del módulo, disponible desde el principio. Úsalo durante la práctica.") : c.learnedWords}</p>{wordBank ? <Link href={bankHref} target="_blank" rel="noopener" className={`${secondary} underline`}>{say("Imprimer la banque complète","Print the complete bank","Imprimir el banco completo")}</Link> : null}<button type="button" className={secondary} aria-pressed={notebookMeanings} onClick={() => setNotebookMeanings(!notebookMeanings)}>{notebookMeanings ? {fr:"Masquer les traductions",en:"Hide translations",es:"Ocultar traducciones"}[locale] : c.translation}</button>{!notebookWords.length ? <p className="py-6 text-sm">{c.emptyNotebook}</p> : notebookWords.map(p => <div key={p.it} className="border-b border-stone-200 py-4"><p lang="it" className="font-bold">{p.it}</p>{notebookMeanings ? <p className="my-2 text-sm">{p.meaning[locale]}</p> : null}<LearningAudio text={p.it} locale={locale} /></div>)}</> : <div className="mt-5 space-y-6">
+    <Dialog.Root open={overlay !== null} onOpenChange={open => { if (!open) { stopLessonAudio(); setOverlay(null); } }}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-[90] bg-stone-950/50" /><Dialog.Content data-yoppo-tools-dialog className="fixed left-1/2 top-1/2 z-[100] max-h-[85dvh] w-[calc(100%_-_2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl bg-[#fbf9f3] p-5 text-stone-800 shadow-xl sm:p-7" aria-describedby={undefined}><div className="flex items-start justify-between gap-4"><Dialog.Title className="text-xl font-bold text-emerald-950">{overlay === "notebook" ? c.notebook : overlay === "printables" ? say("Mes fiches à imprimer", "My printable sheets", "Mis fichas para imprimir") : c.tools}</Dialog.Title><Dialog.Close className={secondary} aria-label={c.close}><X size={21} aria-hidden /></Dialog.Close></div>
+      {overlay === "notebook" ? <><p className="my-4 text-sm leading-6">{wordBank ? say("Toute la banque du module, disponible dès le début. Ouvre-la librement pendant la pratique.","The whole module bank, available from the beginning. Use it freely during practice.","Todo el banco del módulo, disponible desde el principio. Úsalo durante la práctica.") : c.learnedWords}</p>{wordBank ? <Link href={bankHref} target="_blank" rel="noopener" className={`${secondary} underline`}>{say("Imprimer la banque complète","Print the complete bank","Imprimir el banco completo")}</Link> : null}<button type="button" className={secondary} aria-pressed={notebookMeanings} onClick={() => setNotebookMeanings(!notebookMeanings)}>{notebookMeanings ? {fr:"Masquer les traductions",en:"Hide translations",es:"Ocultar traducciones"}[locale] : c.translation}</button>{!notebookWords.length ? <p className="py-6 text-sm">{c.emptyNotebook}</p> : notebookWords.map(p => <div key={p.it} className="border-b border-stone-200 py-4"><p lang="it" className="font-bold">{p.it}</p>{notebookMeanings ? <p className="my-2 text-sm">{p.meaning[locale]}</p> : null}<LearningAudio text={p.it} locale={locale} /></div>)}</> : overlay === "printables" ? <ItalianPrintableMenu locale={locale} unitId={unit.id} mastered={passed}/> : <div className="mt-5 space-y-6">
         {onConfigure ? <section><h3 className="font-bold">{say("Mon départ et mon rythme","My starting point and pace","Mi inicio y mi ritmo")}</h3><p className="mt-2 text-sm">{rhythm ? `${rhythm.sessions} × ${rhythm.minutes} min / ${say("semaine","week","semana")}` : say("À mon rythme","At my pace","A mi ritmo")}</p><button type="button" className={`${secondary} mt-2`} onClick={()=>{stopLessonAudio();setOverlay(null);onConfigure();}}>{say("Ajuster avec Yoppo","Adjust with Yoppo","Ajustar con Yoppo")}</button>{profile?.reviewUnitIds.map(id=><Link className={`${secondary} block underline`} key={id} href={italianCourseHref(locale,id)}>{say("Réviser : ","Review: ","Repasar: ")}{catalog.units.find(u=>u.id===id)?.title[locale]}</Link>)}</section> : null}
         <FeedbackSettings locale={locale}/>
         <section><h3 className="font-bold">{c.stamp}</h3><p className="mt-2 text-sm leading-6">{c.stampRule}</p><p className="mt-2 text-sm leading-6">{c.pointsRule}</p></section>
