@@ -21,7 +21,7 @@ for (const theme of themes) {
   const html = renderToStaticMarkup(createElement(ItalianAdventureLandscape, { worldId: theme, complete: false }));
   assert.ok(html.includes('data-atlas-landscape="' + theme + '"'));
   assert.ok(html.includes('data-yoppo-world-castle'));
-  assert.ok(html.includes('preserveAspectRatio="none"'), "road and stops align in all widths");
+  assert.ok(html.includes('preserveAspectRatio="xMidYMid meet"'), "the portrait SVG must never be non-uniformly stretched");
   assert.ok(html.includes("yo-adventure-dotted-road"), "the actual path must remain visible");
   assert.ok(html.includes("prefers-reduced-motion"), "ambient motion is optional");
   assert.ok(html.includes("<svg"), "world landscape is an original vector scene");
@@ -42,7 +42,9 @@ for (const locale of ["fr", "en", "es"] as const) {
       "four mini landmarks, not four huge cards obscuring the road");
     assert.ok(!html.includes("grid-cols-2"), "no dashboard-like card grid");
     assert.ok(!html.includes("min-h-28"), "no large destination cards");
-    assert.ok(html.includes("h-[calc(100dvh-90px)]") && html.includes("min-h-[650px]"), "the atlas occupies the usable phone viewport instead of sitting below a dashboard");
+    assert.ok(html.includes("aspect-[4/7]") && html.includes("lg:aspect-[3/2]"), "original portrait and independently composed desktop panorama keep true artwork proportions");
+    assert.ok(html.includes("data-yoppo-portrait-art") && html.includes("data-yoppo-desktop-art"), "both responsive art directions are present");
+    assert.ok(html.includes('data-atlas-landscape-wide="' + world.id + '"'), "desktop artwork uses its own original SVG viewBox");
     assert.ok(html.includes('data-yoppo-world-gate="closed"'));
     assert.equal((html.match(/<a /g) ?? []).length, world.id === "discover" ? 1 : 0,
       "no unlocked-by-animation exploit");
