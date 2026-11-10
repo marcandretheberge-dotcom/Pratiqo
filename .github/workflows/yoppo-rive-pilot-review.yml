@@ -114,7 +114,7 @@ jobs:
             const text = fs.readFileSync("/tmp/yoppo-eye-inspect.json", "utf8");
             const json = JSON.parse(text);
             const serialized = JSON.stringify(json);
-            for (const required of ["Eye Mask", "Pupil", "Upper Lid", "Motion Control", "Upper", "Fore", "Two Bone IK", "Skinned Ribbon"]) {
+            for (const required of ["Eye White", "Pupil", "Upper Lid", "Motion Control", "Upper", "Fore", "Two Bone IK", "Skinned Ribbon"]) {
               if (!serialized.includes(required)) throw new Error("inspect output missing " + required);
             }
             const problems = JSON.stringify(json.problems ?? []);
