@@ -91,6 +91,49 @@ jobs:
             echo "===== docs search: $term ====="
             rive docs --search "$term" || true
           done
+      - name: Verify and render Yoppo eye tooling spike
+        shell: bash
+        run: |
+          set -euo pipefail
+          rive rive/yoppo-eye-spike --verify
+          echo "===== built files ====="
+          find rive/yoppo-eye-spike/build -maxdepth 2 -type f -print | sort
+
+          built_riv="$(find rive/yoppo-eye-spike/build -maxdepth 1 -type f -name '*.riv' | head -n 1)"
+          test -n "$built_riv"
+
+          rive inspect "$built_riv" --format=json > /tmp/yoppo-eye-inspect.json
+          cat /tmp/yoppo-eye-inspect.json
+
+          rive rive/yoppo-eye-spike --screenshot=/tmp/yoppo-eye-frame-0.png --advance=0
+          rive rive/yoppo-eye-spike --screenshot=/tmp/yoppo-eye-frame-30.png --advance=30
+
+          test -s /tmp/yoppo-eye-frame-0.png
+          test -s /tmp/yoppo-eye-frame-30.png
+
+          node - <<'NODE'
+          const fs = require("fs");
+          const text = fs.readFileSync("/tmp/yoppo-eye-inspect.json", "utf8");
+          const json = JSON.parse(text);
+          const serialized = JSON.stringify(json);
+          for (const required of ["Eye Mask", "Pupil", "Upper Lid", "Upper", "Fore", "Two Bone IK", "Skinned Ribbon"]) {
+            if (!serialized.includes(required)) throw new Error("inspect output missing " + required);
+          }
+          const problems = JSON.stringify(json.problems ?? []);
+          if (problems !== "[]" && problems !== "{}" && problems !== "null") {
+            throw new Error("Rive inspect reported problems: " + problems);
+          }
+          NODE
+      - name: Upload Yoppo eye spike evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: yoppo-eye-rive-spike
+          path: |
+            /tmp/yoppo-eye-frame-0.png
+            /tmp/yoppo-eye-frame-30.png
+            /tmp/yoppo-eye-inspect.json
+            rive/yoppo-eye-spike/build/problems.log
+          if-no-files-found: error
       - name: Focused lint
         run: npx eslint lib/companion/yoppoRigContract.ts scripts/audit-yoppo-master.mjs tests/companion/yoppoRigContract.test.ts
       - name: Diff integrity
