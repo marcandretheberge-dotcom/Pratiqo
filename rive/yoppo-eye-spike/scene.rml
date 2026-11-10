@@ -9,9 +9,6 @@
         <!-- Clip source comes first and stays unpainted but visible. -->
         <Shape x="200" y="120" name="Eye Mask" id="0:50">
             <Ellipse width="150" height="110" name="Mask Path"/>
-            <Fill name="Runtime Mask Retention">
-                <SolidColor colorValue="01000000" name="Near Transparent"/>
-            </Fill>
         </Shape>
 
         <!-- Visible eye surface. -->
