@@ -90,9 +90,10 @@ Rationale:
 
 - `profiles.id === auth.users.id`
 - public-schema joins are simpler and safer through Supabase/PostgREST
-- deletion still cascades from `auth.users` through `profiles`
 - RLS can still use `auth.uid() = user_id`
 - no direct client querying of the `auth` schema is required
+
+Deletion semantics are **not** implicitly decided by this ADR. Every future Café foreign key to `public.profiles(id)` must choose and document an explicit account-deletion behavior (`ON DELETE CASCADE`, `SET NULL` plus anonymization, or another reviewed strategy) based on the data-retention purpose of that table. PR 2 must not rely on a default FK action or leave Café rows orphaned.
 
 ### 4. Café is a separate domain from commercial group sessions
 
@@ -124,6 +125,7 @@ Initial recommendation:
 - sessions are created by an admin/system scheduling surface or an explicitly authorized host
 - a host is not automatically a teacher
 - hosting permission is separate from marketplace teacher status
+- **PR 1 does not decide that every authenticated user may host.** Open peer-to-peer hosting is a product/safety choice that requires an explicit review of moderation, abuse, trust, scheduling, and cold-start consequences before it is enabled.
 
 The precise host authorization model must be finalized before the first Café schema migration.
 
