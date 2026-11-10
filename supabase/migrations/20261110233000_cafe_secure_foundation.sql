@@ -193,12 +193,24 @@ BEGIN
     IF NEW.slug IS DISTINCT FROM OLD.slug THEN
       RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'Cafe slug is immutable';
     END IF;
-    IF NEW.created_by_profile_id IS DISTINCT FROM OLD.created_by_profile_id THEN
-      RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'Cafe creator is immutable';
+    IF NEW.created_by_profile_id IS DISTINCT FROM OLD.created_by_profile_id
+       AND NOT (OLD.created_by_profile_id IS NOT NULL AND NEW.created_by_profile_id IS NULL) THEN
+      RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'Cafe creator is immutable except privacy cleanup';
     END IF;
 
     IF OLD.status = 'cancelled' THEN
-      RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'Cancelled Cafe session is terminal';
+      IF NEW.status IS DISTINCT FROM OLD.status
+         OR NEW.title IS DISTINCT FROM OLD.title
+         OR NEW.primary_language IS DISTINCT FROM OLD.primary_language
+         OR NEW.practice_language IS DISTINCT FROM OLD.practice_language
+         OR NEW.level IS DISTINCT FROM OLD.level
+         OR NEW.starts_at IS DISTINCT FROM OLD.starts_at
+         OR NEW.duration_minutes IS DISTINCT FROM OLD.duration_minutes
+         OR NEW.max_participants IS DISTINCT FROM OLD.max_participants
+         OR NEW.published_at IS DISTINCT FROM OLD.published_at
+         OR NEW.cancelled_at IS DISTINCT FROM OLD.cancelled_at THEN
+        RAISE EXCEPTION USING ERRCODE = '23514', MESSAGE = 'Cancelled Cafe session is terminal';
+      END IF;
     END IF;
 
     IF OLD.status = 'published' THEN
@@ -313,10 +325,10 @@ RETURNS TABLE (
   version bigint
 )
 LANGUAGE plpgsql
-STABLE
+VOLATILE
 SECURITY DEFINER
 SET search_path = pg_catalog, pg_temp
-AS $$
+AS $
 BEGIN
   PERFORM cafe_private.require_active_profile(p_actor_id);
 
