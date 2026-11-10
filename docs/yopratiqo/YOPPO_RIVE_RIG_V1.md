@@ -24,6 +24,36 @@ Automated audit of the shipped idle source:
 
 These are sampled raster/shading colors, not yet the final simplified semantic palette. The audit script also extracts semantic cream/teal/brown/blush/ink candidates on every CI run.
 
+## Artboard and anchor contract
+
+The 1024 × 1024 runtime artboard is frozen.
+
+- Do **not** center the visible bounding box. The backpack makes that box asymmetric.
+- Anchor the character to body/ground contact: x = 512, ground y = 920.
+- Reference source body center: x = 250 in the 500px master.
+- Reference source ground contact: y = 453.
+- Reconstruction scale: 1.86×, not the naive 2.048× full-canvas scale.
+- Estimated reconstructed visible bounds: x 270–834, y 152–920.
+- Reserved top margin: about 152px.
+- Reserved bottom margin: about 104px.
+- Victory/body rise budget: max 72px before dedicated FX/pose redesign.
+- FX must remain inside the square artboard in v1.
+- All pivots are defined relative to this fixed artboard and must not be rebased later.
+
+This intentionally preserves the square cross-platform asset while leaving enough room for a restrained victory rise, spike lag and shadow separation.
+
+## Morph topology contract
+
+Before alternate shapes are drawn, topology is frozen by group.
+
+- Mouth neutral/smile/open/concerned: identical vertex count, vertex order, semantic point mapping and start point; clockwise from viewer-left mouth corner.
+- Upper/lower lids: identical topology within each side/lid group. Open, blink, squint and thinking variants are path morphs, not unrelated redraws.
+- Brows: neutral/thinking/concerned/happy variants use matched topology per side.
+- Left/right hand poses are **swap-only** in v1: relaxed, open, point, fist, hold. They are not required to share morph topology.
+- Any future shape that is swap-only must be declared in the typed topology manifest before art is added.
+
+If a matched-morph group cannot preserve topology, the drawing is rejected rather than silently falling back to cross-fading.
+
 ## Construction rest pose
 
 The construction rest pose is deliberately more neutral than the shipped idle PNG.
@@ -44,7 +74,7 @@ The rig should reproduce the current idle pose as a named state from this neutra
 
 ## Head-turn rule
 
-Initial head turn is pseudo-3D and capped at ±15°.
+Initial head turn is pseudo-3D and capped at ±15°. Application/Rive input is normalized from -1 to 1 and maps to that limit in one place, easing toward the extremes.
 
 - `FaceFeatures` moves as a group.
 - eyes move less than nose/mouth;
@@ -201,7 +231,7 @@ Existing app state names remain backward-compatible through an adapter:
 
 ## Quality gates
 
-1. Overlay match: rebuilt rest export must preserve canonical idle proportions.
+1. Overlay match: rebuilt idle-pose export must achieve silhouette IoU ≥ 0.94 against the canonical idle after the documented reference transform; major semantic regions must remain within the locked palette family.
 2. Palette lock: palette candidates must be extracted from the canonical PNG before final vector coloring.
 3. Full hidden geometry: no cropped joints or missing overlap shapes.
 4. Pivot manifest: every animated transform has a named pivot before animation work begins.
