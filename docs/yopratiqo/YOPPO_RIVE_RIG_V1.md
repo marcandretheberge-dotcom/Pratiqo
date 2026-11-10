@@ -12,6 +12,18 @@ Status: Step 2A — construction contract. No runtime integration.
 - `inactive` and `badge_unlocked` are acting references only; their anatomy must not override the idle master.
 - Source MP4s are timing references only.
 
+## Canonical raster audit
+
+Automated audit of the shipped idle source:
+
+- source: 500 × 500 RGBA;
+- visible bounds: x 120–423, y 40–453;
+- visible footprint: about 304 × 414 px;
+- scale factor to the 1024 construction canvas: 2.048;
+- dominant raster candidates: `#FDF7EC`, `#E7D9C8`, `#04ABA4`, `#03958A`, `#784426`, `#4A2914`, `#04C5BA`, `#047B74`, `#031619`, `#D8C3AB`, `#38D5CA`, `#67E5D9`, `#965A37`, `#045A55`.
+
+These are sampled raster/shading colors, not yet the final simplified semantic palette. The audit script also extracts semantic cream/teal/brown/blush/ink candidates on every CI run.
+
 ## Construction rest pose
 
 The construction rest pose is deliberately more neutral than the shipped idle PNG.
