@@ -24,7 +24,7 @@ const {render,cleanup,fireEvent,act,within}=require("@testing-library/react") as
 const {LearningFeedbackProvider,FeedbackSettings,useLearningFeedback,HAPTICS_KEY}=require("@/components/yo/feedback/LearningFeedback") as typeof import("@/components/yo/feedback/LearningFeedback");
 const {GuidedGame}=require("@/components/yo/italian/guided/GuidedGame") as typeof import("@/components/yo/italian/guided/GuidedGame");
 const {VisualVocabulary}=require("@/components/yo/personalized/VisualVocabulary") as typeof import("@/components/yo/personalized/VisualVocabulary");
-const {FeedbackPlayer}=require("@/lib/yo/feedback/feedbackPlayer") as typeof import("@/lib/yo/feedback/feedbackPlayer");
+const {FeedbackPlayer,variedPlaybackRate}=require("@/lib/yo/feedback/feedbackPlayer") as typeof import("@/lib/yo/feedback/feedbackPlayer");
 const {beginLessonAudio,lessonAudioIsBusy}=require("@/lib/yo/audio/lessonAudioActivity") as typeof import("@/lib/yo/audio/lessonAudioActivity");
 const EFFECTS_KEY="yopratiqo.audio.muted";
 function flush(){for(let i=0;i<12&&frames.size;i++){const f=[...frames.values()];frames.clear();act(()=>f.forEach(fn=>fn(0)));}}
@@ -58,6 +58,16 @@ test("lesson speech is never interrupted: cue waits, no backlog, cancellation su
 test("a longer spoken phrase still receives its queued success cue",async()=>{const p=new FeedbackPlayer(),release=beginLessonAudio();try{await p.play();clock+=5000;assert.equal(starts,0);release();assert.equal(starts,1);}finally{release();p.dispose();}});
 test("hidden page and disposal cancel queued feedback",async()=>{const p=new FeedbackPlayer(),release=beginLessonAudio();await p.play();Object.defineProperty(document,'visibilityState',{value:'hidden',configurable:true});document.dispatchEvent(new Event('visibilitychange'));release();assert.equal(starts,0);Object.defineProperty(document,'visibilityState',{value:'visible',configurable:true});await p.play();assert.equal(starts,1);p.dispose();await p.play();assert.equal(starts,1);assert.ok(closes>0);});
 test("late AudioContext resume cannot play after cancellation",async()=>{const ctor=window.AudioContext;let resume!:()=>void;class Suspended extends Context {state="suspended";resume(){return new Promise<void>(r=>{resume=()=>{this.state='running';r();};});}}Object.defineProperty(window,'AudioContext',{value:Suspended,writable:true});const p=new FeedbackPlayer();try{const wait=p.play();p.cancel();resume();await wait;assert.equal(starts,0);}finally{p.dispose();Object.defineProperty(window,'AudioContext',{value:ctor,writable:true});}});
+test("repeated feedback gets subtle pitch variation without changing milestone identity",()=>{
+ const close=(a:number,b:number)=>Math.abs(a-b)<.000001;
+ assert.ok(close(variedPlaybackRate("correct",0),.965));
+ assert.ok(close(variedPlaybackRate("correct",1),1.035));
+ assert.ok(close(variedPlaybackRate("step",0),.975));
+ assert.ok(close(variedPlaybackRate("step",1),1.025));
+ assert.ok(close(variedPlaybackRate("unlock",0),.988));
+ assert.ok(close(variedPlaybackRate("unlock",1),1.012));
+ assert.ok(close(variedPlaybackRate("mission",.5),1));
+});
 test("movement, mission and unlock use distinct restrained wooden cues",()=>{
  const kinds=["correct","stamp","step","mission","unlock"] as const;
  const arrays=kinds.map(kind=>woodSamples(kind));

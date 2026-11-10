@@ -103,5 +103,7 @@ assert.doesNotMatch(source, /recordCourseAssessment|recordCourseActivity|\.rpc\(
 assert.match(source, /data-yoppo-trivia=/);
 const guided = readFileSync("components/yo/italian/guided/GuidedItalianCourse.tsx", "utf8");
 assert.match(guided, /ItalianTriviaCheckpoint unit=\{unit\}/);
-assert.match(guided, /i === Math\.ceil\(unit\.lessons\.length \/ 2\) - 1/);
+assert.match(guided, /triviaAvailable=\{canPlayItalianTrivia\(unit, progress\)\}/,
+  "Trivia remains gated by genuinely completed first-half missions on the map");
+assert.match(guided, /data-yoppo-trivia-window/, "the optional checkpoint opens above the persistent map");
 console.log("Yoppo Trivia: 12 playable unit banks, nonduplicate question choices, 4/5 medals, gated flute and read-only progress: PASS");

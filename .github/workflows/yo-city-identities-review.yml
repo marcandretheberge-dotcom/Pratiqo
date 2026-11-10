@@ -1,0 +1,73 @@
+name: Yo city identities review
+
+on:
+  push:
+    branches: [feat/yoppo-city-identities-20261108]
+  pull_request:
+    paths:
+      - ".github/workflows/yo-city-identities-review.yml"
+      - "lib/yo/italian/cityIdentity.ts"
+      - "components/yo/italian/guided/ItalianCityArtwork.tsx"
+      - "components/yo/italian/guided/ItalianCityArrival.tsx"
+      - "components/yo/italian/guided/ItalianAchievementPrintable.tsx"
+      - "components/yo/italian/guided/ItalianWorldAtlas.tsx"
+      - "components/yo/italian/guided/ItalianAdventurePathGeometry.ts"
+      - "components/yo/italian/guided/ItalianAdventureProgressPath.tsx"
+      - "components/yo/italian/guided/ItalianAtlasAtmosphere.tsx"
+      - "components/yo/italian/guided/ItalianAdventureLandscapeWide.tsx"
+      - "components/yo/italian/guided/ItalianPrintableMenu.tsx"
+      - "components/yo/italian/guided/ItalianAdventureLandscape.tsx"
+      - "components/yo/italian/guided/ItalianWorldNavigator.tsx"
+      - "tests/yo/yopratiqoItalianCityIdentities.test.tsx"
+      - "tests/yo/yopratiqoAdventureMapRedesign.test.tsx"
+      - "tests/yo/yopratiqoDesktopMapPrintables.test.tsx"
+      - "tests/yo/yopratiqoMapFirstMissionWindow.test.tsx"
+      - "tests/yo/yopratiqoMapFirstMissionWindow.test.tsx"
+      - "components/yo/italian/guided/GuidedItalianCourse.tsx"
+      - "components/yo/italian/guided/GuidedGame.tsx"
+      - "components/yo/italian/guided/copy.ts"
+      - "lib/yo/feedback/feedbackPlayer.ts"
+      - "tests/yo/yopratiqoFeedback.test.tsx"
+
+permissions:
+  contents: read
+
+jobs:
+  city-identities:
+    name: 12 city illustrations, locale, unlock and accessibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Twelve illustrated city identities and world unlocking
+        run: node --import tsx tests/yo/yopratiqoItalianCityIdentities.test.tsx
+      - name: Storybook world map, accessible navigation and Yoppo guide
+        run: node --import tsx tests/yo/yopratiqoAdventureMapRedesign.test.tsx
+      - name: Responsive art direction and localized printable entry
+        run: node --import tsx tests/yo/yopratiqoDesktopMapPrintables.test.tsx
+      - name: Phase 3 illustrated world and boss regression
+        run: node --import tsx tests/yo/yopratiqoItalianImmersivePhase3.test.tsx
+      - name: Full Italian guided curriculum
+        run: npm run test:yo-italian-course
+      - name: Map-first mission sheet, guided player and placement regressions
+        run: |
+          set -euo pipefail
+          node --import tsx tests/yo/yopratiqoMapFirstMissionWindow.test.tsx
+          node --import tsx tests/yo/yopratiqoGuidedItalianPlayer.test.tsx
+          node --import tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx
+      - name: Premium sound feedback and pitch-variation regression
+        run: node --import tsx tests/yo/yopratiqoFeedback.test.tsx
+      - name: Focused lint
+        run: npx eslint lib/yo/italian/cityIdentity.ts lib/yo/feedback/feedbackPlayer.ts components/yo/italian/guided/ItalianAdventurePathGeometry.ts components/yo/italian/guided/ItalianAdventureProgressPath.tsx components/yo/italian/guided/ItalianAtlasAtmosphere.tsx components/yo/italian/guided/ItalianCityArtwork.tsx components/yo/italian/guided/ItalianCityArrival.tsx components/yo/italian/guided/ItalianAchievementPrintable.tsx components/yo/italian/guided/ItalianWorldAtlas.tsx components/yo/italian/guided/ItalianAdventureLandscape.tsx components/yo/italian/guided/ItalianWorldNavigator.tsx components/yo/italian/guided/GuidedItalianCourse.tsx components/yo/italian/guided/GuidedGame.tsx components/yo/italian/guided/copy.ts components/yo/italian/guided/ItalianAdventureLandscapeWide.tsx components/yo/italian/guided/ItalianPrintableMenu.tsx tests/yo/yopratiqoDesktopMapPrintables.test.tsx tests/yo/yopratiqoItalianCityIdentities.test.tsx tests/yo/yopratiqoAdventureMapRedesign.test.tsx tests/yo/yopratiqoMapFirstMissionWindow.test.tsx tests/yo/yopratiqoFeedback.test.tsx
+      - name: Whitespace check
+        run: git diff --check origin/feat/yoppo-immersive-atlas-boss-20261108...HEAD
