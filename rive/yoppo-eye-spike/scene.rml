@@ -6,50 +6,51 @@
             <SolidColor colorValue="FFF4F0E8" name="Color"/>
         </Fill>
 
-        <!-- Eye white: visible canonical surface. -->
-        <Shape x="200" y="120" name="Eye White" id="0:20">
-            <Ellipse width="150" height="110" name="Path"/>
-            <Fill name="Fill">
-                <SolidColor colorValue="FFFDF7EC" name="Cream"/>
-            </Fill>
-        </Shape>
-
-        <!-- Pupil deliberately travels near/outside the eye edge; clipping must contain it. -->
-        <Shape x="200" y="120" name="Pupil" id="0:21">
-            <Ellipse x="-20" y="5" width="62" height="78" name="Path" id="0:23"/>
-            <Fill name="Fill">
-                <SolidColor colorValue="FF045A55" name="Dark teal"/>
-            </Fill>
-            <ClippingShape sourceId="0:50" name="Eye Clip"/>
-        </Shape>
-
-        <!-- Catchlight moves less than the pupil to prove independent depth motion. -->
-        <Shape x="200" y="120" name="Catchlight" id="0:22">
-            <Ellipse x="-32" y="-18" width="15" height="15" name="Path" id="0:24"/>
-            <Fill name="Fill">
-                <SolidColor colorValue="FFFFFFFF" name="White"/>
-            </Fill>
-            <ClippingShape sourceId="0:50" name="Eye Clip"/>
-        </Shape>
-
-        <!-- Matched-topology upper lid. Vertex y values are keyed below. -->
-        <Shape x="200" y="120" name="Upper Lid" id="0:30">
-            <PointsPath isClosed="true" name="Lid Path" id="0:31">
-                <StraightVertex x="-78" y="-58" name="Lid TL" id="0:32"/>
-                <StraightVertex x="78" y="-58" name="Lid TR" id="0:33"/>
-                <StraightVertex x="78" y="-32" name="Lid BR" id="0:34"/>
-                <StraightVertex x="-78" y="-32" name="Lid BL" id="0:35"/>
-            </PointsPath>
-            <Fill name="Fill">
-                <SolidColor colorValue="FFFDF7EC" name="Cream"/>
-            </Fill>
-            <ClippingShape sourceId="0:50" name="Eye Clip"/>
-        </Shape>
-
-        <!-- Clipping source must remain shown and unpainted. -->
+        <!-- Shared clipping source: visible to the renderer, intentionally unpainted. -->
         <Shape x="200" y="120" name="Eye Mask" id="0:50">
             <Ellipse width="150" height="110" name="Mask Path"/>
         </Shape>
+
+        <!-- Everything inside this node is clipped to the shared eye mask. -->
+        <Node x="200" y="120" name="Eye Content" id="0:19">
+            <ClippingShape sourceId="0:50" name="Eye Clip"/>
+
+            <Shape x="0" y="0" name="Eye White" id="0:20">
+                <Ellipse width="150" height="110" name="Path"/>
+                <Fill name="Fill">
+                    <SolidColor colorValue="FFFDF7EC" name="Cream"/>
+                </Fill>
+            </Shape>
+
+            <!-- Pupil deliberately travels to the edge; the parent clip must contain it. -->
+            <Shape x="0" y="0" name="Pupil" id="0:21">
+                <Ellipse x="-20" y="5" width="62" height="78" name="Path" id="0:23"/>
+                <Fill name="Fill">
+                    <SolidColor colorValue="FF045A55" name="Dark teal"/>
+                </Fill>
+            </Shape>
+
+            <!-- Catchlight moves less than the pupil to prove independent depth motion. -->
+            <Shape x="0" y="0" name="Catchlight" id="0:22">
+                <Ellipse x="-32" y="-18" width="15" height="15" name="Path" id="0:24"/>
+                <Fill name="Fill">
+                    <SolidColor colorValue="FFFFFFFF" name="White"/>
+                </Fill>
+            </Shape>
+
+            <!-- Matched-topology upper lid. Vertex y values are keyed below. -->
+            <Shape x="0" y="0" name="Upper Lid" id="0:30">
+                <PointsPath isClosed="true" name="Lid Path" id="0:31">
+                    <StraightVertex x="-78" y="-58" name="Lid TL" id="0:32"/>
+                    <StraightVertex x="78" y="-58" name="Lid TR" id="0:33"/>
+                    <StraightVertex x="78" y="-32" name="Lid BR" id="0:34"/>
+                    <StraightVertex x="-78" y="-32" name="Lid BL" id="0:35"/>
+                </PointsPath>
+                <Fill name="Fill">
+                    <SolidColor colorValue="FFFDF7EC" name="Cream"/>
+                </Fill>
+            </Shape>
+        </Node>
 
         <!-- Executable vector-rig proof: two-bone IK + skinned PointsPath. -->
         <Node x="72" y="245" name="Vector Skin Proof" id="0:60">
