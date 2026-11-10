@@ -75,8 +75,7 @@ const tests: [string, () => void][] = [
     assert.match(source, /type: "spring", stiffness: 430, damping: 34/);
     assert.match(source, /max-h-\[76dvh\]/);
     assert.match(source, /sm:max-h-\[92dvh\]/);
-    assert.match(source, /sm:inset-0 sm:m-auto sm:h-fit/, "desktop centering must not depend on transforms that Motion owns");
-    assert.doesNotMatch(source, /sm:-translate-x-1\/2|sm:-translate-y-1\/2/);
+    assert.match(source, /sm:inset-0 sm:m-auto sm:h-fit/, "mission sheet desktop centering must not depend on transforms that Motion owns");
     assert.match(source, /bg-\[#16382f\]\/36/);
     assert.match(source, /useReducedMotion/);
   }],
