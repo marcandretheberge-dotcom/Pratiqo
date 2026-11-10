@@ -96,13 +96,8 @@ jobs:
         run: |
           set -euo pipefail
           rive rive/yoppo-eye-spike --verify
-          echo "===== built files ====="
-          find rive/yoppo-eye-spike/build -maxdepth 2 -type f -print | sort
 
-          built_riv="$(find rive/yoppo-eye-spike/build -maxdepth 1 -type f -name '*.riv' | head -n 1)"
-          test -n "$built_riv"
-
-          rive inspect "$built_riv" --format=json > /tmp/yoppo-eye-inspect.json
+          rive inspect rive/yoppo-eye-spike --format=json > /tmp/yoppo-eye-inspect.json
           cat /tmp/yoppo-eye-inspect.json
 
           rive rive/yoppo-eye-spike --screenshot=/tmp/yoppo-eye-frame-0.png --advance=0
