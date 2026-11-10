@@ -75,6 +75,10 @@ assert.match(adr, /\`\/cafe\`/);
 assert.match(adr, /must not initially live under \`\/student\/\*\` or \`\/teacher\/\*\`/);
 assert.match(adr, /reference \`public\.profiles\(id\)\`/);
 assert.match(adr, /sanitized projection\/DTO/);
-ok("Café architecture contract is role-neutral and privacy-minimized");
+assert.match(adr, /A foreign key is not an authorization boundary/);
+assert.match(adr, /Every Café table must explicitly enable RLS and define its own table-specific policies/);
+assert.match(adr, /Foreign-key deletion behavior and privacy anonymization are separate mechanisms/);
+assert.match(adr, /SET NULL.*does not anonymize/i);
+ok("Café architecture contract is role-neutral, privacy-minimized, and explicit about RLS/deletion boundaries");
 
 console.log("[cafe:architecture-contract] tests passed");
