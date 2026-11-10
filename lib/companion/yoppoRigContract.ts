@@ -13,6 +13,20 @@ export const YOPPO_IDENTITY_MASTER = "/companion/travel/companion-travel-idle.pn
 export const YOPPO_CONSTRUCTION_CANVAS = 1024 as const;
 export const YOPPO_HEAD_TURN_LIMIT_DEG = 15 as const;
 
+export const YOPPO_SOURCE_AUDIT = {
+  sourceWidth: 500,
+  sourceHeight: 500,
+  visibleBounds: { minX: 120, minY: 40, maxX: 423, maxY: 453 },
+  visibleWidth: 304,
+  visibleHeight: 414,
+  scaleToConstructionCanvas: 2.048,
+  dominantRasterCandidates: [
+    "#FDF7EC", "#E7D9C8", "#04ABA4", "#03958A", "#784426",
+    "#4A2914", "#04C5BA", "#047B74", "#031619", "#D8C3AB",
+    "#38D5CA", "#67E5D9", "#965A37", "#045A55",
+  ],
+} as const;
+
 export const YOPPO_CONSTRUCTION_REST = {
   weight: "centered",
   feet: "flat",
