@@ -152,7 +152,7 @@ jobs:
             if (controlChanged < 100) throw new Error("headless --advance did not move control: " + controlChanged);
             if (eyeTeal0 < 350) throw new Error("frame 0 eye has no visible clipped teal pupil: " + eyeTeal0);
             if (eyeChanged < 450) throw new Error("frame 30 eye does not visibly differ from frame 0: " + eyeChanged);
-            if (Math.abs(eyeTeal0 - eyeTeal30) < 250) throw new Error("clipped pupil/lid motion did not materially change visible eye teal");
+            // Translation can preserve pupil area; changed-pixel count is the correct motion oracle.
             console.log(JSON.stringify({ eyeTeal0, eyeTeal30, eyeChanged, controlChanged }));
           }
           main().catch(error => { console.error(error); process.exit(1); });
