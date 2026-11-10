@@ -739,6 +739,7 @@ BEGIN
   IF should_purge THEN
     UPDATE public.cafe_sessions
        SET status = 'cancelled',
+           host_profile_id = NULL,
            cancelled_at = COALESCE(cancelled_at, decision_time),
            updated_at = decision_time
      WHERE host_profile_id = target_id
