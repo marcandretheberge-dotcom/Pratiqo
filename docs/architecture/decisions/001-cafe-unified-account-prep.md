@@ -86,6 +86,8 @@ Café authorization must therefore be based on authenticated account ownership, 
 
 For future Café tables, participant/reservation ownership should reference `public.profiles(id)`.
 
+**A foreign key is not an authorization boundary.** Every Café table must explicitly enable RLS and define its own table-specific policies. RLS policies on `public.profiles` are not inherited by tables that reference it.
+
 Rationale:
 
 - `profiles.id === auth.users.id`
@@ -93,7 +95,7 @@ Rationale:
 - RLS can still use `auth.uid() = user_id`
 - no direct client querying of the `auth` schema is required
 
-Deletion semantics are **not** implicitly decided by this ADR. Every future Café foreign key to `public.profiles(id)` must choose and document an explicit account-deletion behavior (`ON DELETE CASCADE`, `SET NULL` plus anonymization, or another reviewed strategy) based on the data-retention purpose of that table. PR 2 must not rely on a default FK action or leave Café rows orphaned.
+Deletion semantics are **not** implicitly decided by this ADR. Every future Café foreign key to `public.profiles(id)` must choose and document an explicit account-deletion behavior (`ON DELETE CASCADE`, `SET NULL`, or another reviewed strategy) based on the data-retention purpose of that table. **Foreign-key deletion behavior and privacy anonymization are separate mechanisms:** `SET NULL` does not anonymize any names, messages, audit fields, or other personal data stored in the row. PR 2 must define and test both referential behavior and any required deletion/anonymization workflow; it must not rely on a default FK action or leave Café rows orphaned.
 
 ### 4. Café is a separate domain from commercial group sessions
 
@@ -204,7 +206,8 @@ Do not begin Café schema/API implementation until all of the following are reso
 - sanitized participant DTO
 - capacity/rate-limit/idempotency rules
 - public browse vs authenticated reserve boundary
-- RLS policy design for sessions and reservations
+- explicit RLS enablement and table-specific policy design for every Café table
 - moderation/reporting minimum viable path
+- account-deletion FK behavior and privacy anonymization/retention behavior, tested separately
 
 PR 2 must not modify any untouchable domain listed above without separate review.

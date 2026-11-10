@@ -1,0 +1,31 @@
+name: Cafe architecture contract
+
+on:
+  pull_request:
+    paths:
+      - "docs/architecture/decisions/001-cafe-unified-account-prep.md"
+      - "tests/cafe/cafeArchitectureContract.test.ts"
+      - "package.json"
+      - ".github/workflows/cafe-architecture-contract.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Run Cafe architecture contract
+        run: npm run test:cafe-architecture
+      - name: Whitespace check
+        run: git diff --check
