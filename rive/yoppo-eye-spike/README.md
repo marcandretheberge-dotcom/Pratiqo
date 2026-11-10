@@ -6,7 +6,7 @@ This is **not** production art.
 
 The spike must prove, through `rive --verify`, `rive inspect`, and rendered screenshots:
 
-1. an unpainted visible `Eye Mask` can clip the pupil, catchlight and lid via `ClippingShape`;
+1. the visible `Eye White` geometry can serve as the clipping source for pupil, catchlight and lid via `ClippingShape`;
 2. pupil and catchlight can move independently;
 3. matched-topology lid vertices can be keyframed directly (`StraightVertex.y`);
 4. a vector `PointsPath` can be skinned to `RootBone` / `Bone`;
