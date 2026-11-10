@@ -15,8 +15,8 @@
         </Shape>
 
         <!-- Pupil deliberately travels near/outside the eye edge; clipping must contain it. -->
-        <Shape x="180" y="125" name="Pupil" id="0:21">
-            <Ellipse width="62" height="78" name="Path"/>
+        <Shape x="200" y="120" name="Pupil" id="0:21">
+            <Ellipse x="-20" y="5" width="62" height="78" name="Path" id="0:23"/>
             <Fill name="Fill">
                 <SolidColor colorValue="FF045A55" name="Dark teal"/>
             </Fill>
@@ -24,8 +24,8 @@
         </Shape>
 
         <!-- Catchlight moves less than the pupil to prove independent depth motion. -->
-        <Shape x="168" y="102" name="Catchlight" id="0:22">
-            <Ellipse width="15" height="15" name="Path"/>
+        <Shape x="200" y="120" name="Catchlight" id="0:22">
+            <Ellipse x="-32" y="-18" width="15" height="15" name="Path" id="0:24"/>
             <Fill name="Fill">
                 <SolidColor colorValue="FFFFFFFF" name="White"/>
             </Fill>
@@ -103,19 +103,19 @@
         </StateMachine>
 
         <LinearAnimation loopValue="loop" fps="60" duration="60" name="Eye Motion Proof" id="0:6">
-            <KeyedObject objectId="0:21">
+            <KeyedObject objectId="0:23">
                 <KeyedProperty propertyKey="13">
-                    <KeyFrameDouble value="180" frame="0" interpolationType="linear"/>
-                    <KeyFrameDouble value="246" frame="30" interpolationType="linear"/>
-                    <KeyFrameDouble value="180" frame="60" interpolationType="linear"/>
+                    <KeyFrameDouble value="-20" frame="0" interpolationType="linear"/>
+                    <KeyFrameDouble value="46" frame="30" interpolationType="linear"/>
+                    <KeyFrameDouble value="-20" frame="60" interpolationType="linear"/>
                 </KeyedProperty>
             </KeyedObject>
 
-            <KeyedObject objectId="0:22">
+            <KeyedObject objectId="0:24">
                 <KeyedProperty propertyKey="13">
-                    <KeyFrameDouble value="168" frame="0" interpolationType="linear"/>
-                    <KeyFrameDouble value="212" frame="30" interpolationType="linear"/>
-                    <KeyFrameDouble value="168" frame="60" interpolationType="linear"/>
+                    <KeyFrameDouble value="-32" frame="0" interpolationType="linear"/>
+                    <KeyFrameDouble value="12" frame="30" interpolationType="linear"/>
+                    <KeyFrameDouble value="-32" frame="60" interpolationType="linear"/>
                 </KeyedProperty>
             </KeyedObject>
 
