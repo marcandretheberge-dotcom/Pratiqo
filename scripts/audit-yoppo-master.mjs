@@ -7,6 +7,16 @@ const { data, info } = await image.raw().toBuffer({ resolveWithObject: true });
 
 let minX = info.width, minY = info.height, maxX = -1, maxY = -1, visible = 0;
 const buckets = new Map();
+const semanticBuckets = new Map();
+
+function semanticKind(r, g, b) {
+  if (r > 235 && g > 220 && b > 190) return "cream";
+  if (r > 185 && g > 105 && b > 105 && b > 105 && r - g > 20 && Math.abs(g - b) < 45) return "blush";
+  if (r < 90 && g > 105 && b > 95 && Math.abs(g - b) < 80) return "teal";
+  if (r > 75 && r > g + 20 && g > 30 && g < 150 && b < 105) return "brown";
+  if (r < 55 && g < 65 && b < 70) return "ink";
+  return null;
+}
 
 for (let y = 0; y < info.height; y++) {
   for (let x = 0; x < info.width; x++) {
@@ -23,6 +33,15 @@ for (let y = 0; y < info.height; y++) {
     prev.weight += weight;
     prev.r += r * weight; prev.g += g * weight; prev.b += b * weight;
     buckets.set(key, prev);
+
+    const semantic = semanticKind(r, g, b);
+    if (semantic) {
+      const semanticKey = `${semantic}:${key}`;
+      const item = semanticBuckets.get(semanticKey) ?? { kind: semantic, weight: 0, r: 0, g: 0, b: 0 };
+      item.weight += weight;
+      item.r += r * weight; item.g += g * weight; item.b += b * weight;
+      semanticBuckets.set(semanticKey, item);
+    }
   }
 }
 
@@ -47,6 +66,23 @@ for (const color of candidates) {
 
 const hex = ({ r, g, b }) => "#" + [r, g, b].map(n => n.toString(16).padStart(2, "0")).join("").toUpperCase();
 
+const semanticPalette = {};
+for (const kind of ["cream", "teal", "brown", "blush", "ink"]) {
+  const best = [...semanticBuckets.values()]
+    .filter(item => item.kind === kind)
+    .sort((a, b) => b.weight - a.weight)[0];
+  if (best) {
+    semanticPalette[kind] = {
+      hex: hex({
+        r: Math.round(best.r / best.weight),
+        g: Math.round(best.g / best.weight),
+        b: Math.round(best.b / best.weight),
+      }),
+      weight: Math.round(best.weight),
+    };
+  }
+}
+
 const result = {
   source,
   width: metadata.width,
@@ -55,6 +91,7 @@ const result = {
   visibleBounds: { minX, minY, maxX, maxY },
   visiblePixels: visible,
   paletteCandidates: selected.map(c => ({ hex: hex(c), weight: Math.round(c.weight) })),
+  semanticPalette,
 };
 
 console.log("YOPPO_MASTER_AUDIT=" + JSON.stringify(result));
