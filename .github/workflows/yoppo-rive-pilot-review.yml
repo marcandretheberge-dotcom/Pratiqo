@@ -60,6 +60,18 @@ jobs:
             echo "===== schema search: $term ====="
             rive schema --search "$term" || true
           done
+          for type in ClippingShape PointsPath StraightVertex CubicAsymmetricVertex RootBone Bone IKConstraint Skin Tendon Weight Mesh MeshVertex; do
+            echo "===== schema: $type ====="
+            rive schema "$type" || true
+            echo "===== animatable: $type ====="
+            rive schema "$type" --animatable || true
+          done
+          echo "===== drawing clipping excerpt ====="
+          rive docs drawing | sed -n '300,345p'
+          echo "===== rigging path/skin excerpt ====="
+          rive docs rigging | sed -n '110,210p'
+          echo "===== rigging animation excerpt ====="
+          rive docs rigging | sed -n '340,410p'
           for term in clipping rigging mesh bone constraint animation keyframe; do
             echo "===== docs search: $term ====="
             rive docs --search "$term" || true
