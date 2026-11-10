@@ -328,7 +328,7 @@ LANGUAGE plpgsql
 VOLATILE
 SECURITY DEFINER
 SET search_path = pg_catalog, pg_temp
-AS $
+AS $$
 BEGIN
   PERFORM cafe_private.require_active_profile(p_actor_id);
 
