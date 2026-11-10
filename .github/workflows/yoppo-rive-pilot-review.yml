@@ -114,7 +114,7 @@ jobs:
             const text = fs.readFileSync("/tmp/yoppo-eye-inspect.json", "utf8");
             const json = JSON.parse(text);
             const serialized = JSON.stringify(json);
-            for (const required of ["Eye Mask", "Pupil", "Upper Lid", "Upper", "Fore", "Two Bone IK", "Skinned Ribbon"]) {
+            for (const required of ["Eye Mask", "Pupil", "Upper Lid", "Motion Control", "Upper", "Fore", "Two Bone IK", "Skinned Ribbon"]) {
               if (!serialized.includes(required)) throw new Error("inspect output missing " + required);
             }
             const problems = JSON.stringify(json.problems ?? []);
@@ -130,7 +130,7 @@ jobs:
             const b = await pixels("/tmp/yoppo-eye-frame-30.png");
             if (a.info.width !== b.info.width || a.info.height !== b.info.height) throw new Error("screenshot sizes differ");
 
-            let eyeTeal0 = 0, eyeTeal30 = 0, changed = 0;
+            let eyeTeal0 = 0, eyeTeal30 = 0, eyeChanged = 0, controlChanged = 0;
             const width = a.info.width;
             for (let y = 55; y < Math.min(185, a.info.height); y++) {
               for (let x = 105; x < Math.min(295, width); x++) {
@@ -139,13 +139,21 @@ jobs:
                 const br=b.data[i], bg=b.data[i+1], bb=b.data[i+2];
                 if (ag > ar + 28 && ab > ar + 24 && ag < 180) eyeTeal0++;
                 if (bg > br + 28 && bb > br + 24 && bg < 180) eyeTeal30++;
-                if (Math.abs(ar-br)+Math.abs(ag-bg)+Math.abs(ab-bb) > 24) changed++;
+                if (Math.abs(ar-br)+Math.abs(ag-bg)+Math.abs(ab-bb) > 24) eyeChanged++;
               }
             }
+            for (let y = 25; y < Math.min(75, a.info.height); y++) {
+              for (let x = 305; x < Math.min(390, width); x++) {
+                const i = (y * width + x) * 4;
+                const diff = Math.abs(a.data[i]-b.data[i])+Math.abs(a.data[i+1]-b.data[i+1])+Math.abs(a.data[i+2]-b.data[i+2]);
+                if (diff > 24) controlChanged++;
+              }
+            }
+            if (controlChanged < 100) throw new Error("headless --advance did not move control: " + controlChanged);
             if (eyeTeal0 < 350) throw new Error("frame 0 eye has no visible clipped teal pupil: " + eyeTeal0);
-            if (changed < 450) throw new Error("frame 30 does not visibly differ from frame 0: " + changed);
+            if (eyeChanged < 450) throw new Error("frame 30 eye does not visibly differ from frame 0: " + eyeChanged);
             if (Math.abs(eyeTeal0 - eyeTeal30) < 250) throw new Error("blink/motion did not materially change visible eye teal");
-            console.log(JSON.stringify({ eyeTeal0, eyeTeal30, changed }));
+            console.log(JSON.stringify({ eyeTeal0, eyeTeal30, eyeChanged, controlChanged }));
           }
           main().catch(error => { console.error(error); process.exit(1); });
           NODE
