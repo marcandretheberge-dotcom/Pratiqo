@@ -37,11 +37,16 @@ async function main() {
     assert.match(html, new RegExp(`lang="${locale}"`));
     assert.match(html, /data-cafe-pilot-page/);
     assert.match(html, /data-cafe-concept-scene/);
+    assert.match(html, /href="#cafes"/, "simple conversation discovery is accessible");
+    assert.match(html, /href="#fonctionnement"/);
+    assert.match(html, /aria-disabled="true"/, "one-to-one must be clearly unavailable");
     assert.match(html, /data-cafe-interest/, "interest UI renders in all 3 languages");
     assert.ok(html.includes("18+"), "adult-only character must be visible");
     assert.ok(html.includes("30 min"), "pilot session has a defined format");
     assert.ok(html.includes("5"), "group capacity must be specified");
     assert.ok(html.includes("info@pratiqo.ca"), "actual support address");
+    assert.ok(html.includes({ fr: "Caméra facultative", en: "Camera optional", es: "Cámara opcional" }[locale]), "camera optional is clearly presented");
+    assert.ok(html.includes({ fr: "Aucune date ni réservation", en: "No dates or bookings", es: "Aún no hay fechas ni reservas" }[locale]), "no fake schedule or booking");
     assert.match(html, /href="#participer"/);
     assert.match(html, /href="#fonctionnement"/);
     assert.ok(html.includes(`href="/cafe-des-langues?lang=${locale}"`), "language toggle is navigable");
@@ -56,9 +61,9 @@ async function main() {
     assert.ok(interest.includes("disabled"), "interested visitors must accept adult/rules conditions to compose");
     assert.ok(interest.includes('href="#regles"'));
     const expected = {
-      fr: "Je souhaite participer",
-      en: "I'd like to join",
-      es: "Quiero participar",
+      fr: "Être informé du lancement",
+      en: "Keep me updated",
+      es: "Quiero recibir noticias",
     }[locale];
     assert.ok(html.includes(expected.replace("&", "&amp;").replace("'", "&#x27;")) ||
       html.includes(expected.replace("'", "&#x27;")) || html.includes(expected),

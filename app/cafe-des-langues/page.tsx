@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  ArrowDown, ArrowRight, BookOpen, CheckCircle2, Coffee, Globe2, HeartHandshake,
-  Languages, LockKeyhole, MessageCircle, Mic2, ShieldCheck, Users, Volume2,
+  ArrowRight, CalendarDays, Check, ChevronRight, Coffee, Globe2,
+  Headphones, HeartHandshake, Mail, MicOff, ShieldCheck, Users, VideoOff,
 } from "lucide-react";
 import { CafePilotInterest } from "@/components/cafe/CafePilotInterest";
 import { getYoLocale } from "@/lib/yo/localize";
 import type { YoLocale } from "@/lib/yo/types";
 
 export const metadata: Metadata = {
-  title: "Le Café des langues — conversations gratuites | Pratiqo",
-  description: "Un café de conversation français–espagnol entre adultes, animé et gratuit. Projet pilote sur invitation : participe à de vraies rencontres linguistiques, sans application de rencontres.",
+  title: "Le Café des langues — pratique gratuite | Pratiqo",
+  description: "Pratique le français et l'espagnol en petit groupe. Conversations de 30 minutes, sans pression, caméra facultative. Projet pilote Pratiqo.",
   robots: { index: false, follow: false },
 };
 
@@ -18,353 +18,263 @@ type PageProps = { searchParams: Promise<{ lang?: string | string[] }> };
 
 const copy = {
   fr: {
-    top: "Une initiative de Pratiqo",
-    home: "Retour à Pratiqo",
-    languageLabel: "Langue de la page",
-    badge: "Projet pilote · français + espagnol · 18+",
-    title1: "Parle avec",
-    title2: "le monde.",
-    sub: "Partage ta langue. Découvre d'autres cultures. Pratique avec de vraies personnes, dans de petits cafés de conversation animés.",
-    free: "Gratuit pour les échanges entre pairs",
-    voice: "Tu peux écouter avant de parler",
-    hosted: "Rencontres animées, sans messages privés imposés",
-    mainCta: "Je souhaite participer",
-    howCta: "Découvrir le fonctionnement",
-    preview: "Pilote en préparation · dates annoncées après confirmation",
-    sceneTitle: "Un petit café. Deux langues. De vraies conversations.",
-    sceneFrench: "10 minutes en français",
-    sceneSpanish: "10 minutos en español",
-    sceneWelcome: "Bienvenue ! ¡Bienvenidos!",
-    sceneTime: "30 min",
-    sceneSeats: "5 à 8 personnes",
-    stepsTitle: "Comment ça marche ?",
-    stepsIntro: "Pas besoin de chercher des profils pendant des heures. On fait connaissance en groupe, naturellement.",
+    back: "Pratiqo", language: "Langue de la page", eyebrow: "Une initiative Pratiqo · Pilote 18+",
+    heading: "Une langue se pratique", accent: "ensemble.",
+    intro: "Pas besoin d'être parfait. Viens parler, écouter et rencontrer des personnes qui apprennent comme toi. Sans pression, et sans obligation d'activer ta caméra.",
+    cta: "Découvrir les cafés", secondCta: "Comment ça marche",
+    trust1: "100 % gratuit", trust2: "Caméra facultative", trust3: "Animé et respectueux",
+    availability: "Le premier café est en préparation. Aucune date ni réservation n'est encore ouverte.",
+    upcoming: "Les conversations", upcomingSub: "Choisis la formule qui te convient. On commence petit, avec un groupe français–espagnol.",
+    group: "En groupe", groupDescription: "Une conversation animée, des échanges simples et la liberté d'écouter avant de parler.",
+    pair: "Français ↔ Espagnol", pilot: "Premier groupe en préparation", duration: "30 minutes", capacity: "5 à 8 adultes",
+    noDate: "Date à annoncer", interest: "Être informé du lancement",
+    duo: "À deux", duoDescription: "Une conversation plus personnelle, à ton rythme. Cette formule n'est pas encore disponible.",
+    coming: "À venir", duoDuration: "20 minutes envisagées", preview: "Pas encore de réservation",
+    how: "Comment ça marche", howSub: "Pas de restaurant virtuel. Juste des gens, des langues et une conversation.",
     steps: [
-      ["01", "Choisis ton café", "Manifeste ton intérêt pour un groupe français–espagnol. L'animateur confirme les places par courriel."],
-      ["02", "Viens comme tu es", "Rejoins une petite rencontre de 30 minutes. Tu peux écouter, passer ton tour et parler à ton rythme."],
-      ["03", "Reviens pratiquer", "Après une rencontre, choisis simplement de participer au prochain café. Les échanges privés ne font pas partie du pilote."],
+      ["01", "Choisis une conversation", "Consulte les rencontres proposées et leurs horaires lorsqu'ils seront confirmés."],
+      ["02", "Rejoins-la sur Pratiqo", "À terme, tu réserveras gratuitement avec ton compte Pratiqo, puis entreras dans la salle depuis le site."],
+      ["03", "Parle… ou écoute", "Le micro et la caméra sont fermés au départ. Tu décides quand participer."],
     ],
-    scheduleTitle: "Un café, pas un cours magistral",
-    scheduleSub: "Chaque personne a sa place. L'animateur guide la conversation; les deux langues sont pratiquées équitablement.",
-    parts: [
-      ["3 min", "Accueil et règles de la rencontre"],
-      ["10 min", "On discute en français"],
-      ["10 min", "Conversamos en español"],
-      ["5 min", "Petite discussion culturelle"],
-      ["2 min", "On se retrouve la prochaine fois ?"],
+    cameraTitle: "Tu n'as pas à montrer ton visage.", cameraText: "Caméra fermée par défaut. Personne ne t'oblige à l'allumer. Tu peux aussi commencer en écoutant simplement.",
+    cameraOff: "Caméra désactivée", micOff: "Micro désactivé", safeTitle: "Un espace pour apprendre, pas pour se faire solliciter.",
+    safeText: "Rencontres pour adultes, animées et sans enregistrement. Aucun flirt, harcèlement ou démarchage. Un problème? Contacte l'organisateur.",
+    rulesTitle: "Des règles simples pour tous", rules: [
+      "Réservé aux personnes de 18 ans ou plus.",
+      "Respecte les accents, les niveaux et le droit de passer son tour.",
+      "Aucun enregistrement, aucune transcription et aucune obligation de caméra.",
+      "Pas de flirt, de sollicitation commerciale ni de partage de coordonnées privées.",
+      "L'animateur peut intervenir ou retirer une personne; signale tout incident.",
     ],
-    topicLabel: "Premier thème envisagé",
-    topic: "On fait connaissance / Nos conocemos",
-    topicSub: "Parle de tes passe-temps, d'une expression de ta région ou d'un plat que tu aimerais faire découvrir.",
-    none: "Aucune date, place ou réunion n'est encore confirmée.",
-    principlesTitle: "Un espace pour apprendre, pas pour se faire solliciter",
-    principles: [
-      ["18 ans et plus", "Le pilote est réservé aux adultes."],
-      ["Pas de rencontres amoureuses", "Pas de flirt, de harcèlement, de discrimination ou de propos déplacés."],
-      ["Pas de vente de cours", "Les cafés sont des échanges gratuits entre pairs, distincts des cours payants avec des professeurs."],
-      ["Respect de la vie privée", "Pas d'enregistrement, de partage d'informations personnelles ou de lien public vers les réunions."],
-      ["Personne n'est forcé de parler", "Il est toujours permis d'écouter ou de passer son tour."],
-    ],
-    report: "Pour signaler un problème : ",
-    contact: "Contacter l'organisateur",
-    rulesTitle: "Les règles du café",
-    rulesIntro: "L'animateur peut interrompre une conversation ou retirer un participant qui ne respecte pas ces règles.",
-    rules: [
-      "Respecte les participants, leur accent et leur niveau. Laisse du temps aux deux langues.",
-      "Ne demande pas de coordonnées privées ou de photos. Ne publie rien sur les autres personnes sans leur accord.",
-      "Aucun enregistrement ni transcription des participants pendant le pilote. Caméra facultative.",
-      "Aucun démarchage commercial, recrutement de clients ou proposition insistante de cours.",
-      "Respecte la modération. Signale immédiatement tout comportement inapproprié.",
-    ],
-    joinTitle: "Une place autour de la table ?",
-    joinIntro: "Nous préparons un premier petit groupe. Indique simplement ton intérêt par courriel; l'organisateur transmettra les détails après validation de la confidentialité et du calendrier.",
-    privacy: "Cette prévisualisation n'enregistre aucune inscription. Le bouton prépare un courriel à envoyer toi-même. Un éventuel courriel reçu sera traité selon les règles de confidentialité applicables; la participation exige une confirmation personnelle.",
-    why: "Pourquoi Pratiqo ?",
-    identity: "Pratiqo réunit des gens qui veulent apprendre; YoPratiqo leur permet d'étudier à leur rythme. Le Café des langues ajoute l'étape essentielle : parler pour vrai.",
-    teachers: "Les cours avec des professeurs restent un service distinct. Aucun paiement ni Pass YoPratiqo n'est requis pour les cafés.",
-    learner: "Explorer YoPratiqo",
-    footer: "Cours Pratiqo Inc. · Le Café des langues est un concept pilote en préparation.",
+    joinTitle: "Une conversation, ça commence ici.", joinText: "La réservation intégrée arrive avec le calendrier. Pour l'instant, indique ton intérêt par courriel : ce n'est pas une réservation.",
+    explore: "Continuer à apprendre avec YoPratiqo", footer: "Le Café des langues est un pilote de Cours Pratiqo Inc. Aucun créneau n'est encore confirmé.",
+    status: "En préparation", email: "Signaler un problème",
   },
   en: {
-    top: "A Pratiqo initiative",
-    home: "Back to Pratiqo",
-    languageLabel: "Page language",
-    badge: "Pilot · French + Spanish · 18+",
-    title1: "Speak with",
-    title2: "the world.",
-    sub: "Share your language. Discover cultures. Practise with real people in small, hosted conversation cafés.",
-    free: "Free peer-to-peer language exchange",
-    voice: "Listen before speaking if you prefer",
-    hosted: "Hosted gatherings, no unsolicited private messages",
-    mainCta: "I'd like to join",
-    howCta: "How it works",
-    preview: "Pilot in preparation · dates announced after confirmation",
-    sceneTitle: "A small café. Two languages. Real conversations.",
-    sceneFrench: "10 minutes in French",
-    sceneSpanish: "10 minutos en español",
-    sceneWelcome: "Bienvenue ! ¡Bienvenidos!",
-    sceneTime: "30 min",
-    sceneSeats: "5 to 8 people",
-    stepsTitle: "How it works",
-    stepsIntro: "No endless profile searching. Meet people naturally in a small group.",
+    back: "Pratiqo", language: "Page language", eyebrow: "A Pratiqo initiative · 18+ pilot",
+    heading: "Languages are better", accent: "together.",
+    intro: "You don't have to speak perfectly. Come talk, listen, and meet people learning just like you. No pressure, and no need to turn on your camera.",
+    cta: "Explore the cafés", secondCta: "How it works",
+    trust1: "Completely free", trust2: "Camera optional", trust3: "Hosted and respectful",
+    availability: "The first café is being prepared. No dates or bookings are available yet.",
+    upcoming: "Conversations", upcomingSub: "Choose a format you feel comfortable with. We'll begin with one French–Spanish group.",
+    group: "In a group", groupDescription: "A hosted conversation with simple prompts, and the freedom to listen before speaking.",
+    pair: "French ↔ Spanish", pilot: "First group in preparation", duration: "30 minutes", capacity: "5 to 8 adults",
+    noDate: "Date to be announced", interest: "Keep me updated",
+    duo: "One-to-one", duoDescription: "A more personal conversation at your pace. This option isn't available yet.",
+    coming: "Coming later", duoDuration: "20 minutes proposed", preview: "Not open for booking",
+    how: "How it works", howSub: "No virtual restaurant. Just people, languages, and conversation.",
     steps: [
-      ["01", "Choose your café", "Express interest in a French–Spanish café. The host confirms places by email."],
-      ["02", "Come as you are", "Join a friendly, 30-minute hosted conversation. Listening or passing a turn is always okay."],
-      ["03", "Practise again", "After the café, choose to return next week. Private messaging is not part of the pilot."],
+      ["01", "Choose a conversation", "See upcoming meetings and times once they have been confirmed."],
+      ["02", "Join inside Pratiqo", "Eventually, book for free with your Pratiqo account and enter the room without leaving the site."],
+      ["03", "Speak… or listen", "Your microphone and camera start off. You decide when to take part."],
     ],
-    scheduleTitle: "A café, not a lecture",
-    scheduleSub: "Everyone has a chance to speak, and the host keeps both languages balanced.",
-    parts: [
-      ["3 min", "Welcome and café rules"],
-      ["10 min", "French conversation"],
-      ["10 min", "Conversamos en español"],
-      ["5 min", "Cultural conversation"],
-      ["2 min", "Want to join again?"],
+    cameraTitle: "You don't have to show your face.", cameraText: "Camera off by default. Nobody will pressure you to turn it on. You're also welcome to listen first.",
+    cameraOff: "Camera off", micOff: "Microphone off", safeTitle: "A place to learn, not to be solicited.",
+    safeText: "Adult-only, hosted conversations without recording. No flirting, harassment or sales pitches. Contact the organizer about any concern.",
+    rulesTitle: "Simple rules for everyone", rules: [
+      "Only for people aged 18 or older.",
+      "Respect accents, levels and the right to pass a turn.",
+      "No recording, transcription or requirement to use a camera.",
+      "No flirting, sales pitches or requests for private contact details.",
+      "The host may intervene or remove someone; report any concern.",
     ],
-    topicLabel: "Proposed first topic",
-    topic: "On fait connaissance / Nos conocemos",
-    topicSub: "Share your hobbies, a local expression, or a dish you'd love someone else to try.",
-    none: "No dates, places or meetings have been confirmed.",
-    principlesTitle: "Here to learn, not to be solicited",
-    principles: [
-      ["Adults 18+", "The pilot is for adults only."],
-      ["Not a dating space", "No flirting, harassment, discrimination or sexual comments."],
-      ["No teacher sales", "Cafés are free peer exchanges, separate from paid lessons with teachers."],
-      ["Respect privacy", "No recording, personal-data sharing or public meeting links."],
-      ["Speaking is optional", "You can listen or pass a turn at any time."],
-    ],
-    report: "Report a concern to ",
-    contact: "Contact the organizer",
-    rulesTitle: "Café rules",
-    rulesIntro: "The host may interrupt or remove anyone who doesn't respect these rules.",
-    rules: [
-      "Respect everyone's accent and level. Make room for both languages.",
-      "Don't ask for personal contact details or photos or share others' information.",
-      "No recording or transcription of participants during the pilot. Video is optional.",
-      "No sales pitches, customer solicitation, or pressure to buy lessons.",
-      "Follow moderation instructions and report inappropriate behaviour.",
-    ],
-    joinTitle: "A seat at the table?",
-    joinIntro: "We're preparing the first small group. Express interest by email; the host will send details after the privacy and scheduling review.",
-    privacy: "This preview does not record sign-ups. The button prepares an email you send yourself. Messages received will be handled according to applicable privacy rules; attendance needs personal confirmation.",
-    why: "Why Pratiqo?",
-    identity: "Pratiqo connects people who want to learn; YoPratiqo helps them study independently. Language Café adds the essential step: speaking with real people.",
-    teachers: "Lessons with professional teachers are a separate service. No payments or YoPratiqo Passes are required to join cafés.",
-    learner: "Explore YoPratiqo",
-    footer: "Cours Pratiqo Inc. · The Language Café pilot is in preparation.",
+    joinTitle: "Every conversation starts somewhere.", joinText: "Native booking is coming with the calendar. For now, express your interest by email; this is not a reservation.",
+    explore: "Keep learning with YoPratiqo", footer: "Language Café is a Cours Pratiqo Inc. pilot. No session is confirmed yet.",
+    status: "In preparation", email: "Report a concern",
   },
   es: {
-    top: "Una iniciativa de Pratiqo",
-    home: "Volver a Pratiqo",
-    languageLabel: "Idioma de la página",
-    badge: "Proyecto piloto · francés + español · 18+",
-    title1: "Habla con",
-    title2: "el mundo.",
-    sub: "Comparte tu idioma. Descubre otras culturas. Practica con personas reales en pequeños cafés de conversación guiados.",
-    free: "Intercambios gratuitos entre participantes",
-    voice: "Puedes escuchar antes de hablar",
-    hosted: "Encuentros con anfitrión, sin mensajes privados no solicitados",
-    mainCta: "Quiero participar",
-    howCta: "Cómo funciona",
-    preview: "Piloto en preparación · fechas pendientes de confirmación",
-    sceneTitle: "Un café pequeño. Dos idiomas. Conversaciones reales.",
-    sceneFrench: "10 minutes en français",
-    sceneSpanish: "10 minutos en español",
-    sceneWelcome: "Bienvenue ! ¡Bienvenidos!",
-    sceneTime: "30 min",
-    sceneSeats: "5 a 8 personas",
-    stepsTitle: "¿Cómo funciona?",
-    stepsIntro: "No hace falta buscar perfiles durante horas. Conoce gente de forma natural en un grupo pequeño.",
+    back: "Pratiqo", language: "Idioma de la página", eyebrow: "Una iniciativa Pratiqo · Piloto 18+",
+    heading: "Los idiomas se practican", accent: "en compañía.",
+    intro: "No tienes que hablar perfectamente. Ven a conversar, escuchar y conocer a personas que también están aprendiendo. Sin presión y sin necesidad de encender la cámara.",
+    cta: "Descubrir los cafés", secondCta: "Cómo funciona",
+    trust1: "Totalmente gratis", trust2: "Cámara opcional", trust3: "Encuentros guiados y respetuosos",
+    availability: "El primer café está en preparación. Aún no hay fechas ni reservas disponibles.",
+    upcoming: "Las conversaciones", upcomingSub: "Elige la modalidad que prefieras. Empezaremos con un grupo de francés y español.",
+    group: "En grupo", groupDescription: "Una conversación guiada, preguntas sencillas y la libertad de escuchar antes de hablar.",
+    pair: "Francés ↔ Español", pilot: "Primer grupo en preparación", duration: "30 minutos", capacity: "5 a 8 adultos",
+    noDate: "Fecha por anunciar", interest: "Quiero recibir noticias",
+    duo: "De a dos", duoDescription: "Una conversación más personal, a tu ritmo. Esta modalidad todavía no está disponible.",
+    coming: "Próximamente", duoDuration: "20 minutos previstos", preview: "Reservas aún no disponibles",
+    how: "Cómo funciona", howSub: "Nada de restaurantes virtuales. Solo personas, idiomas y conversación.",
     steps: [
-      ["01", "Elige tu café", "Expresa interés en un encuentro francés–español. El anfitrión confirma las plazas por correo."],
-      ["02", "Participa a tu ritmo", "Únete a una conversación guiada de 30 minutos. Puedes escuchar o pasar tu turno."],
-      ["03", "Sigue practicando", "Después de cada café, puedes volver al siguiente. No hay mensajes privados en el piloto."],
+      ["01", "Elige una conversación", "Consulta los encuentros y horarios cuando estén confirmados."],
+      ["02", "Entra desde Pratiqo", "Más adelante podrás reservar gratis con tu cuenta y entrar a la sala sin salir del sitio."],
+      ["03", "Habla… o escucha", "El micrófono y la cámara empiezan apagados. Tú decides cuándo participar."],
     ],
-    scheduleTitle: "Un café, no una clase magistral",
-    scheduleSub: "Todas las personas pueden participar. El anfitrión equilibra el tiempo de ambos idiomas.",
-    parts: [
-      ["3 min", "Bienvenida y normas"],
-      ["10 min", "Hablamos en francés"],
-      ["10 min", "Conversamos en español"],
-      ["5 min", "Conversación cultural"],
-      ["2 min", "¿Nos vemos la próxima vez?"],
+    cameraTitle: "No tienes que mostrar tu cara.", cameraText: "Cámara apagada por defecto. Nadie te pedirá que la enciendas. También puedes empezar escuchando.",
+    cameraOff: "Cámara apagada", micOff: "Micrófono apagado", safeTitle: "Un espacio para aprender, no para recibir publicidad.",
+    safeText: "Conversaciones guiadas solo para adultos, sin grabación. No se permite coqueteo, acoso ni venta de servicios. Contacta al organizador ante cualquier problema.",
+    rulesTitle: "Reglas sencillas para todos", rules: [
+      "Solo para mayores de 18 años.",
+      "Respeta los acentos, niveles y el derecho a pasar turno.",
+      "Sin grabaciones, transcripciones ni obligación de usar cámara.",
+      "Sin coqueteo, publicidad ni solicitudes de datos de contacto privados.",
+      "El anfitrión puede intervenir o retirar a alguien; informa sobre cualquier incidente.",
     ],
-    topicLabel: "Primer tema propuesto",
-    topic: "On fait connaissance / Nos conocemos",
-    topicSub: "Comparte tus pasatiempos, una expresión regional o una comida de tu país.",
-    none: "Todavía no se han confirmado fechas, plazas ni reuniones.",
-    principlesTitle: "Un espacio para aprender, no para vender",
-    principles: [
-      ["Solo mayores de 18 años", "El piloto es solo para adultos."],
-      ["No es una app de citas", "No se permite coqueteo, acoso, discriminación ni comentarios sexuales."],
-      ["Sin venta de clases", "Los cafés son intercambios gratuitos, distintos de las clases pagadas con profesores."],
-      ["Privacidad", "Sin grabaciones, intercambio de datos personales ni enlaces públicos."],
-      ["Hablar es opcional", "Puedes escuchar o pasar tu turno cuando quieras."],
-    ],
-    report: "Para informar sobre un problema: ",
-    contact: "Contactar al organizador",
-    rulesTitle: "Normas del café",
-    rulesIntro: "El anfitrión puede interrumpir una conversación o retirar a quien no respete las normas.",
-    rules: [
-      "Respeta los acentos y niveles de todos. Da espacio a ambos idiomas.",
-      "No pidas datos personales, fotos ni publiques información sobre otras personas.",
-      "Sin grabaciones ni transcripciones durante el piloto. La cámara es opcional.",
-      "Sin propuestas comerciales, captación de alumnos ni presión para contratar clases.",
-      "Sigue las instrucciones del anfitrión e informa sobre conductas inapropiadas.",
-    ],
-    joinTitle: "¿Un lugar en la mesa?",
-    joinIntro: "Preparamos el primer grupo pequeño. Expresa tu interés por correo; el anfitrión enviará los detalles tras revisar la privacidad y el calendario.",
-    privacy: "Esta vista previa no registra inscripciones. El botón prepara un correo que envías tú. Los mensajes recibidos se tratarán según las normas de privacidad; la participación necesita confirmación personal.",
-    why: "¿Por qué Pratiqo?",
-    identity: "Pratiqo conecta a quienes quieren aprender; YoPratiqo les permite estudiar a su ritmo. El Café añade lo esencial: hablar con otras personas.",
-    teachers: "Las clases con profesores son un servicio aparte. Los cafés no requieren pago ni pases de YoPratiqo.",
-    learner: "Explorar YoPratiqo",
-    footer: "Cours Pratiqo Inc. · El Café de los idiomas está en preparación.",
+    joinTitle: "Toda conversación empieza aquí.", joinText: "Las reservas integradas llegarán con el calendario. Por ahora, expresa tu interés por correo: no es una reserva.",
+    explore: "Sigue aprendiendo con YoPratiqo", footer: "El Café de los idiomas es un piloto de Cours Pratiqo Inc. Aún no hay reuniones confirmadas.",
+    status: "En preparación", email: "Informar de un problema",
   },
 } as const;
 
-function LangLink({ locale, value, label }: { locale: YoLocale; value: YoLocale; label: string }) {
-  return <Link href={`/cafe-des-langues?lang=${value}`} aria-current={locale === value ? "page" : undefined}
-    className={`rounded-full px-3 py-2 text-xs font-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f7c975] ${locale === value ? "bg-amber-200 text-emerald-950" : "text-white/80 hover:bg-white/15"}`}>{label}</Link>;
+function LocaleLinks({ locale, label }: { locale: YoLocale; label: string }) {
+  return <nav aria-label={label} className="flex items-center gap-1 rounded-full border border-white/25 p-1">
+    {(["fr", "en", "es"] as const).map(value => <Link key={value} href={`/cafe-des-langues?lang=${value}`} aria-current={locale === value ? "page" : undefined}
+      className={`rounded-full px-3 py-1.5 text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${locale === value ? "bg-white text-[#12443f]" : "text-white/80 hover:bg-white/15"}`}>{value.toUpperCase()}</Link>)}
+  </nav>;
 }
 
 export default async function CafeDesLanguesPage({ searchParams }: PageProps) {
   const locale = getYoLocale((await searchParams).lang);
   const c = copy[locale];
-  return <div lang={locale} data-cafe-pilot-page className="min-h-screen bg-[#fbfaf6] text-[#1b382f]" style={{ colorScheme: "light" }}>
-    <header className="border-b border-[#dbe7df] bg-[#103d35] text-white">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-        <Link href="/" className="text-lg font-black tracking-tight" aria-label={c.home}>Pra<span className="text-[#ffbf79]">tiqo</span></Link>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="hidden text-xs font-semibold text-white/70 sm:inline">{c.languageLabel}</span>
-          <nav aria-label={c.languageLabel} className="flex items-center gap-1 rounded-full border border-white/20 p-1">
-            <LangLink locale={locale} value="fr" label="FR"/><LangLink locale={locale} value="en" label="EN"/><LangLink locale={locale} value="es" label="ES"/>
-          </nav>
-        </div>
+
+  return <div lang={locale} data-cafe-pilot-page className="min-h-screen bg-[#f9faf7] text-[#153d39]" style={{ colorScheme: "light" }}>
+    <header className="bg-[#103e3a] text-white">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
+        <Link href="/" className="text-xl font-extrabold tracking-tight" aria-label={c.back}>Pra<span className="text-[#71ddd0]">tiqo</span></Link>
+        <LocaleLinks locale={locale} label={c.language}/>
       </div>
     </header>
 
     <main>
-      <section className="relative overflow-hidden bg-[#103d35] px-4 pb-16 pt-14 text-white sm:px-6 sm:pb-24 sm:pt-20">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-40 -top-64 h-[700px] w-[700px] rounded-full border-[100px] border-[#1b7362]/50"/>
-        <div className="relative mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-12">
+      <section className="relative overflow-hidden bg-[#103e3a] px-5 pb-16 pt-12 text-white sm:px-8 sm:pb-24 sm:pt-20">
+        <div aria-hidden="true" className="pointer-events-none absolute right-[-90px] top-[-180px] h-[440px] w-[440px] rounded-full border-[75px] border-[#226259]/50"/>
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-[1.1fr_.9fr]">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-[#b5e0cb]/25 bg-white/10 px-4 py-2 text-xs font-bold tracking-wide text-[#d3f5df]"><Globe2 size={16} aria-hidden/>{c.badge}</p>
-            <h1 className="mt-7 font-serif text-5xl font-black leading-[1.07] tracking-tight sm:text-6xl lg:text-7xl">{c.title1}<span className="mt-1 block text-[#ffc987]">{c.title2}</span></h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-[#e7f4eb]">{c.sub}</p>
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-[#dbf5ef]"><Coffee size={15} aria-hidden/>{c.eyebrow}</span>
+            <h1 className="mt-7 max-w-2xl text-5xl font-semibold leading-[1.09] tracking-tight sm:text-6xl lg:text-7xl">{c.heading} <span className="text-[#9be5d5]">{c.accent}</span></h1>
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#e0f0eb]">{c.intro}</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#participer" className="inline-flex min-h-14 items-center gap-2 rounded-2xl bg-[#ffc987] px-5 py-3 font-black text-[#123e31] shadow-[0_5px_0_#d59755] hover:bg-[#ffe2af] focus-visible:outline-4 focus-visible:outline-white">{c.mainCta}<ArrowRight size={19} aria-hidden/></a>
-              <a href="#fonctionnement" className="inline-flex min-h-14 items-center gap-2 rounded-2xl border border-white/35 px-5 py-3 font-semibold text-white hover:bg-white/10">{c.howCta}<ArrowDown size={17} aria-hidden/></a>
+              <a href="#cafes" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-[#9ce6d6] px-6 py-3 font-bold text-[#103e3a] transition hover:bg-white focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-white">{c.cta}<ArrowRight size={18} aria-hidden/></a>
+              <a href="#fonctionnement" className="inline-flex min-h-12 items-center gap-2 rounded-full border border-white/40 px-6 py-3 font-semibold text-white transition hover:bg-white/10">{c.secondCta}<ChevronRight size={18} aria-hidden/></a>
             </div>
-            <p className="mt-5 text-xs font-medium text-[#cfead9]">{c.preview}</p>
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[#e8f5ed]">
-              <span className="inline-flex items-center gap-2"><CheckCircle2 size={17} className="text-[#b7f4b8]" aria-hidden/>{c.free}</span>
-              <span className="inline-flex items-center gap-2"><Volume2 size={17} className="text-[#b7f4b8]" aria-hidden/>{c.voice}</span>
+            <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[#e6f5f0]">
+              <span className="inline-flex items-center gap-2"><Check size={17} aria-hidden/>{c.trust1}</span>
+              <span className="inline-flex items-center gap-2"><VideoOff size={17} aria-hidden/>{c.trust2}</span>
+              <span className="inline-flex items-center gap-2"><ShieldCheck size={17} aria-hidden/>{c.trust3}</span>
             </div>
           </div>
-          <div data-cafe-concept-scene className="relative overflow-hidden rounded-[34px] border-2 border-[#6ba792]/60 bg-[#f9edd4] p-5 text-[#173a32] shadow-[0_25px_70px_rgba(0,0,0,.25)] sm:p-7">
-            <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[#ffd48c]/70"/>
-            <div className="relative">
-              <div className="flex items-center justify-between gap-4">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/85 px-4 py-2 text-sm font-black shadow-sm"><Coffee size={19} aria-hidden/> Le Café des langues</span>
-                <span className="rounded-full bg-[#165845] px-3 py-1.5 text-xs font-black text-white">{c.sceneTime}</span>
-              </div>
-              <div className="mt-8 flex justify-center gap-3">
-                <span className="grid h-24 w-24 place-items-center rounded-full border-[7px] border-[#f9bd78] bg-white text-4xl shadow-[0_10px_0_#d9985b]" aria-hidden>☕</span>
-                <span className="grid h-24 w-24 place-items-center rounded-full border-[7px] border-[#aed7be] bg-white text-4xl shadow-[0_10px_0_#79ae92]" aria-hidden>🌎</span>
-                <span className="grid h-24 w-24 place-items-center rounded-full border-[7px] border-[#f1cd90] bg-white text-4xl shadow-[0_10px_0_#d2a96a]" aria-hidden>💬</span>
-              </div>
-              <p className="mt-9 text-center font-serif text-3xl font-black leading-10">{c.sceneWelcome}</p>
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-[#b9d8c5] bg-white/90 p-4 text-center font-bold"><Languages size={22} className="mx-auto mb-2 text-[#167054]" aria-hidden/>{c.sceneFrench}</div>
-                <div className="rounded-2xl border border-[#efd2a3] bg-white/90 p-4 text-center font-bold"><MessageCircle size={22} className="mx-auto mb-2 text-[#a96b32]" aria-hidden/>{c.sceneSpanish}</div>
-              </div>
-              <p className="mt-5 text-center text-sm font-semibold text-[#396858]"><Users size={16} className="mr-2 inline" aria-hidden/>{c.sceneSeats}</p>
+          <div data-cafe-concept-scene className="relative rounded-[30px] border border-white/20 bg-[#174b46] p-5 shadow-2xl sm:p-7">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-[#e2f5f0]">{c.group}</span>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-[#e1f4ee]">{c.duration}</span>
             </div>
+            <div className="mt-7 grid grid-cols-3 gap-3">
+              {["A", "M", "S"].map((initial, index) => <div key={initial} className={`flex aspect-[.85] flex-col items-center justify-center rounded-2xl border border-white/10 ${index === 1 ? "bg-[#275d57]" : "bg-[#20544e]"}`}>
+                <div className="grid h-14 w-14 place-items-center rounded-full bg-[#bde9dc] text-lg font-semibold text-[#194d47]">{initial}</div>
+                <span className="mt-3 flex items-center gap-1 text-xs text-[#dcf2ed]"><MicOff size={12} aria-hidden/> {index === 0 ? "FR" : index === 1 ? "ES" : "FR"}</span>
+              </div>)}
+            </div>
+            <div className="mt-6 flex items-center justify-between rounded-2xl bg-[#0d332f]/70 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm text-white"><Headphones size={18} aria-hidden/>{c.cameraOff}</div>
+              <div className="flex gap-2 text-[#d9f4eb]"><MicOff size={18} aria-hidden/><VideoOff size={18} aria-hidden/></div>
+            </div>
+            <p className="mt-4 text-center text-xs text-[#d4eee7]">{c.status} · {c.noDate}</p>
           </div>
         </div>
       </section>
 
-      <section id="fonctionnement" className="px-4 py-16 sm:px-6 sm:py-20">
+      <section id="cafes" className="mx-auto max-w-6xl scroll-mt-6 px-5 py-16 sm:px-8 sm:py-20">
+        <div className="max-w-2xl">
+          <p className="text-xs font-bold uppercase tracking-[.18em] text-[#377b70]">{c.status}</p>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">{c.upcoming}</h2>
+          <p className="mt-3 text-base text-[#566d66]">{c.upcomingSub}</p>
+        </div>
+        <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          <article className="flex flex-col rounded-[26px] border border-[#c9dfd7] bg-white p-6 shadow-[0_15px_45px_rgba(18,62,58,.06)] sm:p-8">
+            <div className="flex items-center justify-between">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#d9f2e8] text-[#126050]"><Users size={24} aria-hidden/></span>
+              <span className="rounded-full bg-[#e5f5ec] px-3 py-1.5 text-xs font-semibold text-[#1b6752]">{c.pilot}</span>
+            </div>
+            <h3 className="mt-6 text-2xl font-semibold">{c.group}</h3>
+            <p className="mt-2 min-h-12 text-sm leading-6 text-[#576f68]">{c.groupDescription}</p>
+            <div className="mt-6 rounded-2xl bg-[#f3f8f5] p-5">
+              <p className="text-xl font-semibold">{c.pair}</p>
+              <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#47645b]">
+                <span className="inline-flex items-center gap-2"><CalendarDays size={15} aria-hidden/>{c.noDate}</span>
+                <span>{c.duration}</span><span>{c.capacity}</span>
+              </div>
+            </div>
+            <a href="#participer" className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#176e62] px-5 py-3 font-semibold text-white transition hover:bg-[#11574e]">{c.interest}<ArrowRight size={17} aria-hidden/></a>
+          </article>
+          <article className="flex flex-col rounded-[26px] border border-[#dce7e2] bg-[#f1f5f2] p-6 sm:p-8">
+            <div className="flex items-center justify-between">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-[#356b62]"><Headphones size={24} aria-hidden/></span>
+              <span className="rounded-full border border-[#d2ded7] bg-white px-3 py-1.5 text-xs font-semibold text-[#4b6a60]">{c.coming}</span>
+            </div>
+            <h3 className="mt-6 text-2xl font-semibold">{c.duo}</h3>
+            <p className="mt-2 min-h-12 text-sm leading-6 text-[#576f68]">{c.duoDescription}</p>
+            <div className="mt-6 rounded-2xl border border-dashed border-[#bdd2c7] p-5">
+              <p className="text-xl font-semibold">{c.pair}</p>
+              <p className="mt-3 text-sm text-[#55746a]">{c.duoDuration}</p>
+            </div>
+            <span aria-disabled="true" className="mt-6 inline-flex min-h-12 items-center justify-center rounded-xl border border-[#d0dbd5] px-5 py-3 font-semibold text-[#527167]">{c.preview}</span>
+          </article>
+        </div>
+        <p role="status" className="mt-5 flex items-start gap-2 rounded-2xl border border-[#e4e8dc] bg-[#fffdf5] px-4 py-3 text-sm text-[#646657]"><CalendarDays size={18} className="mt-0.5 shrink-0" aria-hidden/>{c.availability}</p>
+      </section>
+
+      <section id="fonctionnement" className="bg-white px-5 py-16 sm:px-8 sm:py-20">
         <div className="mx-auto max-w-6xl">
-          <div className="max-w-2xl"><p className="text-sm font-black uppercase tracking-widest text-[#176c57]">{c.top}</p><h2 className="mt-3 font-serif text-4xl font-black sm:text-5xl">{c.stepsTitle}</h2><p className="mt-4 text-base leading-8 text-[#4b645b]">{c.stepsIntro}</p></div>
-          <div className="mt-9 grid gap-4 md:grid-cols-3">
-            {c.steps.map(([number, title, detail]) => <article key={number} className="rounded-[26px] border border-[#d5e3d7] bg-white p-6 shadow-sm">
-              <span className="text-3xl font-black text-[#c98a4e]">{number}</span>
-              <h3 className="mt-4 text-xl font-black text-[#153e34]">{title}</h3>
-              <p className="mt-3 text-sm leading-7 text-[#4b645b]">{detail}</p>
-            </article>)}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-[#e9f3e9] px-4 py-16 sm:px-6 sm:py-20">
-        <div className="mx-auto grid max-w-6xl items-start gap-10 lg:grid-cols-[.9fr_1.1fr]">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-black text-[#1a6b52]"><Mic2 size={17} aria-hidden/>{c.sceneSeats}</span>
-            <h2 className="mt-5 font-serif text-4xl font-black">{c.scheduleTitle}</h2>
-            <p className="mt-4 text-base leading-8 text-[#476258]">{c.scheduleSub}</p>
-            <div className="mt-6 rounded-2xl border border-[#cae4cf] bg-white p-5">
-              <p className="text-xs font-bold uppercase tracking-wide text-[#21745c]">{c.topicLabel}</p>
-              <h3 className="mt-2 text-xl font-black">{c.topic}</h3>
-              <p className="mt-2 text-sm leading-7 text-[#546a60]">{c.topicSub}</p>
-            </div>
-          </div>
-          <div className="rounded-[28px] border border-[#c6dfce] bg-white p-5 shadow-sm sm:p-8">
-            {c.parts.map(([minutes, activity], index) => <div key={index} className={`flex items-start gap-4 py-4 ${index > 0 ? "border-t border-stone-100" : ""}`}>
-              <div className="w-16 shrink-0 rounded-xl bg-[#eff7ef] px-2 py-2 text-center text-sm font-black text-[#15664e]">{minutes}</div>
-              <div className="pt-1 font-semibold leading-7">{activity}</div>
+          <h2 className="text-3xl font-semibold sm:text-4xl">{c.how}</h2>
+          <p className="mt-3 max-w-2xl text-[#60766d]">{c.howSub}</p>
+          <div className="mt-9 grid gap-6 md:grid-cols-3">
+            {c.steps.map(([number, title, detail]) => <div key={number} className="border-t-2 border-[#8bd5c4] pt-5">
+              <span className="text-sm font-semibold text-[#3f857a]">{number}</span>
+              <h3 className="mt-3 text-xl font-semibold">{title}</h3>
+              <p className="mt-3 text-sm leading-7 text-[#5c7169]">{detail}</p>
             </div>)}
-            <p className="mt-5 rounded-xl bg-[#fff3e0] p-3 text-sm font-semibold text-[#805325]">{c.none}</p>
           </div>
         </div>
       </section>
 
-      <section id="regles" className="px-4 py-16 sm:px-6 sm:py-20">
-        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-2">
+      <section className="px-5 py-16 sm:px-8">
+        <div className="mx-auto grid max-w-6xl items-center gap-9 rounded-[30px] bg-[#e4f3ec] p-7 sm:p-12 lg:grid-cols-[1fr_1fr]">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full bg-[#eaf5ed] px-3 py-1 text-xs font-black text-[#1c7156]"><ShieldCheck size={16} aria-hidden/>{c.hosted}</p>
-            <h2 className="mt-5 font-serif text-4xl font-black">{c.principlesTitle}</h2>
-            <div className="mt-6 space-y-3">{c.principles.map(([title, detail]) => <div key={title} className="flex items-start gap-3">
-              <CheckCircle2 size={20} aria-hidden className="mt-1 shrink-0 text-[#267c59]"/>
-              <p className="text-sm leading-7"><strong className="font-black">{title}.</strong> <span className="text-[#53695e]">{detail}</span></p>
-            </div>)}</div>
+            <div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl bg-white text-[#175d51]"><VideoOff size={23} aria-hidden/></div>
+            <h2 className="text-3xl font-semibold sm:text-4xl">{c.cameraTitle}</h2>
+            <p className="mt-4 text-base leading-8 text-[#45665a]">{c.cameraText}</p>
           </div>
-          <div className="rounded-[30px] border border-[#d2e2d4] bg-white p-6 shadow-sm sm:p-8">
-            <h3 className="flex items-center gap-2 text-2xl font-black"><LockKeyhole size={22} aria-hidden/>{c.rulesTitle}</h3>
-            <p className="mt-3 text-sm leading-7 text-[#576b60]">{c.rulesIntro}</p>
-            <ol className="mt-5 space-y-4">{c.rules.map((rule, i) => <li key={rule} className="flex gap-3 text-sm leading-7"><span className="font-black text-[#167155]">{i + 1}.</span>{rule}</li>)}</ol>
-            <p className="mt-6 text-xs leading-6 text-[#576b60]">{c.report}<a href="mailto:info@pratiqo.ca" className="font-bold text-[#125b46] underline">info@pratiqo.ca</a>.</p>
+          <div className="grid gap-3">
+            <div className="flex items-center gap-4 rounded-2xl bg-white px-5 py-5"><VideoOff size={23} className="text-[#267e6d]" aria-hidden/><span className="font-semibold">{c.cameraOff}</span><Check size={20} className="ml-auto text-[#288775]" aria-hidden/></div>
+            <div className="flex items-center gap-4 rounded-2xl bg-white px-5 py-5"><MicOff size={23} className="text-[#267e6d]" aria-hidden/><span className="font-semibold">{c.micOff}</span><Check size={20} className="ml-auto text-[#288775]" aria-hidden/></div>
           </div>
         </div>
       </section>
 
-      <section id="participer" className="bg-[#f3f0e7] px-4 py-16 sm:px-6 sm:py-20">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[.88fr_1.12fr]">
+      <section id="regles" className="mx-auto max-w-6xl scroll-mt-8 px-5 pb-16 sm:px-8 sm:pb-20">
+        <div className="grid gap-10 lg:grid-cols-[.9fr_1.1fr]">
           <div>
-            <p className="text-sm font-bold uppercase tracking-widest text-[#26765c]">Le Café des langues</p>
-            <h2 className="mt-3 font-serif text-4xl font-black sm:text-5xl">{c.joinTitle}</h2>
-            <p className="mt-5 max-w-lg text-base leading-8 text-[#4b6658]">{c.joinIntro}</p>
-            <p className="mt-5 flex items-start gap-2 text-xs leading-6 text-[#667569]"><ShieldCheck size={18} className="mt-1 shrink-0" aria-hidden/>{c.privacy}</p>
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#e5f3ed] text-[#176757]"><HeartHandshake size={24} aria-hidden/></span>
+            <h2 className="mt-5 text-3xl font-semibold">{c.safeTitle}</h2>
+            <p className="mt-4 text-base leading-7 text-[#567166]">{c.safeText}</p>
+            <a href="mailto:info@pratiqo.ca" className="mt-5 inline-flex items-center gap-2 font-semibold text-[#176e62] underline underline-offset-4"><Mail size={17} aria-hidden/>{c.email}</a>
+          </div>
+          <div className="rounded-[25px] border border-[#d9e8df] bg-white p-6 sm:p-8">
+            <h3 className="text-xl font-semibold">{c.rulesTitle}</h3>
+            <ul className="mt-5 space-y-4">
+              {c.rules.map(rule => <li key={rule} className="flex gap-3 text-sm leading-6 text-[#50695e]"><ShieldCheck size={18} className="mt-0.5 shrink-0 text-[#25816b]" aria-hidden/>{rule}</li>)}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="participer" className="scroll-mt-8 bg-[#eff6f1] px-5 py-16 sm:px-8 sm:py-20">
+        <div className="mx-auto grid max-w-6xl items-start gap-8 lg:grid-cols-[.82fr_1.18fr]">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[.18em] text-[#2b7667]">{c.status}</p>
+            <h2 className="mt-3 text-3xl font-semibold leading-tight sm:text-4xl">{c.joinTitle}</h2>
+            <p className="mt-5 text-base leading-8 text-[#587368]">{c.joinText}</p>
+            <Link href="/yo/langues" className="mt-6 inline-flex items-center gap-2 font-semibold text-[#176e62] hover:underline">{c.explore}<ArrowRight size={17} aria-hidden/></Link>
           </div>
           <CafePilotInterest locale={locale}/>
         </div>
       </section>
-
-      <section className="px-4 py-14 sm:px-6">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 rounded-[32px] bg-[#123e35] p-7 text-white sm:p-10 lg:grid-cols-[1fr_auto]">
-          <div>
-            <p className="inline-flex items-center gap-2 text-sm font-bold text-[#bdeacc]"><HeartHandshake size={19} aria-hidden/>{c.why}</p>
-            <h2 className="mt-3 font-serif text-3xl font-black">{c.sceneTitle}</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-[#e4f0e9]">{c.identity}</p>
-            <p className="mt-3 text-xs leading-6 text-[#c5ded0]">{c.teachers}</p>
-          </div>
-          <Link href="/yo/langues" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[#ffc987] px-5 py-3 font-black text-[#123e31] hover:bg-[#ffdcab]">
-            <BookOpen size={19} aria-hidden/>{c.learner}<ArrowRight size={18} aria-hidden/>
-          </Link>
-        </div>
-      </section>
     </main>
-    <footer className="border-t border-[#d2e0d6] px-4 py-6 text-center text-xs leading-6 text-[#62746b]">{c.footer}</footer>
+
+    <footer className="bg-[#103e3a] px-5 py-7 text-center text-xs text-white/75 sm:px-8">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3"><span>{c.footer}</span><span className="inline-flex items-center gap-1"><Globe2 size={14} aria-hidden/> Pratiqo</span></div>
+    </footer>
   </div>;
 }
