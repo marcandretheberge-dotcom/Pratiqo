@@ -1,4 +1,5 @@
 import { ITALIAN_ADVENTURE_PALETTES } from "./ItalianAdventureLandscape";
+import { ITALIAN_WIDE_ROAD_PATH } from "./ItalianAdventurePathGeometry";
 
 /** A second, independently composed landscape for laptop and desktop.
  * This is not a scaled portrait SVG: road, trees, villages and castle are placed
@@ -12,7 +13,7 @@ export function ItalianAdventureLandscapeWide({ worldId, complete }: {
   const glow = `yo-wide-glow-${worldId}`, shade = `yo-wide-shade-${worldId}`;
   const night = worldId === "independence";
   const coast = worldId === "daily-life";
-  const road = "M240 130 C255 190 558 177 701 237 C776 296 303 264 259 365 C217 450 693 381 701 486 C711 557 511 531 480 590";
+  const road = ITALIAN_WIDE_ROAD_PATH;
   const pines = [
     [65,290,.9], [122,255,.67], [876,214,.82], [920,288,.73],
     [46,477,.91], [154,509,.68], [882,527,.92], [806,563,.64],

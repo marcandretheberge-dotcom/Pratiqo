@@ -1,12 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
 import { Check, Crown, LockKeyhole, Play, Sparkles, Star } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { ItalianWorldView } from "@/lib/yo/italian/worlds";
 import type { YoLocale } from "@/lib/yo/types";
 import { ItalianAdventureLandscape } from "./ItalianAdventureLandscape";
 import { ItalianAdventureLandscapeWide } from "./ItalianAdventureLandscapeWide";
+import { ItalianAdventureProgressPath } from "./ItalianAdventureProgressPath";
+import { ItalianAtlasAtmosphere } from "./ItalianAtlasAtmosphere";
+import { ITALIAN_CITY_PATH_STOPS } from "./ItalianAdventurePathGeometry";
 import { ItalianCityArtwork } from "./ItalianCityArtwork";
 
 type Props = {
@@ -33,6 +37,7 @@ const stops = [
 ] as const;
 
 export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, canReview, onPlayCurrentCity, currentActionLabel, guideMessage }: Props) {
+  const reduceMotion = Boolean(useReducedMotion());
   const copy = {
     fr: {
       title: "Carte d'aventure", level: "Ton aventure", mastered: "Villes maîtrisées",
@@ -63,12 +68,16 @@ export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, c
   const nextStop = world.citiesWithProgress.find(city => city.unlocked && !city.mastered);
   const selectedStop = world.citiesWithProgress.find(city => city.unitId === currentUnitId);
   const guideId = nextStop?.unitId ?? (selectedStop?.unlocked ? currentUnitId : world.citiesWithProgress.find(city => city.unlocked)?.unitId);
+  const guideIndex = world.citiesWithProgress.findIndex(city => city.unitId === guideId);
+  const pathProgress = world.complete ? 1 : guideIndex >= 0 ? ITALIAN_CITY_PATH_STOPS[guideIndex] ?? 0 : 0;
 
   return <section data-yoppo-immersive-atlas={world.id} aria-label={copy.title + ": " + world.title[locale]}
     className="relative isolate aspect-[4/7] w-full overflow-hidden lg:aspect-[3/2] rounded-[28px] border-[4px] border-[#f9e2a4] bg-[#5fc2b2] shadow-[0_12px_0_#987350,0_22px_40px_rgba(33,67,59,.24)]">
     <div className="absolute inset-0 h-full w-full">
       <div className="absolute inset-0 lg:hidden" data-yoppo-portrait-art><ItalianAdventureLandscape worldId={world.id} complete={world.complete}/></div>
       <div className="absolute inset-0 hidden lg:block" data-yoppo-desktop-art><ItalianAdventureLandscapeWide worldId={world.id} complete={world.complete}/></div>
+      <ItalianAdventureProgressPath key={world.id} worldId={world.id} progress={pathProgress}/>
+      <ItalianAtlasAtmosphere worldId={world.id}/>
       <div className="absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-[#173d49]/45 via-[#173d49]/15 to-transparent" aria-hidden="true"/>
       <header className="absolute inset-x-3 top-3 z-20 flex items-start justify-between gap-2 sm:inset-x-5 sm:top-5">
         <div className="min-w-0 rounded-2xl border border-white/40 bg-[#173f47]/90 px-3 py-2.5 text-white shadow-lg backdrop-blur-sm">
@@ -91,16 +100,20 @@ export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, c
           if (!position) return null;
           const node = <div className="group relative flex w-[112px] flex-col items-center sm:w-[136px]" data-yoppo-map-token={city.unitId}>
             {isGuide ? <span aria-hidden="true" className="yo-map-pulse absolute -inset-x-2 -top-2 h-24 rounded-full bg-[#fff19e]/55 blur-xl"/> : null}
-            <div className={"relative h-[78px] w-[100px] overflow-hidden rounded-[26px] border-[4px] shadow-[0_7px_0_rgba(65,61,37,.34),0_14px_25px_rgba(26,55,46,.28)] transition-transform duration-200 sm:h-[96px] sm:w-[128px] " +
-              (isGuide ? "border-[#ffdc66] bg-[#fff8d9] ring-[3px] ring-white/80 group-hover:-translate-y-1 " :
-                city.mastered ? "border-[#88e4a3] bg-[#eeffe1] " :
-                accessible ? "border-[#fff0b5] bg-[#fff8e9] group-hover:-translate-y-1 " :
-                "border-[#c0d1c7] bg-[#e7eee9] opacity-80")}>
+            <motion.div
+              data-yoppo-active-city={isGuide ? "true" : undefined}
+              animate={isGuide && !reduceMotion ? { scale: [1, 1.025, 1], y: [0, -1, 0] } : { scale: 1, y: 0 }}
+              transition={isGuide && !reduceMotion ? { duration: 3.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0 }}
+              className={"relative h-[78px] w-[100px] overflow-hidden rounded-[26px] border-[4px] shadow-[0_7px_0_rgba(65,61,37,.34),0_14px_25px_rgba(26,55,46,.28)] transition-[border-color,box-shadow] duration-200 sm:h-[96px] sm:w-[128px] " +
+                (isGuide ? "border-[#ffdc66] bg-[#fff8d9] ring-[3px] ring-white/80 " :
+                  city.mastered ? "border-[#88e4a3] bg-[#eeffe1] " :
+                  accessible ? "border-[#fff0b5] bg-[#fff8e9] group-hover:-translate-y-1 " :
+                  "border-[#c0d1c7] bg-[#e7eee9] opacity-80")}>
               <ItalianCityArtwork unitId={city.unitId} locale={locale} compact decorative
                 className={"h-full w-full " + (!accessible ? "grayscale-[.85] opacity-65" : "")}/>
               {city.mastered ? <span className="absolute right-1 top-1 grid h-7 w-7 place-items-center rounded-full border-2 border-white bg-[#23865c] text-white shadow"><Check size={18} strokeWidth={4} aria-hidden/></span> : null}
               {!accessible ? <span className="absolute inset-0 grid place-items-center bg-[#2f453e]/30"><span className="grid h-10 w-10 place-items-center rounded-full border-2 border-white/70 bg-[#34443e]/90 text-white shadow-lg"><LockKeyhole size={20} aria-hidden/></span></span> : null}
-            </div>
+            </motion.div>
             <span className={"relative -mt-3 max-w-full truncate rounded-full border-[2px] px-3 py-1 text-[13px] font-black leading-5 shadow-[0_4px_0_rgba(56,63,47,.25)] sm:text-base " +
               (isGuide ? "border-[#d0792f] bg-[#fff2b5] text-[#663c17] " :
                 city.mastered ? "border-[#278258] bg-[#e0ffdc] text-[#185842] " :

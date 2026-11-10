@@ -46,6 +46,7 @@ for (const locale of ["fr", "en", "es"] as const) {
     assert.ok(html.includes("data-yoppo-portrait-art") && html.includes("data-yoppo-desktop-art"), "both responsive art directions are present");
     assert.ok(html.includes('data-atlas-landscape-wide="' + world.id + '"'), "desktop artwork uses its own original SVG viewBox");
     assert.ok(html.includes('data-yoppo-world-gate="closed"'));
+    assert.equal((html.match(/class="yo-atmosphere-particle/g) ?? []).length, 8, "ambient layer stays intentionally tiny");
     assert.equal((html.match(/<a /g) ?? []).length, world.id === "discover" ? 1 : 0,
       "no unlocked-by-animation exploit");
     if (world.id === "discover") {
@@ -53,6 +54,8 @@ for (const locale of ["fr", "en", "es"] as const) {
       assert.equal((html.match(/class="yo-yoppo-map-guide /g) ?? []).length, 1,
         "one Yoppo guide, regardless of the number of animation rules");
       assert.ok(html.includes('data-yoppo-map-token="u01"'));
+      assert.ok(html.includes('data-yoppo-path-progress="0.08"'), "new learner route glows only to the first active city");
+      assert.ok(html.includes('data-yoppo-active-city="true"'));
     }
   }
 }
@@ -69,6 +72,7 @@ assert.equal((nextHtml.match(/<a /g) ?? []).length, 2, "reaching Parma requires 
 const secondStop = nextHtml.split("<li ")[2]?.split("</li>")[0] ?? "";
 assert.ok(secondStop.includes('aria-current="step"') && secondStop.includes('data-yoppo-map-token="u02"'),
   "Yoppo follows the first unmastered unlocked city, even on an older route");
+assert.ok(nextHtml.includes('data-yoppo-path-progress="0.34"'), "mastery advances the illuminated route to the next city");
 
 for (const unit of personalizedItalianCatalog.units.slice(1, 4)) {
   const assessment = personalizedItalianCatalog.assessments.find(a => a.id === unit.quizId)!;
@@ -83,13 +87,20 @@ const finished = getHtml(worlds[0], "fr", "u04");
 assert.ok(finished.includes('data-yoppo-world-gate="open"'));
 assert.equal((finished.match(/<a /g) ?? []).length, 4);
 assert.ok(!finished.includes('data-yoppo-world-gate="closed"'));
+assert.ok(finished.includes('data-yoppo-path-progress="1.00"'), "completed world illuminates the full route to the castle");
 
 const mapSource = readFileSync("components/yo/italian/guided/ItalianWorldAtlas.tsx", "utf8");
 const sceneSource = readFileSync("components/yo/italian/guided/ItalianAdventureLandscape.tsx", "utf8");
 const navigatorSource = readFileSync("components/yo/italian/guided/ItalianWorldNavigator.tsx", "utf8");
+const progressPathSource = readFileSync("components/yo/italian/guided/ItalianAdventureProgressPath.tsx", "utf8");
+const atmosphereSource = readFileSync("components/yo/italian/guided/ItalianAtlasAtmosphere.tsx", "utf8");
 assert.match(navigatorSource, /<ItalianWorldAtlas world=\{world\}/);
 assert.doesNotMatch(navigatorSource, /grid-cols-2/);
-for (const [name, source] of [["map", mapSource], ["scene", sceneSource]] as const) {
+assert.match(progressPathSource, /motion\.path/);
+assert.match(progressPathSource, /useReducedMotion/);
+assert.match(mapSource, /scale: \[1, 1\.025, 1\]/);
+assert.match(atmosphereSource, /prefers-reduced-motion:reduce/);
+for (const [name, source] of [["map", mapSource], ["scene", sceneSource], ["progress path", progressPathSource], ["atmosphere", atmosphereSource]] as const) {
   assert.doesNotMatch(source, /recordCourseAssessment|recordCourseActivity|localStorage|fetch\(|\.rpc\(|stripe|yoppo.?credit/i,
     name + " never changes entitlement, evaluation, purchase or progress");
 }

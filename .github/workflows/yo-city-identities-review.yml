@@ -11,6 +11,9 @@ on:
       - "components/yo/italian/guided/ItalianCityArrival.tsx"
       - "components/yo/italian/guided/ItalianAchievementPrintable.tsx"
       - "components/yo/italian/guided/ItalianWorldAtlas.tsx"
+      - "components/yo/italian/guided/ItalianAdventurePathGeometry.ts"
+      - "components/yo/italian/guided/ItalianAdventureProgressPath.tsx"
+      - "components/yo/italian/guided/ItalianAtlasAtmosphere.tsx"
       - "components/yo/italian/guided/ItalianAdventureLandscapeWide.tsx"
       - "components/yo/italian/guided/ItalianPrintableMenu.tsx"
       - "components/yo/italian/guided/ItalianAdventureLandscape.tsx"
@@ -65,6 +68,6 @@ jobs:
       - name: Premium sound feedback and pitch-variation regression
         run: node --import tsx tests/yo/yopratiqoFeedback.test.tsx
       - name: Focused lint
-        run: npx eslint lib/yo/italian/cityIdentity.ts lib/yo/feedback/feedbackPlayer.ts components/yo/italian/guided/ItalianCityArtwork.tsx components/yo/italian/guided/ItalianCityArrival.tsx components/yo/italian/guided/ItalianAchievementPrintable.tsx components/yo/italian/guided/ItalianWorldAtlas.tsx components/yo/italian/guided/ItalianAdventureLandscape.tsx components/yo/italian/guided/ItalianWorldNavigator.tsx components/yo/italian/guided/GuidedItalianCourse.tsx components/yo/italian/guided/GuidedGame.tsx components/yo/italian/guided/copy.ts components/yo/italian/guided/ItalianAdventureLandscapeWide.tsx components/yo/italian/guided/ItalianPrintableMenu.tsx tests/yo/yopratiqoDesktopMapPrintables.test.tsx tests/yo/yopratiqoItalianCityIdentities.test.tsx tests/yo/yopratiqoAdventureMapRedesign.test.tsx tests/yo/yopratiqoMapFirstMissionWindow.test.tsx tests/yo/yopratiqoFeedback.test.tsx
+        run: npx eslint lib/yo/italian/cityIdentity.ts lib/yo/feedback/feedbackPlayer.ts components/yo/italian/guided/ItalianAdventurePathGeometry.ts components/yo/italian/guided/ItalianAdventureProgressPath.tsx components/yo/italian/guided/ItalianAtlasAtmosphere.tsx components/yo/italian/guided/ItalianCityArtwork.tsx components/yo/italian/guided/ItalianCityArrival.tsx components/yo/italian/guided/ItalianAchievementPrintable.tsx components/yo/italian/guided/ItalianWorldAtlas.tsx components/yo/italian/guided/ItalianAdventureLandscape.tsx components/yo/italian/guided/ItalianWorldNavigator.tsx components/yo/italian/guided/GuidedItalianCourse.tsx components/yo/italian/guided/GuidedGame.tsx components/yo/italian/guided/copy.ts components/yo/italian/guided/ItalianAdventureLandscapeWide.tsx components/yo/italian/guided/ItalianPrintableMenu.tsx tests/yo/yopratiqoDesktopMapPrintables.test.tsx tests/yo/yopratiqoItalianCityIdentities.test.tsx tests/yo/yopratiqoAdventureMapRedesign.test.tsx tests/yo/yopratiqoMapFirstMissionWindow.test.tsx tests/yo/yopratiqoFeedback.test.tsx
       - name: Whitespace check
         run: git diff --check origin/feat/yoppo-immersive-atlas-boss-20261108...HEAD
