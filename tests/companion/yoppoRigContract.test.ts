@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import {
+  YOPPO_ARTBOARD_CONTRACT,
+  YOPPO_HEAD_TURN_INPUT,
   YOPPO_HEAD_TURN_LIMIT_DEG,
   YOPPO_IDENTITY_MASTER,
+  YOPPO_MORPH_TOPOLOGY,
   YOPPO_REFERENCE_POLICY,
   YOPPO_RIG_LAYERS,
   YOPPO_RIVE_BEHAVIORS,
@@ -10,6 +13,25 @@ import {
 
 assert.equal(YOPPO_IDENTITY_MASTER, "/companion/travel/companion-travel-idle.png");
 assert.equal(YOPPO_HEAD_TURN_LIMIT_DEG, 15);
+assert.deepEqual([YOPPO_HEAD_TURN_INPUT.min, YOPPO_HEAD_TURN_INPUT.max], [-1, 1]);
+assert.equal(YOPPO_HEAD_TURN_INPUT.mapsToDegrees, 15);
+assert.equal(YOPPO_ARTBOARD_CONTRACT.width, 1024);
+assert.equal(YOPPO_ARTBOARD_CONTRACT.height, 1024);
+assert.equal(YOPPO_ARTBOARD_CONTRACT.bodyAnchorX, 512);
+assert.equal(YOPPO_ARTBOARD_CONTRACT.groundY, 920);
+assert.equal(YOPPO_ARTBOARD_CONTRACT.reconstructionScale, 1.86);
+assert.ok(YOPPO_ARTBOARD_CONTRACT.topMargin >= 140);
+assert.ok(YOPPO_ARTBOARD_CONTRACT.maxBodyRisePx <= YOPPO_ARTBOARD_CONTRACT.topMargin - 60);
+for (const group of YOPPO_MORPH_TOPOLOGY) {
+  assert.ok(group.members.length >= 2);
+  if (group.mode === "matched-morph") {
+    assert.ok(group.invariant?.includes("same vertex count"));
+    assert.ok(group.startPoint);
+    assert.ok(group.winding);
+  }
+}
+assert.equal(YOPPO_MORPH_TOPOLOGY.find(group => group.group === "hand-left")?.mode, "swap-only");
+assert.equal(YOPPO_MORPH_TOPOLOGY.find(group => group.group === "hand-right")?.mode, "swap-only");
 assert.deepEqual(YOPPO_REFERENCE_POLICY.canonical, ["idle"]);
 assert.ok(YOPPO_RIVE_BEHAVIORS.includes("walking"));
 assert.equal(YOPPO_SOURCE_AUDIT.sourceWidth, 500);
