@@ -1,4 +1,4 @@
-export type YoppoRigMode = "transform" | "bone" | "mask" | "swap" | "mesh" | "fx";
+export type YoppoRigMode = "transform" | "bone" | "mask" | "swap" | "mesh" | "morph" | "fx";
 
 export type YoppoRigLayer = {
   id: string;
@@ -12,6 +12,108 @@ export const YOPPO_RIG_VERSION = "yoppo-rive-v1" as const;
 export const YOPPO_IDENTITY_MASTER = "/companion/travel/companion-travel-idle.png" as const;
 export const YOPPO_CONSTRUCTION_CANVAS = 1024 as const;
 export const YOPPO_HEAD_TURN_LIMIT_DEG = 15 as const;
+export const YOPPO_HEAD_TURN_INPUT = {
+  min: -1,
+  max: 1,
+  mapsToDegrees: 15,
+  easing: "ease-out-near-extremes",
+} as const;
+
+export const YOPPO_ARTBOARD_CONTRACT = {
+  width: 1024,
+  height: 1024,
+  anchorPolicy: "body-ground-contact-not-visible-bounds",
+  bodyAnchorX: 512,
+  groundY: 920,
+  referenceSourceBodyCenterX: 250,
+  referenceSourceGroundY: 453,
+  reconstructionScale: 1.86,
+  estimatedVisibleBounds: { minX: 270, minY: 152, maxX: 834, maxY: 920 },
+  topMargin: 152,
+  bottomMargin: 104,
+  maxBodyRisePx: 72,
+  fxOverflowPolicy: "stay-inside-artboard",
+} as const;
+
+export type YoppoTopologyMode = "matched-morph" | "swap-only" | "transform-only";
+
+export type YoppoTopologyRule = {
+  group: string;
+  mode: YoppoTopologyMode;
+  members: readonly string[];
+  invariant?: string;
+  startPoint?: string;
+  winding?: "clockwise" | "counter-clockwise";
+};
+
+export const YOPPO_MORPH_TOPOLOGY: readonly YoppoTopologyRule[] = [
+  {
+    group: "mouth-expression",
+    mode: "matched-morph",
+    members: ["neutral", "smile", "open", "concerned"],
+    invariant: "same vertex count, same vertex order, same semantic corners/curves",
+    startPoint: "viewer-left mouth corner",
+    winding: "clockwise",
+  },
+  {
+    group: "lid-left-upper",
+    mode: "matched-morph",
+    members: ["open", "blink", "squint", "thinking"],
+    invariant: "same vertex count/order/start point; preserve eye-mask contact",
+    startPoint: "outer eye corner",
+    winding: "clockwise",
+  },
+  {
+    group: "lid-left-lower",
+    mode: "matched-morph",
+    members: ["open", "smile", "squint"],
+    invariant: "same vertex count/order/start point; preserve eye-mask contact",
+    startPoint: "outer eye corner",
+    winding: "clockwise",
+  },
+  {
+    group: "lid-right-upper",
+    mode: "matched-morph",
+    members: ["open", "blink", "squint", "thinking"],
+    invariant: "same vertex count/order/start point; preserve eye-mask contact",
+    startPoint: "outer eye corner",
+    winding: "counter-clockwise",
+  },
+  {
+    group: "lid-right-lower",
+    mode: "matched-morph",
+    members: ["open", "smile", "squint"],
+    invariant: "same vertex count/order/start point; preserve eye-mask contact",
+    startPoint: "outer eye corner",
+    winding: "counter-clockwise",
+  },
+  {
+    group: "brow-left",
+    mode: "matched-morph",
+    members: ["neutral", "thinking", "concerned", "happy"],
+    invariant: "same vertex count/order/start point",
+    startPoint: "inner brow end",
+    winding: "clockwise",
+  },
+  {
+    group: "brow-right",
+    mode: "matched-morph",
+    members: ["neutral", "thinking", "concerned", "happy"],
+    invariant: "same vertex count/order/start point",
+    startPoint: "inner brow end",
+    winding: "counter-clockwise",
+  },
+  {
+    group: "hand-left",
+    mode: "swap-only",
+    members: ["relaxed", "open", "point", "fist", "hold"],
+  },
+  {
+    group: "hand-right",
+    mode: "swap-only",
+    members: ["relaxed", "open", "point", "fist", "hold"],
+  },
+] as const;
 
 export const YOPPO_SOURCE_AUDIT = {
   sourceWidth: 500,
@@ -98,21 +200,21 @@ export const YOPPO_RIG_LAYERS: readonly YoppoRigLayer[] = [
   { id: "Eye_L.Mask", parent: "Eye_L.White", mode: "mask", pivot: "eye-l-center" },
   { id: "Eye_L.Pupil", parent: "Eye_L.Mask", mode: "transform", pivot: "eye-l-center" },
   { id: "Eye_L.Highlight", parent: "Eye_L.Pupil", mode: "transform", pivot: "eye-l-center" },
-  { id: "Eye_L.Lid_Upper", parent: "Eye_L.Mask", mode: "swap", pivot: "eye-l-top" },
-  { id: "Eye_L.Lid_Lower", parent: "Eye_L.Mask", mode: "swap", pivot: "eye-l-bottom" },
+  { id: "Eye_L.Lid_Upper", parent: "Eye_L.Mask", mode: "morph", pivot: "eye-l-top" },
+  { id: "Eye_L.Lid_Lower", parent: "Eye_L.Mask", mode: "morph", pivot: "eye-l-bottom" },
   { id: "Eye_R.White", parent: "FaceFeatures", mode: "transform", pivot: "eye-r-center", completeHiddenGeometry: true },
   { id: "Eye_R.Mask", parent: "Eye_R.White", mode: "mask", pivot: "eye-r-center" },
   { id: "Eye_R.Pupil", parent: "Eye_R.Mask", mode: "transform", pivot: "eye-r-center" },
   { id: "Eye_R.Highlight", parent: "Eye_R.Pupil", mode: "transform", pivot: "eye-r-center" },
-  { id: "Eye_R.Lid_Upper", parent: "Eye_R.Mask", mode: "swap", pivot: "eye-r-top" },
-  { id: "Eye_R.Lid_Lower", parent: "Eye_R.Mask", mode: "swap", pivot: "eye-r-bottom" },
+  { id: "Eye_R.Lid_Upper", parent: "Eye_R.Mask", mode: "morph", pivot: "eye-r-top" },
+  { id: "Eye_R.Lid_Lower", parent: "Eye_R.Mask", mode: "morph", pivot: "eye-r-bottom" },
   { id: "Brow_L", parent: "FaceFeatures", mode: "transform", pivot: "brow-l-inner" },
   { id: "Brow_R", parent: "FaceFeatures", mode: "transform", pivot: "brow-r-inner" },
   { id: "Nose", parent: "FaceFeatures", mode: "transform", pivot: "nose-center" },
   { id: "Mouth.Interior", parent: "FaceFeatures", mode: "transform", pivot: "mouth-center" },
   { id: "Mouth.Teeth", parent: "Mouth.Interior", mode: "transform", pivot: "mouth-center" },
   { id: "Mouth.Tongue", parent: "Mouth.Interior", mode: "transform", pivot: "mouth-center" },
-  { id: "Mouth.Expression", parent: "FaceFeatures", mode: "swap", pivot: "mouth-center" },
+  { id: "Mouth.Expression", parent: "FaceFeatures", mode: "morph", pivot: "mouth-center" },
 
   { id: "Props.Map", parent: "YOPPO_ROOT", mode: "swap", pivot: "prop-center" },
   { id: "Props.Notebook", parent: "YOPPO_ROOT", mode: "swap", pivot: "prop-center" },
