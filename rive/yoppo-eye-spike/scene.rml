@@ -6,11 +6,6 @@
             <SolidColor colorValue="FFF4F0E8" name="Color"/>
         </Fill>
 
-        <!-- Clip source comes first and stays unpainted but visible. -->
-        <Shape x="200" y="120" name="Eye Mask" id="0:50">
-            <Ellipse width="150" height="110" name="Mask Path"/>
-        </Shape>
-
         <!-- Visible eye surface. -->
         <Shape x="200" y="120" name="Eye White" id="0:20">
             <Ellipse width="150" height="110" name="Path"/>
@@ -47,6 +42,11 @@
                 <SolidColor colorValue="FFFDF7EC" name="Cream"/>
             </Fill>
             <ClippingShape sourceId="0:50" name="Eye Clip"/>
+        </Shape>
+
+        <!-- Geometry-only clipping source. Rive's own docs place the source after the clipped drawables. -->
+        <Shape x="200" y="120" name="Eye Mask" id="0:50">
+            <Ellipse width="150" height="110" name="Mask Path"/>
         </Shape>
 
         <!-- Independent animation control: proves headless --advance changes the frame. -->
