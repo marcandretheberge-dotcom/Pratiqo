@@ -97,7 +97,7 @@ jobs:
           set -euo pipefail
           rive rive/yoppo-eye-spike --verify
 
-          rive inspect rive/yoppo-eye-spike --format=json > /tmp/yoppo-eye-inspect.json
+          rive inspect rive/yoppo-eye-spike --json > /tmp/yoppo-eye-inspect.json
           cat /tmp/yoppo-eye-inspect.json
 
           rive rive/yoppo-eye-spike --screenshot=/tmp/yoppo-eye-frame-0.png --advance=0
