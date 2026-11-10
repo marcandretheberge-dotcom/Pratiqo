@@ -7,10 +7,15 @@ on:
       - "docs/yopratiqo/YOPPO_RIVE_RIG_V1.md"
       - "lib/companion/yoppoRigContract.ts"
       - "scripts/audit-yoppo-master.mjs"
+      - "tests/companion/yoppoRigContract.test.ts"
       - ".github/workflows/yoppo-rive-pilot-review.yml"
 
 permissions:
   contents: read
+
+concurrency:
+  group: yoppo-rive-pilot-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   rig-contract:
