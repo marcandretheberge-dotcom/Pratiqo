@@ -1,6 +1,21 @@
 import { lessonAudioIsBusy, subscribeLessonAudio } from "../audio/lessonAudioActivity";
 import { SOUND_SAMPLE_RATE, woodSamples, type FeedbackCue } from "./woodSound";
 
+const PITCH_SPREAD: Record<FeedbackCue, number> = {
+  correct: .035,
+  step: .025,
+  stamp: .012,
+  mission: .015,
+  unlock: .012,
+};
+
+/** Subtle organic variation prevents repeated taps from sounding mechanically identical. */
+export function variedPlaybackRate(kind: FeedbackCue, random = Math.random()): number {
+  const sample = Number.isFinite(random) ? Math.min(1, Math.max(0, random)) : .5;
+  const spread = PITCH_SPREAD[kind];
+  return 1 + (sample * 2 - 1) * spread;
+}
+
 /** At most one short pending cue. Never stops, ducks or overlaps lesson speech. */
 export class FeedbackPlayer {
   private context?: AudioContext;
@@ -84,7 +99,10 @@ export class FeedbackPlayer {
       this.gain ??= context.createGain();
       this.gain.gain.value = this.volume;
       this.gain.disconnect(); this.gain.connect(context.destination);
-      voice.buffer = buffer; voice.connect(this.gain); this.voice = voice;
+      voice.buffer = buffer;
+      // Keep milestone identity stable; repeated low-stakes taps vary slightly to avoid fatigue.
+      if (voice.playbackRate) voice.playbackRate.value = variedPlaybackRate(cue.kind);
+      voice.connect(this.gain); this.voice = voice;
       voice.onended = () => { voice.disconnect(); if (this.voice === voice) this.voice = undefined; };
       voice.start();
     } catch { this.cancel(); }
