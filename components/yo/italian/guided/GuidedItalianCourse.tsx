@@ -229,7 +229,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
             initial={reduceMotion ? false : { y: 54, opacity: .94, scale: .995 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 430, damping: 34, mass: .78 }}
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[76dvh] overflow-y-auto overscroll-contain rounded-t-[30px] border-t-4 border-amber-300 bg-[#fffdf7] px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 text-stone-800 shadow-[0_-12px_55px_rgba(15,56,46,.25)] outline-none sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[92dvh] sm:w-[calc(100%_-_2rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border-4 sm:p-6">
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[76dvh] overflow-y-auto overscroll-contain rounded-t-[30px] border-t-4 border-amber-300 bg-[#fffdf7] px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 text-stone-800 shadow-[0_-12px_55px_rgba(15,56,46,.25)] outline-none sm:inset-0 sm:m-auto sm:h-fit sm:max-h-[92dvh] sm:w-[calc(100%_-_2rem)] sm:max-w-2xl sm:rounded-3xl sm:border-4 sm:p-6">
           <header className="sticky -top-4 z-20 mb-4 flex items-center justify-between gap-2 border-b border-stone-200 bg-[#fffdf7]/95 pb-3 pt-1 backdrop-blur-sm">
             <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">YOPPO · {city}</p>
               <Dialog.Title className="truncate text-base font-black text-emerald-950">
