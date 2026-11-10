@@ -2,6 +2,7 @@
 
 import Link from "../../learning/LessonLink";
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowRight, BookOpen, HelpCircle, Printer, Stamp, X } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
@@ -39,6 +40,7 @@ type Props = { profile?: LearningProfile; onConfigure?: () => void; progressKey?
 
 /** Reference pilot. Learning evidence stays in the existing store; this store holds UI drafts only. */
 export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initialLessonId, initialActivityId, profile, onConfigure, progressKey, wordBank, visualWords = EMPTY_VISUALS }: Props) {
+  const reduceMotion = Boolean(useReducedMotion());
   const city = italianWorldForUnit(unit.id)?.cities.find(item => item.unitId === unit.id)?.name;
   const stamp = unit.id === "u01" ? guidedCopy[locale].stamp
     : city ? t(`Tampon de ${city}`, `${city} stamp`, `Sello de ${city}`)[locale]
@@ -221,9 +223,13 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     </main>
     <Dialog.Root open={ui.view !== "map"} onOpenChange={open => { if (!open) leave(); }}>
       <Dialog.Portal>
-        <Dialog.Overlay data-yoppo-mission-backdrop className="fixed inset-0 z-40 bg-[#16382f]/55 backdrop-blur-[2px]"/>
-        <Dialog.Content ref={missionContent} data-yoppo-mission-window aria-describedby={undefined}
-          className="fixed inset-x-0 bottom-0 z-50 max-h-[92dvh] overflow-y-auto overscroll-contain rounded-t-[30px] border-t-4 border-amber-300 bg-[#fffdf7] px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 text-stone-800 shadow-[0_-12px_55px_rgba(15,56,46,.25)] outline-none sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%_-_2rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border-4 sm:p-6">
+        <Dialog.Overlay data-yoppo-mission-backdrop className="fixed inset-0 z-40 bg-[#16382f]/36 backdrop-blur-[1px]"/>
+        <Dialog.Content asChild>
+          <motion.div ref={missionContent} data-yoppo-mission-window aria-describedby={undefined}
+            initial={reduceMotion ? false : { y: 54, opacity: .94, scale: .995 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 430, damping: 34, mass: .78 }}
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[76dvh] overflow-y-auto overscroll-contain rounded-t-[30px] border-t-4 border-amber-300 bg-[#fffdf7] px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 text-stone-800 shadow-[0_-12px_55px_rgba(15,56,46,.25)] outline-none sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[92dvh] sm:w-[calc(100%_-_2rem)] sm:max-w-2xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:border-4 sm:p-6">
           <header className="sticky -top-4 z-20 mb-4 flex items-center justify-between gap-2 border-b border-stone-200 bg-[#fffdf7]/95 pb-3 pt-1 backdrop-blur-sm">
             <div className="min-w-0"><p className="text-[10px] font-black uppercase tracking-widest text-emerald-800">YOPPO · {city}</p>
               <Dialog.Title className="truncate text-base font-black text-emerald-950">
@@ -278,6 +284,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
         <div className="mt-3 flex flex-wrap gap-2"><Link href={reportHref} target="_blank" rel="noopener" className={`${secondary} underline`}>{say("Imprimer mon bilan", "Print my achievements", "Imprimir mis logros")}</Link><Link href={bankHref} target="_blank" rel="noopener" className={`${secondary} underline`}>{say("Imprimer mes mots", "Print my vocabulary", "Imprimir mis palabras")}</Link></div>
       </section> : null}<p className="mt-5 text-sm leading-6 text-stone-600">{c.finishNotice}</p>{resultPassed ? <button type="button" className={`${primary} mt-6 w-full`} onClick={leave}>{c.map}<ArrowRight size={18} aria-hidden /></button> : <><button type="button" className={`${primary} mt-6 w-full`} onClick={() => move(0)}>{c.practice}</button><button type="button" className={`${secondary} mt-3 w-full`} onClick={startChallenge}>{c.retry}</button></>}</section> : null}
 
+          </motion.div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

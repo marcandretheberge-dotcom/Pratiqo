@@ -1,6 +1,7 @@
 /** Real React interactions: the illustrated map stays mounted while the lesson
  * opens in a mobile bottom-sheet. No new progress, Pass or credit source. */
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as React from "react";
 import { italianCourseCatalog, italianCourseUnits } from "@/lib/yo/italian/course/courseData";
@@ -28,6 +29,14 @@ for (const [name, value] of Object.entries({
   cancelAnimationFrame: (id: number) => frames.delete(id),
   IS_REACT_ACT_ENVIRONMENT: true,
 })) Object.defineProperty(globalThis, name, { value, writable: true, configurable: true });
+Object.defineProperty(dom.window, "matchMedia", {
+  configurable: true,
+  value: (query: string) => ({
+    matches: false, media: query, onchange: null,
+    addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {},
+    dispatchEvent() { return false; },
+  }),
+});
 dom.window.HTMLElement.prototype.scrollIntoView = () => {};
 dom.window.HTMLElement.prototype.scrollTo = () => {};
 window.scrollTo = () => {};
@@ -60,6 +69,15 @@ function assertNoFakeMastery() {
   assert.equal(Object.keys(current.activities).length, 0, "opening and closing cannot complete exercises");
 }
 const tests: [string, () => void][] = [
+  ["mission sheet keeps atlas context visible and uses a reduced-motion-aware spring", () => {
+    const source = readFileSync("components/yo/italian/guided/GuidedItalianCourse.tsx", "utf8");
+    assert.match(source, /from "motion\/react"/);
+    assert.match(source, /type: "spring", stiffness: 430, damping: 34/);
+    assert.match(source, /max-h-\[76dvh\]/);
+    assert.match(source, /sm:max-h-\[92dvh\]/);
+    assert.match(source, /bg-\[#16382f\]\/36/);
+    assert.match(source, /useReducedMotion/);
+  }],
   ["printables are one tap from the map, before any mission or earned stamp", () => {
     const view = mount();
     const map = view.container.querySelector("[data-yoppo-world-map]");
@@ -96,7 +114,10 @@ const tests: [string, () => void][] = [
     assert.equal(map, view.container.querySelector("[data-yoppo-world-map]"), "map remains mounted");
     const panel = document.querySelector("[data-yoppo-mission-window]") as HTMLElement;
     assert.ok(panel);
-    assert.ok(document.querySelector("[data-yoppo-mission-backdrop]"));
+    assert.ok(panel.className.includes("max-h-[76dvh]"), "mobile sheet deliberately leaves the atlas visible");
+    const backdrop = document.querySelector("[data-yoppo-mission-backdrop]") as HTMLElement;
+    assert.ok(backdrop);
+    assert.ok(backdrop.className.includes("bg-[#16382f]/36"), "overlay keeps spatial context recognizable");
     assert.ok(document.querySelector("[data-yoppo-mission-briefing]"));
     assert.ok(within(panel).getByText(unit.lessons[0].goal.en));
     click(within(panel).getByRole("button", { name: "Start my mission" }));
