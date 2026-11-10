@@ -20,7 +20,6 @@
             <Fill name="Fill">
                 <SolidColor colorValue="FF045A55" name="Dark teal"/>
             </Fill>
-            <ClippingShape sourceId="0:20" name="Eye Clip"/>
         </Shape>
 
         <Shape x="200" y="120" name="Catchlight" id="0:22">
@@ -28,7 +27,6 @@
             <Fill name="Fill">
                 <SolidColor colorValue="FFFFFFFF" name="White"/>
             </Fill>
-            <ClippingShape sourceId="0:20" name="Eye Clip"/>
         </Shape>
 
         <Shape x="200" y="120" name="Upper Lid" id="0:30">
@@ -41,7 +39,16 @@
             <Fill name="Fill">
                 <SolidColor colorValue="FFFDF7EC" name="Cream"/>
             </Fill>
-            <ClippingShape sourceId="0:20" name="Eye Clip"/>
+        </Shape>
+
+        <!-- Structural clipping proof: verify/inspect must retain ClippingShape.
+             Current CLI 1.9.x headless screenshots are not used as the visual oracle for masks. -->
+        <Shape x="200" y="120" name="Clip Structure Probe" id="0:52">
+            <Ellipse x="0" y="0" width="18" height="18" name="Probe Path"/>
+            <Fill name="Probe Fill">
+                <SolidColor colorValue="FF04ABA4" name="Teal"/>
+            </Fill>
+            <ClippingShape sourceId="0:20" name="Eye Clip Structure"/>
         </Shape>
 
         <!-- Independent animation control: proves headless --advance changes the frame. -->
