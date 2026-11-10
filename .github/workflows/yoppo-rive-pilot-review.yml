@@ -50,6 +50,21 @@ jobs:
           set -euo pipefail
           curl -fsSL https://releases.rive.app/cli/install.sh | bash
           echo "$HOME/.rive/bin" >> "$GITHUB_PATH"
+      - name: Scaffold current Rive project template
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/yoppo-rive-template
+          rive create /tmp/yoppo-rive-template
+          echo "===== scaffold files ====="
+          find /tmp/yoppo-rive-template -maxdepth 3 -type f -print | sort
+          echo "===== rive.yaml ====="
+          cat /tmp/yoppo-rive-template/rive.yaml
+          echo "===== RML files ====="
+          while IFS= read -r file; do
+            echo "----- $file -----"
+            sed -n '1,220p' "$file"
+          done < <(find /tmp/yoppo-rive-template -type f \( -name '*.rml' -o -name '*.rml.xml' \) | sort)
       - name: Probe Rive rigging schemas before drawing
         shell: bash
         run: |
