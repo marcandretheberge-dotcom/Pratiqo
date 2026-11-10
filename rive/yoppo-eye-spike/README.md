@@ -6,7 +6,7 @@ This is **not** production art.
 
 The spike must prove, through `rive --verify`, `rive inspect`, and rendered screenshots:
 
-1. `ClippingShape` is preserved by RML build/inspect against the visible `Eye White` geometry; mask pixels require a Rive Editor visual gate because current CLI 1.9.x headless captures drop the clipped child in this minimal repro;
+1. the visible `Eye White` geometry clips pupil, catchlight and lid via `ClippingShape`, with clipped contents authored before the later Eye White source to match Rive draw order;
 2. pupil and catchlight can move independently;
 3. matched-topology lid vertices can be keyframed directly (`StraightVertex.y`);
 4. a vector `PointsPath` can be skinned to `RootBone` / `Bone`;
@@ -15,12 +15,6 @@ The spike must prove, through `rive --verify`, `rive inspect`, and rendered scre
 
 Rive's literal `Mesh` type is image-only. Full Yoppo is intended to be reconstructed as vector geometry, so soft deformation should use `Skin` on `PointsPath`, not image Mesh, unless a later asset has a real raster/image use-case.
 
+## Draw-order finding
 
-## Headless clipping note
-
-The CLI verifier/importer accepts the clipping graph with zero problems, but repeated Linux headless
-captures on Rive CLI 1.9.x rendered clipped children as empty. The spike therefore treats clipping as
-a **structural verify/inspect capability** and uses an unclipped duplicate to prove pupil movement and
-matched-topology lid animation in CI. Before the full Yoppo eye is approved for production, open the
-same Rive project in the Rive Editor and visually confirm the eye mask. This limitation does not block
-bones, IK, skinned vector paths, transforms or keyframed path morphing.
+The first headless attempts appeared to show a clipping failure, but the rendered frame exposed the real issue: the Eye White was painted above the pupil because the RML sibling stack draws earlier-authored eye details above the later clip-source surface. The final spike therefore authors clipped eye contents first and the visible Eye White/mask source later. CI requires the clipped pupil to be visible in frame 0 and materially changed by frame 30.
