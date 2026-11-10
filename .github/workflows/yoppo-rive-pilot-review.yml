@@ -8,6 +8,7 @@ on:
       - "lib/companion/yoppoRigContract.ts"
       - "scripts/audit-yoppo-master.mjs"
       - "tests/companion/yoppoRigContract.test.ts"
+      - "rive/yoppo-eye-spike/**"
       - ".github/workflows/yoppo-rive-pilot-review.yml"
 
 permissions:
@@ -37,6 +38,26 @@ jobs:
         run: npx tsc --noEmit
       - name: Rig parent and pivot contract
         run: node --import tsx tests/companion/yoppoRigContract.test.ts
+      - name: Install current Rive CLI for capability spike
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://releases.rive.app/cli/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Probe Rive rigging schemas before drawing
+        shell: bash
+        run: |
+          set -euo pipefail
+          rive --version
+          rive doctor
+          for term in clipping bone ik mesh vertex keyframe; do
+            echo "===== schema search: $term ====="
+            rive schema --search "$term" || true
+          done
+          for term in clipping rigging mesh bone constraint animation keyframe; do
+            echo "===== docs search: $term ====="
+            rive docs --search "$term" || true
+          done
       - name: Focused lint
         run: npx eslint lib/companion/yoppoRigContract.ts scripts/audit-yoppo-master.mjs tests/companion/yoppoRigContract.test.ts
       - name: Diff integrity
