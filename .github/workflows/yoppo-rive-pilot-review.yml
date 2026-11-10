@@ -1,0 +1,35 @@
+name: Yoppo Rive pilot review
+
+on:
+  push:
+    branches: [feat/yoppo-rive-pilot-20261110]
+    paths:
+      - "docs/yopratiqo/YOPPO_RIVE_RIG_V1.md"
+      - "lib/companion/yoppoRigContract.ts"
+      - "scripts/audit-yoppo-master.mjs"
+      - ".github/workflows/yoppo-rive-pilot-review.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  rig-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Canonical PNG audit
+        run: node scripts/audit-yoppo-master.mjs
+      - name: TypeScript contract
+        run: npx tsc --noEmit
+      - name: Focused lint
+        run: npx eslint lib/companion/yoppoRigContract.ts scripts/audit-yoppo-master.mjs
+      - name: Diff integrity
+        run: git diff --check origin/main...HEAD
