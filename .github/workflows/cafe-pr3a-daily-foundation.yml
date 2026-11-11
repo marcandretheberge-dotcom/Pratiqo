@@ -1,0 +1,83 @@
+name: Cafe PR3a Daily foundation
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/*cafe*.sql"
+      - "app/api/cafe/sessions/**"
+      - "app/api/admin/cafe/**"
+      - "lib/cafe/**"
+      - "tests/cafe/**"
+      - "docs/architecture/cafe-pr3b-daily-embed-requirements.md"
+      - ".env.example"
+      - ".env.production.example"
+      - ".github/workflows/cafe-pr3a-daily-foundation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  cafe-room-foundation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: PR3a static and provider contracts
+        run: |
+          npx tsx tests/cafe/cafePr3aContract.test.ts
+          npx tsx tests/cafe/cafePr3aDailyProvider.test.ts
+          npx tsx tests/cafe/cafePr3aDailySafety.test.ts
+          npx tsx tests/cafe/cafePr3aCancellation.test.ts
+          npx tsx tests/cafe/cafePr3aJoinFlow.test.ts
+      - name: PR3a PostgreSQL authorization and security
+        run: |
+          bash tests/cafe/run-pr3a-postgres-tests.sh
+          bash tests/cafe/run-pr3a-binding-race-tests.sh
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Focused lint
+        run: >-
+          npx eslint
+          lib/cafe/roomProvider.ts
+          lib/cafe/roomFeatureFlag.ts
+          lib/cafe/roomAudit.ts
+          lib/cafe/roomJoinFlow.ts
+          lib/cafe/joinService.ts
+          lib/cafe/adminRoomCancellation.ts
+          lib/cafe/providers/daily.ts
+          app/api/admin/cafe/sessions/route.ts
+          app/api/cafe/sessions/[slug]/join/route.ts
+          app/api/cafe/sessions/[slug]/host/route.ts
+          tests/cafe/cafePr3aContract.test.ts
+          tests/cafe/cafePr3aDailyProvider.test.ts
+          tests/cafe/cafePr3aDailySafety.test.ts
+          tests/cafe/cafePr3aCancellation.test.ts
+          tests/cafe/cafePr3aJoinFlow.test.ts
+      - name: Whitespace check
+        run: git diff --check
