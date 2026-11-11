@@ -52,6 +52,6 @@ jobs:
       - name: TypeScript
         run: npx tsc --noEmit
       - name: Focused lint
-        run: npx eslint lib/cafe/serverAuth.ts app/api/cafe/sessions/route.ts app/api/cafe/reservations/route.ts app/api/admin/cafe/sessions/route.ts tests/cafe/cafePr2aContract.test.ts
+        run: npx eslint lib/cafe/serverAuth.ts lib/cafe/sessionInput.ts app/api/cafe/sessions/route.ts app/api/cafe/reservations/route.ts app/api/admin/cafe/sessions/route.ts tests/cafe/cafePr2aContract.test.ts
       - name: Whitespace check
         run: git diff --check
