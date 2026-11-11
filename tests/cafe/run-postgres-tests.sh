@@ -132,6 +132,9 @@ if ! grep -q '"replay": true' "$SR1" && ! grep -q '"replay": true' "$SR2"; then
   exit 1
 fi
 
+# Clear the idempotency-test reservation so the quota race starts from exactly two active reservations.
+"${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','same-request','cancel',1,'51000000-0000-4000-8000-000000000002');" >/dev/null
+
 # Quota race: actor already has two future reservations; two concurrent third attempts across different sessions -> exactly one succeeds.
 for N in qrace-base1 qrace-base2 qrace-a qrace-b; do
   "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_admin_create_draft_server('00000000-0000-4000-8000-000000000001','$N','$N','pt',NULL,NULL,clock_timestamp()+interval '10 days',45,12,'00000000-0000-4000-8000-000000000002'); SELECT public.cafe_admin_publish_server('00000000-0000-4000-8000-000000000001','$N');"
