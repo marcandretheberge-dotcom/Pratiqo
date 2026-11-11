@@ -5,6 +5,8 @@ import {
   YOPPO_HEAD_TURN_LIMIT_DEG,
   YOPPO_IDENTITY_MASTER,
   YOPPO_MORPH_TOPOLOGY,
+  YOPPO_OVERLAY_ACCEPTANCE,
+  YOPPO_LIMB_DEPTH_POLICY,
   YOPPO_REFERENCE_POLICY,
   YOPPO_RIG_LAYERS,
   YOPPO_RIVE_BEHAVIORS,
@@ -20,6 +22,14 @@ assert.equal(YOPPO_ARTBOARD_CONTRACT.height, 1024);
 assert.equal(YOPPO_ARTBOARD_CONTRACT.bodyAnchorX, 512);
 assert.equal(YOPPO_ARTBOARD_CONTRACT.groundY, 920);
 assert.equal(YOPPO_ARTBOARD_CONTRACT.reconstructionScale, 1.86);
+assert.equal(YOPPO_ARTBOARD_CONTRACT.referenceOverlayX, 47);
+assert.equal(YOPPO_ARTBOARD_CONTRACT.referenceOverlayY, 78);
+assert.ok(YOPPO_OVERLAY_ACCEPTANCE.silhouetteIoUMin >= 0.8);
+assert.ok(YOPPO_OVERLAY_ACCEPTANCE.centroidDistanceMaxPx <= 24);
+assert.ok(YOPPO_OVERLAY_ACCEPTANCE.groundContactDeltaMaxPx <= 12);
+assert.ok(YOPPO_OVERLAY_ACCEPTANCE.overlapRgbMaeMax <= 65);
+assert.equal(YOPPO_LIMB_DEPTH_POLICY.method, "explicit-draw-order-switch");
+assert.equal(YOPPO_LIMB_DEPTH_POLICY.walkingImplementationDeferred, true);
 assert.ok(YOPPO_ARTBOARD_CONTRACT.topMargin >= 140);
 assert.ok(YOPPO_ARTBOARD_CONTRACT.maxBodyRisePx <= YOPPO_ARTBOARD_CONTRACT.topMargin - 60);
 for (const group of YOPPO_MORPH_TOPOLOGY) {
