@@ -46,3 +46,14 @@ both local and CI master rendering before consuming further full-canvas
 captures. The comparator also rejects opaque/empty captures independently.
 The preflight must pass using actual Rive output, not an edited PNG. The
 original two full-canvas captures remain counted toward the total budget.
+
+## Diagnostic palette correction, cycle 3
+
+Cycle 2 produced no new master capture. A mathematical color-ID collision
+from cycle 1 was reproduced and removed before further rendering. The new
+diagnostic palette passes 53,340 pairwise edge mixtures (encoded sRGB and
+linear-light), plus a separating-plane check against arbitrary combinations
+of other IDs in encoded space. The decoding tolerance remains 2 per channel.
+No real Yoppo color changed. The CI runner now uses the primary signed Ubuntu
+repository instead of its repeatedly unreachable Azure mirror; permission
+settings, package signature verification and comparison thresholds are intact.

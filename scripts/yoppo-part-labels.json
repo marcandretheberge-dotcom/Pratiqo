@@ -1,10 +1,10 @@
 {
   "colors": {
-    "headCream": "E6194B", "spikes": "3CB44B", "earLeft": "FFE119",
-    "earRight": "4363D8", "eyeLeft": "F58231", "eyeRight": "911EB4",
-    "torso": "46F0F0", "armLeft": "F032E6", "armRight": "BCF60C",
-    "footLeft": "FABEBE", "footRight": "008080", "backpack": "E6BEFF",
-    "mouthInk": "9A6324", "chestEmblem": "FFFAC8", "unmeasured": "555555"
+    "headCream": "AAEF7F", "spikes": "4ADFB0", "earLeft": "87CF26",
+    "earRight": "BDBFD0", "eyeLeft": "13AF6C", "eyeRight": "E19F41",
+    "torso": "608FF2", "armLeft": "487F15", "armRight": "EF6FA8",
+    "footLeft": "145FAB", "footRight": "AE4F1B", "backpack": "9D3FE0",
+    "mouthInk": "322F52", "chestEmblem": "C51F70", "unmeasured": "660FA2"
   },
   "rules": [
     ["Eye_L.", "eyeLeft"], ["Eye_R.", "eyeRight"],

@@ -23,3 +23,16 @@ to substitute for a genuine transparent Rive render.
 
 If a supported fix is found, a new pre-render freeze and manifest are required;
 iteration numbering restarts but the total capture budget does not reset.
+
+## Additional independent label-palette defect
+
+Inspection of the invalid diagnostic capture also exposed an ownership-ID
+collision: an anti-aliased blend of the old head and left-ear diagnostic colors
+could fall within two RGB units of the old left-eye ID. A mathematical test of
+the palette, independent of Yoppo's geometry, reproduces that collision.
+
+Before another master capture, replace only the diagnostic IDs with distinct
+points on a color-space sphere. Exhaustively test all 8-bit pairwise blends in
+encoded sRGB and linear-light space against the unchanged decoding tolerance.
+This changes neither the actual master palette nor any acceptance threshold.
+The corrected palette requires a new freeze; cycle 1 remains invalid.

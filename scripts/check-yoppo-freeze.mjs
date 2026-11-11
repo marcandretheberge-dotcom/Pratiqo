@@ -17,6 +17,7 @@ export const frozenFiles = [
   "tests/companion/yoppoIterationPolicy.test.mjs",
   "scripts/yoppo-capture-alpha.ts", "scripts/check-yoppo-capture.ts",
   "tests/companion/yoppoCaptureAlpha.test.ts",
+  "tests/companion/yoppoLabelPalette.test.mjs",
   "rive/yoppo-transparency-probe/scene.rml", "rive/yoppo-transparency-probe/rive.yaml",
 ];
 export function verifyFreeze() {

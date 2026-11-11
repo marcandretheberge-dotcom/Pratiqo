@@ -52,6 +52,8 @@ jobs:
         run: node tests/companion/yoppoIterationPolicy.test.mjs
       - name: Fail closed on opaque or empty captures
         run: node --import tsx tests/companion/yoppoCaptureAlpha.test.ts
+      - name: Diagnostic ownership palette cannot alias another part
+        run: node tests/companion/yoppoLabelPalette.test.mjs
       - name: Focused lint
         run: npx eslint lib/companion/yoppoRigContract.ts scripts/*yoppo*.mjs scripts/*yoppo*.ts tests/companion/yoppo*.mjs tests/companion/yoppo*.ts
       - name: Diff integrity
@@ -79,8 +81,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=10 -o Acquire::https::Timeout=10 update -y
-          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=10 -o Acquire::https::Timeout=10 install -y libegl1 libgl1 libgles2 libx11-6 libxext6 libxrender1 libxi6 libxrandr2 libxcursor1 libxinerama1 libxkbcommon0
+          # The runner's Azure Ubuntu mirror failed DNS in run 43045627759.
+          # Keep Ubuntu's signed repositories, using its primary mirror instead.
+          for source in /etc/apt/sources.list /etc/apt/sources.list.d/*.sources /etc/apt/sources.list.d/*.list; do
+            if test -f "$source"; then
+              sudo sed -i -e 's|mirror+file:/etc/apt/apt-mirrors.txt|https://archive.ubuntu.com/ubuntu|g' -e 's|://azure.archive.ubuntu.com/ubuntu|://archive.ubuntu.com/ubuntu|g' "$source"
+            fi
+          done
+          timeout 120s sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=10 -o Acquire::https::Timeout=10 update -y
+          timeout 120s sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=10 -o Acquire::https::Timeout=10 install -y libegl1 libgl1 libgles2 libx11-6 libxext6 libxrender1 libxi6 libxrandr2 libxcursor1 libxinerama1 libxkbcommon0
       - name: Install pinned Rive CLI 1.9.2
         shell: bash
         run: |
