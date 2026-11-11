@@ -9,6 +9,8 @@ on:
       - "scripts/audit-yoppo-master.mjs"
       - "tests/companion/yoppoRigContract.test.ts"
       - "rive/yoppo-eye-spike/**"
+      - "rive/yoppo-master/**"
+      - "scripts/compare-yoppo-master.ts"
       - ".github/workflows/yoppo-rive-pilot-review.yml"
 
 permissions:
