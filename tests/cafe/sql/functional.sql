@@ -12,7 +12,7 @@ SELECT public.cafe_admin_publish_server(
  '00000000-0000-4000-8000-000000000001','fr-es-test'
 );
 
-DO $
+DO $hosttest$
 DECLARE j jsonb;
 BEGIN
   j := public.cafe_admin_reassign_host_server(
@@ -40,7 +40,8 @@ BEGIN
   IF j->>'ok' <> 'true' THEN
     RAISE EXCEPTION 'host restoration failed: %', j;
   END IF;
-END $;
+END
+$hosttest$;
 
 -- First reservation, exact replay, cancellation, stale retry.
 DO $$
