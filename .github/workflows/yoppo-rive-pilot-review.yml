@@ -170,7 +170,27 @@ jobs:
             /tmp/yoppo-eye-inspect.json
             rive/yoppo-eye-spike/build/problems.log
           if-no-files-found: error
+      - name: Verify and render Yoppo neutral master
+        shell: bash
+        run: |
+          set -euo pipefail
+          rive rive/yoppo-master --verify
+          rive inspect rive/yoppo-master --json > /tmp/yoppo-master-inspect.json
+          rive rive/yoppo-master --screenshot=/tmp/yoppo-master-neutral.png --advance=0
+          test -s /tmp/yoppo-master-neutral.png
+          node --import tsx scripts/compare-yoppo-master.ts /tmp/yoppo-master-neutral.png
+      - name: Upload Yoppo neutral master evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yoppo-neutral-master-v1
+          path: |
+            /tmp/yoppo-master-neutral.png
+            /tmp/yoppo-master-overlay.png
+            /tmp/yoppo-master-inspect.json
+            rive/yoppo-master/build/problems.log
+          if-no-files-found: error
       - name: Focused lint
-        run: npx eslint lib/companion/yoppoRigContract.ts scripts/audit-yoppo-master.mjs tests/companion/yoppoRigContract.test.ts
+        run: npx eslint lib/companion/yoppoRigContract.ts scripts/audit-yoppo-master.mjs scripts/compare-yoppo-master.ts tests/companion/yoppoRigContract.test.ts
       - name: Diff integrity
         run: git diff --check origin/main...HEAD
