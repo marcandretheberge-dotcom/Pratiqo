@@ -1,2 +1,13 @@
 # Preserve the pinned KanjiVG source bytes used by provenance checks on Windows.
 public/kanjivg/**/*.svg text eol=lf
+
+# Keep the pilot's hashed methodology reproducible on Windows and Linux.
+.gitattributes text eol=lf
+scripts/*yoppo* text eol=lf
+tests/companion/yoppo* text eol=lf
+lib/companion/yoppoRigContract.ts text eol=lf
+.github/workflows/yoppo-rive-pilot-review.yml text eol=lf
+rive/yoppo-master/scene.rml text eol=lf
+rive/yoppo-master/evidence/*.json text eol=lf
+# Preserve the exact bytes of the human-reviewed reference (including CRLF).
+rive/yoppo-master/evidence/reference-segmentation-proposal.json -text

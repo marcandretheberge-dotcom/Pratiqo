@@ -1,0 +1,133 @@
+{
+  "version": "human-reference-proposal-v1",
+  "status": "VISUAL REVIEW PENDING HUMAN REVIEW",
+  "source": "public/companion/travel/companion-travel-idle.png",
+  "sourceSha256": "fb1335d7e170674e6e265c660b641e6f8d2b5a6b9d916d4b2ba9307a41f18070",
+  "sourceSize": [500, 500],
+  "purpose": "Human review of visible part ownership, NOT a measurement mask, ROI replacement or vector master.",
+  "basis": "Manual visual annotation of the canonical PNG only; no Rive master render observed.",
+  "coordinates": "Original PNG pixels; left/right means viewer-left/viewer-right.",
+  "measurementIntegration": false,
+  "hiddenGeometry": "Unmeasured and not reconstructed. Closed paths are review envelopes, not proof of hidden contours.",
+  "parts": [
+    {
+      "id": "headCream", "number": "01", "label": "Visage / tête", "color": "#C3445C",
+      "path": "M139 181 Q145 151 167 134 Q194 110 240 110 L242 134 Q262 125 280 119 Q309 118 339 142 L339 157 Q354 183 360 205 Q369 241 352 256 Q341 275 308 279 Q257 294 207 279 Q162 270 143 248 Q130 230 135 202 Z",
+      "crop": [124, 102, 250, 196], "anchor": [224, 251],
+      "excludedReviewParts": ["spikes", "earLeft", "earRight", "strapLeft", "strapRight"],
+      "note": "Enveloppe du visage visible. Nez, sourcils et joues restent intacts. Yeux et bouche sont des détails enfants, pas des trous à reboucher. La mesure headCream reste distincte de cette enveloppe.",
+      "uncertainty": "A : continuité crème au cou. Ne pas déduire l'arrière de la tête."
+    },
+    {
+      "id": "spikes", "number": "02", "label": "Mèches supérieures", "color": "#007F81",
+      "path": "M180 124 Q182 104 192 85 Q201 70 207 79 L209 91 Q225 57 255 43 Q269 36 271 47 L272 65 Q296 52 317 50 Q333 47 335 62 Q337 81 320 95 Q348 89 366 96 Q379 95 367 118 Q359 134 339 142 Q310 117 278 119 L242 134 L241 112 Q207 111 180 124 Z",
+      "crop": [172, 30, 214, 124], "anchor": [280, 86],
+      "note": "Groupe supérieur turquoise uniquement, oreilles exclues. Les petites pointes latérales restent visibles sur l'original ; leur rattachement est signalé, pas absorbé silencieusement dans cette mesure.",
+      "uncertainty": "Les bases masquées derrière le visage ne sont pas reconstituées."
+    },
+    {
+      "id": "earLeft", "number": "03", "label": "Oreille gauche", "color": "#8753AE",
+      "path": "M157 94 Q146 98 142 120 Q138 142 148 164 L159 147 L170 134 L182 128 Q180 114 171 99 Q164 91 157 94 Z",
+      "crop": [132, 85, 59, 90], "anchor": [154, 124],
+      "note": "Coque turquoise et intérieur sombre visibles, sans emprunter la mèche voisine.",
+      "uncertainty": "Base sous le visage inconnue."
+    },
+    {
+      "id": "earRight", "number": "04", "label": "Oreille droite", "color": "#8753AE",
+      "path": "M338 153 Q345 143 365 135 Q386 128 389 144 Q394 173 379 189 L356 202 L354 181 Q349 165 338 153 Z",
+      "crop": [329, 124, 72, 88], "anchor": [372, 160],
+      "note": "Oreille visible à droite de l'image, distincte de la coiffe et du sac.",
+      "uncertainty": "Base sous le visage inconnue."
+    },
+    {
+      "id": "eyeLeft", "number": "05", "label": "Œil gauche", "color": "#2456B0",
+      "path": "M183 167 Q199 163 205 179 Q211 198 199 209 Q186 219 174 209 Q165 201 168 188 Q170 174 183 167 Z",
+      "crop": [158, 155, 60, 68], "anchor": [186, 189],
+      "note": "Œil visible avec pupille et reflets d'origine ; sourcil exclu. Ne pas redessiner les reflets.",
+      "uncertainty": "Blanc caché derrière les paupières non mesuré."
+    },
+    {
+      "id": "eyeRight", "number": "06", "label": "Œil droit", "color": "#2456B0",
+      "path": "M285 177 Q302 173 309 190 Q316 207 304 219 Q290 229 278 220 Q266 212 269 197 Q271 183 285 177 Z",
+      "crop": [258, 164, 66, 72], "anchor": [291, 202],
+      "note": "Contour, pupille et reflets visibles uniquement. Conserver l'asymétrie de perspective du PNG.",
+      "uncertainty": "Blanc caché derrière les paupières non mesuré."
+    },
+    {
+      "id": "torso", "number": "07", "label": "Corps / ventre", "color": "#BD7313",
+      "path": "M176 267 Q187 278 213 281 Q246 288 282 280 L310 275 L311 305 Q307 331 322 349 Q337 373 329 407 L315 423 L266 427 L263 417 L227 418 L220 427 L181 420 Q159 409 159 381 L154 354 L160 309 Z",
+      "crop": [145, 257, 195, 181], "anchor": [241, 365],
+      "excludedReviewParts": ["headCream", "armLeft", "armRight", "footLeft", "footRight", "backpack", "strapLeft", "strapRight"],
+      "note": "Ventre crème et flancs turquoise visibles. Bras, pieds et sac sont des groupes séparés ; l'emblème reste un détail enfant.",
+      "uncertainty": "A et B : cou et chevilles. Les bretelles passent devant le corps, sans remplissage de la surface cachée."
+    },
+    {
+      "id": "armLeft", "number": "08", "label": "Bras + main gauches", "color": "#2B814A",
+      "path": "M156 285 Q137 304 126 335 Q118 355 121 371 Q124 383 138 385 Q151 385 160 374 L161 354 Q159 336 168 311 L169 292 Z",
+      "crop": [110, 274, 68, 123], "anchor": [139, 349],
+      "excludedReviewParts": ["strapLeft", "headCream"],
+      "note": "Un seul groupe pour le bras crème et la main turquoise, conformément au contrôle existant.",
+      "uncertainty": "Épaule masquée par tête et bretelle ; pas de géométrie inventée."
+    },
+    {
+      "id": "armRight", "number": "09", "label": "Bras + main droits", "color": "#2B814A",
+      "path": "M310 284 Q328 283 342 312 Q355 336 358 363 Q363 382 349 395 Q338 402 323 393 Q310 383 312 369 Q311 350 306 329 Q301 302 310 284 Z",
+      "crop": [296, 274, 73, 135], "anchor": [333, 347],
+      "excludedReviewParts": ["strapRight", "headCream"],
+      "note": "Main conservée avec le bras, pas avec le turquoise du corps ou du sac.",
+      "uncertainty": "Épaule sous la bretelle non mesurée."
+    },
+    {
+      "id": "footLeft", "number": "10", "label": "Pied gauche", "color": "#5064A2",
+      "path": "M176 411 Q194 418 226 417 L226 430 Q222 444 198 446 L174 445 Q157 442 162 430 Q163 419 176 411 Z",
+      "crop": [150, 400, 88, 57], "anchor": [195, 433],
+      "note": "Appui et orteils visibles. La jonction avec la jambe n'est pas une limite de couleur.",
+      "uncertainty": "B : couture de découpage proposée, pas un contour anatomique prouvé."
+    },
+    {
+      "id": "footRight", "number": "11", "label": "Pied droit", "color": "#5064A2",
+      "path": "M266 414 Q288 421 319 416 Q330 425 329 441 Q326 454 306 454 L280 451 Q265 447 264 433 Z",
+      "crop": [253, 402, 88, 61], "anchor": [296, 436],
+      "note": "Pied visible au premier plan. Ne pas agrandir le pied pour capturer toute la jambe.",
+      "uncertainty": "B : couture de découpage proposée à confirmer."
+    },
+    {
+      "id": "backpack", "number": "12", "label": "Sac visible", "color": "#96643D",
+      "path": "M350 238 Q378 228 399 246 Q404 263 404 284 L408 319 Q423 322 423 342 L422 374 Q415 404 380 409 Q354 412 325 402 L335 393 Q357 391 358 372 L354 333 L345 300 L332 282 L335 262 Z",
+      "crop": [316, 224, 118, 197], "anchor": [391, 364],
+      "excludedReviewParts": ["headCream", "armRight"],
+      "note": "Volume visible du sac, rabat, poche et boucles. Bretelles conservées séparément dans les repères C, sans agrandir la mesure backpack.",
+      "uncertainty": "C : parties derrière le bras et le corps non reconstruites."
+    },
+    {
+      "id": "mouthInk", "number": "13", "label": "Bouche", "color": "#AC3659",
+      "path": "M201 222 Q212 235 232 235 Q250 237 261 224 L265 229 Q249 244 231 242 Q211 241 201 228 Z",
+      "crop": [191, 214, 85, 40], "anchor": [234, 233],
+      "note": "Sourire visible uniquement. Le nez reste distinct et n'entre pas dans mouthInk.",
+      "uncertainty": "Aucune nouvelle expression ni intérieur de bouche inventé."
+    },
+    {
+      "id": "chestEmblem", "number": "14", "label": "Emblème", "color": "#007F81",
+      "path": "M193 299 L201 316 L210 312 L229 304 L221 315 L247 306 L229 322 L208 331 L196 317 Z",
+      "crop": [184, 289, 73, 53], "anchor": [215, 318],
+      "note": "Détail turquoise du torse, sans capturer ses flancs ni les bras.",
+      "uncertainty": "Conserver les pixels et la transparence des traits légers d'origine."
+    }
+  ],
+  "accessories": [
+    {"id": "strapLeft", "path": "M176 264 Q164 278 157 303 L155 325 L160 334 Q164 317 169 297 Q176 281 185 273 Z", "note": "Visible strap only; review ownership, no new measurement component."},
+    {"id": "strapRight", "path": "M305 274 Q288 272 280 292 Q272 311 280 335 Q290 349 310 355 L308 341 Q296 324 300 307 Q301 290 318 286 Z", "note": "Visible strap only; hidden sections are not extrapolated."}
+  ],
+  "junctions": [
+    {"id": "A", "title": "Tête / corps", "crop": [145, 247, 194, 62], "path": "M176 267 Q209 287 246 285 Q281 286 310 278", "text": "Suivre le bas visible du visage. La continuité crème au centre ne prouve pas un cou séparé. Trait proposé, à confirmer ; aucune partie cachée dessinée."},
+    {"id": "B", "title": "Jambes / pieds", "crop": [146, 386, 197, 80], "path": "M176 411 Q194 418 226 417 M266 414 Q288 421 319 416", "text": "Séparer l'appui des pieds du corps à cette jonction proposée. La couleur seule ne peut pas décider de la cheville. Ce n'est pas encore un masque de mesure."},
+    {"id": "C", "title": "Bretelles / sac", "crop": [145, 253, 200, 116], "path": "M177 267 Q158 290 157 322 M299 279 Q275 294 280 325 Q282 342 309 352", "text": "Conserver les bretelles devant le corps comme accessoires visibles distincts. Ne pas les ajouter silencieusement à la mesure du sac située à droite."}
+  ],
+  "preservedDetails": ["Nez et sourcils dans le visage", "Petites pointes latérales", "Bretelles et boucles", "Ombres et reflets du PNG"],
+  "approvalQuestions": [
+    "La séparation A tête/corps convient-elle ?",
+    "Les deux séparations B jambes/pieds conviennent-elles ?",
+    "Le rattachement C des bretelles comme accessoires du sac, distincts de sa mesure principale, convient-il ?",
+    "Les 14 repères correspondent-ils aux parties souhaitées, sans modifier l'identité de Yoppo ?"
+  ]
+}

@@ -8,6 +8,9 @@ on:
       - "lib/companion/yoppoRigContract.ts"
       - "scripts/audit-yoppo-master.mjs"
       - "scripts/measure-yoppo-geometry.mjs"
+      - "scripts/*yoppo*"
+      - "tests/companion/yoppo*"
+      - ".gitattributes"
       - "tests/companion/yoppoRigContract.test.ts"
       - "tests/companion/yoppoGeometryDiagnostics.test.mjs"
       - "rive/yoppo-eye-spike/**"
@@ -42,8 +45,12 @@ jobs:
         run: node --import tsx tests/companion/yoppoRigContract.test.ts
       - name: Measurement failure diagnostics regression
         run: node tests/companion/yoppoGeometryDiagnostics.test.mjs
+      - name: Independent reference and unchanged thresholds
+        run: node --import tsx tests/companion/yoppoApprovedReference.test.ts
+      - name: Strict iteration keep and revert rules
+        run: node tests/companion/yoppoIterationPolicy.test.mjs
       - name: Focused lint
-        run: npx eslint lib/companion/yoppoRigContract.ts scripts/audit-yoppo-master.mjs scripts/measure-yoppo-geometry.mjs scripts/compare-yoppo-master.ts tests/companion/yoppoRigContract.test.ts tests/companion/yoppoGeometryDiagnostics.test.mjs
+        run: npx eslint lib/companion/yoppoRigContract.ts scripts/*yoppo*.mjs scripts/*yoppo*.ts tests/companion/yoppo*.mjs tests/companion/yoppo*.ts
       - name: Diff integrity
         run: git diff --check origin/main...HEAD
       - name: Canonical PNG audit
@@ -64,13 +71,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -s rive/yoppo-master/evidence/freeze-manifest.json
+          node scripts/check-yoppo-freeze.mjs
       - name: Install Linux graphics runtime for Rive CLI
         shell: bash
         run: |
           set -euo pipefail
-          sudo apt-get update -y
-          sudo apt-get install -y libegl1 libgl1 libgles2 libx11-6 libxext6 libxrender1 libxi6 libxrandr2 libxcursor1 libxinerama1 libxkbcommon0
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=10 -o Acquire::https::Timeout=10 update -y
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=10 -o Acquire::https::Timeout=10 install -y libegl1 libgl1 libgles2 libx11-6 libxext6 libxrender1 libxi6 libxrandr2 libxcursor1 libxinerama1 libxkbcommon0
       - name: Install pinned Rive CLI 1.9.2
         shell: bash
         run: |
@@ -207,22 +214,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rive rive/yoppo-master --verify
-          rive inspect rive/yoppo-master --json > /tmp/yoppo-master-inspect.json
-          rive rive/yoppo-master --screenshot=/tmp/yoppo-master-neutral.png --advance=0
-          test -s /tmp/yoppo-master-neutral.png
-          node --import tsx scripts/compare-yoppo-master.ts /tmp/yoppo-master-neutral.png /tmp/yoppo-canonical-geometry.json
+          export RIVE_CLI="$(command -v rive)"
+          export PYTHON_EXECUTABLE="$(command -v python3)"
+          node scripts/render-yoppo-pilot.mjs ci-candidate baseline
       - name: Upload Yoppo neutral master evidence
         if: always() && hashFiles('rive/yoppo-master/evidence/freeze-manifest.json') != ''
         uses: actions/upload-artifact@v4
         with:
           name: yoppo-neutral-master-v1
           path: |
-            /tmp/yoppo-master-neutral.png
-            /tmp/yoppo-master-overlay.png
-            /tmp/yoppo-master-inspect.json
-            /tmp/yoppo-canonical-geometry.json
-            /tmp/yoppo-canonical-geometry-annotated.png
+            .qa-guided/yoppo-pilot/renders/ci-candidate/
+            rive/yoppo-master/evidence/freeze-manifest.json
+            rive/yoppo-master/evidence/render-attempts.jsonl
+            rive/yoppo-master/evidence/iterations.jsonl
             rive/yoppo-master/build/problems.log
           if-no-files-found: error
           retention-days: 7

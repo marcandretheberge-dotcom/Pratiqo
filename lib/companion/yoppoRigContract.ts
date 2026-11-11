@@ -39,7 +39,8 @@ export const YOPPO_ARTBOARD_CONTRACT = {
 
 export const YOPPO_GEOMETRY_MEASUREMENT_POLICY = {
   source: "canonical-idle-png",
-  method: "fixed-roi-alpha-color-segmentation",
+  method: "fixed-roi-approved-reference-ownership-alpha-color",
+  referenceApproval: "rive/yoppo-master/evidence/reference-segmentation-approval.json",
   geometryChangesRequireMeasuredDelta: true,
   rejectEdgeClippedMeasurements: true,
   sourceToArtboard: { scale: 1.86, translateX: 47, translateY: 78 },

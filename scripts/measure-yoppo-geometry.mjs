@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import sharp from "sharp";
+import { loadApprovedReference } from "./yoppo-reference-masks.mjs";
 
 const source = "public/companion/travel/companion-travel-idle.png";
 const output = process.argv[2] ?? "/tmp/yoppo-canonical-geometry.json";
@@ -11,6 +12,7 @@ const ROI_MAX_EXPANSIONS = 3;
 
 const image = sharp(source).toColourspace("srgb").ensureAlpha();
 const { data, info } = await image.raw().toBuffer({ resolveWithObject: true });
+const reference = await loadApprovedReference();
 
 const px = (x, y) => {
   const i = (y * info.width + x) * 4;
@@ -50,7 +52,7 @@ function sampleBox(name, spec, box) {
   for(let y=box.y;y<Math.min(info.height,box.y+box.h);y++){
     for(let x=box.x;x<Math.min(info.width,box.x+box.w);x++){
       const p=px(x,y);
-      if(!visible(p)||!test(p)) continue;
+      if(!reference.masks[name][y*info.width+x]||!visible(p)||!test(p)) continue;
       count++; sumX+=x; sumY+=y;
       minX=Math.min(minX,x); minY=Math.min(minY,y); maxX=Math.max(maxX,x); maxY=Math.max(maxY,y);
       if(x<=box.x+1) edge.left=true;
@@ -162,14 +164,15 @@ fs.mkdirSync(path.dirname(annotatedOutput),{recursive:true});
 fs.writeFileSync(annotatedOutput,annotated);
 
 const result={
-  schemaVersion:2,
+  schemaVersion:3,
   valid:failures.length===0,
   failures,
   classificationReview:"VISUAL REVIEW PENDING HUMAN REVIEW",
   source,
   sourceSize:{width:info.width,height:info.height},
   transform,
-  method:"fixed-roi + alpha/color classification; no geometry value is hand-entered",
+  method:"fixed-roi + user-approved reference ownership + unchanged alpha/color classification; bounds and centroids computed from pixels",
+  approvedReference:reference.approval,
   rule:"a feature touching an ROI edge expands deterministically by 12px on each touched side, up to 3 times; ROIs are never shrunk or moved to improve a result",
   roiExpansion:{stepPx:ROI_EXPAND_STEP,maxExpansions:ROI_MAX_EXPANSIONS},
   annotatedOutput,

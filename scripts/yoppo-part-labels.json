@@ -1,0 +1,23 @@
+{
+  "colors": {
+    "headCream": "E6194B", "spikes": "3CB44B", "earLeft": "FFE119",
+    "earRight": "4363D8", "eyeLeft": "F58231", "eyeRight": "911EB4",
+    "torso": "46F0F0", "armLeft": "F032E6", "armRight": "BCF60C",
+    "footLeft": "FABEBE", "footRight": "008080", "backpack": "E6BEFF",
+    "mouthInk": "9A6324", "chestEmblem": "FFFAC8", "unmeasured": "555555"
+  },
+  "rules": [
+    ["Eye_L.", "eyeLeft"], ["Eye_R.", "eyeRight"],
+    ["Brow_", "headCream"], ["Cheek_", "headCream"], ["Nose", "headCream"],
+    ["Mouth.", "mouthInk"], ["Arm_L.", "armLeft"], ["Arm_R.", "armRight"],
+    ["Torso.Chest_Emblem", "chestEmblem"], ["Backpack.Strap_", "unmeasured"],
+    ["Ear_L.", "earLeft"], ["Ear_R.", "earRight"], ["Spikes_", "spikes"],
+    ["Face_Base", "headCream"], ["Head.", "headCream"], ["Torso.", "torso"],
+    ["Leg_L.Complete", "torso"], ["Leg_R.Complete", "torso"],
+    ["Leg_L.Foot", "footLeft"], ["Leg_L.Toe.", "footLeft"],
+    ["Leg_R.Foot", "footRight"], ["Leg_R.Toe.", "footRight"],
+    ["Backpack.", "backpack"], ["Shadow", "unmeasured"]
+  ],
+  "parents": { "headCream": ["headCream", "eyeLeft", "eyeRight", "mouthInk"], "torso": ["torso", "chestEmblem"] },
+  "policy": "Labels come from actual rendered RML shapes, not canonical coordinates. Preserve geometry, ordering and clips. Opaque diagnostic paint identifies frontmost ownership; original render supplies all color/alpha tests. Hidden geometry remains excluded."
+}

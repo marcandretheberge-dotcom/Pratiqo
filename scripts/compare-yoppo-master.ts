@@ -1,5 +1,8 @@
 import fs from "node:fs";
+import path from "node:path";
+import { createHash } from "node:crypto";
 import sharp from "sharp";
+import { measureRenderedComponents } from "./yoppo-component-metrics";
 import {
   YOPPO_ARTBOARD_CONTRACT,
   YOPPO_COMPONENT_TOLERANCES,
@@ -15,11 +18,19 @@ type CanonicalRegion = {
   artboardCentroid: { x: number; y: number };
 };
 type GeometryAudit = { valid: boolean; regions: Record<ComponentName, CanonicalRegion> };
+type ComponentMetric = {
+  centroidDistancePx: number | null; widthRelError: number | null; heightRelError: number | null;
+  rendered: ReturnType<typeof measureRenderedComponents>["components"][ComponentName];
+  canonical: { bounds: Bounds; centroid: { x: number; y: number } };
+  tolerance: { centroidMaxPx: number; widthRelMax: number; heightRelMax: number }; pass: boolean;
+};
 
 async function main() {
 const renderedPath = process.argv[2] ?? "/tmp/yoppo-master-neutral.png";
 const geometryPath = process.argv[3] ?? "/tmp/yoppo-canonical-geometry.json";
 const referencePath = "public/companion/travel/companion-travel-idle.png";
+const provenancePath = process.argv[4];
+const outputDir = process.argv[5] ?? "/tmp/yoppo-master-evidence";
 
 if (!fs.existsSync(geometryPath)) {
   throw new Error("Canonical geometry audit is required before overlay comparison: " + geometryPath);
@@ -42,6 +53,10 @@ if (edgeClipped.length) {
 }
 
 const size = YOPPO_ARTBOARD_CONTRACT.width;
+if (!provenancePath) throw new Error("Independent rendered labels and provenance are required");
+const provenance = JSON.parse(fs.readFileSync(provenancePath, "utf8"));
+const sha = (file: string) => createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+if (sha(renderedPath)!==provenance.renderSha256 || sha(provenance.labelsPath)!==provenance.labelsSha256 || sha("rive/yoppo-master/scene.rml")!==provenance.sourceSha256) throw new Error("Render/labels provenance mismatch");
 
 async function raw(path: string) {
   return sharp(path).toColourspace("srgb").ensureAlpha().raw().toBuffer({ resolveWithObject: true });
@@ -76,69 +91,13 @@ const referenceCanvas = await sharp({
 
 const rendered = await raw(renderedPath);
 const reference = await sharp(referenceCanvas).raw().toBuffer({ resolveWithObject: true });
+const labels = await raw(provenance.labelsPath);
 
 if (rendered.info.width !== size || rendered.info.height !== YOPPO_ARTBOARD_CONTRACT.height) {
   throw new Error(`Rive render must be ${size}x${YOPPO_ARTBOARD_CONTRACT.height}, got ${rendered.info.width}x${rendered.info.height}`);
 }
 
-const cream = (r:number,g:number,b:number,a:number) =>
-  a>=120 && r>=175 && g>=155 && b>=130 && Math.max(r,g,b)-Math.min(r,g,b)<105;
-const teal = (r:number,g:number,b:number,a:number) =>
-  a>=120 && g>=85 && b>=75 && g>r+28 && b>r+20;
-const brown = (r:number,g:number,b:number,a:number) =>
-  a>=120 && r>=65 && r>g+18 && g>=25 && g<170 && b<135;
-const ink = (r:number,g:number,b:number,a:number) =>
-  a>=120 && r<90 && g<105 && b<110;
-const creamOrTeal = (r:number,g:number,b:number,a:number) => cream(r,g,b,a)||teal(r,g,b,a);
-const pack = (r:number,g:number,b:number,a:number) => brown(r,g,b,a)||teal(r,g,b,a);
-
-const classifiers: Record<string,(r:number,g:number,b:number,a:number)=>boolean> = {
-  headCream: cream,
-  spikes: teal,
-  earLeft: (r,g,b,a)=>teal(r,g,b,a)||ink(r,g,b,a),
-  earRight: (r,g,b,a)=>teal(r,g,b,a)||ink(r,g,b,a),
-  eyeLeft: (r,g,b,a)=>teal(r,g,b,a)||ink(r,g,b,a),
-  eyeRight: (r,g,b,a)=>teal(r,g,b,a)||ink(r,g,b,a),
-  torso: creamOrTeal,
-  armLeft: creamOrTeal,
-  armRight: creamOrTeal,
-  footLeft: teal,
-  footRight: teal,
-  backpack: pack,
-  mouthInk: ink,
-  chestEmblem: teal,
-};
-
-function measureRenderedRegion(name:string, canonical:CanonicalRegion) {
-  const classifier=classifiers[name];
-  if(!classifier) throw new Error("No render classifier for component "+name);
-
-  // Keep the rendered search local to the canonical feature so same-color neighbors
-  // cannot dominate a component measurement.
-  const pad=10;
-  const cb=canonical.artboardBounds;
-  const minX=Math.max(0,Math.floor(cb.minX-pad));
-  const minY=Math.max(0,Math.floor(cb.minY-pad));
-  const maxX=Math.min(rendered.info.width-1,Math.ceil(cb.maxX+pad));
-  const maxY=Math.min(rendered.info.height-1,Math.ceil(cb.maxY+pad));
-
-  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity,count=0,sx=0,sy=0;
-  for(let y=minY;y<=maxY;y++){
-    for(let x=minX;x<=maxX;x++){
-      const i=(y*rendered.info.width+x)*4;
-      const r=rendered.data[i],g=rendered.data[i+1],b=rendered.data[i+2],a=rendered.data[i+3];
-      if(!classifier(r,g,b,a)) continue;
-      count++; sx+=x; sy+=y;
-      x0=Math.min(x0,x); y0=Math.min(y0,y); x1=Math.max(x1,x); y1=Math.max(y1,y);
-    }
-  }
-  if(!count) throw new Error("Rendered component has no classified pixels: "+name);
-  return {
-    pixelCount:count,
-    bounds:{minX:x0,minY:y0,maxX:x1,maxY:y1,width:x1-x0+1,height:y1-y0+1},
-    centroid:{x:sx/count,y:sy/count},
-  };
-}
+const independentlyMeasured = measureRenderedComponents(rendered, labels);
 
 let intersection = 0;
 let union = 0;
@@ -190,7 +149,8 @@ const componentMetrics = Object.fromEntries(
   Object.entries(geometry.regions).map(([name,canonical])=>{
     const tolerance=(YOPPO_COMPONENT_TOLERANCES as Record<string,{centroidMaxPx:number;widthRelMax:number;heightRelMax:number}>)[name];
     if(!tolerance) throw new Error("Missing frozen component tolerance: "+name);
-    const measured=measureRenderedRegion(name,canonical);
+    const measured=independentlyMeasured.components[name as ComponentName];
+    if(!measured) return [name, {centroidDistancePx:null,widthRelError:null,heightRelError:null,rendered:null,canonical:{bounds:canonical.artboardBounds,centroid:canonical.artboardCentroid},tolerance,pass:false}];
     const componentCentroidDistance=Math.hypot(
       measured.centroid.x-canonical.artboardCentroid.x,
       measured.centroid.y-canonical.artboardCentroid.y,
@@ -210,7 +170,7 @@ const componentMetrics = Object.fromEntries(
         heightRelError<=tolerance.heightRelMax,
     }];
   })
-);
+) as Record<ComponentName, ComponentMetric>;
 
 const metrics = {
   silhouetteIoU: Number(silhouetteIoU.toFixed(4)),
@@ -222,10 +182,13 @@ const metrics = {
   renderGround,
   referenceGround,
   thresholds: YOPPO_OVERLAY_ACCEPTANCE,
+  unassignedLabelPixels: independentlyMeasured.unassignedVisiblePixels,
   components: componentMetrics,
 };
 
 console.log("YOPPO_MASTER_COMPARE=" + JSON.stringify(metrics));
+fs.mkdirSync(outputDir, {recursive:true});
+fs.writeFileSync(path.join(outputDir,"metrics.json"),JSON.stringify(metrics,null,2)+"\n");
 
 // sharp has no composite opacity option. Apply opacity only to the review copy,
 // after calculating metrics from the unchanged straight-alpha source pixels.
@@ -236,7 +199,15 @@ const overlay = await sharp(referenceCanvas)
   .composite([{ input: overlayRender, blend: "over" }])
   .png()
   .toBuffer();
-await sharp(overlay).toFile("/tmp/yoppo-master-overlay.png");
+await sharp(overlay).toFile(path.join(outputDir,"overlay.png"));
+const neutral = {r:244,g:240,b:232,alpha:1};
+const sideBySide=await sharp({create:{width:size*2,height:size+48,channels:4,background:neutral}})
+  .composite([
+    {input:referenceCanvas,left:0,top:48},
+    {input:await sharp(renderedPath).png().toBuffer(),left:size,top:48},
+    {input:Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="48"><text x="24" y="30" font-family="Arial" font-size="20" fill="#222">CANONICAL PNG</text><text x="1048" y="30" font-family="Arial" font-size="20" fill="#222">RIVE - VISUAL REVIEW PENDING HUMAN REVIEW</text></svg>`),left:0,top:0},
+  ]).png().toBuffer();
+for (const percent of [100,50,25]) await sharp(sideBySide).resize({width:Math.round(size*2*percent/100),kernel:sharp.kernel.lanczos3}).png().toFile(path.join(outputDir,`side-by-side-${percent}.png`));
 
 const failures:string[] = [];
 for(const [name,value] of Object.entries(componentMetrics)){

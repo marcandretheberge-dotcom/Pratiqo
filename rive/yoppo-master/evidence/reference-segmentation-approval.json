@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "status": "APPROVED_REFERENCE_NOT_APPROVED_RENDER",
+  "approvedBy": "user",
+  "authorization": "A, B et C validés. Intègre ce découpage de référence et reprends le pilote Yoppo.",
+  "scope": "Reference part ownership and A/B/C seams only. No threshold change, appearance approval, hidden geometry claim or deployment authorization.",
+  "proposal": "rive/yoppo-master/evidence/reference-segmentation-proposal.json",
+  "proposalSha256": "ed98cbdd14a96ca6f8da4303e0239378755d1e6b761aa806d899d1d5304f6447",
+  "sourceSha256": "fb1335d7e170674e6e265c660b641e6f8d2b5a6b9d916d4b2ba9307a41f18070",
+  "junctions": ["A", "B", "C"],
+  "runtimeIntegration": false
+}
