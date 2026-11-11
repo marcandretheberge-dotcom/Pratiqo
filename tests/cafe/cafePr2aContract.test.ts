@@ -12,6 +12,8 @@ const adminRoute = read("app/api/admin/cafe/sessions/route.ts");
 assert.match(migration, /CREATE TABLE public\.cafe_sessions/);
 assert.match(migration, /CREATE TABLE public\.cafe_reservations/);
 assert.match(migration, /status IN \('draft', 'published', 'cancelled'\)/);
+assert.match(migration, /cafe_sessions_starts_at_finite_check/);
+assert.match(migration, /CHECK \(isfinite\(starts_at\)\)/);
 assert.match(migration, /status IN \('confirmed', 'cancelled'\)/);
 assert.doesNotMatch(migration, /attended|no_show|waitlist/i);
 
@@ -24,6 +26,7 @@ assert.match(migration, /UNIQUE \(session_id, profile_id\)/);
 assert.match(migration, /FOR NO KEY UPDATE/);
 assert.match(migration, /upcoming_confirmed >= 3/);
 assert.match(migration, /session_confirmed >= s\.max_participants/);
+assert.match(migration, /p_action IS NULL/);
 assert.match(migration, /version_conflict/);
 assert.match(migration, /request_id_reused/);
 assert.match(migration, /pg_advisory_xact_lock\(hashtextextended\('cafe_quota:'/);
@@ -51,6 +54,7 @@ assert.match(reservationRoute, /40001/);
 assert.match(reservationRoute, /cafe_set_reservation_server/);
 assert.doesNotMatch(reservationRoute, /\.from\(["']cafe_reservations/);
 assert.match(adminRoute, /requireAdminApi/);
+assert.match(adminRoute, /finiteIsoTimestamp/);
 assert.match(reservationRoute, /isCafeV1Enabled/);
 assert.match(publicRoute, /isCafeV1Enabled/);
 assert.match(adminRoute, /isCafeV1Enabled/);
@@ -60,3 +64,6 @@ assert.match(migration, /CREATE OR REPLACE FUNCTION public\.cafe_admin_reassign_
 assert.match(publicRoute, /cafe_public_sessions/);
 
 console.log("[cafe:pr2a-contract] static contract passed");
+
+const cleanupSection = migration.match(/CREATE OR REPLACE FUNCTION cafe_private\.handle_profile_removal\(\)[\s\S]*?CREATE TRIGGER cafe_profiles_cleanup_on_update/)?.[0] ?? "";
+assert.match(cleanupSection, /pg_advisory_xact_lock[\s\S]*?decision_time := clock_timestamp\(\)/);
