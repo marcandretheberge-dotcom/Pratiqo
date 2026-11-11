@@ -1,0 +1,38 @@
+name: Cafe PR2b front door
+
+on:
+  pull_request:
+    paths:
+      - "app/cafe/**"
+      - "components/cafe/**"
+      - "lib/cafe/copy.ts"
+      - "lib/cafe/publicTypes.ts"
+      - "lib/cafe/sessionInput.ts"
+      - "tests/cafe/cafePr2bFrontDoor.test.ts"
+      - ".github/workflows/cafe-pr2b-front-door.yml"
+      - "package.json"
+
+permissions:
+  contents: read
+
+jobs:
+  cafe-front-door:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Cafe front-door contract
+        run: npm run test:cafe-pr2b
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Focused lint
+        run: npx eslint app/cafe/page.tsx app/cafe/CafeFrontDoor.tsx app/cafe/[slug]/page.tsx app/cafe/[slug]/CafeSessionDetails.tsx components/cafe/CafeSessionCard.tsx lib/cafe/copy.ts lib/cafe/publicTypes.ts
+      - name: Whitespace check
+        run: git diff --check
