@@ -12,6 +12,36 @@ SELECT public.cafe_admin_publish_server(
  '00000000-0000-4000-8000-000000000001','fr-es-test'
 );
 
+DO $
+DECLARE j jsonb;
+BEGIN
+  j := public.cafe_admin_reassign_host_server(
+    '00000000-0000-4000-8000-000000000001',
+    'fr-es-test',
+    '00000000-0000-4000-8000-000000000004'
+  );
+  IF j->>'ok' <> 'true' THEN
+    RAISE EXCEPTION 'host reassignment failed: %', j;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM public.cafe_sessions
+    WHERE slug='fr-es-test'
+      AND host_profile_id='00000000-0000-4000-8000-000000000004'
+      AND status='published'
+  ) THEN
+    RAISE EXCEPTION 'host reassignment did not persist';
+  END IF;
+
+  j := public.cafe_admin_reassign_host_server(
+    '00000000-0000-4000-8000-000000000001',
+    'fr-es-test',
+    '00000000-0000-4000-8000-000000000002'
+  );
+  IF j->>'ok' <> 'true' THEN
+    RAISE EXCEPTION 'host restoration failed: %', j;
+  END IF;
+END $;
+
 -- First reservation, exact replay, cancellation, stale retry.
 DO $$
 DECLARE
