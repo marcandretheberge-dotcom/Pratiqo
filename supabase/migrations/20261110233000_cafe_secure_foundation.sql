@@ -40,6 +40,8 @@ CREATE TABLE public.cafe_sessions (
     CHECK (practice_language IS NULL OR char_length(trim(practice_language)) BETWEEN 1 AND 40),
   CONSTRAINT cafe_sessions_level_check
     CHECK (level IS NULL OR char_length(trim(level)) BETWEEN 1 AND 40),
+  CONSTRAINT cafe_sessions_starts_at_finite_check
+    CHECK (isfinite(starts_at)),
   CONSTRAINT cafe_sessions_duration_check
     CHECK (duration_minutes BETWEEN 15 AND 180),
   CONSTRAINT cafe_sessions_capacity_check
@@ -396,7 +398,8 @@ DECLARE
   upcoming_confirmed bigint := 0;
   next_version bigint;
 BEGIN
-  IF p_action NOT IN ('reserve', 'cancel')
+  IF p_action IS NULL
+     OR p_action NOT IN ('reserve', 'cancel')
      OR p_expected_version IS NULL OR p_expected_version < 0
      OR p_request_id IS NULL
      OR p_slug IS NULL OR trim(p_slug) = '' THEN
@@ -784,7 +787,7 @@ AS $$
 DECLARE
   target_id uuid;
   should_purge boolean := false;
-  decision_time timestamptz := clock_timestamp();
+  decision_time timestamptz;
 BEGIN
   IF TG_OP = 'DELETE' THEN
     target_id := OLD.id;
@@ -800,6 +803,7 @@ BEGIN
   IF should_purge THEN
     PERFORM set_config('lock_timeout', '3s', true);
     PERFORM pg_advisory_xact_lock(hashtextextended('cafe_quota:' || target_id::text, 0));
+    decision_time := clock_timestamp();
 
     UPDATE public.cafe_sessions
        SET status = 'cancelled',
