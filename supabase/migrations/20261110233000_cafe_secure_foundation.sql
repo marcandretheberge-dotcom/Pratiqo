@@ -162,7 +162,7 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = pg_catalog, pg_temp
-AS $$
+AS $cafe$
   SELECT EXISTS (
     SELECT 1
       FROM public.profiles p
@@ -175,7 +175,7 @@ AS $$
        AND au.deleted_at IS NULL
        AND (au.banned_until IS NULL OR au.banned_until <= clock_timestamp())
   )
-$;
+$cafe$;
 
 REVOKE ALL ON FUNCTION cafe_private.require_active_profile(uuid) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION cafe_private.require_admin(uuid) FROM PUBLIC, anon, authenticated, service_role;
