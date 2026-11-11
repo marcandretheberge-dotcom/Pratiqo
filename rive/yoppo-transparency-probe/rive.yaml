@@ -1,0 +1,5 @@
+name: transparent-capture-probe
+artboard:
+  width: 64
+  height: 64
+  background: "#00000000"

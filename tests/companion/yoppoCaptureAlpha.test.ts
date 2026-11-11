@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import { requireTransparentRiveCapture } from "../../scripts/yoppo-capture-alpha";
+const info={width:8,height:8,channels:4};
+const transparent={info,data:new Uint8Array(8*8*4)};
+const center=(3*8+3)*4;transparent.data[center]=255;transparent.data[center+3]=255;
+assert.equal(requireTransparentRiveCapture(transparent).transparentPixels,63);
+const opaque={info,data:new Uint8Array(8*8*4).fill(255)};
+assert.throws(()=>requireTransparentRiveCapture(opaque),/transparent canvas/);
+assert.throws(()=>requireTransparentRiveCapture({info,data:new Uint8Array(8*8*4)}),/no opaque artwork/);
+const corner={info,data:transparent.data.slice()};corner.data[3]=255;
+assert.throws(()=>requireTransparentRiveCapture(corner),/transparent canvas/);
+console.log("Rive capture alpha fail-closed regression: PASS");

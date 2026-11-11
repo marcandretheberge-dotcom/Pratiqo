@@ -35,3 +35,14 @@ No production runtime integration, paid API, deployment or merge is part of
 this work. The production PNG remains untouched.
 
 All rendered evidence: **VISUAL REVIEW PENDING HUMAN REVIEW**.
+
+## Capture correction, cycle 2
+
+Cycle 1 was explicitly invalidated: Rive 1.9.2 on Windows emits an opaque
+capture background, which is not the required transparent canvas. See
+`CYCLE_1_INVALIDATED.md`. No geometry changes or threshold adjustments were
+made from those invalid metrics. A new 64 x 64 transparency preflight stops
+both local and CI master rendering before consuming further full-canvas
+captures. The comparator also rejects opaque/empty captures independently.
+The preflight must pass using actual Rive output, not an edited PNG. The
+original two full-canvas captures remain counted toward the total budget.

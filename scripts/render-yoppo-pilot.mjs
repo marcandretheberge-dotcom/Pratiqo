@@ -47,6 +47,9 @@ function capture(project,output,kind) {
 }
 const geometry=path.join(out,"canonical.json");
 run(process.execPath,["scripts/measure-yoppo-geometry.mjs",geometry,path.join(out,"canonical-annotated.png")]);
+const transparencyProbe=path.join(out,"transparency-probe.png");
+run(rive,["rive/yoppo-transparency-probe",`--screenshot=${transparencyProbe}`,"--advance=0"]);
+run(process.execPath,["--import","tsx","scripts/check-yoppo-capture.ts",transparencyProbe,path.join(out,"transparency-probe.json")]);
 run(rive,[master,"--verify"]);
 const inspect=run(rive,["inspect",master,"--json"]);
 fs.writeFileSync(path.join(out,"inspect.json"),inspect.stdout);

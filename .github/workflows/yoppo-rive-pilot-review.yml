@@ -15,6 +15,7 @@ on:
       - "tests/companion/yoppoGeometryDiagnostics.test.mjs"
       - "rive/yoppo-eye-spike/**"
       - "rive/yoppo-master/**"
+      - "rive/yoppo-transparency-probe/**"
       - "scripts/compare-yoppo-master.ts"
       - ".github/workflows/yoppo-rive-pilot-review.yml"
 
@@ -49,6 +50,8 @@ jobs:
         run: node --import tsx tests/companion/yoppoApprovedReference.test.ts
       - name: Strict iteration keep and revert rules
         run: node tests/companion/yoppoIterationPolicy.test.mjs
+      - name: Fail closed on opaque or empty captures
+        run: node --import tsx tests/companion/yoppoCaptureAlpha.test.ts
       - name: Focused lint
         run: npx eslint lib/companion/yoppoRigContract.ts scripts/*yoppo*.mjs scripts/*yoppo*.ts tests/companion/yoppo*.mjs tests/companion/yoppo*.ts
       - name: Diff integrity
@@ -89,6 +92,22 @@ jobs:
           echo "$RUNNER_TEMP/rive-1.9.2" >> "$GITHUB_PATH"
           "$RUNNER_TEMP/rive-1.9.2/rive" analytics off
           test "$("$RUNNER_TEMP/rive-1.9.2/rive" --version)" = "rive 1.9.2"
+      - name: Require genuinely transparent Rive capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          rive rive/yoppo-transparency-probe --screenshot=/tmp/yoppo-transparency-probe.png --advance=0
+          node --import tsx scripts/check-yoppo-capture.ts /tmp/yoppo-transparency-probe.png /tmp/yoppo-transparency-probe.json
+      - name: Upload transparency preflight
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yoppo-transparency-preflight
+          path: |
+            /tmp/yoppo-transparency-probe.png
+            /tmp/yoppo-transparency-probe.json
+          if-no-files-found: warn
+          retention-days: 7
       - name: Verify neutral-master RML without rendering
         run: rive rive/yoppo-master --verify
       - name: Scaffold current Rive project template

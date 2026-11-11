@@ -15,6 +15,9 @@ export const frozenFiles = [
   "rive/yoppo-master/evidence/reference-segmentation-approval.json", ".gitattributes",
   "tests/companion/yoppoApprovedReference.test.ts", "tests/companion/yoppoGeometryDiagnostics.test.mjs",
   "tests/companion/yoppoIterationPolicy.test.mjs",
+  "scripts/yoppo-capture-alpha.ts", "scripts/check-yoppo-capture.ts",
+  "tests/companion/yoppoCaptureAlpha.test.ts",
+  "rive/yoppo-transparency-probe/scene.rml", "rive/yoppo-transparency-probe/rive.yaml",
 ];
 export function verifyFreeze() {
   const manifest=JSON.parse(fs.readFileSync(manifestPath,"utf8"));

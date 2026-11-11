@@ -3,6 +3,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { measureRenderedComponents } from "./yoppo-component-metrics";
+import { requireTransparentRiveCapture } from "./yoppo-capture-alpha";
 import {
   YOPPO_ARTBOARD_CONTRACT,
   YOPPO_COMPONENT_TOLERANCES,
@@ -92,6 +93,8 @@ const referenceCanvas = await sharp({
 const rendered = await raw(renderedPath);
 const reference = await sharp(referenceCanvas).raw().toBuffer({ resolveWithObject: true });
 const labels = await raw(provenance.labelsPath);
+requireTransparentRiveCapture(rendered);
+requireTransparentRiveCapture(labels);
 
 if (rendered.info.width !== size || rendered.info.height !== YOPPO_ARTBOARD_CONTRACT.height) {
   throw new Error(`Rive render must be ${size}x${YOPPO_ARTBOARD_CONTRACT.height}, got ${rendered.info.width}x${rendered.info.height}`);

@@ -1,0 +1,9 @@
+<Rive version="1" kind="fragment">
+    <Artboard width="64" height="64" name="Transparency Probe" id="0:2">
+        <Fill name="Explicit Transparent Background"><SolidColor colorValue="00000000"/></Fill>
+        <Shape x="32" y="32" name="Opaque Test Square">
+            <Rectangle width="16" height="16"/>
+            <Fill><SolidColor colorValue="FFFF0000"/></Fill>
+        </Shape>
+    </Artboard>
+</Rive>

@@ -15,6 +15,7 @@ const files=Object.fromEntries(frozenFiles.map((file:string)=>{
   return [file,current];
 }));
 fs.writeFileSync(manifestPath,JSON.stringify({
+  cycle:2,invalidatedCycle:{freezeCommit:"65eebd83c5a9d83dc93086f6d648ec52c44b9a1d",report:"CYCLE_1_INVALIDATED.md",capturesStillCounted:2},
   freezeCommit,createdAtUtc:new Date().toISOString(),branch:"feat/yoppo-rive-pilot-20261110",
   expectedStartingHead:"f5e38c21c290ea8612a524edb56e404f5944e050",resumedHead:"c9e7dd0628f2474abf8a309f31581fdd3e73e47e",
   files,globalThresholds:YOPPO_OVERLAY_ACCEPTANCE,componentThresholds:YOPPO_COMPONENT_TOLERANCES,

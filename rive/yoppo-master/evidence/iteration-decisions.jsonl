@@ -1,0 +1,1 @@
+{"iteration":"local-01","freezeCommit":"65eebd83c5a9d83dc93086f6d648ec52c44b9a1d","decision":"invalidated-cycle","reason":"Opaque Rive capture violates the pre-existing transparent canvas contract; all comparison metrics are invalid. No geometry changes retained.","fullCanvasCapturesStillCounted":2}
