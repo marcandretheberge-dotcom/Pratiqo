@@ -29,11 +29,11 @@ assert.match(workflow, /CAFE_DAILY_PARTICIPANT_HMAC_SECRET/);
 assert.match(workflow, /github\.event_name == 'workflow_dispatch'/);
 assert.doesNotMatch(workflow, /pull_request_target/);
 
-assert.match(runbook, /room URL alone/i);
+assert.match(runbook, /URL de salle seule/i);
 assert.match(runbook, /iPhone Safari/);
 assert.match(runbook, /Android Chrome/);
-assert.match(runbook, /eject/i);
+assert.match(runbook, /éjecte|eject/i);
 assert.match(runbook, /CAFE_ROOM_PROVIDER_ENABLED=false/);
-assert.match(runbook, /Do not record/i);
+assert.match(runbook, /ne doivent contenir.*jeton|Ne pas copier.*jeton/i);
 
 console.log("[cafe:daily-live-contract] manual workflow and secret-handling contract passed");
