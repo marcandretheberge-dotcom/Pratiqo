@@ -3,6 +3,7 @@ import {
   YOPPO_ARTBOARD_CONTRACT,
   YOPPO_HEAD_TURN_INPUT,
   YOPPO_HEAD_TURN_LIMIT_DEG,
+  YOPPO_IDLE_POSE_DELTA_V1,
   YOPPO_IDENTITY_MASTER,
   YOPPO_MORPH_TOPOLOGY,
   YOPPO_OVERLAY_ACCEPTANCE,
@@ -15,6 +16,9 @@ import {
 
 assert.equal(YOPPO_IDENTITY_MASTER, "/companion/travel/companion-travel-idle.png");
 assert.equal(YOPPO_HEAD_TURN_LIMIT_DEG, 15);
+assert.equal(YOPPO_IDLE_POSE_DELTA_V1.mouth, "smile");
+assert.equal(YOPPO_IDLE_POSE_DELTA_V1.lids, "open");
+assert.ok(Math.abs(YOPPO_IDLE_POSE_DELTA_V1.backpack.rotationDeg) <= 3);
 assert.deepEqual([YOPPO_HEAD_TURN_INPUT.min, YOPPO_HEAD_TURN_INPUT.max], [-1, 1]);
 assert.equal(YOPPO_HEAD_TURN_INPUT.mapsToDegrees, 15);
 assert.equal(YOPPO_ARTBOARD_CONTRACT.width, 1024);
