@@ -13,6 +13,15 @@ PSQL=(psql -X -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERRO
 "${PSQL[@]}" -f supabase/migrations/20261110233000_cafe_secure_foundation.sql
 "${PSQL[@]}" -f tests/cafe/sql/functional.sql
 
+
+# Non-finite session timestamps must be rejected by the database.
+for BAD_TIME in infinity -infinity; do
+  if "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_admin_create_draft_server('00000000-0000-4000-8000-000000000001','bad-time-'||replace('$BAD_TIME','-','neg'),'Bad time','fr',NULL,NULL,'$BAD_TIME'::timestamptz,45,4,'00000000-0000-4000-8000-000000000002');" >/dev/null 2>&1; then
+    echo "non-finite starts_at unexpectedly accepted: $BAD_TIME" >&2
+    exit 1
+  fi
+done
+
 # Direct table access must stay closed.
 if "${PSQL[@]}" -c "SET ROLE anon; SELECT * FROM public.cafe_sessions LIMIT 1;" >/dev/null 2>&1; then
   echo "anon unexpectedly read cafe_sessions" >&2
