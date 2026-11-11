@@ -36,6 +36,8 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Canonical PNG audit
         run: node scripts/audit-yoppo-master.mjs
+      - name: Canonical geometry measurement
+        run: node scripts/measure-yoppo-geometry.mjs /tmp/yoppo-canonical-geometry.json
       - name: TypeScript contract
         run: npx tsc --noEmit
       - name: Rig parent and pivot contract
@@ -188,9 +190,10 @@ jobs:
             /tmp/yoppo-master-neutral.png
             /tmp/yoppo-master-overlay.png
             /tmp/yoppo-master-inspect.json
+            /tmp/yoppo-canonical-geometry.json
             rive/yoppo-master/build/problems.log
           if-no-files-found: error
       - name: Focused lint
-        run: npx eslint lib/companion/yoppoRigContract.ts scripts/audit-yoppo-master.mjs scripts/compare-yoppo-master.ts tests/companion/yoppoRigContract.test.ts
+        run: npx eslint lib/companion/yoppoRigContract.ts scripts/audit-yoppo-master.mjs scripts/measure-yoppo-geometry.mjs scripts/compare-yoppo-master.ts tests/companion/yoppoRigContract.test.ts
       - name: Diff integrity
         run: git diff --check origin/main...HEAD
