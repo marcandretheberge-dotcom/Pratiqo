@@ -235,10 +235,14 @@ Existing app state names remain backward-compatible through an adapter:
 
 ## Quality gates
 
-1. Overlay match: rebuilt idle-pose export must achieve silhouette IoU ≥ 0.94 against the canonical idle after the documented reference transform; major semantic regions must remain within the locked palette family.
-2. Palette lock: palette candidates must be extracted from the canonical PNG before final vector coloring.
-3. Full hidden geometry: no cropped joints or missing overlap shapes.
-4. Pivot manifest: every animated transform has a named pivot before animation work begins.
-5. Static fallback: final rig rest pose exports a PNG that can replace the current fallback without visual identity drift.
-6. Reduced motion: state contract includes a reduced-motion presentation path.
-7. No learning state, payment state, or entitlement state may enter the Rive asset.
+1. **Global overlay gate:** rebuilt idle-pose export must achieve silhouette IoU ≥ 0.80, centroid drift ≤ 24 px, ground-contact drift ≤ 12 px and overlap RGB MAE ≤ 65. These values were frozen before the full-master render and must not be changed after seeing results.
+2. **Per-component geometry gate:** measured head, spikes, ears, eyes, torso, arms, feet, backpack, mouth and chest emblem must pass their pre-frozen centroid and bounding-box tolerances in `YOPPO_COMPONENT_TOLERANCES`.
+3. **Measurement evidence:** the canonical geometry audit must output an annotated PNG showing each final ROI, classified feature bounds and centroid. That image is visually reviewed once for same-color neighbor contamination before measurements may drive art.
+4. **ROI discipline:** an edge-touching measurement expands by exactly 12 px on each touched side, up to three times, with the reason recorded. ROIs are never shrunk or repositioned to improve a result.
+5. **Hidden geometry:** occluded limb ends, torso/head sections and straps are explicitly unmeasured by definition and are validated by rotation/overlap-exposure tests, not by pretending the source PNG contains those pixels.
+6. **Palette lock:** palette candidates must be extracted from the canonical PNG before final vector coloring.
+7. **Full hidden geometry:** no cropped joints or missing overlap shapes.
+8. **Pivot manifest:** every animated transform has a named pivot before animation work begins.
+9. **Static fallback:** final rig rest pose exports a PNG that can replace the current fallback without visual identity drift.
+10. **Reduced motion:** state contract includes a reduced-motion presentation path.
+11. No learning state, payment state, or entitlement state may enter the Rive asset.
