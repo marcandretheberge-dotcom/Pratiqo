@@ -45,6 +45,12 @@ export const YOPPO_GEOMETRY_MEASUREMENT_POLICY = {
   sourceToArtboard: { scale: 1.86, translateX: 47, translateY: 78 },
 } as const;
 
+export const YOPPO_MASTER_GEOMETRY_STATUS = {
+  status: "provisional-until-canonical-measurement",
+  mayAdvanceToAnimation: false,
+  rule: "current RML proportions are not accepted until pixel geometry + overlay gates pass",
+} as const;
+
 export const YOPPO_OVERLAY_ACCEPTANCE = {
   silhouetteIoUMin: 0.80,
   centroidDistanceMaxPx: 24,
