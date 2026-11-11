@@ -37,6 +37,14 @@ export const YOPPO_ARTBOARD_CONTRACT = {
   fxOverflowPolicy: "stay-inside-artboard",
 } as const;
 
+export const YOPPO_GEOMETRY_MEASUREMENT_POLICY = {
+  source: "canonical-idle-png",
+  method: "fixed-roi-alpha-color-segmentation",
+  geometryChangesRequireMeasuredDelta: true,
+  rejectEdgeClippedMeasurements: true,
+  sourceToArtboard: { scale: 1.86, translateX: 47, translateY: 78 },
+} as const;
+
 export const YOPPO_OVERLAY_ACCEPTANCE = {
   silhouetteIoUMin: 0.80,
   centroidDistanceMaxPx: 24,
