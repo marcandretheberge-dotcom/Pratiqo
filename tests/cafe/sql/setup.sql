@@ -29,7 +29,8 @@ INSERT INTO auth.users(id,email) VALUES
  ('00000000-0000-4000-8000-000000000003','u1@example.test'),
  ('00000000-0000-4000-8000-000000000004','u2@example.test'),
  ('00000000-0000-4000-8000-000000000005','u3@example.test'),
- ('00000000-0000-4000-8000-000000000006','u4@example.test')
+ ('00000000-0000-4000-8000-000000000006','u4@example.test'),
+ ('00000000-0000-4000-8000-000000000007','quota@example.test')
 ON CONFLICT DO NOTHING;
 INSERT INTO public.profiles(id,name,email,role) VALUES
  ('00000000-0000-4000-8000-000000000001','Admin','admin@example.test','admin'),
@@ -37,5 +38,6 @@ INSERT INTO public.profiles(id,name,email,role) VALUES
  ('00000000-0000-4000-8000-000000000003','U1','u1@example.test','student'),
  ('00000000-0000-4000-8000-000000000004','U2','u2@example.test','teacher'),
  ('00000000-0000-4000-8000-000000000005','U3','u3@example.test','student'),
- ('00000000-0000-4000-8000-000000000006','U4','u4@example.test','teacher')
+ ('00000000-0000-4000-8000-000000000006','U4','u4@example.test','teacher'),
+ ('00000000-0000-4000-8000-000000000007','Quota','quota@example.test','student')
 ON CONFLICT DO NOTHING;
