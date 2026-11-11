@@ -17,6 +17,14 @@ function clean(value: unknown, max: number): string | null {
   return v && v.length <= max ? v : null;
 }
 
+function finiteIsoTimestamp(value: unknown): string | null {
+  const v = clean(value, 80);
+  if (!v) return null;
+  const parsed = Date.parse(v);
+  if (!Number.isFinite(parsed)) return null;
+  return v;
+}
+
 export async function POST(req: Request) {
   if (!isCafeV1Enabled()) return cafeDisabled();
   const auth = await requireAdminApi(req);
@@ -39,7 +47,7 @@ export async function POST(req: Request) {
     const primaryLanguage = clean(body.primaryLanguage, 40);
     const practiceLanguage = body.practiceLanguage == null ? null : clean(body.practiceLanguage, 40);
     const level = body.level == null ? null : clean(body.level, 40);
-    const startsAt = clean(body.startsAt, 80);
+    const startsAt = finiteIsoTimestamp(body.startsAt);
     const durationMinutes = Number(body.durationMinutes);
     const maxParticipants = Number(body.maxParticipants);
     const hostProfileId = body.hostProfileId == null ? null : clean(body.hostProfileId, 80);
