@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import {
   YOPPO_ARTBOARD_CONTRACT,
-  YOPPO_GEOMETRY_MEASUREMENT_POLICY,\n  YOPPO_HEAD_TURN_INPUT,
+  YOPPO_COMPONENT_TOLERANCES,
+  YOPPO_GEOMETRY_MEASUREMENT_POLICY,
+  YOPPO_HIDDEN_GEOMETRY_POLICY,
+  YOPPO_HEAD_TURN_INPUT,
   YOPPO_HEAD_TURN_LIMIT_DEG,
   YOPPO_IDLE_POSE_DELTA_V1,
   YOPPO_IDENTITY_MASTER,
@@ -15,7 +18,16 @@ import {
 } from "@/lib/companion/yoppoRigContract";
 
 assert.equal(YOPPO_IDENTITY_MASTER, "/companion/travel/companion-travel-idle.png");
-assert.equal(YOPPO_HEAD_TURN_LIMIT_DEG, 15);\nassert.equal(YOPPO_GEOMETRY_MEASUREMENT_POLICY.geometryChangesRequireMeasuredDelta, true);\nassert.equal(YOPPO_GEOMETRY_MEASUREMENT_POLICY.rejectEdgeClippedMeasurements, true);
+assert.equal(YOPPO_HEAD_TURN_LIMIT_DEG, 15);
+assert.equal(YOPPO_GEOMETRY_MEASUREMENT_POLICY.geometryChangesRequireMeasuredDelta, true);
+assert.equal(YOPPO_GEOMETRY_MEASUREMENT_POLICY.rejectEdgeClippedMeasurements, true);
+assert.equal(YOPPO_GEOMETRY_MEASUREMENT_POLICY.roiExpansion.stepPx, 12);
+assert.equal(YOPPO_GEOMETRY_MEASUREMENT_POLICY.roiExpansion.maxExpansions, 3);
+assert.equal(YOPPO_HIDDEN_GEOMETRY_POLICY.measuredFromCanonical, false);
+assert.equal(YOPPO_HIDDEN_GEOMETRY_POLICY.validation, "rotation-and-overlap-exposure-tests");
+assert.equal(Object.keys(YOPPO_COMPONENT_TOLERANCES).length, 14);
+assert.ok(YOPPO_COMPONENT_TOLERANCES.eyeLeft.centroidMaxPx <= 8);
+assert.ok(YOPPO_COMPONENT_TOLERANCES.eyeRight.widthRelMax <= 0.08);
 assert.equal(YOPPO_IDLE_POSE_DELTA_V1.mouth, "smile");
 assert.equal(YOPPO_IDLE_POSE_DELTA_V1.lids, "open");
 assert.ok(Math.abs(YOPPO_IDLE_POSE_DELTA_V1.backpack.rotationDeg) <= 3);
