@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "test:cafe-architecture": "tsx tests/cafe/cafeArchitectureContract.test.ts",
+    "test:cafe-pr2a": "tsx tests/cafe/cafePr2aContract.test.ts",
     "test:yo-continuity": "node --import tsx tests/yo/yopratiqoFrenchResponsiveDraft.test.tsx && node --import tsx tests/yo/yopratiqoItalianYoppo.test.ts && node --import tsx tests/yo/yopratiqoCourseBreak.test.tsx && node --import tsx tests/yo/yopratiqoSharedCompanionAudio.test.tsx",
     "test:yo-adventure": "node --import tsx tests/yo/yopratiqoAdventure.test.tsx",
     "test:yo-journey": "node --import tsx tests/yo/yopratiqoCourseJourney.test.ts && node --import tsx tests/yo/yopratiqoAllLanguageJourneys.test.ts && npm run test:yo-adventure",

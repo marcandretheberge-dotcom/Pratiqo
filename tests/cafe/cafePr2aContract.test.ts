@@ -1,0 +1,82 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { parseCafeStartsAt } from "@/lib/cafe/sessionInput";
+
+const root = process.cwd();
+const read = (p: string) => readFileSync(join(root, p), "utf8").replace(/\r\n/g, "\n");
+const migration = read("supabase/migrations/20261110233000_cafe_secure_foundation.sql");
+const reservationRoute = read("app/api/cafe/reservations/route.ts");
+const publicRoute = read("app/api/cafe/sessions/route.ts");
+const adminRoute = read("app/api/admin/cafe/sessions/route.ts");
+
+assert.match(migration, /CREATE TABLE public\.cafe_sessions/);
+assert.match(migration, /CREATE TABLE public\.cafe_reservations/);
+assert.match(migration, /status IN \('draft', 'published', 'cancelled'\)/);
+assert.match(migration, /cafe_sessions_starts_at_finite_check/);
+assert.match(migration, /CHECK \(isfinite\(starts_at\)\)/);
+assert.match(migration, /status IN \('confirmed', 'cancelled'\)/);
+assert.doesNotMatch(migration, /attended|no_show|waitlist/i);
+
+assert.match(migration, /ENABLE ROW LEVEL SECURITY/g);
+assert.match(migration, /REVOKE ALL ON public\.cafe_sessions, public\.cafe_reservations[\s\S]*?service_role/);
+assert.match(migration, /cafe_sessions_deny_direct_clients/);
+assert.match(migration, /cafe_reservations_deny_direct_clients/);
+
+assert.match(migration, /UNIQUE \(session_id, profile_id\)/);
+assert.match(migration, /FOR NO KEY UPDATE/);
+assert.match(migration, /upcoming_confirmed >= 3/);
+assert.match(migration, /session_confirmed >= s\.max_participants/);
+assert.match(migration, /p_action IS NULL/);
+assert.match(migration, /version_conflict/);
+assert.match(migration, /request_id_reused/);
+assert.match(migration, /FOR KEY SHARE/);
+const reservationLockSection = migration.match(/CREATE OR REPLACE FUNCTION public\.cafe_set_reservation_server[\s\S]*?SELECT \*\s+INTO s/)?.[0] ?? "";
+assert.match(reservationLockSection, /require_active_profile\(p_actor_id\)[\s\S]*?pg_advisory_xact_lock/);
+assert.match(migration, /pg_advisory_xact_lock\(hashtextextended\('cafe_quota:'/);
+assert.match(migration, /au\.is_anonymous = false/);
+assert.match(migration, /au\.deleted_at IS NULL/);
+assert.match(migration, /au\.banned_until IS NULL/);
+
+assert.match(migration, /REFERENCES public\.profiles\(id\) ON DELETE CASCADE/);
+assert.match(migration, /host_profile_id uuid REFERENCES public\.profiles\(id\) ON DELETE SET NULL/);
+assert.match(migration, /handle_profile_removal/);
+
+assert.match(migration, /CREATE OR REPLACE FUNCTION public\.cafe_public_sessions/);
+const publicRpc = migration.match(/CREATE OR REPLACE FUNCTION public\.cafe_public_sessions[\s\S]*?GRANT EXECUTE[\s\S]*?;/)?.[0] ?? "";
+assert.doesNotMatch(publicRpc, /profile_id|host_profile_id|created_by_profile_id|email/i);
+assert.match(publicRpc, /remaining_spots/);
+assert.match(publicRpc, /LIMIT 100/);
+assert.match(migration, /JOIN auth\.users au ON au\.id = p\.id/);
+
+assert.match(reservationRoute, /authenticateCafeRequest/);
+assert.match(reservationRoute, /rateLimitByIp/);
+assert.match(reservationRoute, /callReservationRpc/);
+assert.match(reservationRoute, /40P01/);
+assert.match(reservationRoute, /55P03/);
+assert.match(reservationRoute, /40001/);
+assert.match(reservationRoute, /cafe_set_reservation_server/);
+assert.doesNotMatch(reservationRoute, /\.from\(["']cafe_reservations/);
+assert.match(adminRoute, /requireAdminApi/);
+assert.match(adminRoute, /parseCafeStartsAt/);
+assert.match(reservationRoute, /isCafeV1Enabled/);
+assert.match(publicRoute, /isCafeV1Enabled/);
+assert.match(adminRoute, /isCafeV1Enabled/);
+assert.match(adminRoute, /cafe_admin_create_draft_server/);
+assert.match(adminRoute, /cafe_admin_reassign_host_server/);
+assert.match(migration, /CREATE OR REPLACE FUNCTION public\.cafe_admin_reassign_host_server/);
+assert.match(publicRoute, /cafe_public_sessions/);
+
+assert.equal(parseCafeStartsAt("2026-02-28T12:00:00Z"), "2026-02-28T12:00:00Z");
+assert.equal(parseCafeStartsAt("2026-02-30T12:00:00Z"), null);
+assert.equal(parseCafeStartsAt("2026-11-10T24:00:00Z"), null);
+assert.equal(parseCafeStartsAt("2026-11-10T12:00:00"), null);
+assert.equal(parseCafeStartsAt("2026-11-10T12:00Z"), null);
+assert.equal(parseCafeStartsAt("2026-11-10T12:00:00+25:00"), null);
+assert.equal(parseCafeStartsAt("2026-11-10T12:00:00+02:99"), null);
+assert.equal(parseCafeStartsAt("infinity"), null);
+
+const cleanupSection = migration.match(/CREATE OR REPLACE FUNCTION cafe_private\.handle_profile_removal\(\)[\s\S]*?CREATE TRIGGER cafe_profiles_cleanup_on_update/)?.[0] ?? "";
+assert.match(cleanupSection, /pg_advisory_xact_lock[\s\S]*?decision_time := clock_timestamp\(\)/);
+
+console.log("[cafe:pr2a-contract] static contract passed");

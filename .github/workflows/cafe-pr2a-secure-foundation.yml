@@ -1,0 +1,57 @@
+name: Cafe PR2a secure foundation
+
+on:
+  pull_request:
+    paths:
+      - "supabase/migrations/*cafe*.sql"
+      - "app/api/cafe/**"
+      - "app/api/admin/cafe/**"
+      - "lib/cafe/**"
+      - "tests/cafe/**"
+      - ".github/workflows/cafe-pr2a-secure-foundation.yml"
+      - "package.json"
+
+permissions:
+  contents: read
+
+jobs:
+  cafe-foundation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Static Cafe contract
+        run: npm run test:cafe-pr2a
+      - name: PostgreSQL functional and concurrency tests
+        run: bash tests/cafe/run-postgres-tests.sh
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Focused lint
+        run: npx eslint lib/cafe/serverAuth.ts lib/cafe/sessionInput.ts app/api/cafe/sessions/route.ts app/api/cafe/reservations/route.ts app/api/admin/cafe/sessions/route.ts tests/cafe/cafePr2aContract.test.ts
+      - name: Whitespace check
+        run: git diff --check
