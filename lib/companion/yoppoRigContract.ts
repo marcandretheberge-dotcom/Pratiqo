@@ -156,6 +156,27 @@ export const YOPPO_CONSTRUCTION_REST = {
   idleSmile: "named-expression-not-base",
 } as const;
 
+/**
+ * Versioned numeric delta from the neutral construction rest to the familiar
+ * shipped idle. These seed values are refined only by numeric overlay review;
+ * pivots/artboard coordinates never move to compensate.
+ */
+export const YOPPO_IDLE_POSE_DELTA_V1 = {
+  bodyOffset: { x: 0, y: 0, rotationDeg: 0 },
+  head: { x: 0, y: -4, rotationDeg: 0.5 },
+  armL: { x: 2, y: 2, rotationDeg: -4 },
+  armR: { x: -2, y: 2, rotationDeg: 4 },
+  handL: { x: 0, y: 2, rotationDeg: -2 },
+  handR: { x: 0, y: 2, rotationDeg: 2 },
+  legL: { x: -2, y: 0, rotationDeg: -1 },
+  legR: { x: 2, y: 0, rotationDeg: 1 },
+  backpack: { x: 0, y: 0, rotationDeg: 1.5 },
+  faceFeatures: { x: 0, y: 0 },
+  pupilLook: { x: 0, y: 0 },
+  mouth: "smile",
+  lids: "open",
+} as const;
+
 export const YOPPO_REFERENCE_POLICY = {
   canonical: ["idle"],
   poseReference: ["map", "teacher_ready", "confused", "celebrating", "level_up"],
