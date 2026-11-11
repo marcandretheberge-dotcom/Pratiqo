@@ -72,6 +72,17 @@ export async function POST(req: Request) {
   } else if (action === "cancel") {
     rpcName = "cafe_admin_cancel_server";
     args = { p_actor_id: auth.user.id, p_slug: slug };
+  } else if (action === "reassign_host") {
+    const hostProfileId = clean(body.hostProfileId, 80);
+    if (!hostProfileId || !UUID_RE.test(hostProfileId)) {
+      return NextResponse.json({ ok: false, error: "invalid_host" }, { status: 400 });
+    }
+    rpcName = "cafe_admin_reassign_host_server";
+    args = {
+      p_actor_id: auth.user.id,
+      p_slug: slug,
+      p_host_profile_id: hostProfileId,
+    };
   } else {
     return NextResponse.json({ ok: false, error: "invalid_action" }, { status: 400 });
   }
