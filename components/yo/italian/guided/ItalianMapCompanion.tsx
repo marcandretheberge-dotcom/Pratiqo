@@ -1,41 +1,57 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
-import { motion, useAnimationControls, useReducedMotion } from "motion/react";
+import { animate, motion, useMotionValue, useMotionValueEvent, useReducedMotion, useTransform } from "motion/react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { YoLocale } from "@/lib/yo/types";
+import { italianRoadPoint } from "./ItalianAdventurePathGeometry";
+import { ItalianMapYoppo } from "./ItalianMapYoppo";
 
-const points = [[120,162],[350,270],[130,396],[350,516]];
-const bends = [[[120,210],[390,190]],[[310,340],[110,300]],[[150,480],[385,440]]];
-/** Sample the illustrated road, including reverse travel. No progress is written. */
-export function companionRoute(from:number,to:number) {
-  const route:number[][] = [];
-  const low=Math.min(from,to), high=Math.max(from,to);
-  for(let segment=low;segment<high;segment++) {
-    const [a,d]=[points[segment],points[segment+1]], [b,c]=bends[segment];
-    for(let i=0;i<=12;i++) {
-      const t=i/12, s=1-t;
-      route.push([0,1].map(axis=>s*s*s*a[axis]+3*s*s*t*b[axis]+3*s*t*t*c[axis]+t*t*t*d[axis]));
+export { companionRoute } from "./ItalianAdventurePathGeometry";
+
+/** Cosmetic position only. Retargeting never writes the learner's progress. */
+export function ItalianMapCompanion({ index, locale, active = true }: { index: number; locale: YoLocale; active?: boolean }) {
+  const position = useMotionValue(Math.max(0, index));
+  const left = useTransform(position, value => `${italianRoadPoint(value)[0] / 480 * 100}%`);
+  const top = useTransform(position, value => `${italianRoadPoint(value)[1] / 600 * 100}%`);
+  const reduce = useReducedMotion();
+  const [animating, setAnimating] = useState(false);
+  const walking = animating && active && !reduce;
+  const [facing, setFacing] = useState<"left" | "right">("right");
+  const lastX = useRef(italianRoadPoint(Math.max(0, index))[0]);
+
+  useMotionValueEvent(position, "animationStart", () => setAnimating(true));
+  useMotionValueEvent(position, "animationComplete", () => setAnimating(false));
+  useMotionValueEvent(position, "animationCancel", () => setAnimating(false));
+
+  useMotionValueEvent(position, "change", value => {
+    const x = italianRoadPoint(value)[0];
+    if (Math.abs(x - lastX.current) > .1) setFacing(x > lastX.current ? "right" : "left");
+    lastX.current = x;
+  });
+
+  useEffect(() => {
+    if (!active || index < 0 || index > 3) return;
+    const from = position.get();
+    if (reduce || Math.abs(from - index) < .001) {
+      position.set(index); return;
     }
-  }
-  if(from>to) route.reverse();
-  return route.length?route:[points[to]??points[0]];
-}
-export function ItalianMapCompanion({index,locale,active=true}:{index:number;locale:YoLocale;active?:boolean}) {
-  const [origin]=useState(()=>points[index] ?? points[0]);
-  const controls=useAnimationControls(), reduce=useReducedMotion(), previous=useRef<number|null>(null);
-  useEffect(()=>{
-    if(!active || index<0 || index>3) return;
-    const from=previous.current; previous.current=index;
-    const target={left:`${points[index][0]/4.8}%`,top:`${points[index][1]/6}%`};
-    if(from===null || reduce || from===index) controls.set(target);
-    else {
-      const route=companionRoute(from,index);
-      void controls.start({left:route.map(p=>`${p[0]/4.8}%`),top:route.map(p=>`${p[1]/6}%`)},{duration:Math.min(3,1.15*Math.abs(from-index)),ease:"easeInOut"});
-    }
-    return ()=>controls.stop();
-  },[index,controls,reduce,active]);
-  if(index<0 || index>3)return null;
-  return <motion.div data-yoppo-traveler className="yo-map-companion" initial={false} animate={controls} style={{left:`${origin[0]/4.8}%`,top:`${origin[1]/6}%`}} aria-label={{fr:"Yoppo t'attend",en:"Yoppo awaits",es:"Yoppo te espera"}[locale]}>
-    <CompanionAvatar visualId="travel" state="map" locale={locale} size="sm" compact/>
+    // Stopping preserves the actual on-screen point, not the previous destination.
+    const travel = animate(position, index, {
+      duration: Math.max(.2, Math.abs(index - from) * 2.1), ease: "linear",
+    });
+    return () => travel.stop();
+  }, [index, active, reduce, position]);
+
+  if (index < 0) return null;
+  const label = {
+    fr: walking ? "Yoppo rejoint la ville choisie" : "Yoppo t'attend",
+    en: walking ? "Yoppo is walking to your city" : "Yoppo awaits",
+    es: walking ? "Yoppo camina hacia tu ciudad" : "Yoppo te espera",
+  }[locale];
+  return <motion.div data-yoppo-traveler data-destination-index={index} data-motion={walking ? "walking" : "idle"}
+    data-facing={facing} className="yo-map-companion" initial={false} style={{ left, top }} role="img" aria-label={label}>
+    <ItalianMapYoppo/>
+    <span className="yo-map-avatar-fallback" aria-hidden><CompanionAvatar visualId="travel" state="map" locale={locale} size="sm" compact/></span>
   </motion.div>;
 }

@@ -24,6 +24,7 @@ if (location.pathname.endsWith("/vocabulaire")) {
 } else root.render(<LearningFeedbackProvider><ReviewCourse/></LearningFeedbackProvider>);
 function ReviewCourse() {
  const [selected,setSelected]=useState(unit.id);
+ const [resumeMission,setResumeMission]=useState(params.get("mission")==="continue");
  useEffect(()=>{
    const navigate=(event:MouseEvent)=>{
      if(event.defaultPrevented || event.button!==0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)return;
@@ -33,13 +34,13 @@ function ReviewCourse() {
      if(url.origin!==location.origin || !match)return;
      const nextLocale=url.searchParams.get("lang") ?? "fr";
      if(nextLocale!==locale)return;
-     event.preventDefault();history.pushState({},"",url);setSelected(match[1]);
+     event.preventDefault();history.pushState({},"",url);setResumeMission(url.searchParams.get("mission")==="continue");setSelected(match[1]);
    };
-   const back=()=>setSelected(location.pathname.match(/parcours\/(u\d+)/)?.[1] ?? new URLSearchParams(location.search).get("unit") ?? "u08");
+   const back=()=>{setResumeMission(new URLSearchParams(location.search).get("mission")==="continue");setSelected(location.pathname.match(/parcours\/(u\d+)/)?.[1] ?? new URLSearchParams(location.search).get("unit") ?? "u08");};
    document.addEventListener("click",navigate);window.addEventListener("popstate",back);
    return ()=>{document.removeEventListener("click",navigate);window.removeEventListener("popstate",back);};
  },[]);
  const current=personalizedItalianUnits.find(u=>u.id===selected) ?? unit;
  return <><aside className="review-banner"><span>Aperçu de design · progression locale de démonstration</span><select aria-label="Ville à prévisualiser" value={current.id} onChange={e=>setSelected(e.target.value)}>{personalizedItalianUnits.map(u=><option value={u.id} key={u.id}>{u.number}. {u.title[locale]}</option>)}</select></aside>
- <GuidedItalianCourse key={current.id} unit={current} catalog={personalizedItalianCatalog} locale={locale} profile={profile} progressKey={GUIDED_PROGRESS_KEY} wordBank={moduleBank(current)} visualWords={moduleVisuals(current)} audioPaths={courseAudioPaths([...unitSpeech(current),...moduleBank(current).map(w=>w.it)])}/></>;
+ <GuidedItalianCourse key={current.id} unit={current} catalog={personalizedItalianCatalog} locale={locale} profile={profile} progressKey={GUIDED_PROGRESS_KEY} wordBank={moduleBank(current)} visualWords={moduleVisuals(current)} audioPaths={courseAudioPaths([...unitSpeech(current),...moduleBank(current).map(w=>w.it)])} resumeMission={resumeMission}/></>;
 }

@@ -20,6 +20,7 @@ type Props = {
   selectedUnitId?: string;
   guideUnitId?: string;
   motionActive?: boolean;
+  travelerUnitId?: string;
   onSelectCity?: (unitId: string) => void;
   guideMessage?: string;
 };
@@ -31,23 +32,30 @@ const stops = [
   { x: "73%", y: "86%" },
 ] as const;
 
+/** Existing progress-derived guide, shared by selection and atlas rendering. */
+export function italianWorldGuideId(world: ItalianWorldView, currentUnitId: string, canReview: (id: string) => boolean, guideUnitId?: string) {
+  const nextStop = world.citiesWithProgress.find(city => city.unlocked && !city.mastered);
+  const selectedStop = world.citiesWithProgress.find(city => city.unitId === (guideUnitId ?? currentUnitId));
+  return nextStop?.unitId ?? (selectedStop && (selectedStop.unlocked || canReview(selectedStop.unitId)) ? selectedStop.unitId : [...world.citiesWithProgress].reverse().find(city => canReview(city.unitId))?.unitId ?? world.citiesWithProgress.find(city => city.unlocked)?.unitId);
+}
+
 /** Artwork is decorative. City access and every status come from the course journey. */
-export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, canReview, onPlayCurrentCity, selectedUnitId, guideUnitId, onSelectCity, motionActive = true }: Props) {
+export function ItalianWorldAtlas({ world, locale, currentUnitId, hrefForUnit, canReview, onPlayCurrentCity, selectedUnitId, guideUnitId, onSelectCity, motionActive = true, travelerUnitId }: Props) {
   const copy = {
     fr: { title: "Carte d'aventure", explore: "Explorer", completed: "Tampon obtenu", locked: "Termine d'abord les missions précédentes", current: "Yoppo t'attend" },
     en: { title: "Adventure map", explore: "Explore", completed: "Stamp earned", locked: "Complete the earlier missions first", current: "Yoppo awaits" },
     es: { title: "Mapa de aventura", explore: "Explorar", completed: "Sello obtenido", locked: "Termina las misiones anteriores primero", current: "Yoppo te espera" },
   }[locale];
-  const nextStop = world.citiesWithProgress.find(city => city.unlocked && !city.mastered);
-  const selectedStop = world.citiesWithProgress.find(city => city.unitId === (guideUnitId ?? currentUnitId));
-  const guideId = nextStop?.unitId ?? (selectedStop && (selectedStop.unlocked || canReview(selectedStop.unitId)) ? selectedStop.unitId : [...world.citiesWithProgress].reverse().find(city => canReview(city.unitId))?.unitId ?? world.citiesWithProgress.find(city => city.unlocked)?.unitId);
+  const guideId = italianWorldGuideId(world, currentUnitId, canReview, guideUnitId);
   const guideIndex = world.citiesWithProgress.findIndex(city => city.unitId === guideId);
   const pathProgress = world.complete ? 1 : guideIndex >= 0 ? ITALIAN_CITY_PATH_STOPS[guideIndex] ?? 0 : 0;
+  const visitedIndex = world.citiesWithProgress.findIndex(city => city.unitId === travelerUnitId && (city.unlocked || canReview(city.unitId)));
+  const travelerIndex = visitedIndex >= 0 ? visitedIndex : guideIndex;
 
   return <section data-yoppo-immersive-atlas={world.id} aria-label={`${copy.title} · ${world.title[locale]}`} className="yo-illustrated-atlas">
     <Image src={`/images/yo/italian/worlds/${world.id}.webp`} alt="" fill sizes="(min-width: 900px) 520px, 100vw" className="yo-world-art" priority/>
     <ItalianAdventureProgressPath worldId={world.id} progress={pathProgress} illustrated/>
-    <ItalianMapCompanion key={world.id} index={guideIndex} locale={locale} active={motionActive}/>
+    <ItalianMapCompanion key={world.id} index={travelerIndex} locale={locale} active={motionActive}/>
     <ol aria-label={copy.title} data-yoppo-world-cities={world.id} className="yo-city-list">
       {world.citiesWithProgress.map((city, index) => {
         const accessible = city.unlocked || canReview(city.unitId);

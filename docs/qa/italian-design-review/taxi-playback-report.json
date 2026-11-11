@@ -1,0 +1,21 @@
+{
+  "playback": {
+    "events": [
+      "loadedmetadata",
+      "playing",
+      "ended"
+    ],
+    "duration": 8.051344,
+    "muted": false,
+    "volume": 0.4,
+    "audioBytes": 129227
+  },
+  "checks": [
+    "actual approved MP4 decoded and ended",
+    "sound enabled at stored 40% volume",
+    "immediate Skip",
+    "network failure still opens mission",
+    "autoplay rejection offers Play and Skip",
+    "desktop two-column map and walking"
+  ]
+}
