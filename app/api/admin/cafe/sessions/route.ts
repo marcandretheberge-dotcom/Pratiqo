@@ -10,7 +10,7 @@ function cafeDisabled() {
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const RFC3339_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
+const RFC3339_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})$/;
 
 function clean(value: unknown, max: number): string | null {
   if (typeof value !== "string") return null;
@@ -21,7 +21,32 @@ function clean(value: unknown, max: number): string | null {
 function finiteIsoTimestamp(value: unknown): string | null {
   const v = clean(value, 80);
   if (!v) return null;
-  if (!RFC3339_RE.test(v)) return null;
+  const match = v.match(RFC3339_RE);
+  if (!match) return null;
+
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText = "00"] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const second = Number(secondText);
+
+  if (
+    month < 1 || month > 12 ||
+    day < 1 || day > 31 ||
+    hour > 23 ||
+    minute > 59 ||
+    second > 59
+  ) return null;
+
+  const utcProbe = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  if (
+    utcProbe.getUTCFullYear() !== year ||
+    utcProbe.getUTCMonth() !== month - 1 ||
+    utcProbe.getUTCDate() !== day
+  ) return null;
+
   const parsed = Date.parse(v);
   if (!Number.isFinite(parsed)) return null;
   return v;
