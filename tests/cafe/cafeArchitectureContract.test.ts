@@ -59,10 +59,11 @@ const parsed = parseProgressSnapshotPayload({
   discipline: "Languages",
 });
 assert.equal(parsed.ok, true);
-if (!parsed.ok) throw new Error(parsed.reason);
-assert.equal(Object.prototype.hasOwnProperty.call(parsed.value, "user_id"), false);
-const snapshot = buildSnapshotInsert(parsed.value, "authenticated-user-id");
-assert.equal(snapshot.user_id, "authenticated-user-id");
+if (parsed.ok) {
+  assert.equal(Object.prototype.hasOwnProperty.call(parsed.value, "user_id"), false);
+  const snapshot = buildSnapshotInsert(parsed.value, "authenticated-user-id");
+  assert.equal(snapshot.user_id, "authenticated-user-id");
+}
 
 const yoRoute = read("app/api/yo/progress/route.ts");
 assert.match(yoRoute, /buildSnapshotInsert\(parsed\.value, auth\.user\.id\)/);
