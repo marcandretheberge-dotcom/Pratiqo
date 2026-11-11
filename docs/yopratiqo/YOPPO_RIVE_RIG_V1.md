@@ -72,6 +72,10 @@ The construction rest pose is deliberately more neutral than the shipped idle PN
 
 The rig should reproduce the current idle pose as a named state from this neutral construction pose.
 
+The conversion is not visual guesswork: `YOPPO_IDLE_POSE_DELTA_V1` stores the numeric
+rest→idle translations/rotations plus mouth/lid state. Those values may be refined by
+overlay measurements, but artboard anchors and pivots remain frozen.
+
 ## Head-turn rule
 
 Initial head turn is pseudo-3D and capped at ±15°. Application/Rive input is normalized from -1 to 1 and maps to that limit in one place, easing toward the extremes.
