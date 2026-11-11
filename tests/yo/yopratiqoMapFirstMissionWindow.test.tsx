@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import * as React from "react";
 import { italianCourseCatalog, italianCourseUnits } from "@/lib/yo/italian/course/courseData";
-import { ITALIAN_COURSE_PROGRESS_KEY, emptyCourseProgress, recordCourseActivity, serializeCourseProgress, parseCourseProgress } from "@/lib/yo/italian/course/courseProgress";
+import { ITALIAN_COURSE_PROGRESS_KEY, emptyCourseProgress, recordCourseAssessment, recordCourseActivity, serializeCourseProgress, parseCourseProgress } from "@/lib/yo/italian/course/courseProgress";
 import { courseAudioPaths } from "@/lib/yo/italian/course/courseAudio.server";
 import { unitSpeech } from "@/lib/yo/italian/course/courseSpeech";
 
@@ -138,6 +138,21 @@ const tests: [string, () => void][] = [
     assert.ok(view.getByRole("heading", { name: "Word notebook" }));
     assert.ok(view.getByText(unit.lessons[0].vocabulary[1].it), "the study cursor resumes without granting progress");
     assertNoFakeMastery();
+  }],
+  ["browsing another unlocked city keeps the map, Yoppo and progress stable", () => {
+    const progress = recordCourseAssessment(emptyCourseProgress(), italianCourseCatalog, unit.quiz.id, unit.quiz.questions.length, unit.quiz.questions.length, false);
+    localStorage.setItem(ITALIAN_COURSE_PROGRESS_KEY, serializeCourseProgress(progress));
+    const view = mount(); skipTour(view);
+    const before=localStorage.getItem(ITALIAN_COURSE_PROGRESS_KEY);
+    const map=view.container.querySelector("[data-yoppo-world-map]");
+    const guide=view.container.querySelector('[data-yoppo-active-city="true"]')?.getAttribute("data-yoppo-map-token");
+    click(view.getByRole("button",{name:/Explore Parma/}));
+    assert.equal(document.querySelector("[data-yoppo-mission-window]"),null,"browsing never auto-opens a mission");
+    assert.equal(view.container.querySelector("[data-yoppo-world-map]"),map,"browsing never remounts the map");
+    assert.equal(view.container.querySelector('[data-yoppo-active-city="true"]')?.getAttribute("data-yoppo-map-token"),guide,"selection does not move Yoppo");
+    assert.equal(view.getByRole("link",{name:"Continue"}).getAttribute("href"),"/yo/langues/italien/parcours/u02?lang=en");
+    assert.equal(localStorage.getItem(ITALIAN_COURSE_PROGRESS_KEY),before,"selection does not write progress");
+    assert.equal(view.getByRole("switch",{name:"Gentle ambience"}).getAttribute("aria-checked"),"false","ambient sound starts off");
   }],
   ["after real midpoint activities, Trivia opens in a window above the same map", () => {
     let progress = emptyCourseProgress();

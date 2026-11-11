@@ -46,7 +46,7 @@ for (const locale of ["fr", "en", "es"] as const) {
       "no unlocked-by-animation exploit");
     if (world.id === "discover") {
       assert.ok(html.includes('aria-current="step"'));
-      assert.equal((html.match(/class="yo-yoppo-map-guide"/g) ?? []).length, 1,
+      assert.equal((html.match(/data-yoppo-traveler/g) ?? []).length, 1,
         "one Yoppo guide, regardless of the number of animation rules");
       assert.ok(html.includes('data-yoppo-map-token="u01"'));
       assert.ok(html.includes('data-yoppo-path-progress="0.08"'), "new learner route glows only to the first active city");

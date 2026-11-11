@@ -18,6 +18,7 @@ import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { GUIDED_KEY, TOUR_KEY, emptyGame, initialGuided, parseGuided, guidedSteps, guidedPassed, lessonDone, type GuidedState, type GameDraft } from "@/lib/yo/italian/course/guidedItalian";
 import { guidedMissionOrder, nextGuidedMissionStep, followingGuidedMissionStep, restoreGuidedMissionDraft } from "@/lib/yo/italian/course/guidedMissionOrder";
 import { italianWorldForUnit } from "@/lib/yo/italian/worlds";
+import { ItalianAtmosphereControl } from "./ItalianAtmosphereControl";
 import { ItalianWorldNavigator } from "./ItalianWorldNavigator";
 import { ItalianTriviaCheckpoint } from "./ItalianTriviaCheckpoint";
 import { ItalianPrintableMenu } from "./ItalianPrintableMenu";
@@ -205,14 +206,14 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     <header className="yo-course-header"><div className="yo-course-header-inner">
       <Link href={`/yo/langues${locale !== "fr" ? `?lang=${locale}` : ""}`} className="text-lg font-black text-emerald-900">Yo<span className="text-orange-700">Pratiqo</span></Link>
 
-      <div className="flex gap-1"><button type="button" className={`${secondary} ${tour === 1 ? "ring-4 ring-orange-300" : ""}`} onClick={openNotebook} disabled={challengeMode} title={challengeMode ? c.noHints : c.notebook} aria-label={c.notebook}><BookOpen size={21} aria-hidden /><span className="hidden sm:inline">{c.notebook}</span></button>
+      <div className="flex gap-1"><ItalianAtmosphereControl active={ui.view === "map" && overlay === null && !checkpointOpen} locale={locale}/><button type="button" className={`${secondary} ${tour === 1 ? "ring-4 ring-orange-300" : ""}`} onClick={openNotebook} disabled={challengeMode} title={challengeMode ? c.noHints : c.notebook} aria-label={c.notebook}><BookOpen size={21} aria-hidden /><span className="hidden sm:inline">{c.notebook}</span></button>
       <button type="button" className={secondary} onClick={() => { stopLessonAudio(); setOverlay("tools"); }} aria-label={c.help}><MoreHorizontal size={21} aria-hidden /></button></div>
     </div></header>
     <main className="yo-course-main">
       {(!learning.storageAvailable || !storageAvailable) ? <p role="status" className="mb-5 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{c.unsaved}</p> : null}
       <ItalianWorldNavigator journey={journey} locale={locale} currentUnitId={unit.id}
         hrefForUnit={id => italianCourseHref(locale,id)} canReview={placedReview}
-        onPlayCurrentCity={playFromMap}
+        onPlayCurrentCity={playFromMap} guideUnitId={profile?.startUnitId} motionActive={ui.view === "map"}
         currentActionLabel={passed ? c.practice : ui.resumeView === "challenge" ? c.challenge : ui.resumeView === "mission" ? c.resume : next < 0 ? c.begin : c.start}
         currentMissionTitle={passed ? unit.lessons[0]?.title[locale] : ui.resumeView === "challenge" || next < 0 ? c.challenge : unit.lessons[steps[ui.resumeView === "mission" ? ui.step : next].lesson]?.title[locale]}
         missionHint={passed ? c.reviewLabel : ui.resumeView === "challenge" || next < 0 ? c.challenge : next >= 0 ? `${c.mission} ${steps[ui.resumeView === "mission" ? ui.step : next].lesson + 1}` : c.start}

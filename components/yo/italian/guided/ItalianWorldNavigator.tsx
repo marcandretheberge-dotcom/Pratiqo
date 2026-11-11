@@ -18,6 +18,8 @@ type Props = {
   canReview: (unitId: string) => boolean;
   onPlayCurrentCity?: () => void;
   currentActionLabel?: string;
+  guideUnitId?: string;
+  motionActive?: boolean;
   currentMissionTitle?: string;
   missionHint?: string;
   triviaAvailable?: boolean;
@@ -28,12 +30,13 @@ type Props = {
 
 export function ItalianWorldNavigator({
   journey, locale, currentUnitId, hrefForUnit, canReview, onPlayCurrentCity,
-  currentActionLabel, currentMissionTitle, missionHint, triviaAvailable = false, onOpenTrivia,
+  currentActionLabel, guideUnitId, motionActive, currentMissionTitle, missionHint, triviaAvailable = false, onOpenTrivia,
   showGuide = false, onDismissGuide,
 }: Props) {
   const worlds = projectItalianWorlds(journey);
   const initial = worlds.findIndex(item => item.cities.some(city => city.unitId === currentUnitId));
   const [selected, setSelected] = useState(Math.max(0, initial));
+  const [inspectedCity, setInspectedCity] = useState(currentUnitId);
   const [portalArrival, setPortalArrival] = useState<string | null>(null);
   const feedback = useLearningFeedback();
   const copy = {
@@ -52,8 +55,9 @@ export function ItalianWorldNavigator({
   const currentWorld = italianWorldForUnit(currentUnitId)?.id === world.id;
   const canTravel = canUseItalianFlute(worlds, selected);
   const completed = world.citiesWithProgress.filter(city => city.mastered).length;
-  const selectedCity = world.citiesWithProgress.find(city => city.unitId === currentUnitId);
-  const destination = world.citiesWithProgress.find(city => city.unlocked && !city.mastered)
+  const selectedCity = world.citiesWithProgress.find(city => city.unitId === inspectedCity && (city.unlocked || canReview(city.unitId)));
+  const isCurrentCity = currentWorld && selectedCity?.unitId === currentUnitId;
+  const destination = selectedCity ?? world.citiesWithProgress.find(city => city.unlocked && !city.mastered)
     ?? world.citiesWithProgress.find(city => city.unlocked || canReview(city.unitId));
 
   return <section data-yoppo-world-map aria-label={copy.choose} className="yo-adventure-board" data-yoppo-map-only>
@@ -68,9 +72,9 @@ export function ItalianWorldNavigator({
       </div>
       <p className="yo-world-stamps">{completed} / 4 {copy.stamps}</p>
     </header>
-    <ItalianWorldAtlas world={world} locale={locale} currentUnitId={currentUnitId} hrefForUnit={hrefForUnit} canReview={canReview} onPlayCurrentCity={currentWorld ? onPlayCurrentCity : undefined}/>
+    <ItalianWorldAtlas world={world} locale={locale} currentUnitId={currentUnitId} hrefForUnit={hrefForUnit} canReview={canReview} onPlayCurrentCity={currentWorld ? onPlayCurrentCity : undefined} selectedUnitId={selectedCity?.unitId} guideUnitId={guideUnitId} motionActive={motionActive} onSelectCity={setInspectedCity}/>
     <div className="yo-world-action">
-      {currentWorld && onPlayCurrentCity ? <>
+      {isCurrentCity && onPlayCurrentCity ? <>
         <p className="yo-action-context">{selectedCity?.name} · {missionHint}</p>
         <h2>{currentMissionTitle ?? selectedCity?.step?.unit.title[locale]}</h2>
         <button type="button" className={`${primary} yo-map-continue`} onClick={onPlayCurrentCity} aria-label={currentActionLabel}>{copy.continue}<ArrowRight size={18} aria-hidden/></button>
