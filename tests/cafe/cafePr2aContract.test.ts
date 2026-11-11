@@ -26,6 +26,10 @@ assert.match(migration, /upcoming_confirmed >= 3/);
 assert.match(migration, /session_confirmed >= s\.max_participants/);
 assert.match(migration, /version_conflict/);
 assert.match(migration, /request_id_reused/);
+assert.match(migration, /pg_advisory_xact_lock\(hashtextextended\('cafe_quota:'/);
+assert.match(migration, /au\.is_anonymous = false/);
+assert.match(migration, /au\.deleted_at IS NULL/);
+assert.match(migration, /au\.banned_until IS NULL/);
 
 assert.match(migration, /REFERENCES public\.profiles\(id\) ON DELETE CASCADE/);
 assert.match(migration, /host_profile_id uuid REFERENCES public\.profiles\(id\) ON DELETE SET NULL/);
@@ -38,9 +42,16 @@ assert.match(publicRpc, /remaining_spots/);
 
 assert.match(reservationRoute, /authenticateCafeRequest/);
 assert.match(reservationRoute, /rateLimitByIp/);
+assert.match(reservationRoute, /callReservationRpc/);
+assert.match(reservationRoute, /40P01/);
+assert.match(reservationRoute, /55P03/);
+assert.match(reservationRoute, /40001/);
 assert.match(reservationRoute, /cafe_set_reservation_server/);
 assert.doesNotMatch(reservationRoute, /\.from\(["']cafe_reservations/);
 assert.match(adminRoute, /requireAdminApi/);
+assert.match(reservationRoute, /isCafeV1Enabled/);
+assert.match(publicRoute, /isCafeV1Enabled/);
+assert.match(adminRoute, /isCafeV1Enabled/);
 assert.match(adminRoute, /cafe_admin_create_draft_server/);
 assert.match(publicRoute, /cafe_public_sessions/);
 
