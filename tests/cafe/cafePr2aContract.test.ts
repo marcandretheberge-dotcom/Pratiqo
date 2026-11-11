@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { parseCafeStartsAt } from "@/lib/cafe/sessionInput";
 
 const root = process.cwd();
 const read = (p: string) => readFileSync(join(root, p), "utf8").replace(/\r\n/g, "\n");
@@ -57,8 +58,7 @@ assert.match(reservationRoute, /40001/);
 assert.match(reservationRoute, /cafe_set_reservation_server/);
 assert.doesNotMatch(reservationRoute, /\.from\(["']cafe_reservations/);
 assert.match(adminRoute, /requireAdminApi/);
-assert.match(adminRoute, /finiteIsoTimestamp/);
-assert.match(adminRoute, /RFC3339_RE/);
+assert.match(adminRoute, /parseCafeStartsAt/);
 assert.match(reservationRoute, /isCafeV1Enabled/);
 assert.match(publicRoute, /isCafeV1Enabled/);
 assert.match(adminRoute, /isCafeV1Enabled/);
@@ -66,6 +66,12 @@ assert.match(adminRoute, /cafe_admin_create_draft_server/);
 assert.match(adminRoute, /cafe_admin_reassign_host_server/);
 assert.match(migration, /CREATE OR REPLACE FUNCTION public\.cafe_admin_reassign_host_server/);
 assert.match(publicRoute, /cafe_public_sessions/);
+
+assert.equal(parseCafeStartsAt("2026-02-28T12:00:00Z"), "2026-02-28T12:00:00Z");
+assert.equal(parseCafeStartsAt("2026-02-30T12:00:00Z"), null);
+assert.equal(parseCafeStartsAt("2026-11-10T24:00:00Z"), null);
+assert.equal(parseCafeStartsAt("2026-11-10T12:00:00"), null);
+assert.equal(parseCafeStartsAt("infinity"), null);
 
 const cleanupSection = migration.match(/CREATE OR REPLACE FUNCTION cafe_private\.handle_profile_removal\(\)[\s\S]*?CREATE TRIGGER cafe_profiles_cleanup_on_update/)?.[0] ?? "";
 assert.match(cleanupSection, /pg_advisory_xact_lock[\s\S]*?decision_time := clock_timestamp\(\)/);
