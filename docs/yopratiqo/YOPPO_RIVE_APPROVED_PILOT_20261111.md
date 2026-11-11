@@ -5,6 +5,13 @@ Date: 2026-11-11. Isolated worktree: `yoppo-rive-pilot`.
 **Current status: RIVE/MEASUREMENT BLOCK.**
 **VISUAL REVIEW PENDING HUMAN REVIEW.** No draft PR is eligible yet.
 
+Latest follow-up: **Ubuntu access is validated; genuine transparent capture
+remains blocked on both Windows and Ubuntu with Rive CLI 1.9.2.** The latest
+run is [43062951961](https://github.com/marcandretheberge-dotcom/Pratiqo/actions/runs/43062951961).
+Its overall conclusion is **FAILURE**, not a passing pilot. See the current
+follow-up section below; the earlier CI runs and invalid master measurements
+are historical evidence, not current infrastructure failures or accepted metrics.
+
 The user's A/B/C approval resolves the previous reference-segmentation blocker.
 It does not approve a vector reconstruction or permit a runtime replacement.
 The reports dated November 10 and the earlier November 11 report in
@@ -15,9 +22,10 @@ The reports dated November 10 and the earlier November 11 report in
 - Authorized branch: `feat/yoppo-rive-pilot-20261110` only.
 - Original starting head: `f5e38c21c290ea8612a524edb56e404f5944e050`.
 - Head on resumption: `c9e7dd0628f2474abf8a309f31581fdd3e73e47e`.
-- Code/evidence head submitted to final CI: `20ca639be2c5f3a84d5148cd714b6d2bfda2ef79`.
-- Current freeze commit: `2719e4ffdf44ac1659beb468cbd4d7cd588f27b9`.
-- Current manifest SHA-256: `b73900bf495877b829a5229655aa31031d602d4801cc49ac0b232f8751b73a1b`.
+- Head at this follow-up's start: `61aeb4d4197d066a10d3caa1088a319956880220`.
+- Code/evidence head submitted to latest CI: `80d49bc2e00a3588880e3524df9f5d0fa76dd9ad`.
+- Current freeze commit (cycle 4): `704ba97d5ea94e94a41dcab7c0ad6a21b57a1a24`.
+- Current manifest SHA-256: `f337f1b2aea1f782c2e8912fdba1590b8a55ce545c9bc2d75a7ef756ad1bf72b`.
 - Freeze integrity passes locally. From freeze to candidate, only the manifest changed.
 - Original PNG SHA-256: `fb1335d7e170674e6e265c660b641e6f8d2b5a6b9d916d4b2ba9307a41f18070`.
 - Master RML SHA-256: `850881e042e428bda6eb9cce68410d80bd910ec1db92b16492f5f7bc2d51952c`.
@@ -141,7 +149,7 @@ The Python XML conversion verified preservation of all 50 shapes' geometry,
 clipping and order. The original one-eye tooling capture succeeded locally;
 it is not counted or presented as a complete neutral-master validation.
 
-## GitHub Actions
+## Historical GitHub Actions: before this follow-up
 
 1. [43057083061](https://github.com/marcandretheberge-dotcom/Pratiqo/actions/runs/43057083061),
    code head `f8c1c063ee79935ece1f62c9714b004a0e7465b4`: runner allocated,
@@ -173,10 +181,133 @@ Actual final-run artifacts (seven-day retention):
   5,883 bytes. Despite its workflow name `yoppo-neutral-master-v1`, this contains
   manifests/logs, **not a successful CI render**.
 
-The correction uses Ubuntu's primary signed mirror rather than the broken
-runner mirror list, with explicit time bounds. No workflow permission,
+That earlier attempted correction used Ubuntu's primary signed mirror rather
+than the runner mirror list, with explicit time bounds; it did not succeed.
+The current follow-up below supersedes it. No workflow permission,
 repository secret, package-signature requirement or visual gate was weakened.
 No full-master capture is allowed until the actual transparency probe passes.
+
+## Current follow-up: Ubuntu and transparency, cycle 4
+
+### Changes
+
+- `scripts/ensure-yoppo-linux-runtime.py`: load all eleven graphics libraries
+  with `ctypes.CDLL`, not merely check package names. If ready, no repository
+  request is needed. Otherwise install only missing packages through the
+  runner's original signed repositories, reject incomplete index refreshes
+  (`--error-on=any`), bound each operation to 120 seconds, and load again.
+- `tests/companion/yoppoLinuxRuntime.test.py`: five regressions covering real
+  loading, no unnecessary network access, targeted install/recheck, blocking
+  repository failure and blocking post-install load failure. Mocks are used
+  only for these unit cases; the subsequent CI preparation loads real libraries.
+- `.github/workflows/yoppo-rive-pilot-review.yml`: use that preparation, remove
+  the forced mirror rewrite, run the new tests, and only demand eye artifacts
+  when the eye step actually ran. The transparency gate still fails the job;
+  a skipped render is not a passed render. Permissions are unchanged.
+- `scripts/check-yoppo-freeze.mjs`, `scripts/write-yoppo-freeze.ts` and the two
+  freeze manifests: include the new preparation/test in the frozen file set;
+  preserve cycle 3 before superseding it. No full master ran in cycle 3 or 4.
+- This report: distinguish the resolved infrastructure step from the remaining
+  rendering limitation. No geometry, source PNG, classifier, transform, threshold
+  or tolerance changed.
+
+### Actual Ubuntu result
+
+Run [43062951961](https://github.com/marcandretheberge-dotcom/Pratiqo/actions/runs/43062951961),
+job `130670133917`, tested exact code head
+`80d49bc2e00a3588880e3524df9f5d0fa76dd9ad` on `ubuntu-24.04`.
+The repository was confirmed PUBLIC before pushing to the authorized pilot
+branch. No runner upgrade, billing setting, subscription or paid API was used.
+
+The actual missing libraries were EGL and GLES2. APT successfully refreshed
+the original signed repositories and installed `libegl1` and `libgles2`
+(`1.7.0-1build1`), plus the required `libegl-mesa0`
+(`25.2.8-0ubuntu0.24.04.4`). Dynamic loading passed. The pinned Rive archive
+checksum passed and `rive --version` returned `rive 1.9.2`.
+
+This proves that Ubuntu access works in this run. It does not prove that the
+earlier DNS failures can never recur. No DNS override, unsigned package,
+security bypass or repository permission change was introduced.
+
+### Actual transparency result
+
+The committed 64 x 64 fixture compiled with zero errors/warnings on Ubuntu.
+EGL initialized (`EGL_PLATFORM_DEVICE_EXT`); the renderer reported its
+depth/stencil fallback with 4x MSAA. The untouched PNG has alpha min/max
+`255/255`, zero transparent pixels, and all four corners `(29,29,29,255)`.
+The existing alpha gate correctly rejected it. No Linux master was captured.
+
+The same pinned Windows CLI was rerun during this follow-up:
+
+```text
+rive rive/yoppo-transparency-probe --screenshot=.qa-guided/yoppo-pilot/transparency-probe/cycle4-windows.png --advance=0 --probe=0,0 --probe=32,32
+probe 0,0 FF1D1D1D
+probe 32,32 FFFF0000
+```
+
+The alpha validator also failed on that raw PNG. A separate, ignored 64 x 64
+fixture changed only transparent black `00000000` to transparent white
+`00FFFFFF` in the fill and YAML: the corner remained `FF1D1D1D`. Thus this is
+not explained by only a zero-valued color falling back to the default.
+These are diagnostic miniatures, not full-master renders. Their source and
+raw images remain under `.qa-guided/yoppo-pilot/transparency-probe/`.
+
+The bundled 1.9.2 help, `workflow.md`, `project/rive-yaml.md`, Artboard/Backboard
+schemas and official [CLI documentation](https://rive.app/docs/cli/getting-started)
+were inspected. No supported transparent headless capture switch was found.
+The documented YAML artboard background does not override an RML artboard.
+No binary patch, color key, alpha reconstruction, alternative renderer/version,
+paid export, account creation or publishing was attempted. A brief loopback-only
+`--headless-serve` probe was stopped; it produced no render or exported file.
+
+### Validations actually rerun in this follow-up
+
+Pinned Node is 22.23.4; local Python is 3.12 and CI Python is the Ubuntu runner's.
+
+| Command/control | Local | Exact-head CI |
+| --- | --- | --- |
+| `node node_modules/typescript/bin/tsc --noEmit` / `npx tsc --noEmit` | PASS | PASS |
+| Focused ESLint command listed above | PASS | PASS |
+| `python tests/companion/yoppoLinuxRuntime.test.py` (`python3 -B` in CI) | PASS, 5 tests | PASS, 5 tests |
+| `node --import tsx tests/companion/yoppoApprovedReference.test.ts` | PASS | PASS |
+| `node --import tsx tests/companion/yoppoCaptureAlpha.test.ts` | PASS | PASS |
+| Rig, geometry diagnostics, iteration policy, label-palette suites | Earlier local results reused; not rerun | All four rerun, PASS |
+| `node scripts/audit-yoppo-master.mjs` | Earlier local result reused | Rerun, PASS |
+| `node scripts/measure-yoppo-geometry.mjs ...` | Earlier local result reused | Rerun, 14/14 PASS |
+| `node scripts/check-yoppo-freeze.mjs` | PASS | PASS |
+| Linux runtime preparation and pinned CLI checksum/version | Not applicable | PASS |
+| Real 64 x 64 transparency probe + alpha validator | FAIL | FAIL |
+| Full master and 14-component candidate comparison | NOT RUN | NOT RUN |
+| `git diff --check` | PASS | PASS (`origin/main...HEAD`) |
+
+No new valid global/component candidate metrics exist. All cycle-1 numbers
+above remain INVALID. The full-canvas capture counter remains **2/15**, with
+no geometry iteration retained or reverted. The approved masks remain intact.
+
+### Evidence and next prerequisite
+
+- [Linux raw PNG + alpha report](https://github.com/marcandretheberge-dotcom/Pratiqo/actions/runs/43062951961/artifacts/13874287362)
+  (625-byte archive), downloaded to
+  `.qa-guided/yoppo-pilot/ci-43062951961/transparency/`.
+- [Canonical 14-region evidence](https://github.com/marcandretheberge-dotcom/Pratiqo/actions/runs/43062951961/artifacts/13874277233)
+  (214,407-byte archive).
+- [Freeze and historical counters](https://github.com/marcandretheberge-dotcom/Pratiqo/actions/runs/43062951961/artifacts/13875190056)
+  (6,050-byte archive); not a successful master render despite the artifact name.
+- Windows raw probe and alpha report:
+  `.qa-guided/yoppo-pilot/transparency-probe/cycle4-windows.{png,json}`.
+
+The concrete remaining prerequisite is a supported genuine-alpha capture path
+for the pinned Rive CLI 1.9.2, confirmed first with this miniature. If Rive cannot
+provide one, a different renderer or tool version requires an explicit reviewed
+methodology change and a new freeze before any full-master comparison. A signed
+local `.riv` export is a separate potential path, not a validated solution:
+[Rive documents that it requires login](https://rive.app/docs/cli/publishing).
+No account/paid plan or unreviewed runtime substitution was used here.
+
+The draft PR remains **not opened** because exact-head CI and transparent
+rendering do not pass. The changes are pushed only to the pilot branch. The
+final report commit is documentation-only; it must not be described as a new
+passing CI head. No merge, deployment, production or other-worktree change.
 
 ## Hidden geometry and scope
 
