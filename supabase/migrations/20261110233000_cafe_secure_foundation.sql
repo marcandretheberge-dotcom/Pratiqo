@@ -676,6 +676,49 @@ BEGIN
 END
 $$;
 
+CREATE OR REPLACE FUNCTION public.cafe_admin_reassign_host_server(
+  p_actor_id uuid,
+  p_slug text,
+  p_host_profile_id uuid
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+VOLATILE
+SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $
+DECLARE
+  s public.cafe_sessions%ROWTYPE;
+BEGIN
+  PERFORM cafe_private.require_admin(p_actor_id);
+
+  IF p_host_profile_id IS NULL
+     OR NOT cafe_private.host_is_eligible(p_host_profile_id) THEN
+    RETURN jsonb_build_object('ok', false, 'code', 'host_unavailable');
+  END IF;
+
+  SELECT * INTO s
+    FROM public.cafe_sessions
+   WHERE slug = lower(trim(p_slug))
+   FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('ok', false, 'code', 'not_found');
+  END IF;
+  IF s.status = 'cancelled'
+     OR (s.status = 'published' AND s.starts_at + s.duration_minutes * interval '1 minute' <= clock_timestamp()) THEN
+    RETURN jsonb_build_object('ok', false, 'code', 'invalid_state');
+  END IF;
+
+  UPDATE public.cafe_sessions
+     SET host_profile_id = p_host_profile_id
+   WHERE id = s.id
+   RETURNING * INTO s;
+
+  RETURN jsonb_build_object('ok', true, 'slug', s.slug, 'status', s.status);
+END
+$;
+
 CREATE OR REPLACE FUNCTION public.cafe_admin_cancel_server(p_actor_id uuid, p_slug text)
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -715,12 +758,16 @@ REVOKE ALL ON FUNCTION public.cafe_admin_publish_server(uuid,text)
   FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.cafe_admin_cancel_server(uuid,text)
   FROM PUBLIC, anon, authenticated, service_role;
+REVOKE ALL ON FUNCTION public.cafe_admin_reassign_host_server(uuid,text,uuid)
+  FROM PUBLIC, anon, authenticated, service_role;
 
 GRANT EXECUTE ON FUNCTION public.cafe_admin_create_draft_server(uuid,text,text,text,text,text,timestamptz,integer,integer,uuid)
   TO service_role;
 GRANT EXECUTE ON FUNCTION public.cafe_admin_publish_server(uuid,text)
   TO service_role;
 GRANT EXECUTE ON FUNCTION public.cafe_admin_cancel_server(uuid,text)
+  TO service_role;
+GRANT EXECUTE ON FUNCTION public.cafe_admin_reassign_host_server(uuid,text,uuid)
   TO service_role;
 
 CREATE OR REPLACE FUNCTION cafe_private.handle_profile_removal()
