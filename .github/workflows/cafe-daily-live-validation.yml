@@ -1,0 +1,61 @@
+name: Cafe Daily live validation
+
+on:
+  pull_request:
+    paths:
+      - "scripts/validate_cafe_daily_live.ts"
+      - "tests/cafe/cafeDailyLiveValidationContract.test.ts"
+      - "docs/operations/cafe-daily-live-validation.md"
+      - ".github/workflows/cafe-daily-live-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Live-validation contract
+        run: npx tsx tests/cafe/cafeDailyLiveValidationContract.test.ts
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Focused lint
+        run: >-
+          npx eslint
+          scripts/validate_cafe_daily_live.ts
+          tests/cafe/cafeDailyLiveValidationContract.test.ts
+      - name: Whitespace check
+        run: git diff --check
+
+  live-daily:
+    if: github.event_name == 'workflow_dispatch'
+    needs: contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: cafe-daily-development
+    env:
+      DAILY_API_KEY: ${{ secrets.DAILY_API_KEY }}
+      DAILY_DOMAIN: ${{ secrets.DAILY_DOMAIN }}
+      CAFE_DAILY_ROOM_HMAC_SECRET: ${{ secrets.CAFE_DAILY_ROOM_HMAC_SECRET }}
+      CAFE_DAILY_PARTICIPANT_HMAC_SECRET: ${{ secrets.CAFE_DAILY_PARTICIPANT_HMAC_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Validate real Daily development account
+        run: npx tsx scripts/validate_cafe_daily_live.ts
