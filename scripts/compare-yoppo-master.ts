@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import sharp from "sharp";
 import {
   YOPPO_ARTBOARD_CONTRACT,
@@ -5,7 +6,23 @@ import {
 } from "@/lib/companion/yoppoRigContract";
 
 const renderedPath = process.argv[2] ?? "/tmp/yoppo-master-neutral.png";
+const geometryPath = process.argv[3] ?? "/tmp/yoppo-canonical-geometry.json";
 const referencePath = "public/companion/travel/companion-travel-idle.png";
+
+if (!fs.existsSync(geometryPath)) {
+  throw new Error("Canonical geometry audit is required before overlay comparison: " + geometryPath);
+}
+const geometry = JSON.parse(fs.readFileSync(geometryPath, "utf8"));
+const regions = Object.entries(geometry.regions ?? {});
+if (regions.length < 10) {
+  throw new Error("Canonical geometry audit is incomplete: expected measured component regions");
+}
+const edgeClipped = regions
+  .filter(([, value]: any) => Object.values(value?.touchesRoiEdge ?? {}).some(Boolean))
+  .map(([name]) => name);
+if (edgeClipped.length) {
+  throw new Error("Canonical geometry measurements touch ROI edges; widen ROIs before comparison: " + edgeClipped.join(", "));
+}
 const size = YOPPO_ARTBOARD_CONTRACT.width;
 
 async function raw(path: string) {
