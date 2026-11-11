@@ -1,0 +1,215 @@
+<Rive version="1" kind="fragment">
+    <Artboard styleId="0:5" width="1024" height="1024" name="Yoppo Neutral Master v1" id="0:2">
+        <LayoutComponentStyle name="Artboard Style" id="0:5"/>
+
+        <!-- FRONT DETAILS: earlier siblings render above later siblings in this authored stack. -->
+        <Node name="YOPPO_ROOT" id="0:10">
+
+            <!-- Eye pupils/catchlights are clipped to the later eye-white geometry. -->
+            <Shape x="420" y="405" name="Eye_L.Pupil" id="0:101">
+                <Ellipse width="82" height="108" name="Pupil"/>
+                <Fill name="Fill"><SolidColor colorValue="FF045A55" name="Dark Teal"/></Fill>
+                <ClippingShape sourceId="0:111" name="Eye L Clip"/>
+            </Shape>
+            <Shape x="405" y="382" name="Eye_L.Highlight" id="0:102">
+                <Ellipse width="25" height="31" name="Catchlight"/>
+                <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                <ClippingShape sourceId="0:111" name="Eye L Clip"/>
+            </Shape>
+            <Shape x="575" y="405" name="Eye_R.Pupil" id="0:103">
+                <Ellipse width="84" height="110" name="Pupil"/>
+                <Fill name="Fill"><SolidColor colorValue="FF045A55" name="Dark Teal"/></Fill>
+                <ClippingShape sourceId="0:112" name="Eye R Clip"/>
+            </Shape>
+            <Shape x="558" y="381" name="Eye_R.Highlight" id="0:104">
+                <Ellipse width="25" height="31" name="Catchlight"/>
+                <Fill name="Fill"><SolidColor colorValue="FFFFFFFF" name="White"/></Fill>
+                <ClippingShape sourceId="0:112" name="Eye R Clip"/>
+            </Shape>
+
+            <!-- brows -->
+            <Shape x="406" y="330" rotation="-0.10" name="Brow_L" id="0:105">
+                <Ellipse width="52" height="13" name="Brow"/>
+                <Fill name="Fill"><SolidColor colorValue="FF031619" name="Ink"/></Fill>
+            </Shape>
+            <Shape x="585" y="330" rotation="0.10" name="Brow_R" id="0:106">
+                <Ellipse width="52" height="13" name="Brow"/>
+                <Fill name="Fill"><SolidColor colorValue="FF031619" name="Ink"/></Fill>
+            </Shape>
+
+            <!-- cheeks -->
+            <Shape x="355" y="483" name="Cheek_L" id="0:107">
+                <Ellipse width="83" height="44" name="Cheek"/>
+                <Fill name="Fill"><SolidColor colorValue="88FDC8B8" name="Blush"/></Fill>
+            </Shape>
+            <Shape x="645" y="483" name="Cheek_R" id="0:108">
+                <Ellipse width="83" height="44" name="Cheek"/>
+                <Fill name="Fill"><SolidColor colorValue="88FDC8B8" name="Blush"/></Fill>
+            </Shape>
+
+            <!-- nose / neutral mouth -->
+            <Shape x="500" y="470" name="Nose" id="0:109">
+                <Ellipse width="48" height="27" name="Nose"/>
+                <Fill name="Fill"><SolidColor colorValue="FF031619" name="Ink"/></Fill>
+            </Shape>
+            <Shape x="500" y="516" name="Mouth.Expression.Neutral" id="0:110">
+                <Ellipse width="58" height="13" name="Neutral Mouth"/>
+                <Fill name="Fill"><SolidColor colorValue="FF4A2914" name="Mouth Ink"/></Fill>
+            </Shape>
+
+            <!-- visible eye whites double as clip geometry -->
+            <Shape x="420" y="405" name="Eye_L.White" id="0:111">
+                <Ellipse width="104" height="132" name="Eye White"/>
+                <Fill name="Fill"><SolidColor colorValue="FFFDF7EC" name="Eye White"/></Fill>
+            </Shape>
+            <Shape x="575" y="405" name="Eye_R.White" id="0:112">
+                <Ellipse width="106" height="134" name="Eye White"/>
+                <Fill name="Fill"><SolidColor colorValue="FFFDF7EC" name="Eye White"/></Fill>
+            </Shape>
+
+            <!-- teal hand shapes stay distinct from full hidden cream arms -->
+            <Shape x="314" y="724" name="Arm_L.Hand.Relaxed" id="0:120">
+                <Ellipse width="91" height="82" name="Hand"/>
+                <Fill name="Fill"><SolidColor colorValue="FF04ABA4" name="Teal"/></Fill>
+            </Shape>
+            <Shape x="690" y="724" name="Arm_R.Hand.Relaxed" id="0:121">
+                <Ellipse width="91" height="82" name="Hand"/>
+                <Fill name="Fill"><SolidColor colorValue="FF04ABA4" name="Teal"/></Fill>
+            </Shape>
+
+            <!-- chest emblem -->
+            <Shape x="475" y="667" rotation="-0.55" name="Torso.Chest_Emblem.Left" id="0:122">
+                <Ellipse width="17" height="63" name="Leaf"/>
+                <Fill name="Fill"><SolidColor colorValue="FF38D5CA" name="Emblem Teal"/></Fill>
+            </Shape>
+            <Shape x="512" y="666" rotation="0.52" name="Torso.Chest_Emblem.Right" id="0:123">
+                <Ellipse width="17" height="63" name="Leaf"/>
+                <Fill name="Fill"><SolidColor colorValue="FF38D5CA" name="Emblem Teal"/></Fill>
+            </Shape>
+
+            <!-- front backpack straps -->
+            <Shape x="359" y="624" rotation="-0.21" name="Backpack.Strap_L" id="0:124">
+                <Ellipse width="58" height="250" name="Strap"/>
+                <Fill name="Fill"><SolidColor colorValue="FF784426" name="Brown"/></Fill>
+            </Shape>
+            <Shape x="650" y="620" rotation="0.24" name="Backpack.Strap_R" id="0:125">
+                <Ellipse width="60" height="252" name="Strap"/>
+                <Fill name="Fill"><SolidColor colorValue="FF784426" name="Brown"/></Fill>
+            </Shape>
+
+            <!-- ear / spikes sit above head surface -->
+            <Shape x="302" y="320" rotation="-0.55" name="Ear_L.Outer" id="0:130">
+                <Ellipse width="104" height="142" name="Outer Ear"/>
+                <Fill name="Fill"><SolidColor colorValue="FF04ABA4" name="Teal"/></Fill>
+            </Shape>
+            <Shape x="307" y="322" rotation="-0.55" name="Ear_L.Inner" id="0:131">
+                <Ellipse width="56" height="88" name="Inner Ear"/>
+                <Fill name="Fill"><SolidColor colorValue="FF045A55" name="Inner Ear"/></Fill>
+            </Shape>
+            <Shape x="700" y="322" rotation="0.57" name="Ear_R.Outer" id="0:132">
+                <Ellipse width="107" height="145" name="Outer Ear"/>
+                <Fill name="Fill"><SolidColor colorValue="FF04ABA4" name="Teal"/></Fill>
+            </Shape>
+            <Shape x="695" y="323" rotation="0.57" name="Ear_R.Inner" id="0:133">
+                <Ellipse width="58" height="90" name="Inner Ear"/>
+                <Fill name="Fill"><SolidColor colorValue="FF045A55" name="Inner Ear"/></Fill>
+            </Shape>
+
+            <Shape x="325" y="232" rotation="-0.34" name="Spikes_Back.1" id="0:134">
+                <Ellipse width="78" height="170" name="Spike"/>
+                <Fill name="Fill"><SolidColor colorValue="FF03958A" name="Teal Shadow"/></Fill>
+            </Shape>
+            <Shape x="385" y="196" rotation="-0.18" name="Spikes_Middle.1" id="0:135">
+                <Ellipse width="82" height="184" name="Spike"/>
+                <Fill name="Fill"><SolidColor colorValue="FF04ABA4" name="Teal"/></Fill>
+            </Shape>
+            <Shape x="462" y="168" rotation="0.10" name="Spikes_Front.1" id="0:136">
+                <Ellipse width="103" height="220" name="Spike"/>
+                <Fill name="Fill"><SolidColor colorValue="FF04C5BA" name="Teal Light"/></Fill>
+            </Shape>
+            <Shape x="552" y="166" rotation="0.42" name="Spikes_Front.2" id="0:137">
+                <Ellipse width="108" height="218" name="Spike"/>
+                <Fill name="Fill"><SolidColor colorValue="FF04C5BA" name="Teal Light"/></Fill>
+            </Shape>
+            <Shape x="638" y="215" rotation="0.82" name="Spikes_Middle.2" id="0:138">
+                <Ellipse width="85" height="180" name="Spike"/>
+                <Fill name="Fill"><SolidColor colorValue="FF04ABA4" name="Teal"/></Fill>
+            </Shape>
+
+            <!-- cream head -->
+            <Shape x="505" y="405" name="Face_Base" id="0:140">
+                <Ellipse width="466" height="382" name="Face"/>
+                <Fill name="Fill"><SolidColor colorValue="FFFDF7EC" name="Cream"/></Fill>
+            </Shape>
+            <Shape x="512" y="418" name="Head.Edge_Shadow" id="0:141">
+                <Ellipse width="481" height="397" name="Head Shadow"/>
+                <Fill name="Fill"><SolidColor colorValue="55E7D9C8" name="Cream Shadow"/></Fill>
+            </Shape>
+
+            <!-- belly above teal torso -->
+            <Shape x="500" y="696" name="Torso.Belly" id="0:150">
+                <Ellipse width="275" height="356" name="Belly"/>
+                <Fill name="Fill"><SolidColor colorValue="FFFDF7EC" name="Cream"/></Fill>
+            </Shape>
+
+            <!-- complete cream arms -->
+            <Shape x="335" y="672" rotation="0.12" name="Arm_L.Complete" id="0:151">
+                <Ellipse width="104" height="255" name="Arm"/>
+                <Fill name="Fill"><SolidColor colorValue="FFFDF7EC" name="Cream"/></Fill>
+            </Shape>
+            <Shape x="666" y="670" rotation="-0.12" name="Arm_R.Complete" id="0:152">
+                <Ellipse width="104" height="255" name="Arm"/>
+                <Fill name="Fill"><SolidColor colorValue="FFFDF7EC" name="Cream"/></Fill>
+            </Shape>
+
+            <!-- teal body contains full hidden torso/hip geometry -->
+            <Shape x="502" y="700" name="Torso.Body_Base" id="0:153">
+                <Ellipse width="360" height="438" name="Body"/>
+                <Fill name="Fill"><SolidColor colorValue="FF04ABA4" name="Teal"/></Fill>
+            </Shape>
+
+            <!-- legs and feet -->
+            <Shape x="410" y="824" name="Leg_L.Complete" id="0:160">
+                <Ellipse width="126" height="205" name="Leg"/>
+                <Fill name="Fill"><SolidColor colorValue="FF04ABA4" name="Teal"/></Fill>
+            </Shape>
+            <Shape x="593" y="824" name="Leg_R.Complete" id="0:161">
+                <Ellipse width="126" height="205" name="Leg"/>
+                <Fill name="Fill"><SolidColor colorValue="FF04ABA4" name="Teal"/></Fill>
+            </Shape>
+            <Shape x="398" y="895" rotation="-0.06" name="Leg_L.Foot" id="0:162">
+                <Ellipse width="155" height="77" name="Foot"/>
+                <Fill name="Fill"><SolidColor colorValue="FF03958A" name="Teal Shadow"/></Fill>
+            </Shape>
+            <Shape x="604" y="895" rotation="0.06" name="Leg_R.Foot" id="0:163">
+                <Ellipse width="155" height="77" name="Foot"/>
+                <Fill name="Fill"><SolidColor colorValue="FF03958A" name="Teal Shadow"/></Fill>
+            </Shape>
+
+            <!-- Backpack sits behind body but remains a canonical silhouette feature. -->
+            <Shape x="707" y="628" name="Backpack.Side_Pocket" id="0:170">
+                <Ellipse width="148" height="222" name="Pocket"/>
+                <Fill name="Fill"><SolidColor colorValue="FF03958A" name="Teal Pocket"/></Fill>
+            </Shape>
+            <Shape x="740" y="613" name="Backpack.Pack_Flap" id="0:171">
+                <Ellipse width="192" height="135" name="Flap"/>
+                <Fill name="Fill"><SolidColor colorValue="FF965A37" name="Brown Light"/></Fill>
+            </Shape>
+            <Shape x="714" y="650" name="Backpack.Pack_Base" id="0:172">
+                <Ellipse width="243" height="378" name="Pack"/>
+                <Fill name="Fill"><SolidColor colorValue="FF784426" name="Brown"/></Fill>
+            </Shape>
+            <Shape x="725" y="663" name="Backpack.Contact_Shadow" id="0:173">
+                <Ellipse width="255" height="392" name="Pack Shadow"/>
+                <Fill name="Fill"><SolidColor colorValue="664A2914" name="Brown Shadow"/></Fill>
+            </Shape>
+
+            <!-- ground shadow is independent of body -->
+            <Shape x="515" y="927" name="Shadow" id="0:180">
+                <Ellipse width="378" height="47" name="Ground Shadow"/>
+                <Fill name="Fill"><SolidColor colorValue="33031619" name="Shadow"/></Fill>
+            </Shape>
+
+        </Node>
+    </Artboard>
+</Rive>
