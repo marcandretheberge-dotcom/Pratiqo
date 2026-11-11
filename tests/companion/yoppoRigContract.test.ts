@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
   YOPPO_ARTBOARD_CONTRACT,
-  YOPPO_HEAD_TURN_INPUT,
+  YOPPO_GEOMETRY_MEASUREMENT_POLICY,\n  YOPPO_HEAD_TURN_INPUT,
   YOPPO_HEAD_TURN_LIMIT_DEG,
   YOPPO_IDLE_POSE_DELTA_V1,
   YOPPO_IDENTITY_MASTER,
@@ -15,7 +15,7 @@ import {
 } from "@/lib/companion/yoppoRigContract";
 
 assert.equal(YOPPO_IDENTITY_MASTER, "/companion/travel/companion-travel-idle.png");
-assert.equal(YOPPO_HEAD_TURN_LIMIT_DEG, 15);
+assert.equal(YOPPO_HEAD_TURN_LIMIT_DEG, 15);\nassert.equal(YOPPO_GEOMETRY_MEASUREMENT_POLICY.geometryChangesRequireMeasuredDelta, true);\nassert.equal(YOPPO_GEOMETRY_MEASUREMENT_POLICY.rejectEdgeClippedMeasurements, true);
 assert.equal(YOPPO_IDLE_POSE_DELTA_V1.mouth, "smile");
 assert.equal(YOPPO_IDLE_POSE_DELTA_V1.lids, "open");
 assert.ok(Math.abs(YOPPO_IDLE_POSE_DELTA_V1.backpack.rotationDeg) <= 3);
