@@ -53,6 +53,8 @@ assert.match(reservationRoute, /isCafeV1Enabled/);
 assert.match(publicRoute, /isCafeV1Enabled/);
 assert.match(adminRoute, /isCafeV1Enabled/);
 assert.match(adminRoute, /cafe_admin_create_draft_server/);
+assert.match(adminRoute, /cafe_admin_reassign_host_server/);
+assert.match(migration, /CREATE OR REPLACE FUNCTION public\.cafe_admin_reassign_host_server/);
 assert.match(publicRoute, /cafe_public_sessions/);
 
 console.log("[cafe:pr2a-contract] static contract passed");
