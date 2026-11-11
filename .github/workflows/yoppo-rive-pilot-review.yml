@@ -38,7 +38,7 @@ jobs:
       - name: Canonical PNG audit
         run: node scripts/audit-yoppo-master.mjs
       - name: Canonical geometry measurement
-        run: node scripts/measure-yoppo-geometry.mjs /tmp/yoppo-canonical-geometry.json
+        run: node scripts/measure-yoppo-geometry.mjs /tmp/yoppo-canonical-geometry.json /tmp/yoppo-canonical-geometry-annotated.png
       - name: TypeScript contract
         run: npx tsc --noEmit
       - name: Rig parent and pivot contract
@@ -192,6 +192,7 @@ jobs:
             /tmp/yoppo-master-overlay.png
             /tmp/yoppo-master-inspect.json
             /tmp/yoppo-canonical-geometry.json
+            /tmp/yoppo-canonical-geometry-annotated.png
             rive/yoppo-master/build/problems.log
           if-no-files-found: error
       - name: Focused lint
