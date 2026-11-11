@@ -9,7 +9,10 @@ END $$;
 CREATE SCHEMA IF NOT EXISTS auth;
 CREATE TABLE IF NOT EXISTS auth.users (
   id uuid PRIMARY KEY,
-  email text
+  email text,
+  is_anonymous boolean NOT NULL DEFAULT false,
+  deleted_at timestamptz,
+  banned_until timestamptz
 );
 CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
