@@ -21,6 +21,10 @@ assert.doesNotMatch(front + styles, /coffee\.avif|styles\.steam|\.steam/);
 assert.match(front, /router\.push\("\/cafe\?step=format"\)/);
 assert.match(front, /router\.push\("\/cafe\?step=groups"\)/);
 assert.match(front, /useSearchParams/);
+// Query-driven client navigation needs a boundary during Next production prerendering.
+assert.match(page, /import \{ Suspense \} from "react"/);
+assert.match(page, /<Suspense fallback=\{<AppLoadingFallback \/>\}>\s*<CafeFrontDoor \/>\s*<\/Suspense>/);
+assert.doesNotMatch(page, /force-dynamic|"use client"/);
 assert.match(front, /headingRef\.current\?\.focus\(\)/);
 assert.match(front, /tabIndex=\{-1\}/);
 assert.match(front, /role="status"/);

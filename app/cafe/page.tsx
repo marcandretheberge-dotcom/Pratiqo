@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { AppLoadingFallback } from "@/components/AppLoadingFallback";
 import { CafeFrontDoor } from "./CafeFrontDoor";
 
 export const metadata: Metadata = {
@@ -11,5 +13,9 @@ export const metadata: Metadata = {
 };
 
 export default function CafePage() {
-  return <CafeFrontDoor />;
+  return (
+    <Suspense fallback={<AppLoadingFallback />}>
+      <CafeFrontDoor />
+    </Suspense>
+  );
 }
