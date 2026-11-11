@@ -691,7 +691,7 @@ LANGUAGE plpgsql
 VOLATILE
 SECURITY DEFINER
 SET search_path = pg_catalog, pg_temp
-AS $
+AS $cafe_host$
 DECLARE
   s public.cafe_sessions%ROWTYPE;
 BEGIN
@@ -722,7 +722,7 @@ BEGIN
 
   RETURN jsonb_build_object('ok', true, 'slug', s.slug, 'status', s.status);
 END
-$;
+$cafe_host$;
 
 CREATE OR REPLACE FUNCTION public.cafe_admin_cancel_server(p_actor_id uuid, p_slug text)
 RETURNS jsonb
