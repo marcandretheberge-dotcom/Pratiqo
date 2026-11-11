@@ -151,6 +151,9 @@
             <Shape x="502" y="416" name="Face_Base" id="0:140">
                 <Ellipse width="448" height="356" name="Face"/>
                 <Fill name="Fill"><SolidColor colorValue="FFFDF7EC" name="Cream"/></Fill>
+                <Stroke thickness="5" transformAffectsStroke="false" name="Edge">
+                    <SolidColor colorValue="88045A55" name="Dark Teal Edge"/>
+                </Stroke>
             </Shape>
             <Shape x="507" y="425" name="Head.Edge_Shadow" id="0:141">
                 <Ellipse width="461" height="369" name="Head Shadow"/>
@@ -177,6 +180,9 @@
             <Shape x="500" y="710" name="Torso.Body_Base" id="0:153">
                 <Ellipse width="330" height="360" name="Body"/>
                 <Fill name="Fill"><SolidColor colorValue="FF04ABA4" name="Teal"/></Fill>
+                <Stroke thickness="5" transformAffectsStroke="false" name="Edge">
+                    <SolidColor colorValue="77045A55" name="Teal Edge"/>
+                </Stroke>
             </Shape>
 
             <!-- legs and feet -->
@@ -197,29 +203,71 @@
                 <Fill name="Fill"><SolidColor colorValue="FF03958A" name="Teal Shadow"/></Fill>
             </Shape>
 
+            <!-- restrained toe/volume cues; still editable vector geometry -->
+            <Shape x="381" y="898" name="Leg_L.Toe.1" id="0:164">
+                <Ellipse width="21" height="16" name="Toe"/>
+                <Fill name="Fill"><SolidColor colorValue="5538D5CA" name="Toe Highlight"/></Fill>
+            </Shape>
+            <Shape x="415" y="900" name="Leg_L.Toe.2" id="0:165">
+                <Ellipse width="18" height="14" name="Toe"/>
+                <Fill name="Fill"><SolidColor colorValue="5538D5CA" name="Toe Highlight"/></Fill>
+            </Shape>
+            <Shape x="570" y="900" name="Leg_R.Toe.1" id="0:166">
+                <Ellipse width="18" height="14" name="Toe"/>
+                <Fill name="Fill"><SolidColor colorValue="5538D5CA" name="Toe Highlight"/></Fill>
+            </Shape>
+            <Shape x="603" y="898" name="Leg_R.Toe.2" id="0:167">
+                <Ellipse width="21" height="16" name="Toe"/>
+                <Fill name="Fill"><SolidColor colorValue="5538D5CA" name="Toe Highlight"/></Fill>
+            </Shape>
+
             <!-- Backpack sits behind body but remains a canonical silhouette feature. -->
             <Shape x="742" y="674" name="Backpack.Teal_Panel" id="0:168">
-                <Ellipse width="111" height="219" name="Panel"/>
+                <Rectangle width="111" height="219"
+                    cornerRadiusTL="34" cornerRadiusTR="34" cornerRadiusBL="34" cornerRadiusBR="34"
+                    name="Panel"/>
                 <Fill name="Fill"><SolidColor colorValue="FF03958A" name="Teal Panel"/></Fill>
+                <Stroke thickness="4" transformAffectsStroke="false" name="Edge">
+                    <SolidColor colorValue="77045A55" name="Teal Edge"/>
+                </Stroke>
             </Shape>
             <Shape x="778" y="581" name="Backpack.Buckle" id="0:169">
-                <Ellipse width="27" height="39" name="Buckle"/>
+                <Rectangle width="27" height="39"
+                    cornerRadiusTL="5" cornerRadiusTR="5" cornerRadiusBL="5" cornerRadiusBR="5"
+                    name="Buckle"/>
                 <Fill name="Fill"><SolidColor colorValue="FFD8C3AB" name="Buckle Light"/></Fill>
+                <Stroke thickness="3" transformAffectsStroke="false" name="Edge">
+                    <SolidColor colorValue="FF4A2914" name="Brown Edge"/>
+                </Stroke>
             </Shape>
             <Shape x="745" y="696" name="Backpack.Side_Pocket" id="0:170">
-                <Ellipse width="105" height="177" name="Pocket"/>
+                <Rectangle width="105" height="177"
+                    cornerRadiusTL="30" cornerRadiusTR="30" cornerRadiusBL="30" cornerRadiusBR="30"
+                    name="Pocket"/>
                 <Fill name="Fill"><SolidColor colorValue="FF03958A" name="Teal Pocket"/></Fill>
             </Shape>
             <Shape x="721" y="565" name="Backpack.Pack_Flap" id="0:171">
-                <Ellipse width="176" height="95" name="Flap"/>
+                <Rectangle width="176" height="95"
+                    cornerRadiusTL="34" cornerRadiusTR="34" cornerRadiusBL="22" cornerRadiusBR="22"
+                    name="Flap"/>
                 <Fill name="Fill"><SolidColor colorValue="FF965A37" name="Brown Light"/></Fill>
+                <Stroke thickness="5" transformAffectsStroke="false" name="Edge">
+                    <SolidColor colorValue="FF4A2914" name="Brown Edge"/>
+                </Stroke>
             </Shape>
             <Shape x="720" y="680" name="Backpack.Pack_Base" id="0:172">
-                <Ellipse width="205" height="314" name="Pack"/>
+                <Rectangle width="205" height="314"
+                    cornerRadiusTL="52" cornerRadiusTR="52" cornerRadiusBL="45" cornerRadiusBR="45"
+                    name="Pack"/>
                 <Fill name="Fill"><SolidColor colorValue="FF784426" name="Brown"/></Fill>
+                <Stroke thickness="6" transformAffectsStroke="false" name="Edge">
+                    <SolidColor colorValue="FF4A2914" name="Brown Edge"/>
+                </Stroke>
             </Shape>
             <Shape x="728" y="686" name="Backpack.Contact_Shadow" id="0:173">
-                <Ellipse width="218" height="329" name="Pack Shadow"/>
+                <Rectangle width="218" height="329"
+                    cornerRadiusTL="58" cornerRadiusTR="58" cornerRadiusBL="50" cornerRadiusBR="50"
+                    name="Pack Shadow"/>
                 <Fill name="Fill"><SolidColor colorValue="664A2914" name="Brown Shadow"/></Fill>
             </Shape>
 
