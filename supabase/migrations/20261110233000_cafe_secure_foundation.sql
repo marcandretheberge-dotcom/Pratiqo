@@ -294,7 +294,7 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = pg_catalog, pg_temp
-AS $$
+AS $cafe_public$
   SELECT
     s.slug,
     s.title,
@@ -318,7 +318,7 @@ AS $$
     AND (p_slug IS NULL OR s.slug = p_slug)
   ORDER BY s.starts_at, s.slug
   LIMIT 100
-$;
+$cafe_public$;
 
 REVOKE ALL ON FUNCTION public.cafe_public_sessions(text) FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.cafe_public_sessions(text) TO anon, authenticated, service_role;
