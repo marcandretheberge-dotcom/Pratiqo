@@ -7,6 +7,7 @@ on:
       - "docs/yopratiqo/YOPPO_RIVE_RIG_V1.md"
       - "lib/companion/yoppoRigContract.ts"
       - "scripts/audit-yoppo-master.mjs"
+      - "scripts/measure-yoppo-geometry.mjs"
       - "tests/companion/yoppoRigContract.test.ts"
       - "rive/yoppo-eye-spike/**"
       - "rive/yoppo-master/**"
@@ -180,7 +181,7 @@ jobs:
           rive inspect rive/yoppo-master --json > /tmp/yoppo-master-inspect.json
           rive rive/yoppo-master --screenshot=/tmp/yoppo-master-neutral.png --advance=0
           test -s /tmp/yoppo-master-neutral.png
-          node --import tsx scripts/compare-yoppo-master.ts /tmp/yoppo-master-neutral.png
+          node --import tsx scripts/compare-yoppo-master.ts /tmp/yoppo-master-neutral.png /tmp/yoppo-canonical-geometry.json
       - name: Upload Yoppo neutral master evidence
         if: always()
         uses: actions/upload-artifact@v4
