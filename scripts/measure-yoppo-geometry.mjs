@@ -3,7 +3,10 @@ import sharp from "sharp";
 
 const source = "public/companion/travel/companion-travel-idle.png";
 const output = process.argv[2] ?? "/tmp/yoppo-canonical-geometry.json";
+const annotatedOutput = process.argv[3] ?? "/tmp/yoppo-canonical-geometry-annotated.png";
 const transform = { scale: 1.86, x: 47, y: 78 };
+const ROI_EXPAND_STEP = 12;
+const ROI_MAX_EXPANSIONS = 3;
 
 const image = sharp(source).ensureAlpha();
 const { data, info } = await image.raw().toBuffer({ resolveWithObject: true });
@@ -38,10 +41,11 @@ const regions = {
   chestEmblem: { box:{x:195,y:285,w:115,h:90},  test:teal, minPixels:100 },
 };
 
-function measure(name, spec) {
-  const {box,test,minPixels}=spec;
+function sampleBox(name, spec, box) {
+  const { test, minPixels } = spec;
   let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity,count=0,sumX=0,sumY=0;
   const edge={left:false,right:false,top:false,bottom:false};
+
   for(let y=box.y;y<Math.min(info.height,box.y+box.h);y++){
     for(let x=box.x;x<Math.min(info.width,box.x+box.w);x++){
       const p=px(x,y);
@@ -55,11 +59,48 @@ function measure(name, spec) {
     }
   }
   if(count<minPixels) throw new Error(`${name}: only ${count} classified pixels (min ${minPixels})`);
+  return {minX,minY,maxX,maxY,count,sumX,sumY,edge};
+}
+
+function expandBox(box, edge) {
+  let {x,y,w,h}=box;
+  if(edge.left){ x=Math.max(0,x-ROI_EXPAND_STEP); w+=ROI_EXPAND_STEP; }
+  if(edge.right){ w=Math.min(info.width-x,w+ROI_EXPAND_STEP); }
+  if(edge.top){ y=Math.max(0,y-ROI_EXPAND_STEP); h+=ROI_EXPAND_STEP; }
+  if(edge.bottom){ h=Math.min(info.height-y,h+ROI_EXPAND_STEP); }
+  return {x,y,w,h};
+}
+
+function measure(name, spec) {
+  let box={...spec.box};
+  const expansionHistory=[];
+  let sampled;
+
+  for(let attempt=0;attempt<=ROI_MAX_EXPANSIONS;attempt++){
+    sampled=sampleBox(name,spec,box);
+    const touched=Object.entries(sampled.edge).filter(([,v])=>v).map(([k])=>k);
+    if(!touched.length) break;
+    if(attempt===ROI_MAX_EXPANSIONS) {
+      throw new Error(`${name}: still touches ROI edge after ${ROI_MAX_EXPANSIONS} deterministic expansions (${touched.join(",")})`);
+    }
+    expansionHistory.push({
+      reason:"measurement-touched-roi-edge",
+      stepPx:ROI_EXPAND_STEP,
+      touched,
+      before:{...box},
+    });
+    box=expandBox(box,sampled.edge);
+  }
+
+  const {minX,minY,maxX,maxY,count,sumX,sumY,edge}=sampled;
   const sourceBounds={minX,minY,maxX,maxY,width:maxX-minX+1,height:maxY-minY+1};
   const centroid={x:sumX/count,y:sumY/count};
   const toArt=(v,axis)=>Number((v*transform.scale+(axis==="x"?transform.x:transform.y)).toFixed(2));
+
   return {
+    initialRoi:spec.box,
     roi:box,
+    roiExpansionHistory:expansionHistory,
     pixelCount:count,
     touchesRoiEdge:edge,
     sourceBounds,
@@ -75,13 +116,40 @@ function measure(name, spec) {
 }
 
 const measured=Object.fromEntries(Object.entries(regions).map(([name,spec])=>[name,measure(name,spec)]));
+
+const annotationColors=["#E63946","#457B9D","#2A9D8F","#F4A261","#8338EC","#FF006E","#3A86FF","#FB5607","#2B9348","#9D4EDD","#BC6C25","#0077B6","#D00000","#6A994E"];
+const annotationSvg=`<svg width="${info.width}" height="${info.height}" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text{font-family:Arial,sans-serif;font-size:9px;font-weight:700;paint-order:stroke;stroke:white;stroke-width:2px;stroke-linejoin:round}
+  </style>
+  ${Object.entries(measured).map(([name,value],index)=>{
+    const c=annotationColors[index%annotationColors.length];
+    const r=value.roi,b=value.sourceBounds;
+    return `<g>
+      <rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="none" stroke="${c}" stroke-width="1" stroke-dasharray="4 3"/>
+      <rect x="${b.minX}" y="${b.minY}" width="${b.width}" height="${b.height}" fill="none" stroke="${c}" stroke-width="2"/>
+      <circle cx="${value.sourceCentroid.x}" cy="${value.sourceCentroid.y}" r="2.5" fill="${c}"/>
+      <text x="${Math.max(2,b.minX)}" y="${Math.max(10,b.minY-3)}" fill="${c}">${name}</text>
+    </g>`;
+  }).join("")}
+</svg>`;
+
+const annotated=await sharp(source)
+  .composite([{input:Buffer.from(annotationSvg),top:0,left:0}])
+  .png()
+  .toBuffer();
+fs.writeFileSync(annotatedOutput,annotated);
+
 const result={
   source,
   sourceSize:{width:info.width,height:info.height},
   transform,
   method:"fixed-roi + alpha/color classification; no geometry value is hand-entered",
-  rule:"a feature touching an ROI edge must have its ROI widened before its measurement may drive RML geometry",
+  rule:"a feature touching an ROI edge expands deterministically by 12px on each touched side, up to 3 times; ROIs are never shrunk or moved to improve a result",
+  roiExpansion:{stepPx:ROI_EXPAND_STEP,maxExpansions:ROI_MAX_EXPANSIONS},
+  annotatedOutput,
   regions:measured,
 };
+
 fs.writeFileSync(output,JSON.stringify(result,null,2)+"\n");
 console.log("YOPPO_GEOMETRY_AUDIT="+JSON.stringify(result));
