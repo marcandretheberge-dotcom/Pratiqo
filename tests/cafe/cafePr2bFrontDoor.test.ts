@@ -48,7 +48,13 @@ assert.match(detailPage, /title: "Table — Café des langues"/);
 assert.doesNotMatch(page, /title: "[^"]*Pratiqo/);
 assert.doesNotMatch(detailPage, /title: "[^"]*Pratiqo/);
 
-assert.doesNotMatch(publicTypes, /profile_id|participant|avatar|host_profile_id|created_by_profile_id|email/i);
+// Capacity and aggregate counts are public by design. Identity-bearing fields
+// and any public attendee/participant collection are not.
+assert.doesNotMatch(
+  publicTypes,
+  /\b(profile_id|participant_id|avatar_url|host_profile_id|created_by_profile_id|email)\b/i,
+);
+assert.doesNotMatch(publicTypes, /\b(participants?|attendees?|roster)\s*:/i);
 assert.doesNotMatch(front + detail + card, /<Avatar|ParticipantList|participantName|participantAvatar|hostProfile/i);
 assert.doesNotMatch(front + detail + card, /caméra|camera/i);
 assert.doesNotMatch(front + detail + card, /copy\.host|hostLine/);
