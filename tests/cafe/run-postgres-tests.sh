@@ -43,7 +43,19 @@ fi
 
 # Function privileges: public/browser roles may not execute mutation/admin RPCs.
 for FN in   "public.cafe_set_reservation_server(uuid,text,text,bigint,uuid)"   "public.cafe_my_reservations_server(uuid)"   "public.cafe_admin_create_draft_server(uuid,text,text,text,text,text,timestamptz,integer,integer,uuid)"   "public.cafe_admin_publish_server(uuid,text)"   "public.cafe_admin_cancel_server(uuid,text)"   "public.cafe_admin_reassign_host_server(uuid,text,uuid)"; do
-  for ROLE in PUBLIC anon authenticated; do
+  HAS_PUBLIC=$("${PSQL[@]}" -c "SELECT EXISTS (
+    SELECT 1
+    FROM pg_proc p
+    CROSS JOIN LATERAL aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) acl
+    WHERE p.oid = '$FN'::regprocedure
+      AND acl.grantee = 0
+      AND acl.privilege_type = 'EXECUTE'
+  );")
+  if [[ "$HAS_PUBLIC" != "f" ]]; then
+    echo "PUBLIC unexpectedly has EXECUTE on $FN" >&2
+    exit 1
+  fi
+  for ROLE in anon authenticated; do
     HAS=$("${PSQL[@]}" -c "SELECT has_function_privilege('$ROLE', '$FN', 'EXECUTE');")
     if [[ "$HAS" != "f" ]]; then
       echo "$ROLE unexpectedly has EXECUTE on $FN" >&2
