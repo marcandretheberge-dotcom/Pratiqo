@@ -34,6 +34,25 @@ function parseMutation(raw: unknown):
   return { ok: true, slug, action, expectedVersion, requestId };
 }
 
+async function callReservationRpc(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  args: {
+    p_actor_id: string;
+    p_slug: string;
+    p_action: ReservationAction;
+    p_expected_version: number;
+    p_request_id: string;
+  },
+) {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const result = await admin.rpc("cafe_set_reservation_server", args);
+    if (!result.error) return result;
+    const retryable = result.error.code === "40P01" || result.error.code === "55P03" || result.error.code === "40001";
+    if (!retryable || attempt === 1) return result;
+  }
+  return admin.rpc("cafe_set_reservation_server", args);
+}
+
 async function enforceRateLimits(req: Request, userId: string, action: ReservationAction) {
   const minuteLimit = action === "reserve" ? 6 : 10;
   const hourLimit = action === "reserve" ? 30 : 60;
@@ -100,7 +119,7 @@ export async function POST(req: Request) {
 
   try {
     const admin = getSupabaseAdmin();
-    const { data, error } = await admin.rpc("cafe_set_reservation_server", {
+    const { data, error } = await callReservationRpc(admin, {
       p_actor_id: auth.id,
       p_slug: input.slug,
       p_action: input.action,
