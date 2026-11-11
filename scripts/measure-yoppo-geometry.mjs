@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 import sharp from "sharp";
 
 const source = "public/companion/travel/companion-travel-idle.png";
@@ -8,7 +9,7 @@ const transform = { scale: 1.86, x: 47, y: 78 };
 const ROI_EXPAND_STEP = 12;
 const ROI_MAX_EXPANSIONS = 3;
 
-const image = sharp(source).ensureAlpha();
+const image = sharp(source).toColourspace("srgb").ensureAlpha();
 const { data, info } = await image.raw().toBuffer({ resolveWithObject: true });
 
 const px = (x, y) => {
@@ -58,46 +59,62 @@ function sampleBox(name, spec, box) {
       if(y>=box.y+box.h-2) edge.bottom=true;
     }
   }
-  if(count<minPixels) throw new Error(`${name}: only ${count} classified pixels (min ${minPixels})`);
-  return {minX,minY,maxX,maxY,count,sumX,sumY,edge};
+  return {minX,minY,maxX,maxY,count,sumX,sumY,edge,
+    insufficientPixels: count<minPixels ? `${name}: only ${count} classified pixels (min ${minPixels})` : null};
 }
 
 function expandBox(box, edge) {
-  let {x,y,w,h}=box;
-  if(edge.left){ x=Math.max(0,x-ROI_EXPAND_STEP); w+=ROI_EXPAND_STEP; }
-  if(edge.right){ w=Math.min(info.width-x,w+ROI_EXPAND_STEP); }
-  if(edge.top){ y=Math.max(0,y-ROI_EXPAND_STEP); h+=ROI_EXPAND_STEP; }
-  if(edge.bottom){ h=Math.min(info.height-y,h+ROI_EXPAND_STEP); }
-  return {x,y,w,h};
+  const x=edge.left ? Math.max(0,box.x-ROI_EXPAND_STEP) : box.x;
+  const y=edge.top ? Math.max(0,box.y-ROI_EXPAND_STEP) : box.y;
+  const right=edge.right ? Math.min(info.width,box.x+box.w+ROI_EXPAND_STEP) : box.x+box.w;
+  const bottom=edge.bottom ? Math.min(info.height,box.y+box.h+ROI_EXPAND_STEP) : box.y+box.h;
+  return {x,y,w:right-x,h:bottom-y};
 }
 
 function measure(name, spec) {
   let box={...spec.box};
   const expansionHistory=[];
+  const failures=[];
   let sampled;
 
   for(let attempt=0;attempt<=ROI_MAX_EXPANSIONS;attempt++){
     sampled=sampleBox(name,spec,box);
+    if(sampled.insufficientPixels) {
+      failures.push(sampled.insufficientPixels);
+      break;
+    }
     const touched=Object.entries(sampled.edge).filter(([,v])=>v).map(([k])=>k);
     if(!touched.length) break;
     if(attempt===ROI_MAX_EXPANSIONS) {
-      throw new Error(`${name}: still touches ROI edge after ${ROI_MAX_EXPANSIONS} deterministic expansions (${touched.join(",")})`);
+      failures.push(`${name}: still touches ROI edge after ${ROI_MAX_EXPANSIONS} deterministic expansions (${touched.join(",")})`);
+      break;
     }
+    const expanded=expandBox(box,sampled.edge);
     expansionHistory.push({
       reason:"measurement-touched-roi-edge",
       stepPx:ROI_EXPAND_STEP,
       touched,
       before:{...box},
+      after:expanded,
+      expansionNumber:attempt+1,
     });
-    box=expandBox(box,sampled.edge);
+    box=expanded;
   }
 
   const {minX,minY,maxX,maxY,count,sumX,sumY,edge}=sampled;
+  if(!count) return {
+    valid:false, failures, initialRoi:spec.box, roi:box,
+    roiExpansionHistory:expansionHistory, pixelCount:0,
+    touchesRoiEdge:edge, sourceBounds:null, sourceCentroid:null,
+    artboardBounds:null, artboardCentroid:null,
+  };
   const sourceBounds={minX,minY,maxX,maxY,width:maxX-minX+1,height:maxY-minY+1};
   const centroid={x:sumX/count,y:sumY/count};
   const toArt=(v,axis)=>Number((v*transform.scale+(axis==="x"?transform.x:transform.y)).toFixed(2));
 
   return {
+    valid:failures.length===0,
+    failures,
     initialRoi:spec.box,
     roi:box,
     roiExpansionHistory:expansionHistory,
@@ -116,6 +133,7 @@ function measure(name, spec) {
 }
 
 const measured=Object.fromEntries(Object.entries(regions).map(([name,spec])=>[name,measure(name,spec)]));
+const failures=Object.values(measured).flatMap(region=>region.failures);
 
 const annotationColors=["#E63946","#457B9D","#2A9D8F","#F4A261","#8338EC","#FF006E","#3A86FF","#FB5607","#2B9348","#9D4EDD","#BC6C25","#0077B6","#D00000","#6A994E"];
 const annotationSvg=`<svg width="${info.width}" height="${info.height}" xmlns="http://www.w3.org/2000/svg">
@@ -125,22 +143,29 @@ const annotationSvg=`<svg width="${info.width}" height="${info.height}" xmlns="h
   ${Object.entries(measured).map(([name,value],index)=>{
     const c=annotationColors[index%annotationColors.length];
     const r=value.roi,b=value.sourceBounds;
+    if(!b) return `<g><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="none" stroke="${c}"/><text x="${r.x}" y="${r.y+10}">${name}: INVALID</text></g>`;
     return `<g>
       <rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="none" stroke="${c}" stroke-width="1" stroke-dasharray="4 3"/>
       <rect x="${b.minX}" y="${b.minY}" width="${b.width}" height="${b.height}" fill="none" stroke="${c}" stroke-width="2"/>
       <circle cx="${value.sourceCentroid.x}" cy="${value.sourceCentroid.y}" r="2.5" fill="${c}"/>
-      <text x="${Math.max(2,b.minX)}" y="${Math.max(10,b.minY-3)}" fill="${c}">${name}</text>
+      <text x="${Math.max(2,b.minX)}" y="${Math.max(10,b.minY-3)}" fill="${c}">${name}${value.valid ? "" : ": INVALID"}</text>
     </g>`;
   }).join("")}
 </svg>`;
 
 const annotated=await sharp(source)
+  .toColourspace("srgb")
   .composite([{input:Buffer.from(annotationSvg),top:0,left:0}])
   .png()
   .toBuffer();
+fs.mkdirSync(path.dirname(annotatedOutput),{recursive:true});
 fs.writeFileSync(annotatedOutput,annotated);
 
 const result={
+  schemaVersion:2,
+  valid:failures.length===0,
+  failures,
+  classificationReview:"VISUAL REVIEW PENDING HUMAN REVIEW",
   source,
   sourceSize:{width:info.width,height:info.height},
   transform,
@@ -151,5 +176,10 @@ const result={
   regions:measured,
 };
 
+fs.mkdirSync(path.dirname(output),{recursive:true});
 fs.writeFileSync(output,JSON.stringify(result,null,2)+"\n");
 console.log("YOPPO_GEOMETRY_AUDIT="+JSON.stringify(result));
+if(failures.length) {
+  console.error("Canonical geometry is invalid; no master render or comparison is permitted:\n"+failures.join("\n"));
+  process.exitCode=1;
+}

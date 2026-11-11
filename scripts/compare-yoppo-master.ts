@@ -6,6 +6,17 @@ import {
   YOPPO_OVERLAY_ACCEPTANCE,
 } from "@/lib/companion/yoppoRigContract";
 
+type ComponentName = keyof typeof YOPPO_COMPONENT_TOLERANCES;
+type Bounds = { minX: number; minY: number; maxX: number; maxY: number; width: number; height: number };
+type CanonicalRegion = {
+  valid: boolean;
+  touchesRoiEdge: Record<string, boolean>;
+  artboardBounds: Bounds;
+  artboardCentroid: { x: number; y: number };
+};
+type GeometryAudit = { valid: boolean; regions: Record<ComponentName, CanonicalRegion> };
+
+async function main() {
 const renderedPath = process.argv[2] ?? "/tmp/yoppo-master-neutral.png";
 const geometryPath = process.argv[3] ?? "/tmp/yoppo-canonical-geometry.json";
 const referencePath = "public/companion/travel/companion-travel-idle.png";
@@ -14,13 +25,17 @@ if (!fs.existsSync(geometryPath)) {
   throw new Error("Canonical geometry audit is required before overlay comparison: " + geometryPath);
 }
 
-const geometry = JSON.parse(fs.readFileSync(geometryPath, "utf8"));
+const geometry = JSON.parse(fs.readFileSync(geometryPath, "utf8")) as GeometryAudit;
+if (geometry.valid !== true) {
+  throw new Error("Canonical geometry audit is invalid; comparison is prohibited");
+}
 const regions = Object.entries(geometry.regions ?? {});
-if (regions.length < 10) {
-  throw new Error("Canonical geometry audit is incomplete: expected measured component regions");
+if (regions.length !== Object.keys(YOPPO_COMPONENT_TOLERANCES).length ||
+    Object.keys(YOPPO_COMPONENT_TOLERANCES).some(name => !Object.hasOwn(geometry.regions, name))) {
+  throw new Error("Canonical geometry audit is incomplete: expected all 14 measured component regions");
 }
 const edgeClipped = regions
-  .filter(([, value]: any) => Object.values(value?.touchesRoiEdge ?? {}).some(Boolean))
+  .filter(([, value]) => value.valid !== true || Object.values(value?.touchesRoiEdge ?? {}).some(Boolean))
   .map(([name]) => name);
 if (edgeClipped.length) {
   throw new Error("Canonical geometry measurements still touch ROI edges: " + edgeClipped.join(", "));
@@ -29,14 +44,16 @@ if (edgeClipped.length) {
 const size = YOPPO_ARTBOARD_CONTRACT.width;
 
 async function raw(path: string) {
-  return sharp(path).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return sharp(path).toColourspace("srgb").ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 }
 
 const referenceResized = await sharp(referencePath)
+  .toColourspace("srgb")
   .resize({
     width: Math.round(500 * YOPPO_ARTBOARD_CONTRACT.reconstructionScale),
     height: Math.round(500 * YOPPO_ARTBOARD_CONTRACT.reconstructionScale),
     fit: "fill",
+    kernel: sharp.kernel.lanczos3,
   })
   .png()
   .toBuffer();
@@ -65,13 +82,13 @@ if (rendered.info.width !== size || rendered.info.height !== YOPPO_ARTBOARD_CONT
 }
 
 const cream = (r:number,g:number,b:number,a:number) =>
-  a>=48 && r>=175 && g>=155 && b>=130 && Math.max(r,g,b)-Math.min(r,g,b)<105;
+  a>=120 && r>=175 && g>=155 && b>=130 && Math.max(r,g,b)-Math.min(r,g,b)<105;
 const teal = (r:number,g:number,b:number,a:number) =>
-  a>=48 && g>=85 && b>=75 && g>r+28 && b>r+20;
+  a>=120 && g>=85 && b>=75 && g>r+28 && b>r+20;
 const brown = (r:number,g:number,b:number,a:number) =>
-  a>=48 && r>=65 && r>g+18 && g>=25 && g<170 && b<135;
+  a>=120 && r>=65 && r>g+18 && g>=25 && g<170 && b<135;
 const ink = (r:number,g:number,b:number,a:number) =>
-  a>=48 && r<90 && g<105 && b<110;
+  a>=120 && r<90 && g<105 && b<110;
 const creamOrTeal = (r:number,g:number,b:number,a:number) => cream(r,g,b,a)||teal(r,g,b,a);
 const pack = (r:number,g:number,b:number,a:number) => brown(r,g,b,a)||teal(r,g,b,a);
 
@@ -92,7 +109,7 @@ const classifiers: Record<string,(r:number,g:number,b:number,a:number)=>boolean>
   chestEmblem: teal,
 };
 
-function measureRenderedRegion(name:string, canonical:any) {
+function measureRenderedRegion(name:string, canonical:CanonicalRegion) {
   const classifier=classifiers[name];
   if(!classifier) throw new Error("No render classifier for component "+name);
 
@@ -170,7 +187,7 @@ const groundContactDelta = Math.abs(renderGround - referenceGround);
 const overlapRgbMae = rgbSamples ? rgbError / rgbSamples : 255;
 
 const componentMetrics = Object.fromEntries(
-  Object.entries(geometry.regions).map(([name,canonical]:[string,any])=>{
+  Object.entries(geometry.regions).map(([name,canonical])=>{
     const tolerance=(YOPPO_COMPONENT_TOLERANCES as Record<string,{centroidMaxPx:number;widthRelMax:number;heightRelMax:number}>)[name];
     if(!tolerance) throw new Error("Missing frozen component tolerance: "+name);
     const measured=measureRenderedRegion(name,canonical);
@@ -210,14 +227,19 @@ const metrics = {
 
 console.log("YOPPO_MASTER_COMPARE=" + JSON.stringify(metrics));
 
+// sharp has no composite opacity option. Apply opacity only to the review copy,
+// after calculating metrics from the unchanged straight-alpha source pixels.
+const overlayPixels = Buffer.from(rendered.data);
+for (let i=3;i<overlayPixels.length;i+=4) overlayPixels[i]=Math.round(overlayPixels[i]*0.5);
+const overlayRender = await sharp(overlayPixels, {raw:{width:size,height:YOPPO_ARTBOARD_CONTRACT.height,channels:4}}).png().toBuffer();
 const overlay = await sharp(referenceCanvas)
-  .composite([{ input: await sharp(renderedPath).png().toBuffer(), blend: "over", opacity: 0.5 }])
+  .composite([{ input: overlayRender, blend: "over" }])
   .png()
   .toBuffer();
 await sharp(overlay).toFile("/tmp/yoppo-master-overlay.png");
 
 const failures:string[] = [];
-for(const [name,value] of Object.entries(componentMetrics) as [string,any][]){
+for(const [name,value] of Object.entries(componentMetrics)){
   if(!value.pass) {
     failures.push(
       `component ${name} centroid=${value.centroidDistancePx}px widthErr=${value.widthRelError} heightErr=${value.heightRelError}`
@@ -232,3 +254,9 @@ if (overlapRgbMae > YOPPO_OVERLAY_ACCEPTANCE.overlapRgbMaeMax) failures.push(`RG
 if (failures.length) {
   throw new Error("Yoppo neutral master overlay gate failed: " + failures.join(", "));
 }
+}
+
+main().catch(error => {
+  console.error(error);
+  process.exitCode=1;
+});

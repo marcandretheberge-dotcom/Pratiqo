@@ -9,6 +9,7 @@ on:
       - "scripts/audit-yoppo-master.mjs"
       - "scripts/measure-yoppo-geometry.mjs"
       - "tests/companion/yoppoRigContract.test.ts"
+      - "tests/companion/yoppoGeometryDiagnostics.test.mjs"
       - "rive/yoppo-eye-spike/**"
       - "rive/yoppo-master/**"
       - "scripts/compare-yoppo-master.ts"
@@ -32,29 +33,57 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.23.4
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Canonical PNG audit
-        run: node scripts/audit-yoppo-master.mjs
-      - name: Canonical geometry measurement
-        run: node scripts/measure-yoppo-geometry.mjs /tmp/yoppo-canonical-geometry.json /tmp/yoppo-canonical-geometry-annotated.png
+      - name: Install pinned Rive CLI 1.9.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://releases.rive.app/cli/v1.9.2/rive-linux-x64.tar.gz -o "$RUNNER_TEMP/rive-1.9.2.tar.gz"
+          echo "e606530230ad8ddc4869d1ade4de10c5ffb3e74e44745339c227018e65eabb0b  $RUNNER_TEMP/rive-1.9.2.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/rive-1.9.2"
+          tar -xzf "$RUNNER_TEMP/rive-1.9.2.tar.gz" -C "$RUNNER_TEMP/rive-1.9.2" -- rive docs
+          echo "$RUNNER_TEMP/rive-1.9.2" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/rive-1.9.2/rive" analytics off
+          test "$("$RUNNER_TEMP/rive-1.9.2/rive" --version)" = "rive 1.9.2"
       - name: TypeScript contract
         run: npx tsc --noEmit
       - name: Rig parent and pivot contract
         run: node --import tsx tests/companion/yoppoRigContract.test.ts
+      - name: Measurement failure diagnostics regression
+        run: node tests/companion/yoppoGeometryDiagnostics.test.mjs
+      - name: Focused lint
+        run: npx eslint lib/companion/yoppoRigContract.ts scripts/audit-yoppo-master.mjs scripts/measure-yoppo-geometry.mjs scripts/compare-yoppo-master.ts tests/companion/yoppoRigContract.test.ts tests/companion/yoppoGeometryDiagnostics.test.mjs
+      - name: Diff integrity
+        run: git diff --check origin/main...HEAD
+      - name: Verify neutral-master RML without rendering
+        run: rive rive/yoppo-master --verify
+      - name: Canonical PNG audit
+        run: node scripts/audit-yoppo-master.mjs
+      - name: Canonical geometry measurement
+        run: node scripts/measure-yoppo-geometry.mjs /tmp/yoppo-canonical-geometry.json /tmp/yoppo-canonical-geometry-annotated.png
+      - name: Upload canonical diagnostics even when measurement is blocked
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yoppo-canonical-measurement
+          path: |
+            /tmp/yoppo-canonical-geometry.json
+            /tmp/yoppo-canonical-geometry-annotated.png
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Require a measurement freeze before rendering
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s rive/yoppo-master/evidence/freeze-manifest.json
       - name: Install Linux graphics runtime for Rive CLI
         shell: bash
         run: |
           set -euo pipefail
           sudo apt-get update -y
           sudo apt-get install -y libegl1 libgl1 libgles2 libx11-6 libxext6 libxrender1 libxi6 libxrandr2 libxcursor1 libxinerama1 libxkbcommon0
-      - name: Install current Rive CLI for capability spike
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl -fsSL https://releases.rive.app/cli/install.sh | bash
-          echo "$HOME/.rive/bin" >> "$GITHUB_PATH"
       - name: Scaffold current Rive project template
         shell: bash
         run: |
@@ -163,7 +192,7 @@ jobs:
           main().catch(error => { console.error(error); process.exit(1); });
           NODE
       - name: Upload Yoppo eye spike evidence
-        if: always()
+        if: always() && hashFiles('rive/yoppo-master/evidence/freeze-manifest.json') != ''
         uses: actions/upload-artifact@v4
         with:
           name: yoppo-eye-rive-spike
@@ -173,6 +202,7 @@ jobs:
             /tmp/yoppo-eye-inspect.json
             rive/yoppo-eye-spike/build/problems.log
           if-no-files-found: error
+          retention-days: 7
       - name: Verify and render Yoppo neutral master
         shell: bash
         run: |
@@ -183,7 +213,7 @@ jobs:
           test -s /tmp/yoppo-master-neutral.png
           node --import tsx scripts/compare-yoppo-master.ts /tmp/yoppo-master-neutral.png /tmp/yoppo-canonical-geometry.json
       - name: Upload Yoppo neutral master evidence
-        if: always()
+        if: always() && hashFiles('rive/yoppo-master/evidence/freeze-manifest.json') != ''
         uses: actions/upload-artifact@v4
         with:
           name: yoppo-neutral-master-v1
@@ -195,7 +225,4 @@ jobs:
             /tmp/yoppo-canonical-geometry-annotated.png
             rive/yoppo-master/build/problems.log
           if-no-files-found: error
-      - name: Focused lint
-        run: npx eslint lib/companion/yoppoRigContract.ts scripts/audit-yoppo-master.mjs scripts/measure-yoppo-geometry.mjs scripts/compare-yoppo-master.ts tests/companion/yoppoRigContract.test.ts
-      - name: Diff integrity
-        run: git diff --check origin/main...HEAD
+          retention-days: 7
