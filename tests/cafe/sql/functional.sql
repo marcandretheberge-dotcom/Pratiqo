@@ -56,10 +56,18 @@ END
 $hostrestore$;
 
 -- First reservation, exact replay, cancellation, stale retry.
-DO $$
+DO $
 DECLARE
   j jsonb;
 BEGIN
+  j := public.cafe_set_reservation_server(
+    '00000000-0000-4000-8000-000000000003','fr-es-test',NULL,0,
+    '09000000-0000-4000-8000-000000000001'
+  );
+  IF j->>'ok' <> 'false' OR j->>'code' <> 'invalid_request' THEN
+    RAISE EXCEPTION 'NULL action was not rejected: %', j;
+  END IF;
+
   j := public.cafe_set_reservation_server(
     '00000000-0000-4000-8000-000000000003','fr-es-test','reserve',0,
     '10000000-0000-4000-8000-000000000001'
