@@ -55,6 +55,7 @@ assert.match(reservationRoute, /cafe_set_reservation_server/);
 assert.doesNotMatch(reservationRoute, /\.from\(["']cafe_reservations/);
 assert.match(adminRoute, /requireAdminApi/);
 assert.match(adminRoute, /finiteIsoTimestamp/);
+assert.match(adminRoute, /RFC3339_RE/);
 assert.match(reservationRoute, /isCafeV1Enabled/);
 assert.match(publicRoute, /isCafeV1Enabled/);
 assert.match(adminRoute, /isCafeV1Enabled/);
@@ -63,7 +64,7 @@ assert.match(adminRoute, /cafe_admin_reassign_host_server/);
 assert.match(migration, /CREATE OR REPLACE FUNCTION public\.cafe_admin_reassign_host_server/);
 assert.match(publicRoute, /cafe_public_sessions/);
 
-console.log("[cafe:pr2a-contract] static contract passed");
-
 const cleanupSection = migration.match(/CREATE OR REPLACE FUNCTION cafe_private\.handle_profile_removal\(\)[\s\S]*?CREATE TRIGGER cafe_profiles_cleanup_on_update/)?.[0] ?? "";
 assert.match(cleanupSection, /pg_advisory_xact_lock[\s\S]*?decision_time := clock_timestamp\(\)/);
+
+console.log("[cafe:pr2a-contract] static contract passed");
