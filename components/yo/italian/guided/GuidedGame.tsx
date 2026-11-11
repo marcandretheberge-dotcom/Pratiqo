@@ -60,7 +60,7 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
       response.correct(`${activity.id}:pair:${id}`);
     } else { edit({ feedback: false, assisted: true }); onAttempt(false, g.assisted); }
   }
-  const optionStyle = "min-h-14 w-full rounded-2xl border-2 px-4 py-4 text-left text-base font-medium shadow-[0_3px_0_rgba(51,65,61,.12),0_8px_18px_rgba(51,65,61,.07)] transition-[transform,border-color,background-color,box-shadow] duration-150 ease-out hover:-translate-y-px active:translate-y-[2px] active:shadow-none motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 ";
+  const optionStyle = "yo-answer-option min-h-14 w-full rounded-2xl border-2 px-4 py-4 text-left text-base font-medium shadow-[0_3px_0_rgba(51,65,61,.12),0_8px_18px_rgba(51,65,61,.07)] transition-[transform,border-color,background-color,box-shadow] duration-150 ease-out hover:-translate-y-px active:translate-y-[2px] active:shadow-none motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 ";
   const title = activity.kind === "type" ? activity.listeningText ? c.listenBuild : activity.prompt[locale].replace(/^(Écris en italien|Write in Italian|Escribe en italiano)/, c.writtenTarget) : turn?.prompt[locale] ?? activity.prompt[locale];
   return <section aria-label={title} data-guided-game={activity.id}>
     <h2 className="mb-6 text-xl font-bold leading-relaxed sm:text-2xl">{title}</h2>

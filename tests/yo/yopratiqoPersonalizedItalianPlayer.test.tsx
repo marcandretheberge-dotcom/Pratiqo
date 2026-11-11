@@ -16,7 +16,6 @@ dom.window.HTMLElement.prototype.scrollIntoView=()=>{};window.scrollTo=()=>{};
 class FakeAudio extends dom.window.EventTarget { src:string;preload="none";playbackRate=1;preservesPitch=true;currentTime=0;constructor(src:string){super();this.src=src;}play(){this.dispatchEvent(new Event("playing"));return Promise.resolve();}pause(){}load(){}removeAttribute(){this.src="";} }
 window.Audio=FakeAudio as unknown as typeof Audio;
 process.env.NEXT_PUBLIC_SUPABASE_URL="https://audio.example.test";
-const { GuidedItalianCourse } = require("@/components/yo/italian/guided/GuidedItalianCourse") as typeof import("@/components/yo/italian/guided/GuidedItalianCourse");
 const {render,cleanup,fireEvent,act,within}=require("@testing-library/react") as typeof import("@testing-library/react");
 
 import { firstMeetingUnit, firstMeetingVisuals, firstMeetingBank } from "@/lib/yo/personalized/firstMeeting";
@@ -27,7 +26,6 @@ const { ItalianOnboarding }=require("@/components/yo/personalized/ItalianOnboard
 const { ItalianLearningEntry }=require("@/components/yo/personalized/ItalianLearningEntry") as typeof import("@/components/yo/personalized/ItalianLearningEntry");
 const { VisualVocabulary }=require("@/components/yo/personalized/VisualVocabulary") as typeof import("@/components/yo/personalized/VisualVocabulary");
 const { ItalianAudioProvider }=require("@/components/yo/italian/ItalianAudioProvider") as typeof import("@/components/yo/italian/ItalianAudioProvider");
-type View=ReturnType<typeof render>;
 function flush(){for(let i=0;i<15&&frames.size;i++){const f=[...frames.values()];frames.clear();act(()=>f.forEach(fn=>fn(0)));}}
 let clock=Date.now();Date.now=()=>clock;
 function click(el:HTMLElement){clock+=500;fireEvent.click(el);flush();}
@@ -40,7 +38,16 @@ tests.push(["three failed checked placement answers recommend foundations withou
 tests.push(["meaning recall replaces labelled portraits, checks taps and preserves checked answer on remount",()=>{
  const words=firstMeetingVisuals["it2-u01-l1"];let entered=0;
  const mount=()=>{const v=render(<ItalianAudioProvider paths={courseAudioPaths(words.map(w=>w.it))}><VisualVocabulary words={words} lessonId="v-test" locale="en" onReady={()=>entered++}/></ItalianAudioProvider>);flush();return v;};
- let v=mount();click(v.getByRole("button",{name:"Let’s practise"}));
+ let v=mount();
+ for(const [index,word] of words.entries()){
+   assert.ok(v.getByText(word.it,{exact:true}));
+   if(index<words.length-1){
+     assert.equal(v.queryByRole("button",{name:"Let’s practise"}),null);
+     click(v.getByRole("button",{name:"Next expression"}));
+   }
+ }
+ assert.equal(entered,0,"study does not enter the mission before recall");
+ click(v.getByRole("button",{name:"Let’s practise"}));
  assert.equal(v.queryByRole("group",{name:"Four images"}),null);
  const first=v.container.querySelector('[data-vocabulary-recall]')!.getAttribute('data-vocabulary-recall');
  const read=v.queryByRole('button',{name:'Read instead of listen'});if(read)click(read);

@@ -22,13 +22,12 @@ const achievementSource = source("components/yo/italian/guided/ItalianAchievemen
 assert.match(achievementSource, /status\.mastered \? c\.subtitle : c\.upcoming/,
   "a pre-completion printout must show learning goals, not pretend they were mastered");
 
-assert.match(atlasSource, /aspect-\[4\/7\]/, "mobile map stays proportional to 480x840 artwork");
-assert.match(atlasSource, /lg:aspect-\[3\/2\]/, "desktop board is composed at 960x640, not stretched");
-assert.match(atlasSource, /data-yoppo-portrait-art/);
-assert.match(atlasSource, /data-yoppo-desktop-art/);
-assert.match(navigatorSource, /width:min\(100%,480px/);
-assert.match(navigatorSource, /width:min\(100%,960px/);
-assert.match(navigatorSource, /min-width:1024px/);
+const experienceCss = source("components/yo/italian/guided/ItalianCourseExperience.css");
+assert.match(experienceCss, /aspect-ratio:4\/5/, "all map art uses its native portrait ratio");
+assert.match(experienceCss, /max-width:960px/, "desktop has a bounded two-column composition");
+assert.match(experienceCss, /grid-template-columns:minmax\(0,520px\)/);
+assert.match(atlasSource, /yo-world-art/);
+assert.match(navigatorSource, /yo-world-action/);
 assert.match(portraitSource, /preserveAspectRatio="xMidYMid meet"/);
 assert.match(desktopSource, /preserveAspectRatio="xMidYMid meet"/);
 assert.doesNotMatch(portraitSource + desktopSource, /preserveAspectRatio="none"/);
@@ -54,19 +53,9 @@ for (const world of worlds) {
   }));
   assert.equal((map.match(/data-yoppo-map-token=/g) ?? []).length, 4, "each art direction reuses the exact same four mission markers");
   assert.equal((map.match(/<a /g) ?? []).length, world.id === "discover" ? 1 : 0, "decor never unlocks cities");
-  assert.ok(map.includes("data-atlas-landscape-wide") && map.includes("data-atlas-landscape="));
+  assert.ok(map.includes(`${world.id}.webp`) && map.includes("yo-illustrated-atlas"));
 }
 
-for (const [viewportWidth, viewportHeight] of [[375, 812], [390, 844], [430, 932], [1024, 768], [1440, 760], [1920, 1080]]) {
-  const desktop = viewportWidth >= 1024;
-  const width = desktop
-    ? Math.min(viewportWidth, 960, (viewportHeight - 96) * 1.5)
-    : Math.min(viewportWidth, 480, Math.max(320, (viewportHeight - 96) * 480 / 840));
-  const height = width / (desktop ? 1.5 : 480 / 840);
-  assert.ok(width <= viewportWidth, "board may never overflow the window");
-  assert.ok(Math.abs(width / height - (desktop ? 1.5 : 480 / 840)) < .00001, "source art stays proportional");
-  assert.ok(height <= viewportHeight, "world board fits within standard laptop/phone viewport");
-}
 assert.match(guidedSource, /data-yoppo-printables-trigger/);
 assert.match(guidedSource, /onClick=\{openPrintables\} disabled=\{challengeMode\}/,
   "reference material is disabled while the final challenge is in progress");
@@ -86,4 +75,4 @@ for (const locale of ["fr","en","es"] as const) for (const mastered of [true, fa
   assert.ok(!html.includes("download="), "printable routes never promise nonexistent PDFs");
   if (!mastered) assert.ok(html.includes(locale === "fr" ? "sans tampon" : locale === "en" ? "no stamp" : "sin sello"));
 }
-console.log("Yoppo desktop & printables: original aspect 480x840/960x640, 3 worlds, six viewport sizes, localized study sheets and real access rules PASS");
+console.log("Yoppo desktop & printables: proportional illustrated maps, 3 worlds, localized study sheets and real access rules PASS");

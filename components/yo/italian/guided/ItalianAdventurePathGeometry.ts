@@ -9,3 +9,31 @@ export const ITALIAN_WIDE_ROAD_PATH =
   "M240 130 C255 190 558 177 701 237 C776 296 303 264 259 365 C217 450 693 381 701 486 C711 557 511 531 480 590";
 
 export const ITALIAN_CITY_PATH_STOPS = [0.08, 0.34, 0.61, 0.86] as const;
+
+/** The illustrated maps share a 4:5 canvas on every device. */
+type Point = readonly [number, number];
+type RoadSegment = readonly [Point, Point, Point, Point];
+
+// Reflected controls of the original SVG's S commands, shared with the traveler.
+export const ITALIAN_ILLUSTRATED_ROAD: readonly RoadSegment[] = [
+  [[120, 150], [120, 210], [390, 190], [350, 270]],
+  [[350, 270], [310, 350], [110, 300], [130, 396]],
+  [[130, 396], [150, 492], [385, 440], [350, 516]],
+];
+export const ITALIAN_ILLUSTRATED_ROAD_PATH = `M${ITALIAN_ILLUSTRATED_ROAD[0][0].join(" ")} `
+  + ITALIAN_ILLUSTRATED_ROAD.map(([, b, c, d]) => `C${b.join(" ")} ${c.join(" ")} ${d.join(" ")}`).join(" ");
+
+/** Fractional city index, not earned progress. Safe to retarget mid-curve. */
+export function italianRoadPoint(position: number): [number, number] {
+  const safe = Math.max(0, Math.min(3, position));
+  const segment = Math.min(2, Math.floor(safe)), t = safe - segment, u = 1 - t;
+  const [a, b, c, d] = ITALIAN_ILLUSTRATED_ROAD[segment];
+  return [0, 1].map(axis => u ** 3 * a[axis] + 3 * u * u * t * b[axis]
+    + 3 * u * t * t * c[axis] + t ** 3 * d[axis]) as [number, number];
+}
+
+export function companionRoute(from: number, to: number): [number, number][] {
+  const steps = Math.max(1, Math.ceil(Math.abs(to - from) * 40));
+  const route = Array.from({ length: steps + 1 }, (_, i) => italianRoadPoint(Math.min(from, to) + Math.abs(to - from) * i / steps));
+  return from > to ? route.reverse() : route;
+}

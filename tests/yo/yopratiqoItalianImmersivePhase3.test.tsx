@@ -24,8 +24,8 @@ for (const locale of ["fr", "en", "es"] as const) {
       world, locale, currentUnitId: "u01", hrefForUnit: href, canReview: noReview,
     }));
     assert.ok(html.includes(`data-yoppo-immersive-atlas="${world.id}"`));
-    assert.ok(html.includes(`data-atlas-landscape="${world.id}"`));
-    assert.equal((html.match(/data-yoppo-world-gate="closed"/g) ?? []).length, 1);
+    assert.ok(html.includes(`${world.id}.webp`));
+    assert.equal(world.complete, false);
     for (const city of world.cities) assert.ok(html.includes(city.name), `${locale} ${city.name} must remain visible`);
     assert.equal((html.match(/<a /g) ?? []).length, world.id === "discover" ? 1 : 0,
       `${locale}: never link to a locked city`);
@@ -59,7 +59,7 @@ assert.equal(progressed[1].citiesWithProgress[0].unlocked, true);
 const opened = render(createElement(ItalianWorldAtlas, {
   world: progressed[0], locale: "fr", currentUnitId: "u04", hrefForUnit: href, canReview: noReview,
 }));
-assert.ok(opened.includes('data-yoppo-world-gate="open"'));
+assert.ok(!opened.includes('data-status="locked"'));
 assert.equal((opened.match(/<a /g) ?? []).length, 4);
 
 for (const locale of ["fr","en","es"] as const) {

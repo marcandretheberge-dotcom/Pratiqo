@@ -7,7 +7,7 @@ import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { recallChoices, recallQueue, type RecallWord } from "@/lib/yo/learning/vocabularyPractice";
 import { LearningAudio } from "./LearningAudio";
 import { primary } from "../italian/guided/copy";
-import { PracticeAdvanceNotice } from "../learning/PracticeAdvance";
+import { VocabularyStudy } from "./VocabularyStudy";
 import { RecallQuestion, freshRecall, type RecallDraft } from "../learning/RecallQuestion";
 
 // The public component/step IDs stay stable; the discarded portrait exercise has a new draft schema.
@@ -75,9 +75,10 @@ export function VisualVocabulary({ words, lessonId, locale, onReady, resetAt = 0
   }
   if (!draft) return <p role="status">{say("Préparation…", "Preparing…", "Preparando…")}</p>;
   if (draft.done) return <section data-visual-ready><h2 className="text-2xl font-bold">{say("Prêt pour la rencontre !", "Ready for the conversation!", "¡Todo listo para el encuentro!")}</h2><button type="button" className={`${primary} mt-5 w-full`} onClick={onReady}>{say("Entrer dans la mission", "Enter the mission", "Entrar en la misión")}</button></section>;
-  if (draft.study) return <section data-vocabulary-study><h2 className="text-2xl font-bold">{say("Les expressions avant la mission", "Expressions before the mission", "Expresiones antes de la misión")}</h2>
-    <PracticeAdvanceNotice locale={locale}/><div className="space-y-4">{targets.map(w => <div key={w.id} className="border-b border-stone-200 pb-3"><p lang="it" className="text-lg font-semibold">{w.text}</p><p className="my-2 text-stone-600">{w.meaning[locale]}</p><LearningAudio text={w.text} locale={locale}/></div>)}</div>
-    <button type="button" className={`${primary} mt-5 w-full`} onClick={() => { stopLessonAudio(); save({ ...draft, study: false }); }}>{say("Passer à la pratique", "Let’s practise", "Vamos a practicar")}</button></section>;
+  if (draft.study) return <VocabularyStudy key={key} storageKey={`${key}.study-cursor.v1`} phrases={words} locale={locale}
+    title={say("Les expressions avant la mission", "Expressions before the mission", "Expresiones antes de la misión")}
+    completeLabel={say("Passer à la pratique", "Let’s practise", "Vamos a practicar")}
+    onComplete={() => save({ ...draft, study: false })}/>;
   const word = targets[draft.queue[draft.at]], token = `${lessonId}:${draft.at}`;
   return <section data-vocabulary-preparation>
     <h2 ref={heading} tabIndex={-1} className="mb-4 text-sm font-bold text-emerald-800 outline-none">{say("Préparation", "Preparation", "Preparación")} · {draft.at + 1}/{draft.queue.length}</h2>

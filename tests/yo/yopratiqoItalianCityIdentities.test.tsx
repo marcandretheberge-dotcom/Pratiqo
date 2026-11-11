@@ -61,9 +61,11 @@ for(const locale of ["fr","en","es"] as const) {
     const html = render(createElement(ItalianWorldAtlas,{
       world, locale, currentUnitId:"u01",hrefForUnit,canReview:()=>false,
     }));
-    const cityIds = world.cities.map(city => city.unitId);
-    for(const id of cityIds) assert.ok(html.includes(`data-yoppo-city-art="${id}"`), id);
-    assert.equal((html.match(/data-yoppo-city-art=/g)??[]).length,4);
+    for(const city of world.cities) {
+      assert.ok(html.includes(`data-yoppo-map-token="${city.unitId}"`));
+      assert.ok(html.includes(city.name));
+    }
+    assert.equal((html.match(/data-yoppo-map-token=/g)??[]).length,4);
     assert.equal((html.match(/<a /g)??[]).length,world.id==="discover"?1:0,
       "city art must never make a locked city clickable");
   }
@@ -79,7 +81,7 @@ const complete = render(createElement(ItalianWorldAtlas,{
   world:projected[0],locale:"fr",currentUnitId:"u04",hrefForUnit,canReview:()=>false,
 }));
 assert.equal((complete.match(/<a /g)??[]).length,4);
-assert.ok(complete.includes('data-yoppo-world-gate="open"'));
+assert.ok(!complete.includes('data-status="locked"'));
 
 for(const file of [
   "lib/yo/italian/cityIdentity.ts",

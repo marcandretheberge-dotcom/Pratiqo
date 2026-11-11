@@ -1,0 +1,112 @@
+/* The map keeps one illustration ratio at every viewport. Controls remain live DOM. */
+[data-guided-italian] { background:#f8f7f2; color:#173b35; }
+.yo-course-header { background:#fffefa; border-bottom:1px solid #e9e9e2; }
+.yo-course-header-inner { max-width:1100px; margin:auto; min-height:68px; padding:12px 24px; display:flex; align-items:center; justify-content:space-between; }
+.yo-course-header .yo-learning-secondary { border:0; box-shadow:none; background:transparent; border-radius:50%; width:44px; height:44px; padding:10px; }
+.yo-course-header .yo-learning-secondary span { display:none; }
+.yo-course-main { width:100%; max-width:1080px; margin:auto; padding:0 0 32px; }
+.yo-adventure-board { max-width:520px; margin:auto; overflow:hidden; }
+.yo-world-heading { position:relative; padding:24px 24px 4px; z-index:10; }
+.yo-world-language { color:#687b74; font-size:12px; font-weight:600; letter-spacing:.04em; margin:0 0 8px; }
+.yo-world-selector { display:flex; align-items:center; gap:8px; width:fit-content; max-width:100%; position:relative; }
+.yo-world-selector h1 { font-size:clamp(25px,6vw,32px); line-height:1.2; font-weight:650; letter-spacing:-.045em; margin:0; }
+.yo-world-selector select { position:absolute; inset:0; width:100%; cursor:pointer; opacity:0; }
+.yo-world-selector:focus-within { outline:2px solid #176b59; outline-offset:6px; border-radius:4px; }
+.yo-world-stamps { color:#65736c; font-size:12px; margin:10px 0 0; }
+.yo-illustrated-atlas { position:relative; isolation:isolate; width:100%; aspect-ratio:4/5; margin-top:-8px; }
+.yo-world-art { object-fit:cover; mask-image:linear-gradient(to bottom,transparent,#000 12%,#000 93%,transparent); }
+.yo-city-list { list-style:none; padding:0; margin:0; position:absolute; inset:0; z-index:8; }
+.yo-city-list li { position:absolute; transform:translate(-50%,0); max-width:46%; }
+.yo-city-link { display:block; min-width:44px; min-height:44px; border-radius:99px; text-decoration:none; }
+.yo-city-link:focus-visible { outline:3px solid #125e52; outline-offset:5px; }
+.yo-city-marker { position:relative; display:flex; align-items:center; justify-content:center; min-height:44px; }
+.yo-city-name { display:flex; align-items:center; justify-content:center; gap:7px; padding:9px 15px; color:#21473f; background:#fffdf5; border:1px solid #fff9e6; border-radius:99px; box-shadow:0 3px 10px #273f3320; font-size:14px; font-weight:650; line-height:1.2; }
+.yo-city-marker[data-status="locked"] .yo-city-name { color:#4f6358; background:#f8f7eeeb; }
+.yo-city-marker[data-status="complete"] .yo-city-name { color:#19654e; }
+.yo-city-marker[data-status="current"] .yo-city-name { background:#fbd47c; color:#3e391e; border:2px solid #fff8d6; box-shadow:0 0 0 4px #fcd9844d,0 4px 14px #37423020; }
+.yo-yoppo-map-guide { position:absolute; bottom:34px; left:calc(50% - 28px); pointer-events:none; filter:drop-shadow(0 3px 3px #183e3526); }
+.yo-world-action { position:relative; margin:0 20px; padding:4px 4px 20px; }
+.yo-action-context { font-size:11px; color:#667b73; font-weight:650; margin:0 0 5px; letter-spacing:.025em; }
+.yo-world-action h2 { font-size:22px; line-height:1.25; font-weight:650; letter-spacing:-.035em; margin:0 0 16px; }
+[data-guided-italian] .yo-learning-primary,.yo-mission-window .yo-learning-primary,[data-yoppo-tools-dialog] .yo-learning-primary { background:#126b5c; border:1px solid #126b5c; border-radius:14px; box-shadow:none; min-height:50px; font-size:15px; font-weight:600; transform:none; padding:12px 20px; }
+[data-guided-italian] .yo-learning-primary:hover,.yo-mission-window .yo-learning-primary:hover { background:#0d584b; }
+.yo-map-continue { width:100%; display:flex; justify-content:center; }
+.yo-map-continue svg { position:absolute; right:24px; }
+.yo-map-guide { display:flex; align-items:center; gap:10px; color:#597068; font-size:12px; line-height:1.6; margin-top:12px; }
+.yo-map-extras { display:flex; gap:16px; justify-content:center; margin-top:10px; }
+.yo-map-extras:empty { display:none; }
+.yo-map-extras button { display:flex; align-items:center; gap:7px; min-height:44px; font-size:13px; font-weight:600; color:#176954; }
+.yo-world-gate { text-align:center; font-size:11px; color:#64766d; line-height:1.6; margin:15px 0 0; }
+.yo-world-earned { display:flex; align-items:center; gap:8px; justify-content:center; font-size:13px; color:#176954; }
+.yo-icon-button { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; min-width:44px; border:0; border-radius:50%; background:transparent; color:#3a5e52; cursor:pointer; }
+.yo-icon-button:hover { background:#edf2eb; }
+.yo-icon-button:focus-visible { outline:2px solid #126b5c; outline-offset:3px; }
+.yo-icon-button:disabled { opacity:.3; cursor:default; }
+.yo-mission-window { box-shadow:0 -8px 70px #183f3224; padding:0 24px max(24px,env(safe-area-inset-bottom)); }
+.yo-mission-header { display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:20; background:#fffdf8; padding:16px 0 14px; margin:0 -8px 25px; }
+.yo-mission-progress { flex:1; min-width:0; }
+.yo-mission-progress p { font-size:11px; color:#6b7e73; margin:0 0 9px; font-weight:550; }
+.yo-progress-track { height:5px; background:#e6ebe3; border-radius:10px; overflow:hidden; }
+.yo-progress-track > div { height:100%; background:#388267; border-radius:10px; transition:width .2s; }
+.yo-mission-body > h1 { font-size:clamp(26px,6vw,32px); line-height:1.22; font-weight:600; letter-spacing:-.045em; color:#1d3a32; margin-bottom:26px; }
+.yo-mission-content { padding:0; }
+.yo-mission-content > .mb-5 { color:#64766c; }
+.yo-mission-content .yo-learning-secondary,.yo-mission-window .yo-learning-secondary { box-shadow:none; border:1px solid #dce7de; background:#f9fcf8; border-radius:12px; transform:none; }
+.yo-answer-option { box-shadow:none; border-width:1px; border-radius:14px; font-size:16px; padding:18px; transform:none; }
+.yo-answer-option:hover { transform:none; }
+.yo-answer-option[aria-pressed="true"] { box-shadow:0 0 0 1px #3a7a59; }
+.yo-study-title { font-size:13px; font-weight:600; color:#5e7468; margin:0 0 5px; }
+.yo-study-instruction { color:#7b8278; font-size:12px; line-height:1.6; }
+.yo-expression-card { margin:24px 0; padding:26px 20px; border-radius:20px; background:#f1f5ec; min-height:220px; display:flex; flex-direction:column; justify-content:center; }
+.yo-expression-count { color:#657c68; font-size:11px; margin-bottom:18px; }
+.yo-expression-text { color:#1c4437; font-size:clamp(24px,6vw,31px); letter-spacing:-.03em; line-height:1.4; font-weight:600; outline:none; }
+.yo-expression-text:focus-visible { outline:2px solid #4d8b70; outline-offset:6px; border-radius:4px; }
+.yo-expression-meaning { color:#647265; font-size:15px; line-height:1.6; margin:12px 0 24px; }
+.yo-study-audio button { border-radius:99px; }
+.yo-study-navigation { display:flex; align-items:center; gap:8px; padding:12px 0 0; }
+.yo-study-navigation > p { font-size:11px; color:#718076; min-width:32px; }
+.yo-study-navigation > .yo-learning-primary { flex:1; padding:12px 10px; font-size:13px; }
+.yo-mission-window [data-yoppo-mission-briefing] { padding:15px 0; }
+@media (min-width:900px) {
+ .yo-course-main { padding-top:24px; }
+ .yo-adventure-board { background:#fffdf7; border:1px solid #e8e8df; border-radius:24px; box-shadow:0 15px 60px #244c3210; }
+ .yo-world-heading { padding-top:24px; }
+ .yo-mission-window { padding-left:40px; padding-right:40px; }
+}
+@media (max-width:375px) {
+ .yo-world-heading { padding-left:20px; }
+ .yo-city-name { font-size:12px; padding:8px 10px; }
+ .yo-mission-window { padding-left:20px; padding-right:20px; }
+}
+@media (prefers-reduced-motion:reduce) {
+ .yo-progress-track > div,.yo-answer-option,.yo-learning-primary { transition:none; }
+}
+@media (min-width:900px) {
+ .yo-adventure-board { max-width:960px; display:grid; grid-template-columns:minmax(0,520px) minmax(280px,1fr); }
+ .yo-world-heading { grid-column:1; grid-row:1; }
+ .yo-illustrated-atlas { grid-column:1; grid-row:2; }
+ .yo-world-action { grid-column:2; grid-row:1 / 3; align-self:center; margin:0 32px; padding:30px 0; }
+ .yo-world-action h2 { font-size:30px; }
+ .yo-action-context { font-size:12px; margin-bottom:10px; }
+ .yo-map-continue svg { right:20px; }
+}
+.yo-map-companion { position:absolute; z-index:9; width:72px; height:84px; transform:translate(-50%,-100%); pointer-events:none; }
+.yo-map-vector { display:block; width:100%; height:100%; overflow:visible; }
+.yo-map-avatar-fallback { display:none; }
+.yo-map-figure { transform-origin:48px 60px; }
+.yo-map-leg-front { transform-origin:33px 88px; }
+.yo-map-leg-back { transform-origin:61px 88px; }
+.yo-map-front-arm { transform-origin:27px 72px; }
+.yo-map-back-arm { transform-origin:69px 71px; }
+.yo-map-companion[data-facing="left"] .yo-map-vector { transform:scaleX(-1); }
+.yo-map-companion[data-motion="walking"] .yo-map-figure { animation:yo-walk-bob .34s ease-in-out infinite alternate; }
+.yo-map-companion[data-motion="walking"] .yo-map-leg-front,
+.yo-map-companion[data-motion="walking"] .yo-map-back-arm { animation:yo-walk-step .68s ease-in-out infinite; }
+.yo-map-companion[data-motion="walking"] .yo-map-leg-back,
+.yo-map-companion[data-motion="walking"] .yo-map-front-arm { animation:yo-walk-step .68s ease-in-out -.34s infinite; }
+@keyframes yo-walk-step { 0%,100% { transform:rotate(-24deg); } 50% { transform:rotate(24deg) translateY(-2px); } }
+@keyframes yo-walk-bob { from { transform:translateY(0); } to { transform:translateY(-2px); } }
+@supports not (transform-box:fill-box) { .yo-map-vector { display:none; } .yo-map-avatar-fallback { display:block; } }
+@media (prefers-reduced-motion:reduce) { .yo-map-companion * { animation:none !important; } }
+.yo-city-link { -webkit-tap-highlight-color:transparent; }
+.yo-city-marker[data-selected="true"] .yo-city-name { outline:2px solid #176b59; outline-offset:3px; }

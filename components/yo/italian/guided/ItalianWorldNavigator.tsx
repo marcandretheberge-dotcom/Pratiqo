@@ -1,13 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, Check, Gamepad2, LockKeyhole, Music2, Sparkles, X } from "lucide-react";
-import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
-import { ItalianWorldAtlas } from "./ItalianWorldAtlas";
+import { ArrowRight, ChevronDown, Gamepad2, Music2, Sparkles, X } from "lucide-react";
+import { ItalianWorldAtlas, italianWorldGuideId } from "./ItalianWorldAtlas";
 import type { LearningJourney } from "@/lib/yo/learningJourney";
 import type { YoLocale } from "@/lib/yo/types";
 import { canUseItalianFlute, italianWorldForUnit, projectItalianWorlds } from "@/lib/yo/italian/worlds";
 import { useLearningFeedback } from "../../feedback/LearningFeedback";
+import { primary } from "./copy";
 
 type Props = {
   journey: LearningJourney;
@@ -15,9 +16,12 @@ type Props = {
   currentUnitId: string;
   hrefForUnit: (unitId: string) => string;
   canReview: (unitId: string) => boolean;
-  /** Existing guided player handles lessons. Navigation cannot award a result. */
   onPlayCurrentCity?: () => void;
   currentActionLabel?: string;
+  guideUnitId?: string;
+  motionActive?: boolean;
+  startAtCurrentCity?: boolean;
+  currentMissionTitle?: string;
   missionHint?: string;
   triviaAvailable?: boolean;
   onOpenTrivia?: () => void;
@@ -25,114 +29,82 @@ type Props = {
   onDismissGuide?: () => void;
 };
 
-/**
- * Map-only game shell. The landscape stays mounted as lessons are opened in
- * a separate dialog. World travel remains a visual projection of verified
- * assessments; it never grants credit, Passes, stamps or paid access.
- */
 export function ItalianWorldNavigator({
   journey, locale, currentUnitId, hrefForUnit, canReview, onPlayCurrentCity,
-  currentActionLabel, missionHint, triviaAvailable = false, onOpenTrivia,
+  currentActionLabel, guideUnitId, motionActive, startAtCurrentCity = false, currentMissionTitle, missionHint, triviaAvailable = false, onOpenTrivia,
   showGuide = false, onDismissGuide,
 }: Props) {
   const worlds = projectItalianWorlds(journey);
   const initial = worlds.findIndex(item => item.cities.some(city => city.unitId === currentUnitId));
   const [selected, setSelected] = useState(Math.max(0, initial));
+  const [inspection, setInspection] = useState(() => {
+    const world = worlds[Math.max(0, initial)];
+    return { unitId: currentUnitId, worldId: world.id, guideId: italianWorldGuideId(world, currentUnitId, canReview, guideUnitId), travel: startAtCurrentCity };
+  });
   const [portalArrival, setPortalArrival] = useState<string | null>(null);
   const feedback = useLearningFeedback();
   const copy = {
-    fr: {
-      world: "Monde", choose: "Choisir un monde", next: "Monde suivant", flute: "Jouer de la flûte",
-      arrived: "Nouveau monde découvert !", trivia: "Jouer au Trivia",
-      guide: "Touche la ville illuminée. Je t'accompagne dans ta prochaine mission !",
-      close: "Passer la visite", stamp: "Yoppo Pass gagné",
-    },
-    en: {
-      world: "World", choose: "Choose a world", next: "Next world", flute: "Play the flute",
-      arrived: "New world discovered!", trivia: "Play Trivia",
-      guide: "Tap the glowing city. I'll guide you through your next mission!",
-      close: "Skip the tour", stamp: "Yoppo Pass earned",
-    },
-    es: {
-      world: "Mundo", choose: "Elegir un mundo", next: "Mundo siguiente", flute: "Tocar la flauta",
-      arrived: "¡Nuevo mundo descubierto!", trivia: "Jugar al Trivia",
-      guide: "Toca la ciudad iluminada. ¡Te guiaré en tu próxima misión!",
-      close: "Saltar la visita", stamp: "Yoppo Pass obtenido",
-    },
+    fr: { language: "Italien · A1", world: "Monde", choose: "Choisir un monde", next: "Monde suivant", flute: "Jouer de la flûte", arrived: "Nouveau monde découvert !", trivia: "Jouer au Trivia", guide: "Touche la ville illuminée ou continue ta mission ici.", close: "Passer la visite", stamp: "Yoppo Pass gagné", stamps: "tampons", continue: "Continuer", gateOpen: "Les 4 tampons sont dans ton passeport", gateClosed: "Gagne les 4 tampons pour explorer le monde suivant" },
+    en: { language: "Italian · A1", world: "World", choose: "Choose a world", next: "Next world", flute: "Play the flute", arrived: "New world discovered!", trivia: "Play Trivia", guide: "Tap the highlighted city or continue your mission here.", close: "Skip the tour", stamp: "Yoppo Pass earned", stamps: "stamps", continue: "Continue", gateOpen: "All 4 stamps are in your passport", gateClosed: "Earn all 4 stamps to explore the next world" },
+    es: { language: "Italiano · A1", world: "Mundo", choose: "Elegir un mundo", next: "Mundo siguiente", flute: "Tocar la flauta", arrived: "¡Nuevo mundo descubierto!", trivia: "Jugar al Trivia", guide: "Toca la ciudad iluminada o continúa tu misión aquí.", close: "Saltar la visita", stamp: "Yoppo Pass obtenido", stamps: "sellos", continue: "Continuar", gateOpen: "Los 4 sellos están en tu pasaporte", gateClosed: "Consigue los 4 sellos para explorar el siguiente mundo" },
   }[locale];
   const world = worlds[selected] ?? worlds[0];
   if (!world || !italianWorldForUnit(currentUnitId)) return null;
 
   function canSelectWorld(index: number) {
     const item = worlds[index];
-    return index === 0 || item.open || item.complete ||
-      item.cities.some(city => canReview(city.unitId)) || Boolean(worlds[index - 1]?.complete);
+    return index === 0 || item.open || item.complete || item.cities.some(city => canReview(city.unitId)) || Boolean(worlds[index - 1]?.complete);
   }
 
   const currentWorld = italianWorldForUnit(currentUnitId)?.id === world.id;
   const canTravel = canUseItalianFlute(worlds, selected);
+  const completed = world.citiesWithProgress.filter(city => city.mastered).length;
+  const guideId = italianWorldGuideId(world, currentUnitId, canReview, guideUnitId);
+  // Only a real guide advance supersedes this session's cosmetic destination.
+  const currentInspection = inspection.worldId === world.id && inspection.guideId === guideId;
+  const inspectedCity = currentInspection ? inspection.unitId : guideId;
+  const selectedCity = world.citiesWithProgress.find(city => city.unitId === inspectedCity && (city.unlocked || canReview(city.unitId)));
+  const travelerUnitId = currentInspection && inspection.travel ? selectedCity?.unitId : guideId;
+  const isCurrentCity = currentWorld && selectedCity?.unitId === currentUnitId;
+  const destination = selectedCity ?? world.citiesWithProgress.find(city => city.unlocked && !city.mastered)
+    ?? world.citiesWithProgress.find(city => city.unlocked || canReview(city.unitId));
 
-  return <section data-yoppo-world-map aria-label={copy.choose}
-    className="yo-adventure-board relative mx-auto max-w-full" data-yoppo-map-only>
-    <ItalianWorldAtlas world={world} locale={locale} currentUnitId={currentUnitId}
-      hrefForUnit={hrefForUnit} canReview={canReview}
-      onPlayCurrentCity={currentWorld ? onPlayCurrentCity : undefined}
-      currentActionLabel={currentActionLabel} guideMessage={missionHint}/>
-    <nav aria-label={copy.choose}
-      className="absolute right-4 top-[86px] z-30 flex items-center gap-1.5 rounded-full border border-white/75 bg-[#183f42]/80 p-1.5 shadow-xl backdrop-blur-sm sm:right-6">
-      {worlds.map((item, index) => {
-        const accessible = canSelectWorld(index);
-        const active = selected === index;
-        return <button key={item.id} type="button" disabled={!accessible}
-          aria-label={`${copy.world} ${item.number} : ${item.title[locale]}`}
-          aria-current={active ? "step" : undefined}
-          onClick={() => { setSelected(index); setPortalArrival(null); }}
-          className={`grid h-10 w-10 place-items-center rounded-full border-2 text-sm font-black focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-amber-300 ${active
-            ? "border-amber-300 bg-[#ffe9a2] text-[#533918]"
-            : accessible ? "border-white/60 bg-[#2d796d] text-white"
-              : "border-stone-500 bg-stone-700 text-stone-300 opacity-65"}`}>
-          {item.complete ? <Check size={18} aria-hidden/> : accessible ? item.number : <LockKeyhole size={16} aria-hidden/>}
-        </button>;
-      })}
-    </nav>
-    {world.passEarned ? <span className="absolute right-4 top-[143px] z-20 rounded-full bg-[#fff0b9] px-3 py-1 text-[11px] font-bold text-amber-950 shadow-lg">{copy.stamp}</span> : null}
-    {showGuide && currentWorld && onDismissGuide ? <div data-yoppo-map-guide
-      className="absolute bottom-[82px] left-3 z-30 flex max-w-[240px] items-start gap-2 rounded-2xl border-2 border-[#fae1a9] bg-white/95 p-2.5 text-[#17493d] shadow-lg sm:left-5">
-      <CompanionAvatar visualId="travel" state="teacher_ready" size="xs" locale={locale} compact />
-      <p className="text-xs font-bold leading-5">{copy.guide}</p>
-      <button type="button" onClick={onDismissGuide} aria-label={copy.close}
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2">
-        <X size={17} aria-hidden/>
-      </button>
-    </div> : null}
-    {triviaAvailable && currentWorld && onOpenTrivia ? <button type="button"
-      data-yoppo-trivia-map={currentUnitId} onClick={onOpenTrivia}
-      className="absolute bottom-16 left-3 z-20 inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-amber-200 bg-[#fff8d9] px-4 py-2 text-xs font-black text-[#63421d] shadow-lg focus-visible:outline-4 focus-visible:outline-offset-2 sm:left-5">
-      <Gamepad2 size={18} aria-hidden/>{copy.trivia}
-    </button> : null}
-    {world.complete && selected < worlds.length - 1 ? <button type="button"
-      data-yoppo-flute={world.id} disabled={!canTravel}
-      aria-label={copy.flute + " · " + copy.next}
-      onClick={() => {
-        if (!canTravel) return;
-        setSelected(selected + 1);
-        setPortalArrival(worlds[selected + 1].id);
-        feedback.sample("unlock");
-      }}
-      className="absolute bottom-16 right-4 z-30 inline-flex min-h-12 items-center gap-2 rounded-full border-2 border-[#f2da9c] bg-[#fff1c2] px-4 py-2.5 text-sm font-black text-[#603b18] shadow-xl focus-visible:outline-4 focus-visible:outline-offset-2 disabled:opacity-50">
-      <Music2 size={21} aria-hidden/>{copy.flute}<ArrowRight size={15} aria-hidden/>
-    </button> : null}
-    {portalArrival === world.id ? <div role="status" data-yoppo-portal-arrival={world.id}
-      className="yo-portal-arrival absolute bottom-16 right-3 z-20 flex items-center gap-2 rounded-full bg-[#e4f8d3] px-3 py-2 text-xs font-bold text-emerald-950 shadow-xl">
-      <Sparkles size={18} aria-hidden/>{copy.arrived}
-    </div> : null}
-    <style>{`
-      /* The SVG artwork is never stretched. On laptops a separately composed
-         wide board fills the viewport; portrait devices keep the original map. */
-      .yo-adventure-board { width:min(100%,480px,max(320px,calc((100dvh - 96px)*0.5714286))); }
-      @media(min-width:1024px) { .yo-adventure-board { width:min(100%,960px,calc((100dvh - 96px)*1.5)); } }
-      @keyframes yo-portal-shine{from{opacity:.2;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-      @media(prefers-reduced-motion:no-preference){.yo-portal-arrival{animation:yo-portal-shine .5s ease-out}}
-    `}</style>
+  return <section data-yoppo-world-map aria-label={copy.choose} className="yo-adventure-board" data-yoppo-map-only>
+    <header className="yo-world-heading">
+      <p className="yo-world-language">{copy.language}</p>
+      <div className="yo-world-selector">
+        <h1>{world.title[locale]}</h1>
+        <ChevronDown size={19} aria-hidden/>
+        <select aria-label={copy.choose} value={selected} onChange={event => { setSelected(Number(event.target.value)); setPortalArrival(null); }}>
+          {worlds.map((item, index) => <option key={item.id} value={index} disabled={!canSelectWorld(index)}>{copy.world} {item.number} · {item.title[locale]}</option>)}
+        </select>
+      </div>
+      <p className="yo-world-stamps">{completed} / 4 {copy.stamps}</p>
+    </header>
+    <ItalianWorldAtlas world={world} locale={locale} currentUnitId={currentUnitId} hrefForUnit={hrefForUnit} canReview={canReview} onPlayCurrentCity={currentWorld ? onPlayCurrentCity : undefined} selectedUnitId={selectedCity?.unitId} guideUnitId={guideUnitId} motionActive={motionActive} onSelectCity={unitId => setInspection({ unitId, worldId: world.id, guideId, travel: true })} travelerUnitId={travelerUnitId}/>
+    <div className="yo-world-action">
+      {isCurrentCity && onPlayCurrentCity ? <>
+        <p className="yo-action-context">{selectedCity?.name} · {missionHint}</p>
+        <h2>{currentMissionTitle ?? selectedCity?.step?.unit.title[locale]}</h2>
+        <button type="button" className={`${primary} yo-map-continue`} onClick={onPlayCurrentCity} aria-label={currentActionLabel}>{copy.continue}<ArrowRight size={18} aria-hidden/></button>
+      </> : destination ? <>
+        <p className="yo-action-context">{destination.name}</p>
+        <h2>{destination.step?.unit.title[locale]}</h2>
+        <Link href={hrefForUnit(destination.unitId)} scroll={false} className={`${primary} yo-map-continue`}>{copy.continue}<ArrowRight size={18} aria-hidden/></Link>
+      </> : null}
+      {showGuide && currentWorld && onDismissGuide ? <div data-yoppo-map-guide className="yo-map-guide">
+        <p>{copy.guide}</p><button type="button" onClick={onDismissGuide} aria-label={copy.close} className="yo-icon-button"><X size={17} aria-hidden/></button>
+      </div> : null}
+      <div className="yo-map-extras">
+        {triviaAvailable && currentWorld && onOpenTrivia ? <button type="button" data-yoppo-trivia-map={currentUnitId} onClick={onOpenTrivia}><Gamepad2 size={18} aria-hidden/>{copy.trivia}</button> : null}
+        {world.complete && selected < worlds.length - 1 ? <button type="button" data-yoppo-flute={world.id} disabled={!canTravel} aria-label={`${copy.flute} · ${copy.next}`} onClick={() => {
+          if (!canTravel) return;
+          setSelected(selected + 1); setPortalArrival(worlds[selected + 1].id); feedback.sample("unlock");
+        }}><Music2 size={18} aria-hidden/>{copy.flute}<ArrowRight size={16} aria-hidden/></button> : null}
+      </div>
+      <p data-yoppo-world-gate={world.complete ? "open" : "closed"} className="yo-world-gate">{world.complete ? copy.gateOpen : copy.gateClosed}</p>
+      {world.passEarned ? <p className="yo-world-earned"><Sparkles size={16} aria-hidden/>{copy.stamp}</p> : null}
+      {portalArrival === world.id ? <p role="status" data-yoppo-portal-arrival={world.id} className="yo-world-earned">{copy.arrived}</p> : null}
+    </div>
   </section>;
 }

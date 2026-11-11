@@ -1,7 +1,9 @@
 # ADR: Café des langues — unified-account preparation
 
-Status: Proposed for PR 1  
-Date: 2026-11-10  
+Status: Proposed for PR 1
+
+Date: 2026-11-10
+
 Scope: architecture contract and regression safety only; no Café runtime feature, schema migration, routing change, or deployment behavior change.
 
 ## Context

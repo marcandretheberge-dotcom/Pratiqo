@@ -9,3 +9,8 @@ export function italianCourseHref(locale:YoLocale, unitId?:string, lessonId?:str
   return `${ITALIAN_COURSE_PATH}${unitId?`/${encodeURIComponent(unitId)}`:""}${query?`?${query}`:""}`;
 }
 export function italianAssessmentHref(locale:YoLocale,id:string){return `${ITALIAN_COURSE_PATH}/bilans/${encodeURIComponent(id)}${locale!=="fr"?`?lang=${locale}`:""}`;}
+/** Explicit map Continue intent, separate from opening a course's map. */
+export function italianMissionHref(locale: YoLocale, unitId: string) {
+  const href = italianCourseHref(locale, unitId);
+  return `${href}${href.includes("?") ? "&" : "?"}mission=continue`;
+}

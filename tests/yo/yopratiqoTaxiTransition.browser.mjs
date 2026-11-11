@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import {createRequire} from 'node:module';
+const load=createRequire(import.meta.url);
+const {chromium}=load(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
+const {personalizedItalianUnits,personalizedItalianCatalog}=load('../../lib/yo/personalized/courseData.ts');
+const {emptyCourseProgress,recordCourseAssessment,serializeCourseProgress}=load('../../lib/yo/italian/course/courseProgress.ts');
+const {TOUR_KEY}=load('../../lib/yo/italian/course/guidedItalian.ts');
+const base=(process.env.MAP_REVIEW_URL ?? 'http://127.0.0.1:55742').replace(/\/$/,'');
+assert(['127.0.0.1','localhost','[::1]'].includes(new URL(base).hostname),'Synthetic progress is local-only');
+(async()=>{const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH});try{
+await fs.mkdir('.qa-guided/map',{recursive:true});
+let earned=emptyCourseProgress();for(const unit of personalizedItalianUnits.slice(0,5))earned=recordCourseAssessment(earned,personalizedItalianCatalog,unit.quiz.id,unit.quiz.questions.length,unit.quiz.questions.length,false,1730000000000);
+const fixture={'yo.italian.course.first-meeting.v2':serializeCourseProgress(earned),[TOUR_KEY]:'seen','yopratiqo.audio.muted':'true'};
+const c=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+await c.addInitScript(data=>{for(const[k,v]of Object.entries(data))localStorage.setItem(k,v);localStorage.setItem('yopratiqo.audio.muted','false');localStorage.setItem('yopratiqo.audio.effects-volume.v1','0.4');window.clipProof={events:[]};for(const event of ['playing','ended','error','loadedmetadata'])document.addEventListener(event,e=>{if(e.target.tagName==='VIDEO'){window.clipProof.events.push(event);window.clipProof.duration=e.target.duration;window.clipProof.muted=e.target.muted;window.clipProof.volume=e.target.volume;window.clipProof.audioBytes=e.target.webkitAudioDecodedByteCount;}},true);},fixture);
+const p=await c.newPage();await p.goto(base+'/?unit=u08&start=u12&lang=en');await p.locator('.yo-map-continue').tap();await p.locator('[data-yoppo-taxi-transition]').waitFor();
+assert.equal(await p.getByRole('button',{name:'Skip video'}).isVisible(),true);
+await p.waitForFunction(()=>window.clipProof.events.includes('playing'));
+await p.screenshot({path:'.qa-guided/map/taxi.png'});
+await p.locator('[data-yoppo-mission-briefing]').waitFor();
+const playback=await p.evaluate(()=>window.clipProof);assert(playback.events.includes('ended'));assert(!playback.events.includes('error'));assert.equal(playback.muted,false);assert.equal(playback.volume,.4);assert(playback.duration>=8&&playback.duration<8.1);
+await c.close();
+const fail=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});await fail.route('**/yoppo-taxi-approved.mp4',r=>r.abort());const f=await fail.newPage();await f.goto(base+'/?unit=u08&start=u12&lang=en');await f.locator('.yo-map-continue').tap();await f.getByRole('status').filter({hasText:'video could not play'}).waitFor();await f.getByRole('button',{name:'Skip video'}).tap();await f.locator('[data-yoppo-mission-briefing]').waitFor();await fail.close();
+const blocked=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});await blocked.addInitScript(()=>{const original=HTMLMediaElement.prototype.play;let first=true;HTMLMediaElement.prototype.play=function(){if(first&&this.src.includes('taxi-approved')){first=false;return Promise.reject(new DOMException('Browser autoplay policy','NotAllowedError'));}return original.call(this);};});const b=await blocked.newPage();await b.goto(base+'/?unit=u08&start=u12&lang=en');await b.locator('.yo-map-continue').tap();await b.getByRole('button',{name:'Play video'}).waitFor();assert.equal(await b.locator('video').count(),1);await b.getByRole('button',{name:'Skip video'}).tap();await b.locator('[data-yoppo-mission-briefing]').waitFor();await blocked.close();
+const desktop=await browser.newContext({viewport:{width:1365,height:900}});await desktop.addInitScript(data=>{for(const[k,v]of Object.entries(data))localStorage.setItem(k,v)},fixture);const d=await desktop.newPage();await d.goto(base+'/?unit=u06&start=u12&lang=en');await d.locator('[data-yoppo-traveler]').waitFor();await d.getByRole('button',{name:/Explore Venezia/}).click();await d.waitForFunction(()=>document.querySelector('[data-yoppo-traveler]').dataset.motion==='idle');const atlas=await d.locator('[data-yoppo-immersive-atlas]').boundingBox(),action=await d.locator('.yo-world-action').boundingBox();assert(action.x>=atlas.x+atlas.width);await d.screenshot({path:'.qa-guided/map/desktop.png'});await desktop.close();
+await fs.writeFile('.qa-guided/map/media-verified.json',JSON.stringify({playback,checks:['actual approved MP4 decoded and ended','sound enabled at stored 40% volume','immediate Skip','network failure still opens mission','autoplay rejection offers Play and Skip','desktop two-column map and walking']},null,2));console.log('Taxi playback, failure recovery, sound settings and desktop: PASS');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1)});
