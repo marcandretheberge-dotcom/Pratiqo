@@ -139,19 +139,19 @@ fi
 for N in qrace-base1 qrace-base2 qrace-a qrace-b; do
   "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_admin_create_draft_server('00000000-0000-4000-8000-000000000001','$N','$N','pt',NULL,NULL,clock_timestamp()+interval '10 days',45,12,'00000000-0000-4000-8000-000000000002'); SELECT public.cafe_admin_publish_server('00000000-0000-4000-8000-000000000001','$N');"
 done
-"${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','qrace-base1','reserve',0,'52000000-0000-4000-8000-000000000001'); SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','qrace-base2','reserve',0,'52000000-0000-4000-8000-000000000002');"
+"${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000007','qrace-base1','reserve',0,'52000000-0000-4000-8000-000000000001'); SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000007','qrace-base2','reserve',0,'52000000-0000-4000-8000-000000000002');"
 QR1=$(mktemp)
 QR2=$(mktemp)
 (
-  "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','qrace-a','reserve',0,'52000000-0000-4000-8000-000000000003');" >"$QR1"
+  "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000007','qrace-a','reserve',0,'52000000-0000-4000-8000-000000000003');" >"$QR1"
 ) &
 Q1=$!
 (
-  "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','qrace-b','reserve',0,'52000000-0000-4000-8000-000000000004');" >"$QR2"
+  "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000007','qrace-b','reserve',0,'52000000-0000-4000-8000-000000000004');" >"$QR2"
 ) &
 Q2=$!
 wait "$Q1"; wait "$Q2"
-QC=$("${PSQL[@]}" -c "SELECT count(*) FROM public.cafe_reservations r JOIN public.cafe_sessions s ON s.id=r.session_id WHERE r.profile_id='00000000-0000-4000-8000-000000000004' AND r.status='confirmed' AND s.status='published' AND s.starts_at>clock_timestamp() AND s.slug LIKE 'qrace-%';")
+QC=$("${PSQL[@]}" -c "SELECT count(*) FROM public.cafe_reservations r JOIN public.cafe_sessions s ON s.id=r.session_id WHERE r.profile_id='00000000-0000-4000-8000-000000000007' AND r.status='confirmed' AND s.status='published' AND s.starts_at>clock_timestamp() AND s.slug LIKE 'qrace-%';")
 if [[ "$QC" != "3" ]]; then
   echo "quota race ended with $QC active reservations instead of 3" >&2
   cat "$QR1" "$QR2" >&2
