@@ -1,16 +1,17 @@
 {
-  "cycle": 3,
+  "cycle": 4,
   "invalidatedCycle": {
     "freezeCommit": "65eebd83c5a9d83dc93086f6d648ec52c44b9a1d",
     "report": "CYCLE_1_INVALIDATED.md",
     "capturesStillCounted": 2
   },
   "supersededBeforeMasterRender": {
-    "freezeCommit": "1132d33f91aa96152b4ea45bc41a17aaa685c2c0",
-    "reason": "Diagnostic palette aliasing correction; official Ubuntu mirror replaces the failing Azure mirror, no signature or permission weakening"
+    "freezeCommit": "2719e4ffdf44ac1659beb468cbd4d7cd588f27b9",
+    "priorManifest": "freeze-cycle-3-superseded.json",
+    "reason": "Check actual Linux shared-library loading before network installation; retain signed repositories, fail closed and keep the genuine alpha preflight. No master capture in cycle 3."
   },
-  "freezeCommit": "2719e4ffdf44ac1659beb468cbd4d7cd588f27b9",
-  "createdAtUtc": "2026-11-11T16:27:50.146Z",
+  "freezeCommit": "704ba97d5ea94e94a41dcab7c0ad6a21b57a1a24",
+  "createdAtUtc": "2026-11-11T16:52:31.345Z",
   "branch": "feat/yoppo-rive-pilot-20261110",
   "expectedStartingHead": "f5e38c21c290ea8612a524edb56e404f5944e050",
   "resumedHead": "c9e7dd0628f2474abf8a309f31581fdd3e73e47e",
@@ -19,15 +20,15 @@
     "scripts/measure-yoppo-geometry.mjs": "9a391d6267504eee3f4533934d9d975f3758578036413d8cad8c521a086ff7ee",
     "scripts/compare-yoppo-master.ts": "898e5690ee214fb23fd3c90c03a5587e41bea33ef81bfbb37bad12e304445536",
     "lib/companion/yoppoRigContract.ts": "1b01e424190fc9f4657e574ec7af4c4266144806095d2bcbd847e43614fd9011",
-    ".github/workflows/yoppo-rive-pilot-review.yml": "f331a7a0ca1557e13e4429c039a444408c91727dc8542ad7fd39b66f146e0908",
+    ".github/workflows/yoppo-rive-pilot-review.yml": "922e0b3858643391cf04603943058723f9c4a296c76126b6db70dc924ffbd58e",
     "scripts/yoppo-reference-masks.mjs": "4d9725690ada010fceb55e14a13b4c20b7a8de559f724f91a9106612b4c0a9f4",
     "scripts/yoppo-component-metrics.ts": "cdf17535517b050696899a115055b37d84d0dd5c91b75fa4da900f59124ead05",
     "scripts/yoppo-part-labels.json": "be8641c398e4c29d2ce0e594e13e98f50f60e9c3d6a178ae2993d36513e5ee45",
     "scripts/export-yoppo-part-labels.py": "e9c671e4a8174f7d86fe9df9cdb1193b52f2c057dee6446ebc66a574972719c2",
     "scripts/render-yoppo-pilot.mjs": "083904c3e8c6f6a9d24d699ce57dd8c4c403dc9a1fcf3694bd9aa594955ee0ac",
-    "scripts/check-yoppo-freeze.mjs": "d56901a9fdfa426bd8b22ccdb07f16164c172baae9b94dfb6c5fd0ab76c7c058",
+    "scripts/check-yoppo-freeze.mjs": "df98925cf87d535706dfef6de9a62936f9ff14e293e1f6c9d622fbde60f5b697",
     "scripts/yoppo-iteration-policy.mjs": "377181b89c1947811fbb654ca68b3a04f8acea6556ab4162dde82cd377e2e226",
-    "scripts/write-yoppo-freeze.ts": "c97bc2bca76edc9f3f41d8f90c71ea45c696219fd2c1f75a9e949d2e3e691834",
+    "scripts/write-yoppo-freeze.ts": "e433f06de013c01af1046f324475fa375a66a65a3f632a8a3965fd9cb05aed50",
     "rive/yoppo-master/evidence/reference-segmentation-proposal.json": "ed98cbdd14a96ca6f8da4303e0239378755d1e6b761aa806d899d1d5304f6447",
     "rive/yoppo-master/evidence/reference-segmentation-approval.json": "b1f1985506d88af68a41c275a76e4da7275bf469748c52f36e8299e25c0d853c",
     ".gitattributes": "f5e84edfb15726c7fecd3b65c8412555363c0c63c521d5ab00e7b9bd9f267c7d",
@@ -38,6 +39,8 @@
     "scripts/check-yoppo-capture.ts": "50f511a54061dc44250397e85fdbeece393fe6e70e159cef264bf252ce4e143e",
     "tests/companion/yoppoCaptureAlpha.test.ts": "7093dc60244cc2de015ee2891c28b1b75b26ed10c5c9317376f998ef5a1f62d3",
     "tests/companion/yoppoLabelPalette.test.mjs": "134c1af0a30f512ce195007b50b13bd550789b4ed94fff048389345da34b539e",
+    "scripts/ensure-yoppo-linux-runtime.py": "2bc48e4e0d8d02963a266448adf55b62e7901672901ee495d40eb3ebc03cdead",
+    "tests/companion/yoppoLinuxRuntime.test.py": "46fcf685d49bef411a23b026918bcd7fb15c555c01e6401cbc38bab6f4f4be2f",
     "rive/yoppo-transparency-probe/scene.rml": "08c6b5b9314aa72f1768dac91bf10c6c7cbe494ccfdb7d20696aad1b85215add",
     "rive/yoppo-transparency-probe/rive.yaml": "853baa3a1992470a66ef9397e248eb1819eef6a67bda96bfc361ec9d828f0718"
   },
