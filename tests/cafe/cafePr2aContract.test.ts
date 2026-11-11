@@ -39,6 +39,8 @@ assert.match(migration, /CREATE OR REPLACE FUNCTION public\.cafe_public_sessions
 const publicRpc = migration.match(/CREATE OR REPLACE FUNCTION public\.cafe_public_sessions[\s\S]*?GRANT EXECUTE[\s\S]*?;/)?.[0] ?? "";
 assert.doesNotMatch(publicRpc, /profile_id|host_profile_id|created_by_profile_id|email/i);
 assert.match(publicRpc, /remaining_spots/);
+assert.match(publicRpc, /LIMIT 100/);
+assert.match(migration, /JOIN auth\.users au ON au\.id = p\.id/);
 
 assert.match(reservationRoute, /authenticateCafeRequest/);
 assert.match(reservationRoute, /rateLimitByIp/);
