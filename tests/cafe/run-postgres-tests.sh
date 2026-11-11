@@ -40,6 +40,31 @@ if "${PSQL[@]}" -c "UPDATE public.cafe_sessions SET max_participants=9 WHERE slu
   exit 1
 fi
 
+
+# Function privileges: public/browser roles may not execute mutation/admin RPCs.
+for FN in   "public.cafe_set_reservation_server(uuid,text,text,bigint,uuid)"   "public.cafe_my_reservations_server(uuid)"   "public.cafe_admin_publish_server(uuid,text)"   "public.cafe_admin_cancel_server(uuid,text)"; do
+  for ROLE in PUBLIC anon authenticated; do
+    HAS=$("${PSQL[@]}" -c "SELECT has_function_privilege('$ROLE', '$FN', 'EXECUTE');")
+    if [[ "$HAS" != "f" ]]; then
+      echo "$ROLE unexpectedly has EXECUTE on $FN" >&2
+      exit 1
+    fi
+  done
+  HAS=$("${PSQL[@]}" -c "SELECT has_function_privilege('service_role', '$FN', 'EXECUTE');")
+  if [[ "$HAS" != "t" ]]; then
+    echo "service_role lacks EXECUTE on $FN" >&2
+    exit 1
+  fi
+done
+
+# Anonymous/banned auth users are rejected even through service-only RPC.
+"${PSQL[@]}" -c "UPDATE auth.users SET is_anonymous=true WHERE id='00000000-0000-4000-8000-000000000004';"
+if "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','fr-es-test','reserve',0,'41000000-0000-4000-8000-000000000001');" >/dev/null 2>&1; then
+  echo "anonymous auth user unexpectedly passed database actor guard" >&2
+  exit 1
+fi
+"${PSQL[@]}" -c "UPDATE auth.users SET is_anonymous=false WHERE id='00000000-0000-4000-8000-000000000004';"
+
 # Last-place race: capacity 1, two distinct users, exactly one confirmation.
 "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_admin_create_draft_server('00000000-0000-4000-8000-000000000001','race-one','Race','fr',NULL,NULL,clock_timestamp()+interval '8 days',45,1,'00000000-0000-4000-8000-000000000002'); SELECT public.cafe_admin_publish_server('00000000-0000-4000-8000-000000000001','race-one');"
 
@@ -69,4 +94,60 @@ if ! grep -q '"capacity_full"' "$OUT1" && ! grep -q '"capacity_full"' "$OUT2"; t
 fi
 
 rm -f "$OUT1" "$OUT2"
+
+# Same request UUID concurrently: one state transition, no raw uniqueness error.
+"${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_admin_create_draft_server('00000000-0000-4000-8000-000000000001','same-request','Same request','fr',NULL,NULL,clock_timestamp()+interval '9 days',45,2,'00000000-0000-4000-8000-000000000002'); SELECT public.cafe_admin_publish_server('00000000-0000-4000-8000-000000000001','same-request');"
+SR1=$(mktemp)
+SR2=$(mktemp)
+(
+  "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','same-request','reserve',0,'51000000-0000-4000-8000-000000000001');" >"$SR1"
+) &
+S1=$!
+(
+  "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','same-request','reserve',0,'51000000-0000-4000-8000-000000000001');" >"$SR2"
+) &
+S2=$!
+wait "$S1"; wait "$S2"
+SC=$("${PSQL[@]}" -c "SELECT count(*) FROM public.cafe_reservations r JOIN public.cafe_sessions s ON s.id=r.session_id WHERE s.slug='same-request' AND r.profile_id='00000000-0000-4000-8000-000000000004';")
+if [[ "$SC" != "1" ]]; then
+  echo "same request created $SC rows" >&2
+  cat "$SR1" "$SR2" >&2
+  exit 1
+fi
+if ! grep -q '"replay": true' "$SR1" && ! grep -q '"replay": true' "$SR2"; then
+  echo "same concurrent request did not produce an idempotent replay" >&2
+  cat "$SR1" "$SR2" >&2
+  exit 1
+fi
+
+# Quota race: actor already has two future reservations; two concurrent third attempts across different sessions -> exactly one succeeds.
+for N in qrace-base1 qrace-base2 qrace-a qrace-b; do
+  "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_admin_create_draft_server('00000000-0000-4000-8000-000000000001','$N','$N','pt',NULL,NULL,clock_timestamp()+interval '10 days',45,12,'00000000-0000-4000-8000-000000000002'); SELECT public.cafe_admin_publish_server('00000000-0000-4000-8000-000000000001','$N');"
+done
+"${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','qrace-base1','reserve',0,'52000000-0000-4000-8000-000000000001'); SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','qrace-base2','reserve',0,'52000000-0000-4000-8000-000000000002');"
+QR1=$(mktemp)
+QR2=$(mktemp)
+(
+  "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','qrace-a','reserve',0,'52000000-0000-4000-8000-000000000003');" >"$QR1"
+) &
+Q1=$!
+(
+  "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','qrace-b','reserve',0,'52000000-0000-4000-8000-000000000004');" >"$QR2"
+) &
+Q2=$!
+wait "$Q1"; wait "$Q2"
+QC=$("${PSQL[@]}" -c "SELECT count(*) FROM public.cafe_reservations r JOIN public.cafe_sessions s ON s.id=r.session_id WHERE r.profile_id='00000000-0000-4000-8000-000000000004' AND r.status='confirmed' AND s.status='published' AND s.starts_at>clock_timestamp() AND s.slug LIKE 'qrace-%';")
+if [[ "$QC" != "3" ]]; then
+  echo "quota race ended with $QC active reservations instead of 3" >&2
+  cat "$QR1" "$QR2" >&2
+  exit 1
+fi
+if ! grep -q '"reservation_limit"' "$QR1" && ! grep -q '"reservation_limit"' "$QR2"; then
+  echo "quota race loser did not receive reservation_limit" >&2
+  cat "$QR1" "$QR2" >&2
+  exit 1
+fi
+
+rm -f "$SR1" "$SR2" "$QR1" "$QR2"
+
 echo "[cafe:postgres] functional, ACL, deletion, freeze and concurrency tests passed"
