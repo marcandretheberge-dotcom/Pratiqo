@@ -43,14 +43,23 @@ test("correct single-tap assessment sounds once; wrong answer and rerender are s
 test("practice correction receives confirmation without duplicate scoring",()=>{const q=firstMeetingUnit.quiz.questions[0];const attempts:boolean[]=[];const v=render(<Harness activity={q} attempt={c=>attempts.push(c)}/>);flush();click(v.getByRole("button",{name:"Sono canadese."}));assert.equal(starts,0);click(v.getByRole("button",{name:"Mi chiamo Nina."}));assert.equal(starts,1);assert.deepEqual(attempts,[false,true]);});
 test("every successful pair sounds, last pair not twice; aggregate scoring is unchanged",()=>{const a=firstMeetingUnit.lessons[0].activities.find(a=>a.kind==="match")!;assert.ok(a.kind==="match");if(a.kind!=="match")return;let scored=0;const v=render(<Harness activity={a} attempt={c=>{if(c)scored++;}}/>);flush();const box=within(v.container.querySelector('[data-guided-game]') as HTMLElement);for(const [i,p]of a.pairs.entries()){click(box.getByRole("button",{name:p.it}));click(box.getByRole("button",{name:p.meaning.en}));assert.equal(starts,i+1);}assert.equal(scored,1);});
 test("each correct dialogue turn sounds while one final completion is scored",()=>{const a=firstMeetingUnit.lessons[2].activities.find(a=>a.kind==="dialogue")!;assert.ok(a.kind==="dialogue");if(a.kind!=="dialogue")return;let scored=0;const v=render(<Harness activity={a} attempt={c=>{if(c)scored++;}}/>);flush();const box=within(v.container.querySelector('[data-guided-game]') as HTMLElement);for(const [i,t]of a.turns.entries()){const o=t.options.find(o=>o.id===t.correctId)!;click(box.getByRole("button",{name:o.it??o.label!.en}));assert.equal(starts,i+1);if(i<a.turns.length-1)click(box.getByRole("button",{name:"Continue the conversation"}));}assert.equal(scored,1);});
-test("meaning recall: wrong tap is silent, correct tap sounds once and restore is silent",()=>{
+test("meaning recall: wrong tap is silent, correct tap sounds once and restore is silent",async()=>{
  const words=firstMeetingVisuals["it2-u01-l1"];
  const mount=()=>{const v=render(<LearningFeedbackProvider><VisualVocabulary words={words} lessonId="sound-test" locale="en" onReady={()=>{}}/></LearningFeedbackProvider>);flush();return v;};
- let v=mount();click(v.getByRole('button',{name:'Let’s practise'}));click(v.getByRole('button',{name:'Read instead of listen'}));
+ let v=mount();
+ for(const [index,word] of words.entries()){
+   assert.ok(v.getByText(word.it,{exact:true}));
+   if(index<words.length-1){
+     assert.equal(v.queryByRole('button',{name:'Let’s practise'}),null);
+     click(v.getByRole('button',{name:'Next expression'}));
+   }
+ }
+ assert.equal(starts,0,"studying expressions does not award a success sound");
+ click(v.getByRole('button',{name:'Let’s practise'}));await tick();click(v.getByRole('button',{name:'Read instead of listen'}));await tick();
  const target=v.container.querySelector('[data-vocabulary-recall]')!.getAttribute('data-vocabulary-recall');
  click(v.container.querySelector(`[data-answer-id]:not([data-answer-id="${target}"])`) as HTMLElement);assert.equal(starts,0);
  click(v.container.querySelector(`[data-answer-id="${target}"]`) as HTMLElement);assert.equal(starts,1);
- cleanup();v=mount();assert.equal(starts,1);assert.equal(v.container.querySelector('[data-yoppo-success]'),null);
+ cleanup();v=mount();await tick();assert.equal(starts,1);assert.equal(v.container.querySelector('[data-yoppo-success]'),null);
 });
 test("legacy mute retained; independent haptics, event deduplication, sample and persisted settings",()=>{localStorage.setItem(EFFECTS_KEY,"true");const v=render(<LearningFeedbackProvider><EventHarness/></LearningFeedbackProvider>);flush();click(v.getByRole("switch",{name:"Vibrations"}));click(v.getByRole("button",{name:"Emit"}));click(v.getByRole("button",{name:"Emit"}));assert.equal(starts,0);assert.deepEqual(vibrations,[12]);assert.equal(localStorage.getItem(HAPTICS_KEY),"true");click(v.getByRole("switch",{name:"Success sounds"}));click(v.getByRole("button",{name:"Another"}));assert.equal(starts,1);assert.deepEqual(vibrations,[12,12]);click(v.getByRole("button",{name:"Preview the soft wood sound"}));assert.equal(starts,2);assert.equal(vibrations.length,2);click(v.getByRole("switch",{name:"Success sounds"}));assert.equal(localStorage.getItem(EFFECTS_KEY),"true");assert.ok(stops>=1);});
 test("no audio API degrades to visuals; no false promise of browser vibration support",()=>{const ctor=window.AudioContext;Object.defineProperty(window,"AudioContext",{value:undefined,writable:true});const vib=navigator.vibrate;Object.defineProperty(navigator,"vibrate",{value:undefined,configurable:true});try{const v=render(<LearningFeedbackProvider><EventHarness/></LearningFeedbackProvider>);flush();assert.ok((v.getByRole('switch',{name:'Vibrations'}) as HTMLButtonElement).disabled);click(v.getByRole('button',{name:'Emit'}));assert.equal(starts,0);}finally{Object.defineProperty(window,"AudioContext",{value:ctor,writable:true});Object.defineProperty(navigator,"vibrate",{value:vib,configurable:true});}});

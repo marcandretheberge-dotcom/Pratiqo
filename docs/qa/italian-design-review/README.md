@@ -121,3 +121,30 @@ Full compiler failure is independently present in the pre-change GitHub run [430
 Private review: https://yopratiqo-italian-design-review.markitos2222.chatgpt.site . Its audience stays owner-only. The build uses real course components with small Next navigation/image adapters and local progress, not the full deployed Next routing/auth stack. Pick Firenze, then Venezia to inspect walking; Continue at Venezia opens the approved taxi and transport mission.
 
 No merge, Pratiqo production deployment, payment, migration, paid generation or change to other worktrees. The unrelated Cafe compiler failure, full Next production build and physical iPhone/Safari playback remain before merge. Browser tests validate decoded audio/video and settings, not a human listening review or physical-device audio output. Production remains behind the existing review gate.
+
+## Compiler and CI follow-up (2026-11-11)
+
+This section supersedes the compiler/build blockers above; those results are retained as historical evidence.
+
+- `tests/cafe/cafeArchitectureContract.test.ts` now matches the correction on main: the strict parse-success assertion is retained and the ownership assertions run in the success branch. The removed failure branch was unreachable after Node's narrowing assertion (`reason` on `never`). No Cafe application behavior changed.
+- Two Markdown trailing-space line breaks in the Cafe ADR were replaced by paragraphs. This fixes the existing historical-base diff checks without changing their base references or disabling whitespace validation.
+- The feedback and personalized-player tests now walk through every vocabulary study card before entering recall, as the real UI requires. They additionally prove that study cannot skip ahead, enter the mission, or award a success sound. Existing wrong/correct-answer, saved-answer and silent-restore assertions remain. Async audio state settles inside React `act`; no warnings are suppressed.
+- No application source, dependency, workflow, scoring, access, progression or frozen pilot asset changed in this follow-up.
+
+Validation actually rerun with Node 22.23.4:
+
+| Command | Result |
+| --- | --- |
+| `npm run test:cafe-architecture` | PASS, 7 checks |
+| `node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit --incremental false` | PASS; complete compiler, no disabled checks |
+| `node --import tsx tests/yo/yopratiqoFeedback.test.tsx` | PASS, 17/17 |
+| `node --import tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx` | PASS, 5/5 |
+| `node --import tsx tests/yo/yopratiqoProgressSnapshots.test.ts` | PASS, 15/15 |
+| `node --import tsx tests/yo/yopratiqoPratiqoBridgeConsistency.test.ts` | PASS, 14/14 |
+| `node node_modules/eslint/bin/eslint.js tests/cafe/cafeArchitectureContract.test.ts tests/yo/yopratiqoFeedback.test.tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx` | PASS; no code warnings (Browserslist age advisory only) |
+| `git diff --check` and diff checks against both existing review workflow base branches | PASS after ADR cleanup |
+| Existing frozen progress-file comparison against `5d7edc9da2a35507b4da76b0d56f164168360097` | PASS, unchanged |
+
+GitHub at `19726078504a6f3cf9aa7cc4ebd7ceb3b0c4a261` passed the Cafe contract/foundation/Daily foundation, guided-worlds QA and trivia checks. Vercel completed the full Next preview build successfully. The safety job exposed the obsolete vocabulary-study test corrected in this follow-up; pending/final checks are recorded on PR #457 rather than represented as passing here before execution.
+
+The browser recording and media evidence above remain valid because runtime code and media are unchanged. Physical iPhone/Safari playback and human listening review remain unverified. Keep the PR in draft; no merge or production deployment is authorized.
