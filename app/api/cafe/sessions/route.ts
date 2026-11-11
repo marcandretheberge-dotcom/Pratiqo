@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import { isCafeV1Enabled } from "@/lib/cafe/featureFlag";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 
+function cafeDisabled() {
+  return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
+}
+
 export async function GET(req: Request) {
+  if (!isCafeV1Enabled()) return cafeDisabled();
   const url = new URL(req.url);
   const rawSlug = url.searchParams.get("slug");
   const slug = rawSlug?.trim().toLowerCase() || null;
