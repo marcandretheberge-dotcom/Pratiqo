@@ -150,4 +150,41 @@ fi
 
 rm -f "$SR1" "$SR2" "$QR1" "$QR2"
 
+
+
+# Hard profile delete: hosted future session is cancelled/detached and reservations cascade away.
+"${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_admin_create_draft_server('00000000-0000-4000-8000-000000000001','hard-delete','Hard delete','de',NULL,NULL,clock_timestamp()+interval '11 days',45,4,'00000000-0000-4000-8000-000000000004'); SELECT public.cafe_admin_publish_server('00000000-0000-4000-8000-000000000001','hard-delete'); SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','hard-delete','reserve',0,'53000000-0000-4000-8000-000000000001');"
+"${PSQL[@]}" -c "DELETE FROM public.profiles WHERE id='00000000-0000-4000-8000-000000000004';"
+if [[ "$("${PSQL[@]}" -c "SELECT count(*) FROM public.cafe_reservations WHERE profile_id='00000000-0000-4000-8000-000000000004';")" != "0" ]]; then
+  echo "hard-deleted profile left Cafe reservations behind" >&2
+  exit 1
+fi
+HD=$("${PSQL[@]}" -c "SELECT status||':'||coalesce(host_profile_id::text,'null') FROM public.cafe_sessions WHERE slug='hard-delete';")
+if [[ "$HD" != "cancelled:null" ]]; then
+  echo "hard-deleted host left unsafe session state: $HD" >&2
+  exit 1
+fi
+
+# Recreate U2 for reserve-vs-delete race.
+INSERT_SQL="INSERT INTO public.profiles(id,name,email,role) VALUES ('00000000-0000-4000-8000-000000000004','U2','u2@example.test','teacher');"
+"${PSQL[@]}" -c "$INSERT_SQL"
+"${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_admin_create_draft_server('00000000-0000-4000-8000-000000000001','delete-race','Delete race','fr',NULL,NULL,clock_timestamp()+interval '12 days',45,2,'00000000-0000-4000-8000-000000000002'); SELECT public.cafe_admin_publish_server('00000000-0000-4000-8000-000000000001','delete-race');"
+DR1=$(mktemp)
+DR2=$(mktemp)
+(
+  "${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_set_reservation_server('00000000-0000-4000-8000-000000000004','delete-race','reserve',0,'54000000-0000-4000-8000-000000000001');" >"$DR1" 2>&1 || true
+) &
+D1=$!
+(
+  "${PSQL[@]}" -c "DELETE FROM public.profiles WHERE id='00000000-0000-4000-8000-000000000004';" >"$DR2" 2>&1
+) &
+D2=$!
+wait "$D1"; wait "$D2"
+if [[ "$("${PSQL[@]}" -c "SELECT count(*) FROM public.cafe_reservations WHERE profile_id='00000000-0000-4000-8000-000000000004';")" != "0" ]]; then
+  echo "reserve-vs-delete race left a reservation behind" >&2
+  cat "$DR1" "$DR2" >&2
+  exit 1
+fi
+rm -f "$DR1" "$DR2"
+
 echo "[cafe:postgres] functional, ACL, deletion, freeze and concurrency tests passed"
