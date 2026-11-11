@@ -28,11 +28,27 @@ export const YOPPO_ARTBOARD_CONTRACT = {
   referenceSourceBodyCenterX: 250,
   referenceSourceGroundY: 453,
   reconstructionScale: 1.86,
+  referenceOverlayX: 47,
+  referenceOverlayY: 78,
   estimatedVisibleBounds: { minX: 270, minY: 152, maxX: 834, maxY: 920 },
   topMargin: 152,
   bottomMargin: 104,
   maxBodyRisePx: 72,
   fxOverflowPolicy: "stay-inside-artboard",
+} as const;
+
+export const YOPPO_OVERLAY_ACCEPTANCE = {
+  silhouetteIoUMin: 0.80,
+  centroidDistanceMaxPx: 24,
+  groundContactDeltaMaxPx: 12,
+  overlapRgbMaeMax: 65,
+} as const;
+
+export const YOPPO_LIMB_DEPTH_POLICY = {
+  method: "explicit-draw-order-switch",
+  states: ["neutral", "walk-screen-left", "walk-screen-right"],
+  rule: "near/far arm and leg depth must switch through draw order, never by changing anatomy",
+  walkingImplementationDeferred: true,
 } as const;
 
 export type YoppoTopologyMode = "matched-morph" | "swap-only" | "transform-only";
