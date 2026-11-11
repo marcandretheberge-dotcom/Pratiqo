@@ -166,12 +166,16 @@ AS $$
   SELECT EXISTS (
     SELECT 1
       FROM public.profiles p
+      JOIN auth.users au ON au.id = p.id
      WHERE p.id = p_profile_id
        AND COALESCE(p.is_active, true) = true
        AND p.deletion_requested_at IS NULL
        AND p.deleted_at IS NULL
+       AND au.is_anonymous = false
+       AND au.deleted_at IS NULL
+       AND (au.banned_until IS NULL OR au.banned_until <= clock_timestamp())
   )
-$$;
+$;
 
 REVOKE ALL ON FUNCTION cafe_private.require_active_profile(uuid) FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION cafe_private.require_admin(uuid) FROM PUBLIC, anon, authenticated, service_role;
@@ -313,7 +317,8 @@ AS $$
     AND s.starts_at > statement_timestamp()
     AND (p_slug IS NULL OR s.slug = p_slug)
   ORDER BY s.starts_at, s.slug
-$$;
+  LIMIT 100
+$;
 
 REVOKE ALL ON FUNCTION public.cafe_public_sessions(text) FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.cafe_public_sessions(text) TO anon, authenticated, service_role;
