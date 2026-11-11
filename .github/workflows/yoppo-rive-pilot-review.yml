@@ -36,23 +36,6 @@ jobs:
           node-version: 22.23.4
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Install Linux graphics runtime for Rive CLI
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo apt-get update -y
-          sudo apt-get install -y libegl1 libgl1 libgles2 libx11-6 libxext6 libxrender1 libxi6 libxrandr2 libxcursor1 libxinerama1 libxkbcommon0
-      - name: Install pinned Rive CLI 1.9.2
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl -fsSL https://releases.rive.app/cli/v1.9.2/rive-linux-x64.tar.gz -o "$RUNNER_TEMP/rive-1.9.2.tar.gz"
-          echo "e606530230ad8ddc4869d1ade4de10c5ffb3e74e44745339c227018e65eabb0b  $RUNNER_TEMP/rive-1.9.2.tar.gz" | sha256sum --check
-          mkdir -p "$RUNNER_TEMP/rive-1.9.2"
-          tar -xzf "$RUNNER_TEMP/rive-1.9.2.tar.gz" -C "$RUNNER_TEMP/rive-1.9.2" -- rive docs
-          echo "$RUNNER_TEMP/rive-1.9.2" >> "$GITHUB_PATH"
-          "$RUNNER_TEMP/rive-1.9.2/rive" analytics off
-          test "$("$RUNNER_TEMP/rive-1.9.2/rive" --version)" = "rive 1.9.2"
       - name: TypeScript contract
         run: npx tsc --noEmit
       - name: Rig parent and pivot contract
@@ -63,8 +46,6 @@ jobs:
         run: npx eslint lib/companion/yoppoRigContract.ts scripts/audit-yoppo-master.mjs scripts/measure-yoppo-geometry.mjs scripts/compare-yoppo-master.ts tests/companion/yoppoRigContract.test.ts tests/companion/yoppoGeometryDiagnostics.test.mjs
       - name: Diff integrity
         run: git diff --check origin/main...HEAD
-      - name: Verify neutral-master RML without rendering
-        run: rive rive/yoppo-master --verify
       - name: Canonical PNG audit
         run: node scripts/audit-yoppo-master.mjs
       - name: Canonical geometry measurement
@@ -84,6 +65,25 @@ jobs:
         run: |
           set -euo pipefail
           test -s rive/yoppo-master/evidence/freeze-manifest.json
+      - name: Install Linux graphics runtime for Rive CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y libegl1 libgl1 libgles2 libx11-6 libxext6 libxrender1 libxi6 libxrandr2 libxcursor1 libxinerama1 libxkbcommon0
+      - name: Install pinned Rive CLI 1.9.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://releases.rive.app/cli/v1.9.2/rive-linux-x64.tar.gz -o "$RUNNER_TEMP/rive-1.9.2.tar.gz"
+          echo "e606530230ad8ddc4869d1ade4de10c5ffb3e74e44745339c227018e65eabb0b  $RUNNER_TEMP/rive-1.9.2.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/rive-1.9.2"
+          tar -xzf "$RUNNER_TEMP/rive-1.9.2.tar.gz" -C "$RUNNER_TEMP/rive-1.9.2" -- rive docs
+          echo "$RUNNER_TEMP/rive-1.9.2" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/rive-1.9.2/rive" analytics off
+          test "$("$RUNNER_TEMP/rive-1.9.2/rive" --version)" = "rive 1.9.2"
+      - name: Verify neutral-master RML without rendering
+        run: rive rive/yoppo-master --verify
       - name: Scaffold current Rive project template
         shell: bash
         run: |
