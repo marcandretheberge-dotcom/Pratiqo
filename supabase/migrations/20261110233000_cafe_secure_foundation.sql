@@ -117,13 +117,20 @@ BEGIN
   SELECT *
     INTO p
     FROM public.profiles
-   WHERE id = p_profile_id
-   FOR UPDATE;
+   WHERE id = p_profile_id;
 
   IF NOT FOUND
      OR COALESCE(p.is_active, true) IS NOT TRUE
      OR p.deletion_requested_at IS NOT NULL
-     OR p.deleted_at IS NOT NULL THEN
+     OR p.deleted_at IS NOT NULL
+     OR NOT EXISTS (
+       SELECT 1
+         FROM auth.users au
+        WHERE au.id = p_profile_id
+          AND au.is_anonymous = false
+          AND au.deleted_at IS NULL
+          AND (au.banned_until IS NULL OR au.banned_until <= clock_timestamp())
+     ) THEN
     RAISE EXCEPTION USING ERRCODE = '42501', MESSAGE = 'Cafe account unavailable';
   END IF;
 
@@ -358,7 +365,7 @@ BEGIN
 END
 $$;
 
-REVOKE ALL ON FUNCTION public.cafe_my_reservations_server(uuid) FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.cafe_my_reservations_server(uuid) FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.cafe_my_reservations_server(uuid) TO service_role;
 
 CREATE OR REPLACE FUNCTION public.cafe_set_reservation_server(
@@ -391,6 +398,8 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'code', 'invalid_request');
   END IF;
 
+  PERFORM set_config('lock_timeout', '3s', true);
+  PERFORM pg_advisory_xact_lock(hashtextextended('cafe_quota:' || p_actor_id::text, 0));
   p := cafe_private.require_active_profile(p_actor_id);
 
   SELECT *
@@ -586,7 +595,7 @@ END
 $$;
 
 REVOKE ALL ON FUNCTION public.cafe_set_reservation_server(uuid,text,text,bigint,uuid)
-  FROM PUBLIC, anon, authenticated;
+  FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.cafe_set_reservation_server(uuid,text,text,bigint,uuid)
   TO service_role;
 
@@ -701,11 +710,11 @@ END
 $$;
 
 REVOKE ALL ON FUNCTION public.cafe_admin_create_draft_server(uuid,text,text,text,text,text,timestamptz,integer,integer,uuid)
-  FROM PUBLIC, anon, authenticated;
+  FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.cafe_admin_publish_server(uuid,text)
-  FROM PUBLIC, anon, authenticated;
+  FROM PUBLIC, anon, authenticated, service_role;
 REVOKE ALL ON FUNCTION public.cafe_admin_cancel_server(uuid,text)
-  FROM PUBLIC, anon, authenticated;
+  FROM PUBLIC, anon, authenticated, service_role;
 
 GRANT EXECUTE ON FUNCTION public.cafe_admin_create_draft_server(uuid,text,text,text,text,text,timestamptz,integer,integer,uuid)
   TO service_role;
@@ -737,6 +746,9 @@ BEGIN
   END IF;
 
   IF should_purge THEN
+    PERFORM set_config('lock_timeout', '3s', true);
+    PERFORM pg_advisory_xact_lock(hashtextextended('cafe_quota:' || target_id::text, 0));
+
     UPDATE public.cafe_sessions
        SET status = 'cancelled',
            host_profile_id = NULL,
