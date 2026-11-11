@@ -73,15 +73,16 @@ const tests: [string, () => void][] = [
     const source = readFileSync("components/yo/italian/guided/GuidedItalianCourse.tsx", "utf8");
     assert.match(source, /from "motion\/react"/);
     assert.match(source, /type: "spring", stiffness: 430, damping: 34/);
-    assert.match(source, /max-h-\[76dvh\]/);
+    assert.match(source, /max-h-\[96dvh\]/);
     assert.match(source, /sm:max-h-\[92dvh\]/);
-    assert.match(source, /sm:inset-0 sm:m-auto sm:h-fit/, "mission sheet desktop centering must not depend on transforms that Motion owns");
+    assert.match(source, /sm:inset-0 sm:m-auto sm:h-\[92dvh\]/, "mission sheet desktop centering must not depend on transforms that Motion owns");
     assert.match(source, /bg-\[#16382f\]\/36/);
     assert.match(source, /useReducedMotion/);
   }],
-  ["printables are one tap from the map, before any mission or earned stamp", () => {
+  ["printables are available from map tools, before any mission or earned stamp", () => {
     const view = mount();
     const map = view.container.querySelector("[data-yoppo-world-map]");
+    click(view.getByRole("button", { name: "Yoppo and my tools" }));
     click(view.getByRole("button", { name: "My printable sheets" }));
     const dialog = document.querySelector("[data-yoppo-tools-dialog]") as HTMLElement;
     assert.ok(dialog && dialog.querySelector("[data-yoppo-printables-menu]"), "printable resources are in a real dialog");
@@ -115,7 +116,7 @@ const tests: [string, () => void][] = [
     assert.equal(map, view.container.querySelector("[data-yoppo-world-map]"), "map remains mounted");
     const panel = document.querySelector("[data-yoppo-mission-window]") as HTMLElement;
     assert.ok(panel);
-    assert.ok(panel.className.includes("max-h-[76dvh]"), "mobile sheet deliberately leaves the atlas visible");
+    assert.ok(panel.className.includes("max-h-[96dvh]"), "mobile lesson uses the available viewport");
     const backdrop = document.querySelector("[data-yoppo-mission-backdrop]") as HTMLElement;
     assert.ok(backdrop);
     assert.ok(backdrop.className.includes("bg-[#16382f]/36"), "overlay keeps spatial context recognizable");
@@ -124,12 +125,18 @@ const tests: [string, () => void][] = [
     click(within(panel).getByRole("button", { name: "Start my mission" }));
     assert.equal(document.querySelector("[data-yoppo-mission-briefing]"), null);
     assert.ok(within(panel).getByRole("heading", { name: "Word notebook" }));
+    assert.equal(panel.querySelectorAll("[role=progressbar]").length, 1);
+    assert.ok(within(panel).getByText(unit.lessons[0].vocabulary[0].it));
+    click(within(panel).getByRole("button", { name: "Next expression" }));
+    assert.ok(within(panel).getByText(unit.lessons[0].vocabulary[1].it));
+    assert.equal(within(panel).queryByText(unit.lessons[0].vocabulary[0].it), null);
     click(within(panel).getByRole("button", { name: "Leave and save my place" }));
     assert.equal(document.querySelector("[data-yoppo-mission-window]"), null);
     assert.equal(map, view.container.querySelector("[data-yoppo-world-map]"));
     click(view.getByRole("button", { name: "Continue my mission" }));
     assert.ok(document.querySelector("[data-yoppo-mission-window]"));
     assert.ok(view.getByRole("heading", { name: "Word notebook" }));
+    assert.ok(view.getByText(unit.lessons[0].vocabulary[1].it), "the study cursor resumes without granting progress");
     assertNoFakeMastery();
   }],
   ["after real midpoint activities, Trivia opens in a window above the same map", () => {

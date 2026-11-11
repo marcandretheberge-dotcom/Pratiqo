@@ -6,6 +6,7 @@ import { buildCourseJourney } from "@/lib/yo/courseJourney";
 import { emptyCourseProgress, recordCourseAssessment } from "@/lib/yo/italian/course/courseProgress";
 import { personalizedItalianCatalog } from "@/lib/yo/personalized/courseData";
 import { projectItalianWorlds } from "@/lib/yo/italian/worlds";
+import { ItalianWorldNavigator } from "@/components/yo/italian/guided/ItalianWorldNavigator";
 import { ItalianWorldAtlas } from "@/components/yo/italian/guided/ItalianWorldAtlas";
 import { ItalianAdventureLandscape } from "@/components/yo/italian/guided/ItalianAdventureLandscape";
 
@@ -38,20 +39,14 @@ for (const locale of ["fr", "en", "es"] as const) {
     assert.ok(html.includes('data-yoppo-world-cities="' + world.id + '"'));
     assert.equal((html.match(/<li /g) ?? []).length, 4);
     assert.equal((html.match(/data-yoppo-map-token=/g) ?? []).length, 4);
-    assert.equal((html.match(/data-yoppo-city-art=/g) ?? []).length, 4,
-      "four mini landmarks, not four huge cards obscuring the road");
-    assert.ok(!html.includes("grid-cols-2"), "no dashboard-like card grid");
-    assert.ok(!html.includes("min-h-28"), "no large destination cards");
-    assert.ok(html.includes("aspect-[4/7]") && html.includes("lg:aspect-[3/2]"), "original portrait and independently composed desktop panorama keep true artwork proportions");
-    assert.ok(html.includes("data-yoppo-portrait-art") && html.includes("data-yoppo-desktop-art"), "both responsive art directions are present");
-    assert.ok(html.includes('data-atlas-landscape-wide="' + world.id + '"'), "desktop artwork uses its own original SVG viewBox");
-    assert.ok(html.includes('data-yoppo-world-gate="closed"'));
-    assert.equal((html.match(/class="yo-atmosphere-particle/g) ?? []).length, 8, "ambient layer stays intentionally tiny");
+    assert.ok(html.includes(`${world.id}.webp`), "each world uses its own illustrated landscape");
+    assert.ok(html.includes('alt=""'), "decorative art never replaces accessible city names");
+    assert.ok(html.includes('viewBox="0 0 480 600"'), "route shares the artwork ratio");
     assert.equal((html.match(/<a /g) ?? []).length, world.id === "discover" ? 1 : 0,
       "no unlocked-by-animation exploit");
     if (world.id === "discover") {
       assert.ok(html.includes('aria-current="step"'));
-      assert.equal((html.match(/class="yo-yoppo-map-guide /g) ?? []).length, 1,
+      assert.equal((html.match(/class="yo-yoppo-map-guide"/g) ?? []).length, 1,
         "one Yoppo guide, regardless of the number of animation rules");
       assert.ok(html.includes('data-yoppo-map-token="u01"'));
       assert.ok(html.includes('data-yoppo-path-progress="0.08"'), "new learner route glows only to the first active city");
@@ -83,8 +78,13 @@ for (const unit of personalizedItalianCatalog.units.slice(1, 4)) {
 }
 worlds = projectItalianWorlds(buildCourseJourney(personalizedItalianCatalog, progress));
 assert.equal(worlds[0].complete, true);
+const completedNavigator = renderToStaticMarkup(createElement(ItalianWorldNavigator, {
+  journey: buildCourseJourney(personalizedItalianCatalog, progress), locale: "fr", currentUnitId: "u04", hrefForUnit, canReview: noReview,
+}));
+assert.ok(completedNavigator.includes('data-yoppo-world-gate="open"'));
+assert.ok(completedNavigator.includes('data-yoppo-flute="discover"'));
 const finished = getHtml(worlds[0], "fr", "u04");
-assert.ok(finished.includes('data-yoppo-world-gate="open"'));
+
 assert.equal((finished.match(/<a /g) ?? []).length, 4);
 assert.ok(!finished.includes('data-yoppo-world-gate="closed"'));
 assert.ok(finished.includes('data-yoppo-path-progress="1.00"'), "completed world illuminates the full route to the castle");
@@ -98,10 +98,10 @@ assert.match(navigatorSource, /<ItalianWorldAtlas world=\{world\}/);
 assert.doesNotMatch(navigatorSource, /grid-cols-2/);
 assert.match(progressPathSource, /motion\.path/);
 assert.match(progressPathSource, /useReducedMotion/);
-assert.match(mapSource, /scale: \[1, 1\.025, 1\]/);
+assert.match(navigatorSource, /data-yoppo-world-gate/);
 assert.match(atmosphereSource, /prefers-reduced-motion:reduce/);
 for (const [name, source] of [["map", mapSource], ["scene", sceneSource], ["progress path", progressPathSource], ["atmosphere", atmosphereSource]] as const) {
   assert.doesNotMatch(source, /recordCourseAssessment|recordCourseActivity|localStorage|fetch\(|\.rpc\(|stripe|yoppo.?credit/i,
     name + " never changes entitlement, evaluation, purchase or progress");
 }
-console.log("Yoppo map redesign: rich original SVG worlds, 4 actual pathway stops, next-city guidance, locked cities and reduced motion: PASS");
+console.log("Yoppo map redesign: illustrated worlds, 4 actual pathway stops, next-city guidance, locked cities and reduced motion: PASS");
