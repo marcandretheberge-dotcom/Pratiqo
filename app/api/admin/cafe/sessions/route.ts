@@ -1,12 +1,30 @@
 import { NextResponse } from "next/server";
 import { isCafeV1Enabled } from "@/lib/cafe/featureFlag";
+import { isCafeRoomProviderEnabled } from "@/lib/cafe/roomFeatureFlag";
+import {
+  CafeRoomCancellationMigrationUnavailableError,
+  cancelCafeSessionAndDeleteRoom,
+} from "@/lib/cafe/adminRoomCancellation";
+import { CafeRoomProviderError } from "@/lib/cafe/roomProvider";
 import { requireAdminApi } from "@/lib/auth/admin";
 import { parseCafeStartsAt } from "@/lib/cafe/sessionInput";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function cafeDisabled() {
   return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
+}
+
+function noStoreJson(body: unknown, status: number, headers?: HeadersInit) {
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      "Cache-Control": "no-store, private",
+      Pragma: "no-cache",
+      ...headers,
+    },
+  });
 }
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -24,12 +42,53 @@ export async function POST(req: Request) {
   if (auth.status === "error") return auth.response;
 
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!body) return NextResponse.json({ ok: false, error: "invalid_request" }, { status: 400 });
+  if (!body) return noStoreJson({ ok: false, error: "invalid_request" }, 400);
 
   const action = body.action;
   const slug = clean(body.slug, 120)?.toLowerCase() ?? "";
   if (!SLUG_RE.test(slug)) {
-    return NextResponse.json({ ok: false, error: "invalid_slug" }, { status: 400 });
+    return noStoreJson({ ok: false, error: "invalid_slug" }, 400);
+  }
+
+  if (action === "cancel") {
+    try {
+      // Always use the provider-aware path once the migration exists, even if
+      // room token issuance has been emergency-disabled. This closes any room
+      // created before the rollback flag was switched off.
+      const result = await cancelCafeSessionAndDeleteRoom({
+        admin: auth.admin,
+        actorId: auth.user.id,
+        slug,
+      });
+      return noStoreJson(result, 200);
+    } catch (error) {
+      if (
+        error instanceof CafeRoomCancellationMigrationUnavailableError &&
+        !isCafeRoomProviderEnabled()
+      ) {
+        // Additive deploy compatibility only: before PR3a's migration exists,
+        // the provider gate is OFF and no Daily room can have been issued.
+      } else if (error instanceof CafeRoomProviderError) {
+        const retryAfter = error.retryAfterSeconds ?? 15;
+        return noStoreJson(
+          {
+            ok: false,
+            error: error.code === "provider_unavailable"
+              ? "provider_cleanup_pending"
+              : "cafe_admin_unavailable",
+            retryAfter,
+          },
+          error.code === "provider_unavailable" ? 503 : 500,
+          { "Retry-After": String(retryAfter) },
+        );
+      } else {
+        console.error("[admin/cafe] provider cancellation failed", {
+          action,
+          errorClass: error instanceof Error ? error.name : "unknown",
+        });
+        return noStoreJson({ ok: false, error: "cafe_admin_unavailable" }, 503);
+      }
+    }
   }
 
   let rpcName: string;
@@ -51,7 +110,7 @@ export async function POST(req: Request) {
       !Number.isSafeInteger(maxParticipants) ||
       (hostProfileId !== null && !UUID_RE.test(hostProfileId))
     ) {
-      return NextResponse.json({ ok: false, error: "invalid_request" }, { status: 400 });
+      return noStoreJson({ ok: false, error: "invalid_request" }, 400);
     }
 
     rpcName = "cafe_admin_create_draft_server";
@@ -71,12 +130,13 @@ export async function POST(req: Request) {
     rpcName = "cafe_admin_publish_server";
     args = { p_actor_id: auth.user.id, p_slug: slug };
   } else if (action === "cancel") {
+    // Pre-migration fallback reached only when the provider feature is disabled.
     rpcName = "cafe_admin_cancel_server";
     args = { p_actor_id: auth.user.id, p_slug: slug };
   } else if (action === "reassign_host") {
     const hostProfileId = clean(body.hostProfileId, 80);
     if (!hostProfileId || !UUID_RE.test(hostProfileId)) {
-      return NextResponse.json({ ok: false, error: "invalid_host" }, { status: 400 });
+      return noStoreJson({ ok: false, error: "invalid_host" }, 400);
     }
     rpcName = "cafe_admin_reassign_host_server";
     args = {
@@ -85,22 +145,22 @@ export async function POST(req: Request) {
       p_host_profile_id: hostProfileId,
     };
   } else {
-    return NextResponse.json({ ok: false, error: "invalid_action" }, { status: 400 });
+    return noStoreJson({ ok: false, error: "invalid_action" }, 400);
   }
 
   try {
     const { data, error } = await auth.admin.rpc(rpcName, args);
     if (error) {
       console.error("[admin/cafe] rpc failed", { action, code: error.code });
-      return NextResponse.json({ ok: false, error: "cafe_admin_unavailable" }, { status: 503 });
+      return noStoreJson({ ok: false, error: "cafe_admin_unavailable" }, 503);
     }
     const result = (data ?? {}) as { ok?: boolean; code?: string };
-    return NextResponse.json(result, { status: result.ok === false ? 409 : 200 });
+    return noStoreJson(result, result.ok === false ? 409 : 200);
   } catch (error) {
     console.error("[admin/cafe] unexpected failure", {
       action,
-      message: error instanceof Error ? error.message : "unknown",
+      errorClass: error instanceof Error ? error.name : "unknown",
     });
-    return NextResponse.json({ ok: false, error: "cafe_admin_unavailable" }, { status: 503 });
+    return noStoreJson({ ok: false, error: "cafe_admin_unavailable" }, 503);
   }
 }
