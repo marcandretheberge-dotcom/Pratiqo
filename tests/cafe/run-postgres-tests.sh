@@ -42,7 +42,7 @@ fi
 
 
 # Function privileges: public/browser roles may not execute mutation/admin RPCs.
-for FN in   "public.cafe_set_reservation_server(uuid,text,text,bigint,uuid)"   "public.cafe_my_reservations_server(uuid)"   "public.cafe_admin_publish_server(uuid,text)"   "public.cafe_admin_cancel_server(uuid,text)"; do
+for FN in   "public.cafe_set_reservation_server(uuid,text,text,bigint,uuid)"   "public.cafe_my_reservations_server(uuid)"   "public.cafe_admin_create_draft_server(uuid,text,text,text,text,text,timestamptz,integer,integer,uuid)"   "public.cafe_admin_publish_server(uuid,text)"   "public.cafe_admin_cancel_server(uuid,text)"   "public.cafe_admin_reassign_host_server(uuid,text,uuid)"; do
   for ROLE in PUBLIC anon authenticated; do
     HAS=$("${PSQL[@]}" -c "SELECT has_function_privilege('$ROLE', '$FN', 'EXECUTE');")
     if [[ "$HAS" != "f" ]]; then
