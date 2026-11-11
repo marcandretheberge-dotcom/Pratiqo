@@ -36,6 +36,12 @@ jobs:
           node-version: 22.23.4
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install Linux graphics runtime for Rive CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y libegl1 libgl1 libgles2 libx11-6 libxext6 libxrender1 libxi6 libxrandr2 libxcursor1 libxinerama1 libxkbcommon0
       - name: Install pinned Rive CLI 1.9.2
         shell: bash
         run: |
@@ -78,12 +84,6 @@ jobs:
         run: |
           set -euo pipefail
           test -s rive/yoppo-master/evidence/freeze-manifest.json
-      - name: Install Linux graphics runtime for Rive CLI
-        shell: bash
-        run: |
-          set -euo pipefail
-          sudo apt-get update -y
-          sudo apt-get install -y libegl1 libgl1 libgles2 libx11-6 libxext6 libxrender1 libxi6 libxrandr2 libxcursor1 libxinerama1 libxkbcommon0
       - name: Scaffold current Rive project template
         shell: bash
         run: |
