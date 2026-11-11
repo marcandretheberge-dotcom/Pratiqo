@@ -23,6 +23,12 @@ BEGIN
   IF j->>'ok' <> 'true' THEN
     RAISE EXCEPTION 'host reassignment failed: %', j;
   END IF;
+END
+$hosttest$;
+
+RESET ROLE;
+DO $hostverify$
+BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM public.cafe_sessions
     WHERE slug='fr-es-test'
@@ -31,7 +37,13 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'host reassignment did not persist';
   END IF;
+END
+$hostverify$;
+SET ROLE service_role;
 
+DO $hostrestore$
+DECLARE j jsonb;
+BEGIN
   j := public.cafe_admin_reassign_host_server(
     '00000000-0000-4000-8000-000000000001',
     'fr-es-test',
@@ -41,7 +53,7 @@ BEGIN
     RAISE EXCEPTION 'host restoration failed: %', j;
   END IF;
 END
-$hosttest$;
+$hostrestore$;
 
 -- First reservation, exact replay, cancellation, stale retry.
 DO $$
