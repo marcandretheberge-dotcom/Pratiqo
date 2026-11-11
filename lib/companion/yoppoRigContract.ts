@@ -43,6 +43,43 @@ export const YOPPO_GEOMETRY_MEASUREMENT_POLICY = {
   geometryChangesRequireMeasuredDelta: true,
   rejectEdgeClippedMeasurements: true,
   sourceToArtboard: { scale: 1.86, translateX: 47, translateY: 78 },
+  roiExpansion: {
+    stepPx: 12,
+    maxExpansions: 3,
+    reasonRequired: "measurement-touched-roi-edge",
+    rule: "expand every touched side by the same fixed step; never shrink or move an ROI to improve a result",
+  },
+} as const;
+
+export const YOPPO_HIDDEN_GEOMETRY_POLICY = {
+  measuredFromCanonical: false,
+  status: "unmeasured-by-definition",
+  parts: [
+    "limb-ends-behind-torso",
+    "torso-behind-backpack",
+    "head-behind-spikes",
+    "ear-bases-behind-head",
+    "eye-whites-behind-lids",
+    "strap-sections-behind-arms",
+  ],
+  validation: "rotation-and-overlap-exposure-tests",
+} as const;
+
+export const YOPPO_COMPONENT_TOLERANCES = {
+  headCream:   { centroidMaxPx: 10, widthRelMax: 0.08, heightRelMax: 0.08 },
+  spikes:      { centroidMaxPx: 12, widthRelMax: 0.12, heightRelMax: 0.12 },
+  earLeft:     { centroidMaxPx: 10, widthRelMax: 0.12, heightRelMax: 0.12 },
+  earRight:    { centroidMaxPx: 10, widthRelMax: 0.12, heightRelMax: 0.12 },
+  eyeLeft:     { centroidMaxPx: 8,  widthRelMax: 0.08, heightRelMax: 0.08 },
+  eyeRight:    { centroidMaxPx: 8,  widthRelMax: 0.08, heightRelMax: 0.08 },
+  torso:       { centroidMaxPx: 12, widthRelMax: 0.10, heightRelMax: 0.10 },
+  armLeft:     { centroidMaxPx: 12, widthRelMax: 0.14, heightRelMax: 0.12 },
+  armRight:    { centroidMaxPx: 12, widthRelMax: 0.14, heightRelMax: 0.12 },
+  footLeft:    { centroidMaxPx: 10, widthRelMax: 0.10, heightRelMax: 0.10 },
+  footRight:   { centroidMaxPx: 10, widthRelMax: 0.10, heightRelMax: 0.10 },
+  backpack:    { centroidMaxPx: 12, widthRelMax: 0.10, heightRelMax: 0.10 },
+  mouthInk:    { centroidMaxPx: 8,  widthRelMax: 0.15, heightRelMax: 0.15 },
+  chestEmblem: { centroidMaxPx: 10, widthRelMax: 0.16, heightRelMax: 0.16 },
 } as const;
 
 export const YOPPO_MASTER_GEOMETRY_STATUS = {
