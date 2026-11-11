@@ -15,8 +15,8 @@ const files=Object.fromEntries(frozenFiles.map((file:string)=>{
   return [file,current];
 }));
 fs.writeFileSync(manifestPath,JSON.stringify({
-  cycle:3,invalidatedCycle:{freezeCommit:"65eebd83c5a9d83dc93086f6d648ec52c44b9a1d",report:"CYCLE_1_INVALIDATED.md",capturesStillCounted:2},
-  supersededBeforeMasterRender:{freezeCommit:"1132d33f91aa96152b4ea45bc41a17aaa685c2c0",reason:"Diagnostic palette aliasing correction; official Ubuntu mirror replaces the failing Azure mirror, no signature or permission weakening"},
+  cycle:4,invalidatedCycle:{freezeCommit:"65eebd83c5a9d83dc93086f6d648ec52c44b9a1d",report:"CYCLE_1_INVALIDATED.md",capturesStillCounted:2},
+  supersededBeforeMasterRender:{freezeCommit:"2719e4ffdf44ac1659beb468cbd4d7cd588f27b9",priorManifest:"freeze-cycle-3-superseded.json",reason:"Check actual Linux shared-library loading before network installation; retain signed repositories, fail closed and keep the genuine alpha preflight. No master capture in cycle 3."},
   freezeCommit,createdAtUtc:new Date().toISOString(),branch:"feat/yoppo-rive-pilot-20261110",
   expectedStartingHead:"f5e38c21c290ea8612a524edb56e404f5944e050",resumedHead:"c9e7dd0628f2474abf8a309f31581fdd3e73e47e",
   files,globalThresholds:YOPPO_OVERLAY_ACCEPTANCE,componentThresholds:YOPPO_COMPONENT_TOLERANCES,
