@@ -119,7 +119,8 @@ BEGIN
   SELECT *
     INTO p
     FROM public.profiles
-   WHERE id = p_profile_id;
+   WHERE id = p_profile_id
+   FOR KEY SHARE;
 
   IF NOT FOUND
      OR COALESCE(p.is_active, true) IS NOT TRUE
@@ -398,7 +399,8 @@ DECLARE
   upcoming_confirmed bigint := 0;
   next_version bigint;
 BEGIN
-  IF p_action IS NULL
+  IF p_actor_id IS NULL
+     OR p_action IS NULL
      OR p_action NOT IN ('reserve', 'cancel')
      OR p_expected_version IS NULL OR p_expected_version < 0
      OR p_request_id IS NULL
@@ -407,8 +409,10 @@ BEGIN
   END IF;
 
   PERFORM set_config('lock_timeout', '3s', true);
-  PERFORM pg_advisory_xact_lock(hashtextextended('cafe_quota:' || p_actor_id::text, 0));
+  -- Canonical lock order: profile row -> actor advisory lock -> session -> reservation.
+  -- FOR KEY SHARE blocks hard delete/key changes without blocking unrelated profile updates.
   p := cafe_private.require_active_profile(p_actor_id);
+  PERFORM pg_advisory_xact_lock(hashtextextended('cafe_quota:' || p_actor_id::text, 0));
 
   SELECT *
     INTO s
