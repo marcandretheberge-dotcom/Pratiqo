@@ -71,6 +71,9 @@ assert.equal(parseCafeStartsAt("2026-02-28T12:00:00Z"), "2026-02-28T12:00:00Z");
 assert.equal(parseCafeStartsAt("2026-02-30T12:00:00Z"), null);
 assert.equal(parseCafeStartsAt("2026-11-10T24:00:00Z"), null);
 assert.equal(parseCafeStartsAt("2026-11-10T12:00:00"), null);
+assert.equal(parseCafeStartsAt("2026-11-10T12:00Z"), null);
+assert.equal(parseCafeStartsAt("2026-11-10T12:00:00+25:00"), null);
+assert.equal(parseCafeStartsAt("2026-11-10T12:00:00+02:99"), null);
 assert.equal(parseCafeStartsAt("infinity"), null);
 
 const cleanupSection = migration.match(/CREATE OR REPLACE FUNCTION cafe_private\.handle_profile_removal\(\)[\s\S]*?CREATE TRIGGER cafe_profiles_cleanup_on_update/)?.[0] ?? "";
