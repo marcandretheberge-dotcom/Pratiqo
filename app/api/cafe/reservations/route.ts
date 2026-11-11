@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
+import { isCafeV1Enabled } from "@/lib/cafe/featureFlag";
 import { authenticateCafeRequest } from "@/lib/cafe/serverAuth";
 import { rateLimitByIp, rateLimitGuardResponse } from "@/lib/rateLimit";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
+
+function cafeDisabled() {
+  return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
+}
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -53,6 +58,7 @@ async function enforceRateLimits(req: Request, userId: string, action: Reservati
 }
 
 export async function GET(req: Request) {
+  if (!isCafeV1Enabled()) return cafeDisabled();
   const auth = await authenticateCafeRequest(req);
   if (!auth.ok) {
     return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
@@ -77,6 +83,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  if (!isCafeV1Enabled()) return cafeDisabled();
   const auth = await authenticateCafeRequest(req);
   if (!auth.ok) {
     return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
