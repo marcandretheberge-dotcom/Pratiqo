@@ -56,7 +56,7 @@ END
 $hostrestore$;
 
 -- First reservation, exact replay, cancellation, stale retry.
-DO $
+DO $reservationtest$
 DECLARE
   j jsonb;
 BEGIN
@@ -99,7 +99,8 @@ BEGIN
   IF j->>'ok' <> 'false' OR j->>'code' <> 'version_conflict' THEN
     RAISE EXCEPTION 'stale retry resurrected state: %', j;
   END IF;
-END $$;
+END
+$reservationtest$;
 
 -- Three-upcoming-session quota.
 SELECT public.cafe_admin_create_draft_server('00000000-0000-4000-8000-000000000001','quota-1','Quota 1','it',NULL,NULL,clock_timestamp()+interval '3 days',45,12,'00000000-0000-4000-8000-000000000002');
