@@ -6,7 +6,8 @@ import styles from "@/app/cafe/cafe.module.css";
 import { cafeCopy, type CafeLocale } from "@/lib/cafe/copy";
 import {
   CafeDailyJoinGeneration,
-  destroyCafeDailyCall,
+  clearCafeDailyCallSlot,
+  releaseOwnedCafeDailyCall,
   type CafeDailyCallHandle,
 } from "@/lib/cafe/dailyRoomSession";
 import { requestCafeRoomJoin } from "@/lib/cafe/roomClient";
@@ -72,13 +73,25 @@ export function CafeConversationRoom({
     return () => {
       joinGen.invalidate();
       tokenRef.current = null;
-      callRef.current = destroyCafeDailyCall(callRef.current);
+      clearCafeDailyCallSlot(callRef);
     };
   }, []);
 
-  function cleanupDailyCall() {
+  /** Leave / retry / new join — clear the published slot intentionally. */
+  function clearPublishedDailyCall() {
     tokenRef.current = null;
-    callRef.current = destroyCafeDailyCall(callRef.current);
+    clearCafeDailyCallSlot(callRef);
+  }
+
+  /**
+   * Attempt-scoped teardown: destroy only this attempt's handle.
+   * Never clears callRef when a newer attempt already published a different call.
+   */
+  function releaseAttemptDailyCall(owned: CafeDailyCallHandle | null) {
+    if (callRef.current === owned) {
+      tokenRef.current = null;
+    }
+    releaseOwnedCafeDailyCall(callRef, owned);
   }
 
   async function enterLiveRoom(attempt: number) {
@@ -102,23 +115,26 @@ export function CafeConversationRoom({
       return;
     }
     if (!joined.ok) {
-      cleanupDailyCall();
-      dispatch({ type: "join_failed", code: joined.code });
+      if (joinGenRef.current.isCurrent(attempt)) {
+        clearPublishedDailyCall();
+        dispatch({ type: "join_failed", code: joined.code });
+      }
       return;
     }
 
+    let owned: CafeDailyCallHandle | null = null;
     try {
       const host = frameHostRef.current;
       if (!host) {
-        cleanupDailyCall();
         if (joinGenRef.current.isCurrent(attempt)) {
+          clearPublishedDailyCall();
           dispatch({ type: "join_failed", code: "provider_unavailable" });
         }
         return;
       }
 
-      // Destroy any leftover frame before creating a new one (retry path).
-      cleanupDailyCall();
+      // Current attempt may clear leftovers before creating its own frame.
+      clearPublishedDailyCall();
       if (!joinGenRef.current.isCurrent(attempt)) return;
 
       const DailyIframe = (await import("@daily-co/daily-js")).default;
@@ -136,17 +152,18 @@ export function CafeConversationRoom({
         },
       }) as CafeDailyCallHandle;
 
+      owned = call;
       callRef.current = call;
       tokenRef.current = joined.token;
       call.on?.("left-meeting", () => {
         if (!joinGenRef.current.isCurrent(attempt)) return;
-        cleanupDailyCall();
+        releaseAttemptDailyCall(owned);
         dispatch({ type: "leave" });
       });
       call.on?.("error", () => {
         if (!joinGenRef.current.isCurrent(attempt)) return;
         joinGenRef.current.invalidate();
-        cleanupDailyCall();
+        releaseAttemptDailyCall(owned);
         dispatch({ type: "join_failed", code: "provider_unavailable" });
       });
 
@@ -159,13 +176,14 @@ export function CafeConversationRoom({
       });
 
       if (!joinGenRef.current.isCurrent(attempt)) {
-        // Left/unmounted during join — tear down the late connection.
-        cleanupDailyCall();
+        // Left/unmounted during join — tear down only this attempt's late connection.
+        releaseAttemptDailyCall(owned);
         return;
       }
       dispatch({ type: "join_succeeded" });
     } catch {
-      cleanupDailyCall();
+      // Obsolete attempts must not destroy a newer call sitting in callRef.
+      releaseAttemptDailyCall(owned);
       if (joinGenRef.current.isCurrent(attempt)) {
         joinGenRef.current.invalidate();
         dispatch({ type: "join_failed", code: "provider_unavailable" });
@@ -175,7 +193,7 @@ export function CafeConversationRoom({
 
   async function onJoin() {
     // Invalidate any previous in-flight join before starting a new attempt.
-    cleanupDailyCall();
+    clearPublishedDailyCall();
     const attempt = joinGenRef.current.beginAttempt();
     dispatch({ type: "request_join" });
 
@@ -195,13 +213,13 @@ export function CafeConversationRoom({
 
   function onLeave() {
     joinGenRef.current.invalidate();
-    cleanupDailyCall();
+    clearPublishedDailyCall();
     dispatch({ type: "leave" });
   }
 
   function onRetry() {
     joinGenRef.current.invalidate();
-    cleanupDailyCall();
+    clearPublishedDailyCall();
     dispatch({ type: "start_media_prep" });
   }
 
