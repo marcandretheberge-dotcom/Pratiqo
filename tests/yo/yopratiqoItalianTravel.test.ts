@@ -1,0 +1,46 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { ITALIAN_WORLDS } from "../../lib/yo/italian/worlds";
+import { personalizedItalianUnits as units, personalizedItalianCatalog as catalog } from "../../lib/yo/personalized/courseData";
+import { emptyCourseProgress, recordCourseActivity, recordCourseAssessment } from "../../lib/yo/italian/course/courseProgress";
+import { buildCourseJourney } from "../../lib/yo/courseJourney";
+import { CITY_COORDINATES, GEOGRAPHIC_ROADS, WORLD_BOUNDS, project, parseTravelMemory, scooterEarned } from "../../lib/yo/italian/travel/journey";
+import { roadPoint } from "../../components/yo/journey/map/roadGeometry";
+
+assert.equal(ITALIAN_WORLDS.flatMap(w => w.cities).length, units.length);
+for (const [worldIndex, world] of ITALIAN_WORLDS.entries()) for (const [index, city] of world.cities.entries()) {
+  assert.ok(units.some(u => u.id === city.unitId), "No invented unit");
+  assert.deepEqual(roadPoint(index, GEOGRAPHIC_ROADS[worldIndex]), project(CITY_COORDINATES[city.unitId], WORLD_BOUNDS[worldIndex]));
+  assert.ok(CITY_COORDINATES[city.unitId][0] >= 7 && CITY_COORDINATES[city.unitId][0] <= 15);
+}
+const florence = units.find(u => u.id === "u06")!;
+let progress = emptyCourseProgress();
+assert.equal(scooterEarned(florence, progress), false);
+for (const unit of units.slice(0, 5)) progress = recordCourseAssessment(progress, catalog, unit.quiz.id, unit.quiz.questions.length, unit.quiz.questions.length, false);
+const before = JSON.stringify(buildCourseJourney(catalog, progress));
+assert.equal(buildCourseJourney(catalog, progress).steps.find(s => s.unit.id === "u06")?.unlocked, true);
+assert.equal(buildCourseJourney(catalog, progress).steps.find(s => s.unit.id === "u11")?.unlocked, false);
+const activities = florence.lessons.slice(0, 2).flatMap(l => l.activities);
+for (const activity of activities.slice(0, -1)) progress = recordCourseActivity(progress, catalog, activity.id, true, false);
+assert.equal(scooterEarned(florence, progress), false, "Every midpoint activity is needed");
+progress = recordCourseActivity(progress, catalog, activities.at(-1)!.id, true, false);
+assert.equal(scooterEarned(florence, progress), true);
+const after = buildCourseJourney(catalog, progress);
+assert.equal(after.steps.find(s => s.unit.id === "u07")?.unlocked, false, "Cosmetic midpoint does not grant next-city access");
+const memory = parseTravelMemory(JSON.stringify({ version: 1, selected: "u05", equipped: true, arrived: true, positions: { "daily-life": .4 } }));
+assert.equal(memory.equipped, true); assert.equal(memory.positions["daily-life"], .4);
+assert.deepEqual(parseTravelMemory(JSON.stringify(memory)), memory);
+assert.equal(parseTravelMemory('{"version":1,"selected":"unknown","positions":{"daily-life":999}}').selected, "");
+assert.equal(parseTravelMemory('{"version":1,"positions":{"daily-life":999}}').positions["daily-life"], 3);
+assert.equal(parseTravelMemory("{").equipped, false);
+assert.equal(scooterEarned(units[0], progress), false);
+assert.ok(before.includes('"u06"'));
+const earned = recordCourseAssessment(progress, catalog, florence.quiz.id, florence.quiz.questions.length, florence.quiz.questions.length, false);
+assert.equal(buildCourseJourney(catalog, earned).steps.find(s => s.unit.id === "u07")?.unlocked, true, "Only the real final opens Siena");
+const source = readFileSync("components/yo/italian/travel/ItalianTravelNavigator.tsx", "utf8");
+assert.ok(!/recordAssessment|recordActivity|markProduction|fetch\(/.test(source), "Map never writes learning evidence or a backend");
+assert.ok(source.includes("openCurrentMission"));
+const shell = readFileSync("tools/italian-travel-review/main.tsx", "utf8");
+assert.ok(shell.includes('yo.review.travel.course.v1'));
+assert.ok(shell.includes('italian-travel-review-only'));
+console.log("PASS: geography, real course IDs/order, checkpoint boundary, cosmetic persistence, unchanged unlock rules, preview isolation");
