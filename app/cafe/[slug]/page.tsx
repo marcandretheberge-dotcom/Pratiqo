@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { CafeSessionDetails } from "./CafeSessionDetails";
 
 export const metadata: Metadata = {
@@ -15,5 +16,9 @@ export default async function CafeSessionPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  return <CafeSessionDetails slug={slug} />;
+  return (
+    <Suspense fallback={null}>
+      <CafeSessionDetails slug={slug} />
+    </Suspense>
+  );
 }

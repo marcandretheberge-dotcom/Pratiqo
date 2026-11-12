@@ -1,36 +1,47 @@
 import type { NextConfig } from "next";
+import { cafeLocalSandboxConnectSrcExtra } from "./lib/security/cafeLocalSandboxCsp";
 import { localDiscoveryRedirects } from "./lib/seo/localDiscoveryRedirects";
 
-/** Enforcing CSP — Phase A hardening; unsafe-inline kept where required; no eval in script/default. */
-const cspValue = [
-  // Fallback for any directive not explicitly listed below
-  "default-src 'self' 'unsafe-inline' https://*.supabase.co https://*.stripe.com https://*.googleapis.com https://*.gstatic.com data: blob:",
-  // Network requests: must list every origin explicitly — default-src does NOT apply here
-  "connect-src 'self'"
+/** Base connect-src (production-safe). Optional local sandbox origin appended only via CAFE_LOCAL_SUPABASE_CONNECT_ORIGIN. */
+function buildConnectSrcDirective(env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env): string {
+  return (
+    "connect-src 'self'"
     + " https://*.supabase.co wss://*.supabase.co"
     + " https://*.stripe.com https://api.stripe.com"
     + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com"
-    + " https://us.i.posthog.com",
-  // Script sources (explicit so Google Maps JS API loads without relying on default-src)
-  "script-src 'self' 'unsafe-inline'"
-    + " https://maps.googleapis.com https://maps.gstatic.com"
-    + " https://*.supabase.co https://*.stripe.com https://js.stripe.com",
-  // Stylesheets (Google Maps injects inline styles; unsafe-inline is required)
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  // Images: tiles served from maps.gstatic.com + maps.googleapis.com + data URIs
-  "img-src 'self' data: blob: https: https://maps.googleapis.com https://maps.gstatic.com",
-  // Fonts: Google Maps icon fonts live on fonts.gstatic.com
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com"
-    + " https://www.youtube.com https://www.youtube-nocookie.com"
-    + " https://player.vimeo.com",
-  // Phase A — additive hardening (no domain narrowing)
-  "object-src 'none'",
-  "base-uri 'self'",
-  "frame-ancestors 'self'",
-  "manifest-src 'self'",
-  "form-action 'self' https://*.stripe.com",
-].join("; ");
+    + " https://us.i.posthog.com"
+    + cafeLocalSandboxConnectSrcExtra(env)
+  );
+}
+
+/** Enforcing CSP — Phase A hardening; unsafe-inline kept where required; no eval in script/default. */
+function buildCspValue(env: NodeJS.ProcessEnv = process.env): string {
+  return [
+    // Fallback for any directive not explicitly listed below
+    "default-src 'self' 'unsafe-inline' https://*.supabase.co https://*.stripe.com https://*.googleapis.com https://*.gstatic.com data: blob:",
+    // Network requests: must list every origin explicitly — default-src does NOT apply here
+    buildConnectSrcDirective(env),
+    // Script sources (explicit so Google Maps JS API loads without relying on default-src)
+    "script-src 'self' 'unsafe-inline'"
+      + " https://maps.googleapis.com https://maps.gstatic.com"
+      + " https://*.supabase.co https://*.stripe.com https://js.stripe.com",
+    // Stylesheets (Google Maps injects inline styles; unsafe-inline is required)
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    // Images: tiles served from maps.gstatic.com + maps.googleapis.com + data URIs
+    "img-src 'self' data: blob: https: https://maps.googleapis.com https://maps.gstatic.com",
+    // Fonts: Google Maps icon fonts live on fonts.gstatic.com
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com"
+      + " https://www.youtube.com https://www.youtube-nocookie.com"
+      + " https://player.vimeo.com",
+    // Phase A — additive hardening (no domain narrowing)
+    "object-src 'none'",
+    "base-uri 'self'",
+    "frame-ancestors 'self'",
+    "manifest-src 'self'",
+    "form-action 'self' https://*.stripe.com",
+  ].join("; ");
+}
 
 /**
  * Stricter candidate policy for Report-Only only (ENABLE_CSP_REPORT_ONLY=1).
@@ -38,28 +49,26 @@ const cspValue = [
  * — script-src matches enforcing except eval omitted (JSON-LD keeps unsafe-inline).
  * — No report-uri/report-to until a collector endpoint exists.
  */
-const cspReportOnlyValue = [
-  "default-src 'self'",
-  "connect-src 'self'"
-    + " https://*.supabase.co wss://*.supabase.co"
-    + " https://*.stripe.com https://api.stripe.com"
-    + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com"
-    + " https://us.i.posthog.com",
-  "script-src 'self' 'unsafe-inline'"
-    + " https://maps.googleapis.com https://maps.gstatic.com"
-    + " https://*.supabase.co https://*.stripe.com https://js.stripe.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https: https://maps.googleapis.com https://maps.gstatic.com",
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com"
-    + " https://www.youtube.com https://www.youtube-nocookie.com"
-    + " https://player.vimeo.com",
-  "object-src 'none'",
-  "base-uri 'self'",
-  "frame-ancestors 'self'",
-  "manifest-src 'self'",
-  "form-action 'self' https://*.stripe.com",
-].join("; ");
+function buildCspReportOnlyValue(env: NodeJS.ProcessEnv = process.env): string {
+  return [
+    "default-src 'self'",
+    buildConnectSrcDirective(env),
+    "script-src 'self' 'unsafe-inline'"
+      + " https://maps.googleapis.com https://maps.gstatic.com"
+      + " https://*.supabase.co https://*.stripe.com https://js.stripe.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https: https://maps.googleapis.com https://maps.gstatic.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com"
+      + " https://www.youtube.com https://www.youtube-nocookie.com"
+      + " https://player.vimeo.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "frame-ancestors 'self'",
+    "manifest-src 'self'",
+    "form-action 'self' https://*.stripe.com",
+  ].join("; ");
+}
 
 /** Next.js embeds matched route headers at build time — set ENABLE_CSP_REPORT_ONLY=1 before `next build` for Report-Only in production. */
 function isCspReportOnlyEnabled(): boolean {
@@ -67,6 +76,9 @@ function isCspReportOnlyEnabled(): boolean {
 }
 
 const nextConfig: NextConfig = {
+  // Next.js 16 blocks cross-origin access to /_next/* from 127.0.0.1 when the
+  // app is served as localhost (and the reverse). Local Café sandbox QA uses both.
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
   experimental: {
     forceSwcTransforms: true,
     optimizePackageImports: ["lucide-react"],
@@ -166,7 +178,7 @@ const nextConfig: NextConfig = {
     ].join(", ");
 
     const routeHeaders: { key: string; value: string }[] = [
-      { key: "Content-Security-Policy", value: cspValue },
+      { key: "Content-Security-Policy", value: buildCspValue() },
       { key: "X-Frame-Options", value: "SAMEORIGIN" },
       { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
       // Defense-in-depth: stop the browser from MIME-sniffing user-uploaded
@@ -181,7 +193,7 @@ const nextConfig: NextConfig = {
     if (isCspReportOnlyEnabled()) {
       routeHeaders.push({
         key: "Content-Security-Policy-Report-Only",
-        value: cspReportOnlyValue,
+        value: buildCspReportOnlyValue(),
       });
     }
 
