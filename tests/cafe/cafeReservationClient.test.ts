@@ -138,6 +138,70 @@ async function assertCancelThenRereserveUsesStoredVersion() {
   }
 }
 
+async function assertIncompletePostReconcilesViaGet() {
+  const slug = "fr-introductions-a1";
+  const requestId = "55555555-5555-4555-8555-555555555555";
+
+  async function runCase(
+    postBody: Record<string, unknown>,
+    getRows: unknown[],
+    expectConfirmed: boolean,
+  ) {
+    let getCount = 0;
+    const result = await attemptCafeReserve({
+      slug,
+      expectedVersion: 0,
+      requestId,
+      accessToken: "token",
+      fetchImpl: async (_input, init) => {
+        if (init?.method === "POST") {
+          return new Response(JSON.stringify(postBody), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        getCount += 1;
+        return new Response(JSON.stringify({ ok: true, reservations: getRows }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      },
+    });
+    assert.equal(getCount, 1, `expected GET reconcile for ${JSON.stringify(postBody)}`);
+    if (expectConfirmed) {
+      assert.equal(result.ok, true);
+      if (result.ok) {
+        assert.equal(result.seat.kind, "confirmed");
+        assert.equal(result.reuseRequestId, false);
+        if (result.seat.kind === "confirmed") assert.equal(result.seat.version, 1);
+      }
+    } else {
+      assert.equal(result.ok, false);
+      if (!result.ok) {
+        assert.equal(result.code, "incomplete_response");
+        assert.equal(result.seat.kind, "ready");
+        // Must not surface Place confirmée without effective_status === "confirmed".
+        assert.notEqual(
+          result.seat.kind === "ready" ? result.seat.effectiveStatus : null,
+          "confirmed",
+        );
+      }
+    }
+  }
+
+  // ok: true but status absent → GET; Place confirmée only if effective_status confirmed.
+  await runCase({ ok: true, version: 1 }, [RPC_CONFIRMED_ROW], true);
+  await runCase({ ok: true, version: 1 }, [RPC_CANCELLED_RESERVATION_ROW], false);
+
+  // ok: true but status not confirmed → GET.
+  await runCase({ ok: true, status: "cancelled", version: 2 }, [RPC_CANCELLED_RESERVATION_ROW], false);
+  await runCase({ ok: true, status: "pending", version: 1 }, [RPC_CONFIRMED_ROW], true);
+
+  // ok: true but version absent → GET.
+  await runCase({ ok: true, status: "confirmed" }, [RPC_CONFIRMED_ROW], true);
+  await runCase({ ok: true, status: "confirmed" }, [], false);
+}
+
 async function assertLostPostReconcilesAndReusesRequestId() {
   const requestId = "33333333-3333-4333-8333-333333333333";
   let postCount = 0;
@@ -252,8 +316,11 @@ async function assertLostPostReconcilesAndReusesRequestId() {
 void (async () => {
   await assertFetchParsesRpcGetShape();
   await assertCancelThenRereserveUsesStoredVersion();
+  await assertIncompletePostReconcilesViaGet();
   await assertLostPostReconcilesAndReusesRequestId();
-  console.log("[cafe:reservation-client] RPC GET shapes, cancel/re-reserve, lost POST contracts passed");
+  console.log(
+    "[cafe:reservation-client] RPC GET shapes, cancel/re-reserve, incomplete POST, lost POST contracts passed",
+  );
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

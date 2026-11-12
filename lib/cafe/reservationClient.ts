@@ -285,10 +285,20 @@ export async function postCafeReservation(input: {
   return {
     ok: true,
     code: body.code,
-    version: body.version,
-    status: body.status ?? "confirmed",
+    version: typeof body.version === "number" ? body.version : undefined,
+    status: typeof body.status === "string" ? body.status : undefined,
     replay: body.replay === true,
   };
+}
+
+/** Complete confirmed POST: explicit status + version — never invent either. */
+function isCompleteConfirmedMutation(
+  posted: Extract<CafeReservationMutationResult, { ok: true }>,
+): posted is Extract<CafeReservationMutationResult, { ok: true }> & {
+  status: "confirmed";
+  version: number;
+} {
+  return posted.status === "confirmed" && typeof posted.version === "number";
 }
 
 export type CafeReserveAttemptResult =
@@ -331,13 +341,57 @@ export async function attemptCafeReserve(input: {
   });
 
   if (posted.ok) {
-    const version =
-      typeof posted.version === "number" ? posted.version : input.expectedVersion + 1;
+    // Never invent status/version. Incomplete or non-confirmed POST → GET reconcile.
+    // "Place confirmée" only after effective_status === "confirmed" (or a complete confirmed POST).
+    if (isCompleteConfirmedMutation(posted)) {
+      return {
+        ok: true,
+        seat: {
+          kind: "confirmed",
+          version: posted.version,
+          expectedVersion: posted.version,
+        },
+        reuseRequestId: false,
+        replay: posted.replay,
+      };
+    }
+
+    const reconciled = await reconcileCafeSeatState({
+      slug: input.slug,
+      accessToken: input.accessToken,
+      fetchImpl: input.fetchImpl,
+    });
+
+    if (!reconciled.ok) {
+      return {
+        ok: false,
+        code: "incomplete_response",
+        seat: {
+          kind: "ready",
+          expectedVersion: input.expectedVersion,
+          reservationStatus: null,
+          sessionStatus: null,
+          effectiveStatus: null,
+        },
+        // POST acknowledged but outcome unclear — keep requestId for idempotent retry.
+        reuseRequestId: true,
+      };
+    }
+
+    if (reconciled.seat.kind === "confirmed") {
+      return {
+        ok: true,
+        seat: reconciled.seat,
+        reuseRequestId: false,
+        replay: posted.replay,
+      };
+    }
+
     return {
-      ok: true,
-      seat: { kind: "confirmed", version, expectedVersion: version },
+      ok: false,
+      code: "incomplete_response",
+      seat: reconciled.seat,
       reuseRequestId: false,
-      replay: posted.replay,
     };
   }
 
@@ -368,7 +422,7 @@ export async function attemptCafeReserve(input: {
   if (!reconciled.ok) {
     return {
       ok: false,
-      code: posted.uncertain ? posted.code : posted.code,
+      code: posted.code,
       seat: {
         kind: "ready",
         expectedVersion: input.expectedVersion,
