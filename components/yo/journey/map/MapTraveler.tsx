@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { animate, motion, useMotionValue, useMotionValueEvent, useReducedMotion, useTransform } from "motion/react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { animate, motion, useMotionValue, useMotionValueEvent, useTransform } from "motion/react";
+import { useMapReducedMotion } from "./useMapReducedMotion";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { YoLocale } from "@/lib/yo/types";
 import { approvedRoad, roadPoint, type MapRoad } from "./roadGeometry";
@@ -9,14 +10,15 @@ import { MapYoppo } from "./MapYoppo";
 import { travelerStyles } from "./travelerStyles";
 
 /** Cosmetic position only. Retargeting never writes the learner's progress. */
-export function MapTraveler({ index, locale, active = true, road = approvedRoad, initialPosition, onPosition }: {
+export function MapTraveler({ index, locale, active = true, road = approvedRoad, initialPosition, onPosition, accessory, pose = "walking" }: {
   index: number; locale: YoLocale; active?: boolean; road?: MapRoad; initialPosition?: number;
   onPosition?: (position: number) => void;
+  accessory?: ReactNode; pose?: "walking" | "riding";
 }) {
   const position = useMotionValue(Math.max(0, initialPosition ?? index));
   const left = useTransform(position, value => `${roadPoint(value, road)[0] / road.width * 100}%`);
   const top = useTransform(position, value => `${roadPoint(value, road)[1] / road.height * 100}%`);
-  const reduce = useReducedMotion();
+  const reduce = useMapReducedMotion();
   const [animating, setAnimating] = useState(false);
   const walking = animating && active && !reduce;
   const [facing, setFacing] = useState<"left" | "right">("right");
@@ -48,14 +50,14 @@ export function MapTraveler({ index, locale, active = true, road = approvedRoad,
 
   if (index < 0) return null;
   const label = {
-    fr: walking ? "Yoppo rejoint la ville choisie" : "Yoppo t'attend",
-    en: walking ? "Yoppo is walking to your city" : "Yoppo awaits",
-    es: walking ? "Yoppo camina hacia tu ciudad" : "Yoppo te espera",
+    fr: walking ? pose === "riding" ? "Yoppo roule vers la ville choisie" : "Yoppo rejoint la ville choisie" : "Yoppo t'attend",
+    en: walking ? pose === "riding" ? "Yoppo is riding to your city" : "Yoppo is walking to your city" : "Yoppo awaits",
+    es: walking ? pose === "riding" ? "Yoppo va en scooter hacia tu ciudad" : "Yoppo camina hacia tu ciudad" : "Yoppo te espera",
   }[locale];
   return <motion.div data-yoppo-traveler data-destination-index={index} data-motion={walking ? "walking" : "idle"}
-    data-facing={facing} className="yo-map-companion" initial={false} style={{ left, top }} role="img" aria-label={label}>
+    data-facing={facing} data-pose={pose} className="yo-map-companion" initial={false} style={{ left, top }} role="img" aria-label={label}>
     <style>{travelerStyles}</style>
-    <MapYoppo/>
+    <MapYoppo/>{accessory}
     <span className="yo-map-avatar-fallback" aria-hidden><CompanionAvatar visualId="travel" state="map" locale={locale} size="sm" compact/></span>
   </motion.div>;
 }

@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "../../learning/LessonLink";
-import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState, type ComponentType } from "react";
+import type { CourseProgress } from "@/lib/yo/italian/course/courseProgress";
+import type { LearningJourney } from "@/lib/yo/learningJourney";
 import { motion, useReducedMotion } from "motion/react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowRight, BookOpen, MoreHorizontal, Printer, Stamp, X } from "lucide-react";
@@ -39,10 +41,11 @@ import { guidedCopy, primary, secondary } from "./copy";
 import { LanguageExplanation } from "../../learning/LanguageExplanation";
 
 const EMPTY_VISUALS: Record<string, VisualWord[]> = {};
-type Props = { profile?: LearningProfile; onConfigure?: () => void; progressKey?: string; wordBank?: WordBankEntry[]; visualWords?: Record<string, VisualWord[]>; unit: CourseUnit; catalog: CourseCatalog; locale: YoLocale; audioPaths: Record<string, string>; initialLessonId?: string; initialActivityId?: string; resumeMission?: boolean };
+export type ItalianNavigatorContext = { journey: LearningJourney; progress: CourseProgress; active: boolean; openCurrentMission: () => void; openTrivia: () => void };
+type Props = { Navigator?: ComponentType<ItalianNavigatorContext>; profile?: LearningProfile; onConfigure?: () => void; progressKey?: string; wordBank?: WordBankEntry[]; visualWords?: Record<string, VisualWord[]>; unit: CourseUnit; catalog: CourseCatalog; locale: YoLocale; audioPaths: Record<string, string>; initialLessonId?: string; initialActivityId?: string; resumeMission?: boolean };
 
 /** Reference pilot. Learning evidence stays in the existing store; this store holds UI drafts only. */
-export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initialLessonId, initialActivityId, resumeMission = false, profile, onConfigure, progressKey, wordBank, visualWords = EMPTY_VISUALS }: Props) {
+export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initialLessonId, initialActivityId, resumeMission = false, profile, onConfigure, progressKey, wordBank, visualWords = EMPTY_VISUALS, Navigator }: Props) {
   const reduceMotion = Boolean(useReducedMotion());
   const city = italianWorldForUnit(unit.id)?.cities.find(item => item.unitId === unit.id)?.name;
   const stamp = unit.id === "u01" ? guidedCopy[locale].stamp
@@ -228,14 +231,15 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     </div></header>
     <main className="yo-course-main">
       {(!learning.storageAvailable || !storageAvailable) ? <p role="status" className="mb-5 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{c.unsaved}</p> : null}
-      <ItalianWorldNavigator journey={journey} locale={locale} currentUnitId={unit.id}
+      {Navigator ? <Navigator journey={journey} progress={progress} active={ui.view === "map" && overlay === null && !checkpointOpen} openCurrentMission={playFromMap}
+        openTrivia={() => { finishTour(); stopLessonAudio(); setCheckpointOpen(true); }}/> : <ItalianWorldNavigator journey={journey} locale={locale} currentUnitId={unit.id}
         hrefForUnit={id => italianMissionHref(locale,id)} canReview={placedReview} startAtCurrentCity={resumeMission}
         onPlayCurrentCity={playFromMap} guideUnitId={profile?.startUnitId} motionActive={ui.view === "map"}
         currentActionLabel={passed ? c.practice : ui.resumeView === "challenge" ? c.challenge : ui.resumeView === "mission" ? c.resume : next < 0 ? c.begin : c.start}
         currentMissionTitle={passed ? unit.lessons[0]?.title[locale] : ui.resumeView === "challenge" || next < 0 ? c.challenge : unit.lessons[steps[ui.resumeView === "mission" ? ui.step : next].lesson]?.title[locale]}
         missionHint={passed ? c.reviewLabel : ui.resumeView === "challenge" || next < 0 ? c.challenge : next >= 0 ? `${c.mission} ${steps[ui.resumeView === "mission" ? ui.step : next].lesson + 1}` : c.start}
         triviaAvailable={canPlayItalianTrivia(unit, progress)} onOpenTrivia={() => { finishTour(); stopLessonAudio(); setCheckpointOpen(true); }}
-        showGuide={tour !== null && !canPlayItalianTrivia(unit, progress)} onDismissGuide={finishTour}/>
+        showGuide={tour !== null && !canPlayItalianTrivia(unit, progress)} onDismissGuide={finishTour}/>}
     </main>
     <Dialog.Root open={ui.view !== "map"} onOpenChange={open => { if (!open) leave(); }}>
       <Dialog.Portal>
