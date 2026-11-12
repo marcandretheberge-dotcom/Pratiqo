@@ -419,6 +419,133 @@
   color: rgba(245, 236, 223, 0.68);
 }
 
+.invitePreview {
+  width: min(100%, 820px);
+  margin: 0 auto;
+  padding: 28px 20px max(40px, env(safe-area-inset-bottom));
+  display: grid;
+  gap: 22px;
+}
+
+.inviteBanner {
+  border: 1px dashed rgba(245, 236, 223, 0.28);
+  border-radius: 18px;
+  padding: 14px 16px;
+  color: rgba(245, 236, 223, 0.78);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.inviteCard {
+  border: 1px solid rgba(245, 236, 223, 0.12);
+  border-radius: 24px;
+  padding: 22px 20px;
+  background: rgba(255, 248, 238, 0.03);
+}
+
+.inviteEyebrow {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 236, 223, 0.55);
+}
+
+.inviteTitle {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  font-weight: 600;
+  color: #f7efe4;
+}
+
+.inviteBody {
+  margin: 10px 0 0;
+  color: rgba(245, 236, 223, 0.78);
+  line-height: 1.55;
+  font-size: 15px;
+}
+
+.inviteMeta {
+  margin: 10px 0 18px;
+  color: rgba(245, 236, 223, 0.58);
+  font-size: 13px;
+}
+
+.inviteDetails {
+  margin: 18px 0 0;
+  display: grid;
+  gap: 12px;
+}
+
+.inviteBox {
+  margin-top: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(242, 225, 204, 0.12);
+  background: rgba(17, 13, 11, 0.28);
+  padding: 16px;
+}
+
+.inviteList {
+  margin: 8px 0 0;
+  padding-left: 1.1rem;
+  color: rgba(245, 236, 223, 0.82);
+  line-height: 1.55;
+  font-size: 14px;
+}
+
+.inviteActions {
+  margin-top: 20px;
+  display: grid;
+  gap: 10px;
+}
+
+.secondaryButton {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 236, 223, 0.22);
+  color: rgba(245, 236, 223, 0.86);
+  text-decoration: none;
+  font-weight: 650;
+}
+
+.yoContextNote {
+  margin-top: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(242, 225, 204, 0.14);
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(245, 236, 223, 0.76);
+}
+
+.yoContextNote p {
+  margin: 0 0 8px;
+}
+
+.yoReturnRow {
+  margin: 0;
+}
+
+.yoReturnLink {
+  color: #f0cfa8;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+a.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 @media (min-width: 680px) {
   .choiceGrid {
     grid-template-columns: 1fr 1fr;
@@ -430,5 +557,9 @@
 
   .sessionPage {
     padding-inline: 28px;
+  }
+
+  .inviteActions {
+    grid-template-columns: 1.2fr 1fr;
   }
 }

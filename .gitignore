@@ -72,3 +72,11 @@ backups/
 
 # Backend-free local course QA output
 .qa-guided/
+
+.cafe-live-handoff.json
+.cafe-live-browser-report.json
+
+
+# Local Cafe browser QA artifacts
+artifacts/cafe-live-browser/
+

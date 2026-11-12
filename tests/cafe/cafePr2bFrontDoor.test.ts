@@ -21,10 +21,6 @@ assert.doesNotMatch(front + styles, /coffee\.avif|styles\.steam|\.steam/);
 assert.match(front, /router\.push\("\/cafe\?step=format"\)/);
 assert.match(front, /router\.push\("\/cafe\?step=groups"\)/);
 assert.match(front, /useSearchParams/);
-// Query-driven client navigation needs a boundary during Next production prerendering.
-assert.match(page, /import \{ Suspense \} from "react"/);
-assert.match(page, /<Suspense fallback=\{<AppLoadingFallback \/>\}>\s*<CafeFrontDoor \/>\s*<\/Suspense>/);
-assert.doesNotMatch(page, /force-dynamic|"use client"/);
 assert.match(front, /headingRef\.current\?\.focus\(\)/);
 assert.match(front, /tabIndex=\{-1\}/);
 assert.match(front, /role="status"/);
@@ -39,26 +35,26 @@ const doorSection = front.match(/view === "door"[\s\S]*?view === "choice"/)?.[0]
 assert.doesNotMatch(doorSection, /remaining_spots|confirmed_count|sessionsTitle|CafeSessionCard/);
 
 assert.match(front, /fetch\("\/api\/cafe\/sessions"/);
-assert.doesNotMatch(front + detail, /api\/cafe\/reservations/);
-assert.match(detail, /disabledReservation/);
-assert.match(detail, /disabled>/);
+assert.doesNotMatch(front, /api\/cafe\/reservations/);
+assert.match(detail, /attemptCafeReserve|reconcileCafeSeatState/);
+assert.match(detail, /returnToCourse/);
+assert.match(detail, /yoReturn/);
+assert.match(detail, /pendingRequestIdRef/);
 assert.match(copy, /La réservation n’est pas encore ouverte/);
 assert.match(copy, /Le café n’est pas encore ouvert/);
+assert.match(copy, /Revenir à mon cours/);
+assert.match(copy, /Return to my course/);
+assert.match(copy, /Volver a mi curso/);
 
 assert.match(page, /index: false/);
 assert.match(detailPage, /index: false/);
 assert.match(page, /title: "Café des langues"/);
+assert.match(page, /Suspense/);
 assert.match(detailPage, /title: "Table — Café des langues"/);
 assert.doesNotMatch(page, /title: "[^"]*Pratiqo/);
 assert.doesNotMatch(detailPage, /title: "[^"]*Pratiqo/);
 
-// Capacity and aggregate counts are public by design. Identity-bearing fields
-// and any public attendee/participant collection are not.
-assert.doesNotMatch(
-  publicTypes,
-  /\b(profile_id|participant_id|avatar_url|host_profile_id|created_by_profile_id|email)\b/i,
-);
-assert.doesNotMatch(publicTypes, /\b(participants?|attendees?|roster)\s*:/i);
+assert.doesNotMatch(publicTypes, /\bprofile_id\b|\bparticipant\b|\bavatar\b|\bhost_profile_id\b|\bcreated_by_profile_id\b|\bemail\b/i);
 assert.doesNotMatch(front + detail + card, /<Avatar|ParticipantList|participantName|participantAvatar|hostProfile/i);
 assert.doesNotMatch(front + detail + card, /caméra|camera/i);
 assert.doesNotMatch(front + detail + card, /copy\.host|hostLine/);

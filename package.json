@@ -6,6 +6,7 @@
     "test:cafe-architecture": "tsx tests/cafe/cafeArchitectureContract.test.ts",
     "test:cafe-pr2a": "tsx tests/cafe/cafePr2aContract.test.ts",
     "test:cafe-pr2b": "tsx tests/cafe/cafePr2bFrontDoor.test.ts",
+    "test:cafe-invitation": "tsx tests/cafe/cafePracticeInvitation.test.ts && tsx tests/cafe/cafeReservationClient.test.ts && tsx tests/cafe/cafeLocalSandboxCsp.test.ts",
     "test:yo-continuity": "node --import tsx tests/yo/yopratiqoFrenchResponsiveDraft.test.tsx && node --import tsx tests/yo/yopratiqoItalianYoppo.test.ts && node --import tsx tests/yo/yopratiqoCourseBreak.test.tsx && node --import tsx tests/yo/yopratiqoSharedCompanionAudio.test.tsx",
     "test:yo-adventure": "node --import tsx tests/yo/yopratiqoAdventure.test.tsx",
     "test:yo-journey": "node --import tsx tests/yo/yopratiqoCourseJourney.test.ts && node --import tsx tests/yo/yopratiqoAllLanguageJourneys.test.ts && npm run test:yo-adventure",
@@ -118,6 +119,7 @@
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "next": "16.2.9",
+    "playwright": "^1.57.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.75.0",
@@ -136,7 +138,9 @@
     "Edge >= 90"
   ],
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.10",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/react": "16.3.3",
     "@types/google.maps": "^3.64.0",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -144,13 +148,11 @@
     "@types/ws": "8.18.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "jsdom": "26.1.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5",
-    "@electric-sql/pglite": "0.5.10",
-    "jsdom": "26.1.0",
-    "@testing-library/react": "16.3.3",
     "ws": "8.22.0"
   }
 }
