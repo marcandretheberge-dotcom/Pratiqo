@@ -8,10 +8,9 @@ import type { YoLocale } from "@/lib/yo/types";
 import { useItalianCourseProgress } from "../italian/course/useItalianCourseProgress";
 import { getDueActivityIds } from "@/lib/yo/italian/course/courseProgress";
 import { t } from "@/lib/yo/german/courseAuthoring";
-import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
-import { GermanCourseShell, button, outline, copy } from "./GermanCourseShared";
+import { GermanCourseShell, outline, copy } from "./GermanCourseShared";
 import { CourseJourney } from "../journey/CourseJourney";
-import { buildCourseJourney, canEnterCourseAssessment } from "@/lib/yo/courseJourney";
+import { canEnterCourseAssessment } from "@/lib/yo/courseJourney";
 import { journeyCopy } from "../journey/journeyCopy";
 
 export function GermanCourseDashboard({
@@ -28,31 +27,26 @@ export function GermanCourseDashboard({
     c = copy[locale];
   const due = getDueActivityIds(state.progress, catalog);
   const dueUnit = catalog.units.find((u) => u.activityIds.includes(due[0]));
-  const current = buildCourseJourney(catalog, state.progress).current?.unit;
-  const resume = state.progress.resume?.unitId === current?.id ? state.progress.resume : null;
+  const resume = state.progress.resume;
   const photo = catalog.units.find(unit => unit.photo)?.photo;
-  const resumeHref = resume
-    ? `${experience.href(locale, resume.unitId)}&lesson=${resume.lessonId}${resume.activityId ? `&activity=${resume.activityId}` : ""}`
-    : experience.href(locale, current?.id ?? "u01");
+  const courseHref = (id?: string) => id && resume?.unitId === id
+    ? `${experience.href(locale, id)}&lesson=${resume.lessonId}${resume.activityId ? `&activity=${resume.activityId}` : ""}`
+    : experience.href(locale, id);
   return (
     <GermanCourseShell locale={locale}>
-      <section className="grid gap-5 border-b border-emerald-100 pb-7 md:grid-cols-[minmax(0,1fr)_280px]">
+      <section className="border-b border-emerald-100 pb-4">
         <div>
           <p className="text-xs font-bold text-emerald-800">
             {experience.name.toUpperCase()} ·{" "}
             {t("PREMIERS PAS", "FIRST STEPS", "PRIMEROS PASOS")[locale]}
           </p>
-          <h1 className="mt-3 font-serif text-4xl text-emerald-950 sm:text-5xl">
+          <h1 className="mt-3 font-serif text-3xl text-emerald-950">
             {experience.title[locale]}
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-600">
             {experience.description[locale]}
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            <Link href={resumeHref} className={button}>
-              {resume ? c.resume : c.start}
-              <ArrowRight size={17} aria-hidden />
-            </Link>
             {dueUnit ? (
               <Link
                 className={outline}
@@ -62,20 +56,10 @@ export function GermanCourseDashboard({
                 {c.review} · {due.length}
               </Link>
             ) : null}
-            <CompanionAvatar
-              visualId="travel"
-              state="map"
-              locale={locale}
-              size="sm"
-              compact
-            />
           </div>
           <p className="mt-4 text-xs text-gray-600" role="status">
             {state.ready && !state.storageAvailable ? c.blocked : c.local}
           </p>
-        </div>
-        <div className="min-w-0 self-center">
-          {photo ? <CourseCulturePhoto photo={photo} locale={locale} /> : null}
         </div>
       </section>
       {!audioReady ? (
@@ -95,8 +79,9 @@ export function GermanCourseDashboard({
           {catalog.units.reduce((n, u) => n + u.activityIds.length, 0)}{" "}
           {t("activités", "activities", "actividades")[locale]}
         </p>
-        <CourseJourney locale={locale} catalog={catalog} progress={state.progress} ready={state.ready} href={id => experience.href(locale, id)} />
+        <CourseJourney locale={locale} catalog={catalog} progress={state.progress} ready={state.ready} href={courseHref} />
       </section>
+      {photo ? <div className="my-6 max-w-md"><CourseCulturePhoto photo={photo} locale={locale} /></div> : null}
       <section className="mt-8 grid gap-4 border-t border-gray-200 pt-6 sm:grid-cols-2">
         {catalog.assessments
           .filter((a) => a.id === experience.finalId || a.theme === "culture")

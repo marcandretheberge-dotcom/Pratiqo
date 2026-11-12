@@ -6,8 +6,10 @@ import { spanishRegionalPractice } from "@/lib/yo/spanishRegionalPractice";
 import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale } from "@/lib/yo/types";
 
-export function SpanishRegionalPractice({ locale }: { locale: YoLocale }) {
-  const [index, setIndex] = useState(0);
+export function SpanishRegionalPractice({ locale, selectedIndex, onIndexChange }: { locale: YoLocale; selectedIndex?: number; onIndexChange?: (index: number) => void }) {
+  const [localIndex, setLocalIndex] = useState(0);
+  const index = selectedIndex ?? localIndex;
+  const setIndex = (next: number) => { setLocalIndex(next); onIndexChange?.(next); };
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const item = spanishRegionalPractice[index];
   const answer = answers[item.id];
@@ -26,8 +28,8 @@ export function SpanishRegionalPractice({ locale }: { locale: YoLocale }) {
       <button type="button" className={`${button} flex items-center gap-2`} onClick={() => setAnswers(values => { const next = { ...values }; delete next[item.id]; return next; })}><RotateCcw size={16} aria-hidden />{t(lstr("Réessayer", "Try again", "Reintentar"), locale)}</button>
     </div> : null}
     <nav className="flex justify-between gap-3" aria-label={t(lstr("Exemples régionaux", "Regional examples", "Ejemplos regionales"), locale)}>
-      <button type="button" className={button} disabled={index === 0} onClick={() => setIndex(i => i - 1)} aria-label={t(lstr("Exemple précédent", "Previous example", "Ejemplo anterior"), locale)}><ArrowLeft size={18} aria-hidden /></button>
-      <button type="button" className={button} disabled={index === spanishRegionalPractice.length - 1} onClick={() => setIndex(i => i + 1)} aria-label={t(lstr("Exemple suivant", "Next example", "Ejemplo siguiente"), locale)}><ArrowRight size={18} aria-hidden /></button>
+      <button type="button" className={button} disabled={index === 0} onClick={() => setIndex(index - 1)} aria-label={t(lstr("Exemple précédent", "Previous example", "Ejemplo anterior"), locale)}><ArrowLeft size={18} aria-hidden /></button>
+      <button type="button" className={button} disabled={index === spanishRegionalPractice.length - 1} onClick={() => setIndex(index + 1)} aria-label={t(lstr("Exemple suivant", "Next example", "Ejemplo siguiente"), locale)}><ArrowRight size={18} aria-hidden /></button>
     </nav>
   </section>;
 }
