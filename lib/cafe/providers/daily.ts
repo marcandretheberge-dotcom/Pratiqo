@@ -479,6 +479,26 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
 }
 
 /**
+ * Daily GET / returns `domain_name` as the subdomain label (e.g. `pratiqo`),
+ * while room URLs and DAILY_DOMAIN use the hostname (`pratiqo.daily.co`).
+ */
+export function dailyDomainLabelsMatch(
+  configuredHostname: string,
+  returnedDomainName: string | null | undefined,
+): boolean {
+  if (!returnedDomainName) return false;
+  const configured = normalizeDailyDomain(configuredHostname);
+  const configuredLabel = configured.replace(/\.daily\.co$/, "");
+  const returned = returnedDomainName
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "")
+    .replace(/\.daily\.co$/, "");
+  return returned.length > 0 && returned === configuredLabel;
+}
+
+/**
  * Read-only account check: GET /v1/ and compare domain_name to configured DAILY_DOMAIN.
  * Logs only status + match boolean — never secret values.
  */
@@ -489,6 +509,7 @@ export async function verifyDailyAccountDomainMatch(input: {
 }): Promise<{
   httpStatus: number;
   domainMatches: boolean;
+  returnedDomainPresent: boolean;
   diagnostic: CafeDailyDiagnostic;
 }> {
   const apiKey = normalizeSecret(input.apiKey, "DAILY_API_KEY");
@@ -511,23 +532,24 @@ export async function verifyDailyAccountDomainMatch(input: {
       return {
         httpStatus: response.status,
         domainMatches: false,
+        returnedDomainPresent: false,
         diagnostic,
       };
     }
     const payload = (await response.json().catch(() => null)) as DailyAccountResponse | null;
     const returned =
-      typeof payload?.domain_name === "string"
-        ? payload.domain_name.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/$/, "")
-        : null;
-    const domainMatches = returned === domain;
+      typeof payload?.domain_name === "string" ? payload.domain_name : null;
+    const returnedDomainPresent = typeof returned === "string" && returned.trim().length > 0;
+    const domainMatches = dailyDomainLabelsMatch(domain, returned);
     return {
       httpStatus: response.status,
       domainMatches,
+      returnedDomainPresent,
       diagnostic: publicCafeDailyDiagnostic({
         operation: "account_lookup",
         httpStatus: response.status,
         errorCode: domainMatches ? null : "domain_mismatch",
-        info: null,
+        info: returnedDomainPresent ? null : "domain_name_missing",
         rejectedField: domainMatches ? null : "domain_name",
         requestId:
           response.headers.get("x-daily-request-id")

@@ -2,6 +2,7 @@
  * Simulated Daily diagnostics — not live API, not browser join.
  */
 import assert from "node:assert/strict";
+import { dailyDomainLabelsMatch } from "@/lib/cafe/providers/daily";
 import {
   extractDailyRejectedField,
   isDailyExistingRoomConflict,
@@ -9,6 +10,11 @@ import {
   readDailyErrorDiagnostic,
   sanitizeDailyDiagnosticText,
 } from "@/lib/cafe/providers/dailyDiagnostics";
+
+assert.equal(dailyDomainLabelsMatch("pratiqo.daily.co", "pratiqo"), true);
+assert.equal(dailyDomainLabelsMatch("pratiqo.daily.co", "pratiqo.daily.co"), true);
+assert.equal(dailyDomainLabelsMatch("pratiqo.daily.co", "other"), false);
+assert.equal(dailyDomainLabelsMatch("pratiqo.daily.co", null), false);
 
 assert.equal(isDailyRecordingEnabled(undefined), false);
 assert.equal(isDailyRecordingEnabled(null), false);

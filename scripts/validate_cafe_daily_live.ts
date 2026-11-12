@@ -39,9 +39,14 @@ async function main() {
   console.log("[cafe:daily-live] account lookup", {
     httpStatus: account.httpStatus,
     domainMatches: account.domainMatches,
+    returnedDomainPresent: account.returnedDomainPresent,
   });
   assert.equal(account.httpStatus, 200, "Daily account lookup must return HTTP 200");
-  assert.equal(account.domainMatches, true, "DAILY_DOMAIN must match the API key domain");
+  assert.equal(
+    account.domainMatches,
+    true,
+    "DAILY_DOMAIN hostname label must match Daily domain_name for this API key",
+  );
 
   const provider = createDailyRoomProvider({
     apiKey,
