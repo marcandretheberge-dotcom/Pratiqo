@@ -7,6 +7,7 @@
     "test:cafe-pr2a": "tsx tests/cafe/cafePr2aContract.test.ts",
     "test:cafe-pr2b": "tsx tests/cafe/cafePr2bFrontDoor.test.ts",
     "test:cafe-invitation": "tsx tests/cafe/cafePracticeInvitation.test.ts && tsx tests/cafe/cafeReservationClient.test.ts && tsx tests/cafe/cafeLocalSandboxCsp.test.ts",
+    "test:cafe-pr3b-room": "tsx tests/cafe/cafeRoomUiState.test.ts",
     "test:yo-continuity": "node --import tsx tests/yo/yopratiqoFrenchResponsiveDraft.test.tsx && node --import tsx tests/yo/yopratiqoItalianYoppo.test.ts && node --import tsx tests/yo/yopratiqoCourseBreak.test.tsx && node --import tsx tests/yo/yopratiqoSharedCompanionAudio.test.tsx",
     "test:yo-adventure": "node --import tsx tests/yo/yopratiqoAdventure.test.tsx",
     "test:yo-journey": "node --import tsx tests/yo/yopratiqoCourseJourney.test.ts && node --import tsx tests/yo/yopratiqoAllLanguageJourneys.test.ts && npm run test:yo-adventure",
@@ -106,6 +107,7 @@
     "test:yo-italian-pilot": "node --import tsx tests/yo/yopratiqoItalianPilotContent.test.ts && node --import tsx tests/yo/yopratiqoItalianMidpoint.test.ts && node --import tsx tests/yo/yopratiqoItalianMidpointPlayer.test.tsx && node --import tsx tests/yo/yopratiqoCourseMission.test.tsx && node --import tsx tests/yo/yopratiqoItalianVictory.test.tsx"
   },
   "dependencies": {
+    "@daily-co/daily-js": "^0.84.0",
     "@googlemaps/js-api-loader": "^2.0.2",
     "@googlemaps/markerclusterer": "^2.6.2",
     "@hookform/resolvers": "^5.2.2",

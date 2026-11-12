@@ -10,6 +10,8 @@ function buildConnectSrcDirective(env: NodeJS.ProcessEnv | Record<string, string
     + " https://*.stripe.com https://api.stripe.com"
     + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com"
     + " https://us.i.posthog.com"
+    // Daily room media (PR3b) — additive; café room stays feature-flagged off in production.
+    + " https://*.daily.co wss://*.daily.co https://*.wss.daily.co wss://*.wss.daily.co"
     + cafeLocalSandboxConnectSrcExtra(env)
   );
 }
@@ -33,7 +35,8 @@ function buildCspValue(env: NodeJS.ProcessEnv = process.env): string {
     "font-src 'self' data: https://fonts.gstatic.com",
     "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com"
       + " https://www.youtube.com https://www.youtube-nocookie.com"
-      + " https://player.vimeo.com",
+      + " https://player.vimeo.com"
+      + " https://*.daily.co",
     // Phase A — additive hardening (no domain narrowing)
     "object-src 'none'",
     "base-uri 'self'",
@@ -61,7 +64,8 @@ function buildCspReportOnlyValue(env: NodeJS.ProcessEnv = process.env): string {
     "font-src 'self' data: https://fonts.gstatic.com",
     "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com"
       + " https://www.youtube.com https://www.youtube-nocookie.com"
-      + " https://player.vimeo.com",
+      + " https://player.vimeo.com"
+      + " https://*.daily.co",
     "object-src 'none'",
     "base-uri 'self'",
     "frame-ancestors 'self'",
@@ -177,6 +181,20 @@ const nextConfig: NextConfig = {
       "gyroscope=()",
     ].join(", ");
 
+    // Café room routes may request camera/microphone after an explicit learner action.
+    // display-capture stays disabled (screen share off for the pilot).
+    const cafeRoomPermissionsPolicy = [
+      "camera=(self)",
+      "microphone=(self)",
+      "display-capture=()",
+      "geolocation=()",
+      "payment=()",
+      "usb=()",
+      "magnetometer=()",
+      "accelerometer=()",
+      "gyroscope=()",
+    ].join(", ");
+
     const routeHeaders: { key: string; value: string }[] = [
       { key: "Content-Security-Policy", value: buildCspValue() },
       { key: "X-Frame-Options", value: "SAMEORIGIN" },
@@ -197,7 +215,21 @@ const nextConfig: NextConfig = {
       });
     }
 
+    const cafeRoomHeaders = routeHeaders.map((header) =>
+      header.key === "Permissions-Policy"
+        ? { key: header.key, value: cafeRoomPermissionsPolicy }
+        : header,
+    );
+
     return [
+      {
+        source: "/cafe/:slug/salle",
+        headers: cafeRoomHeaders,
+      },
+      {
+        source: "/cafe/preview/salle",
+        headers: cafeRoomHeaders,
+      },
       {
         source: "/:path*",
         headers: routeHeaders,
