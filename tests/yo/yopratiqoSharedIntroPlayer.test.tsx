@@ -4,7 +4,7 @@ import * as React from "react";
 import { woodSamples, type FeedbackCue } from "@/lib/yo/feedback/woodSound";
 import { introCourses } from "@/lib/yo/shared/course";
 import { courseSteps } from "@/lib/yo/shared/steps";
-import { introKey } from "@/lib/yo/shared/state";
+import { emptyDraft, freshIntro, introKey } from "@/lib/yo/shared/state";
 import type { Exercise, IntroCourse } from "@/lib/yo/shared/types";
 const require = createRequire(`${process.cwd()}/package.json`), { JSDOM } = require("jsdom");
 const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://example.test/", pretendToBeVisual: true });
@@ -52,7 +52,7 @@ for(const c of introCourses){
  click(v.getByRole('radio',{name:'120 min'}));assert.equal((v.getByRole('radio',{name:'120 min'}) as HTMLInputElement).checked,true);
  click(v.getByRole('button',{name:'Continue'}));assert.equal(v.queryByRole('combobox'),null);click(v.getByRole('button',{name:'Start here'}));
  click(v.getByRole('button',{name:'Word notebook'}));assert.ok(v.getByRole('dialog'));assert.ok(within(v.getByRole('dialog')).getByText(c.phrases.find(p=>p.id==='age30')!.text,{exact:true}));click(within(v.getByRole('dialog')).getByRole('button',{name:'Close'}));
- click(v.getByRole('button',{name:'Start my mission'}));
+ click(v.getByRole('button',{name:'Continue'}));
  for(const step of courseSteps(c)){
   const m=c.missions[step.mission];
   if(step.kind==='recall'){assert.equal(v.container.querySelectorAll('[data-intro-question] img').length,0);solve(v,c,m.preparation[step.index-1]);}
@@ -64,5 +64,24 @@ for(const c of introCourses){
  assert.ok(v.getByRole('heading',{name:'Your stamp is in your passport!'}));click(v.getByRole('button',{name:'Back to my journey'}));
  assert.ok(v.getByText('250 learning points',{exact:true}));assert.equal(cues.filter(k=>k==='step').length,1);assert.equal(cues.filter(k=>k==='mission').length,3);assert.equal(cues.filter(k=>k==='stamp').length,1);const cueCount=cues.length;const before=localStorage.getItem(introKey(c.language));cleanup();v=mount(c);assert.ok(v.getByText('250 learning points',{exact:true}));assert.equal(localStorage.getItem(introKey(c.language)),before);assert.equal(localStorage.getItem('legacy-progress-sentinel'),'do-not-change');assert.equal(cues.length,cueCount,'reload must not replay rewards');
  console.log(`PASS ${c.slug}: onboarding, all study/listening/teaching/practice steps, independent final, bank, reload and untouched legacy`);tests++;
+}
+// A mission selection must not accidentally resume an unfinished final instead.
+{
+ cleanup();localStorage.clear();frames.clear();
+ const c=introCourses[0],s=freshIntro(c);
+ s.profile={experience:'some',goal:'travel',minutes:30,entry:2};s.step=courseSteps(c).findIndex(x=>x.mission===2);
+ s.resume='final';s.finalIndex=1;s.answers=[{correct:true,assisted:false}];
+ s.draft=emptyDraft();localStorage.setItem(introKey(c.language),JSON.stringify(s));
+ let v=mount(c);
+ assert.equal(v.container.querySelector('[data-selected-destination]')?.getAttribute('data-selected-destination'),'intro-final');
+ click(v.getByRole('button',{name:'Continue'}));assert.ok(v.getByRole('heading',{name:'Final challenge · 2/6'}));
+ click(v.getByRole('button',{name:'Leave and save my place'}));
+ click(v.container.querySelectorAll<HTMLElement>('.yo-shared-destinations button')[2]);
+ click(v.getByRole('button',{name:'Continue'}));assert.equal(v.queryByRole('heading',{name:'Final challenge · 2/6'}),null);
+ click(v.getByRole('button',{name:'Leave and save my place'}));
+ const before=localStorage.getItem(introKey(c.language));cleanup();v=mount(c);click(v.getByRole('button',{name:'Continue'}));
+ assert.ok(v.getByRole('heading',{name:c.missions[2].title.en}));
+ assert.deepEqual(JSON.parse(localStorage.getItem(introKey(c.language))!).answers,JSON.parse(before!).answers);
+ console.log('PASS selected mission versus exact final/lesson resume');tests++;
 }
 cleanup();console.log(`${tests} complete language journeys passed`);

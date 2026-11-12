@@ -84,7 +84,7 @@ export function MandarinCourseHome({
             </p>
           </div>
         </header>
-        {ready && (
+        {ready && progress.unit === "bilan" && finalOpen && (
           <Link
             href={buildYoLocaleHref(
               `${MANDARIN_PATH}/${progress.unit === "bilan" && finalOpen ? "bilan" : journey.current?.unit.id ?? "u01"}`,

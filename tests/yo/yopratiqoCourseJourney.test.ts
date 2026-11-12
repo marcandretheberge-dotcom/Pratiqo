@@ -104,11 +104,18 @@ for (const [key, value] of Object.entries({ window: dom.window, self: dom.window
 const { render, cleanup, fireEvent } = require("@testing-library/react") as typeof import("@testing-library/react");
 for (const locale of ["fr", "en", "es"] as const) test(`${locale}: semantic map retains goals, shows locked steps without dead links and positions Yoppo`, () => {
   const view = render(React.createElement(CourseJourney, { catalog, progress: pass(), ready: true, locale, href: id => `/course/${id ?? ""}` }));
-  assert.ok(view.getByRole("heading", { name: journeyCopy[locale].title }));
-  assert.equal(view.container.querySelectorAll("[data-journey-unit]").length, catalog.units.length);
+  assert.ok(view.getByRole("region", { name: journeyCopy[locale].title }));
+  const visibleIds = () => Array.from(view.container.querySelectorAll("[data-journey-unit]")).map(node => node.getAttribute("data-journey-unit"));
+  assert.deepEqual(visibleIds(), catalog.units.slice(0,4).map(unit => unit.id));
   assert.equal(view.container.querySelector("[data-yoppo-position]")?.getAttribute("data-yoppo-position"), second.id);
   assert.equal(view.container.querySelector('[data-unlocked="false"] a:not([target])'), null);
-  assert.ok(view.getByRole("link", { name: journeyCopy[locale].enter }));
+  const continueLabel = {fr:"Continuer",en:"Continue",es:"Continuar"}[locale];
+  assert.equal(view.getByRole("link", { name: continueLabel }).getAttribute("href"), `/course/${second.id}`);
+  assert.ok(view.getByText(second.objectives[0][locale]));
+  fireEvent.click(view.getByRole("button", {name:{fr:"Étapes suivantes",en:"Next stops",es:"Etapas siguientes"}[locale]}));
+  assert.deepEqual(visibleIds(),catalog.units.slice(4).map(unit=>unit.id));
+  assert.ok(Array.from(view.container.querySelectorAll<HTMLButtonElement>('.yo-shared-destinations button')).every(button=>button.disabled));
+  assert.equal(view.queryByRole("link",{name:continueLabel}),null);
 });
 test("direct locked route cannot create a resume entry or unlock itself", () => {
   const view = render(React.createElement(GermanCourseUnit, { catalog, unit: germanCourseUnits[1], locale: "fr", audioPaths: {} }));

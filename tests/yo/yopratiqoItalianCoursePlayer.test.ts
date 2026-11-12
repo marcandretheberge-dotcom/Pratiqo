@@ -50,7 +50,26 @@ for(const locale of ["fr","en","es"] as const)test(`${locale}: course and unit r
  click(view.getByRole("button",{name:{fr:"2. La scène",en:"2. The scene",es:"2. La escena"}[locale]}));assert.ok(view.getByText(lesson.reading.it));
  click(view.getByRole("button",{name:{fr:"4. La langue",en:"4. Language",es:"4. La lengua"}[locale]}));assert.ok(view.getByText(lesson.grammar.body[locale]));
  click(view.getByRole("button",{name:{fr:"6. À toi",en:"6. Your turn",es:"6. Tu turno"}[locale]}));assert.equal(view.getAllByRole("checkbox").filter(item=>item!==effects).length,lesson.speaking.checklist.length);
- cleanup();const dashboard=render(React.createElement(ItalianCourseDashboard,{locale,catalog:italianCourseCatalog,sources:courseSources}));assert.equal(dashboard.getAllByRole("link").filter(link=>(link.getAttribute("href")??"").includes("/parcours/u")).length,2);assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,italianCourseCatalog.units.length-1);assert.equal(starts,0);
+ cleanup();const dashboard=render(React.createElement(ItalianCourseDashboard,{locale,catalog:italianCourseCatalog,sources:courseSources}));assert.equal(dashboard.getAllByRole("link").filter(link=>(link.getAttribute("href")??"").includes("/parcours/u")).length,2);const visited = new Map<string, boolean>();
+ const nextLabel = {fr:"Étapes suivantes",en:"Next stops",es:"Etapas siguientes"}[locale];
+ for (let page = 0; page < Math.ceil(italianCourseCatalog.units.length / 4); page++) {
+  const stops = Array.from(dashboard.container.querySelectorAll<HTMLElement>("[data-journey-unit]"));
+  assert.equal(stops.length, Math.min(4, italianCourseCatalog.units.length - page * 4));
+  for (const stop of stops) {
+   const id = stop.dataset.journeyUnit!;
+   assert.equal(visited.has(id), false);
+   const accessible = stop.dataset.unlocked === "true";
+   assert.equal((stop.querySelector("button") as HTMLButtonElement).disabled, !accessible);
+   visited.set(id, accessible);
+  }
+  const next = dashboard.getByRole("button", {name: nextLabel}) as HTMLButtonElement;
+  assert.equal(next.disabled, page === Math.ceil(italianCourseCatalog.units.length / 4) - 1);
+  if (!next.disabled) click(next);
+ }
+ assert.deepEqual([...visited.keys()], italianCourseCatalog.units.map(item => item.id));
+ assert.equal([...visited.values()].filter(Boolean).length, 1);
+ assert.equal(visited.get(unit.id), true);
+ assert.equal(starts,0);
 });
 test("phrase translations can be hidden in the optional notebook without removing Italian audio",()=>{const view=mount();play(view);click(view.getByRole("button",{name:"Carnet de mots"}));const notebook=within(view.getByRole("heading",{name:"Carnet de mots"}).closest("section")!);assert.ok(notebook.getByText(lesson.vocabulary[0].meaning.fr));click(notebook.getByRole("button",{name:"Masquer les traductions"}));assert.equal(notebook.queryByText(lesson.vocabulary[0].meaning.fr),null);assert.ok(notebook.getByRole("button",{name:`Écouter : ${lesson.vocabulary[0].it}`}));});
 test("independent pair completion persists and replays do not duplicate completed activities",()=>{const view=mount();play(view);pairs(view);assert.equal(saved().activities[match.id].independent,true);assert.equal(Object.values(saved().activities).filter(v=>v.completed).length,1);click(view.getByRole("button",{name:"Rejouer sans aide"}));pairs(view);assert.equal(Object.values(saved().activities).filter(v=>v.completed).length,1);assert.equal(saved().activities[match.id].attempts,2);});

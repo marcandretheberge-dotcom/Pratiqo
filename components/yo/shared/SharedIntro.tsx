@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { BookOpen, Check, Settings, Stamp, X } from "lucide-react";
+import { BookOpen, Settings, Stamp, X } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { IntroCourse, IntroState, IntroProfile } from "@/lib/yo/shared/types";
 import { L } from "@/lib/yo/shared/types";
@@ -17,6 +17,11 @@ import { IntroAudio } from "./IntroAudio";
 import { IntroQuestion } from "./IntroQuestion";
 import { IntroWelcome } from "./IntroWelcome";
 import { IntroNotebook } from "./IntroNotebook";
+import { WorldJourneyMap } from "../journey/map/WorldJourneyMap";
+import { introMap } from "@/lib/yo/worldMap";
+import { adventureWorld } from "@/lib/yo/adventure";
+import { SpanishRegionalPractice } from "../SpanishRegionalPractice";
+import { spanishRegionalPractice } from "@/lib/yo/spanishRegionalPractice";
 
 type Props={course:IntroCourse;locale:YoLocale;audio:Record<string,string>};
 export function SharedIntro(props:Props){return <LearningFeedbackProvider><IntroPlayer {...props}/></LearningFeedbackProvider>;}
@@ -25,6 +30,7 @@ function IntroPlayer({course,locale,audio}:Props){
  const [state,setState]=useState<IntroState>(()=>freshIntro(course)),[ready,setReady]=useState(false),[stored,setStored]=useState(true),[editing,setEditing]=useState(false);
  const [panel,setPanel]=useState<'notebook'|'settings'|null>(null),latest=useRef(state),heading=useRef<HTMLHeadingElement>(null);
  const feedback=useLearningFeedback();
+ const [regionalOpen,setRegionalOpen]=useState(false),[regionalIndex,setRegionalIndex]=useState(0);
  useLayoutEffect(()=>{latest.current=state;},[state]);
  useEffect(()=>{const frame=requestAnimationFrame(()=>{try{const saved=parseIntro(localStorage.getItem(key),course);if(saved.view==='lesson'||saved.view==='final'){saved.resume=saved.view;saved.view='map';}latest.current=saved;setState(saved);}catch{setStored(false);}setReady(true);});return()=>cancelAnimationFrame(frame);},[key,course]);
  useEffect(()=>{return()=>stopLessonAudio();},[]);
@@ -64,19 +70,30 @@ function IntroPlayer({course,locale,audio}:Props){
    <span lang={course.language} className="text-sm font-bold">{course.nativeName}</span>
    <div className="flex"><button type="button" className={secondary} disabled={state.view==='final'} onClick={notebook} aria-label={say('Carnet de mots','Word notebook','Cuaderno de palabras')}><BookOpen size={21}/></button><button type="button" className={secondary} onClick={()=>{stopLessonAudio();setPanel('settings');}} aria-label={say('Mes outils','My tools','Mis herramientas')}><Settings size={21}/></button></div>
   </div></header>
-  <main className="mx-auto max-w-2xl px-4 pt-6 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+  <main className={`mx-auto ${state.view==='map'?'max-w-5xl':'max-w-2xl'} px-4 pt-6 pb-[calc(5rem+env(safe-area-inset-bottom))]`}>
    {smallStatus}
-   {state.view==='map'&&<>
+   {course.slug==='espagnol'&&<section hidden={!regionalOpen}>
+    <button type="button" className={secondary} onClick={()=>{setRegionalOpen(false);focus();}}>{say('Retour à la carte','Back to the map','Volver al mapa')}</button>
+    <SpanishRegionalPractice locale={locale} selectedIndex={regionalIndex} onIndexChange={setRegionalIndex}/>
+    {spanishRegionalPractice[regionalIndex].id==='es-region-caribbean-bus'&&<Link prefetch={false} href={`/yo/langues/espagnol/pays/republique-dominicaine?lang=${locale}`} className={`${secondary} mt-4 underline`}>{say('Découvrir le parcours dominicain existant','Explore the existing Dominican course','Explorar el curso dominicano existente')}</Link>}
+   </section>}
+   {state.view==='map'&&<div hidden={regionalOpen}>
     <div className="mb-6 flex items-center gap-4"><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="md" compact/><div className="min-w-0"><p className="text-sm font-semibold text-emerald-700">{course.city} · {say('Premières rencontres','First meetings','Primeros encuentros')}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-2xl font-black outline-none">{passed?say('Ton premier tampon est gagné !','You earned your first stamp!','¡Ganaste tu primer sello!'):say('On fait connaissance ?','Shall we get acquainted?','¿Vamos a conocernos?')}</h1></div></div>
-    <section className="rounded-3xl border border-stone-200 bg-white p-5"><p className="text-sm font-bold text-emerald-800">{say('Ta prochaine étape','Your next step','Tu siguiente paso')}</p><h2 className="mt-2 text-xl font-bold">{state.resume==='final'?say('Défi final','Final challenge','Reto final'):mission.title[locale]}</h2><p className="mt-3 leading-7">{mission.goal[locale]}</p>
-     {passed?<Link prefetch={false} href={`${course.legacyPath}?lang=${locale}`} className={`${primary} mt-5 w-full`}>{say('Explorer la suite du parcours','Explore the existing course','Explorar el resto del curso')}</Link>:<button type="button" className={`${primary} mt-5 w-full`} onClick={resume}>{state.visited.length?say('Continuer ma mission','Continue my mission','Continuar mi misión'):say('Commencer ma mission','Start my mission','Empezar mi misión')}</button>}
-     <Link prefetch={false} href={`/yo/langues/${course.slug}/demarrer/vocabulaire?lang=${locale}`} target="_blank" rel="noopener" className={`${secondary} mt-3 underline`}>{say('Voir / imprimer les mots et verbes','View / print words and verbs','Ver / imprimir palabras y verbos')}</Link>
-    </section>
-    <ol className="my-6 space-y-3">{course.missions.map((m,i)=>{const done=m.practice.every(e=>state.completed.includes(e.id)),available=i<=state.profile!.entry||i===0||course.missions[i-1].practice.every(e=>state.completed.includes(e.id));return <li key={m.id} className={i%2?'ml-6':'mr-6'}><button type="button" disabled={!available} className="flex min-h-16 w-full items-center gap-4 rounded-2xl border border-stone-200 bg-white p-4 text-left disabled:opacity-50" onClick={()=>{const at=steps.findIndex(s=>s.mission===i&&!state.visited.includes(s.id));move(at<0?steps.findIndex(s=>s.mission===i):at);}}><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-100 font-bold">{done?<Check size={21}/>:i+1}</span><span className="font-semibold">{m.title[locale]}</span></button></li>;})}</ol>
+    <WorldJourneyMap model={introMap(course,state,adventureWorld(course.slug))} locale={locale} active={!regionalOpen} onContinue={id=>{
+      if(id==='intro-final'){if(latest.current.resume==='final')resume();else startFinal();return;}
+      const region=course.slug==='espagnol'?spanishRegionalPractice.findIndex(item=>item.id===id):-1;
+      if(region>=0){stopLessonAudio();setRegionalIndex(region);setRegionalOpen(true);return;}
+      const index=course.missions.findIndex(m=>m.id===id),s=latest.current;
+      if(index<0)return;
+      if(steps[s.step].mission===index&&s.resume==='lesson'){resume();return;}
+      const at=steps.findIndex(item=>item.mission===index&&!s.visited.includes(item.id));
+      move(at<0?steps.findIndex(item=>item.mission===index):at);
+    }}/>
+    <Link prefetch={false} href={`/yo/langues/${course.slug}/demarrer/vocabulaire?lang=${locale}`} target="_blank" rel="noopener" className={`${secondary} mt-3 underline`}>{say('Voir / imprimer les mots et verbes','View / print words and verbs','Ver / imprimir palabras y verbos')}</Link>
     <p className="text-sm text-emerald-800">{introPoints(course,state)} {say('points d’apprentissage','learning points','puntos de aprendizaje')}{passed&&<Stamp className="ml-3 inline" aria-label={say('Tampon obtenu','Stamp earned','Sello obtenido')}/>}</p>
     <button type="button" className={`${secondary} mt-3 underline`} onClick={startFinal}>{say('Déjà à l’aise ? Essayer le défi','Already comfortable? Try the challenge','¿Ya dominas esto? Probar el reto')}</button>
     <Link prefetch={false} href={`${course.legacyPath}?lang=${locale}`} className={`${secondary} mt-2 block underline`}>{say('Retrouver mon parcours existant','Return to my existing course','Volver a mi curso existente')}</Link>
-   </>}
+   </div>}
    {state.view==='lesson'&&<>
     <p className="text-sm font-semibold text-emerald-800">{say('Mission','Mission','Misión')} {step.mission+1} · {position+1}/{missionSteps.length}</p><div className="my-3 h-2 overflow-hidden rounded-full bg-stone-200" role="progressbar" aria-valuenow={position} aria-valuemin={0} aria-valuemax={missionSteps.length} aria-label={mission.title[locale]}><div className="h-full bg-emerald-700" style={{width:`${position/missionSteps.length*100}%`}}/></div>
     <h1 ref={heading} tabIndex={-1} className="mb-5 text-2xl font-bold outline-none">{mission.title[locale]}</h1>

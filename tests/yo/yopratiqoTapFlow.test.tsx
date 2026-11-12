@@ -37,11 +37,11 @@ function tick(ms:number){const until=now+ms;for(let i=0;i<1000;i++){const due=[.
 function click(el:HTMLElement,detail=1){fireEvent.click(el,{detail});flush();}
 let shared:Draft=emptyDraft(),italian:GameDraft=emptyGame();
 function Shared({course=introCourses[0],exercise=course.missions[0].practice[0],initial=emptyDraft(),paused=false,assessment=false}:{course?:IntroCourse;exercise?:Exercise;initial?:Draft;paused?:boolean;assessment?:boolean}){
- const [d,set]=React.useState(initial);shared=d;
+ const [d,set]=React.useState(initial);React.useLayoutEffect(()=>{shared=d;},[d]);
  return <LearningFeedbackProvider><PracticeAdvanceSettings locale="en"/><IntroQuestion course={course} locale="en" exercise={exercise} audio={{}} value={d} onChange={set} onContinue={()=>nexts++} paused={paused} assessment={assessment}/></LearningFeedbackProvider>;
 }
 function Italian({activity=firstMeetingUnit.lessons[0].activities[0],assessment=false,initial=emptyGame()}:{activity?:ItalianActivity;assessment?:boolean;initial?:GameDraft}){
- const [d,set]=React.useState(initial);italian=d;
+ const [d,set]=React.useState(initial);React.useLayoutEffect(()=>{italian=d;},[d]);
  return <LearningFeedbackProvider><GuidedGame activity={activity} locale="en" value={d} onChange={set} onAttempt={(correct,assisted)=>attempts.push({correct,assisted})} onContinue={()=>nexts++} assessment={assessment}/></LearningFeedbackProvider>;
 }
 let count=0;

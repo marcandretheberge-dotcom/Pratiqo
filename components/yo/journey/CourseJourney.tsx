@@ -1,17 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, LockKeyhole, RotateCcw } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { CourseCatalog } from "@/lib/yo/italian/course/courseTypes";
 import type { CourseProgress } from "@/lib/yo/italian/course/courseProgress";
 import { buildCourseJourney } from "@/lib/yo/courseJourney";
 import type { LearningJourney as Journey } from "@/lib/yo/learningJourney";
 import type { YoLocale } from "@/lib/yo/types";
-import { CourseCulturePhoto } from "../italian/course/CourseCulturePhoto";
 import { journeyCopy } from "./journeyCopy";
-import { adventureCopy, adventureWorld, destinationState } from "@/lib/yo/adventure";
-import { AdventureScenery } from "./AdventureScenery";
+import { adventureWorld } from "@/lib/yo/adventure";
+import { journeyMap } from "@/lib/yo/worldMap";
+import { WorldJourneyMap } from "./map/WorldJourneyMap";
 import { CourseAdventure } from "./AdventureProgress";
 
 type Props = { catalog: CourseCatalog; progress: CourseProgress; locale: YoLocale; ready: boolean; href: (unitId?: string) => string };
@@ -28,46 +28,10 @@ export function LearningJourney({ journey, locale, ready, href, copy }: {
 }) {
   const c = { ...journeyCopy[locale], ...copy };
   const world = adventureWorld(href());
-  const a = adventureCopy[locale];
+  const model = journeyMap(journey, world, href().split("?")[0]);
   return <section aria-label={c.title} className="my-8 min-w-0">
-    <div className="border-b border-emerald-200 pb-5">
-      <h2 className="text-2xl font-bold text-emerald-950">{c.title}</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700">{c.rule}</p>
-      <p role="status" className="mt-3 text-sm font-semibold text-emerald-800">{ready ? `${journey.passedCount}/${journey.steps.length} · ${c.checkpoints}` : c.loading}</p>
-    </div>
-    <ol className="relative mx-auto mt-6 max-w-4xl">
-      {journey.steps.map((step, index) => {
-        const current = ready && step.unit.id === journey.current?.unit.id;
-        const open = ready && step.unlocked;
-        const state = ready ? destinationState(step) : "locked";
-        return <li key={step.unit.id} data-journey-unit={step.unit.id} data-unlocked={open} data-destination-state={state} aria-current={current ? "step" : undefined} className="relative grid min-w-0 grid-cols-[56px_minmax(0,1fr)] gap-3 pb-8 sm:grid-cols-[88px_minmax(0,1fr)] sm:gap-5">
-          <div className="relative flex flex-col items-center">
-            {index < journey.steps.length - 1 ? <div aria-hidden className={`absolute bottom-[-2rem] top-14 w-1 ${step.passed ? "bg-emerald-500" : "bg-gray-200"}`} /> : null}
-            <span aria-label={`${step.unit.number}. ${step.passed ? c.passed : open ? c.enter : c.locked}`} className={`relative z-10 grid h-14 w-14 shrink-0 place-items-center rounded-full border-2 text-lg font-bold ${step.passed ? "border-emerald-700 bg-emerald-700 text-white" : current ? "border-emerald-700 bg-white text-emerald-900" : "border-gray-300 bg-white text-gray-600"}`}>
-              {step.passed ? <Check aria-hidden /> : open ? step.unit.number : <LockKeyhole size={19} aria-hidden />}
-            </span>
-            {current ? <div className="relative z-10 mt-2 motion-safe:animate-[fadeIn_300ms_ease-out]" data-yoppo-position={step.unit.id}><CompanionAvatar visualId="travel" state="map" locale={locale} size="xs" compact /></div> : null}
-          </div>
-          <article className={`min-w-0 rounded-lg border p-4 sm:p-6 ${current ? "border-emerald-600 bg-emerald-50" : "border-gray-200 bg-white"}`}>
-            <div className="mb-3 max-w-sm"><AdventureScenery world={world} state={state} /></div>
-            <div className="grid min-w-0 items-start gap-4 sm:grid-cols-[minmax(0,1fr)_160px]">
-              <div className="min-w-0">
-                <p className={`text-xs font-bold ${current ? "text-emerald-800" : "text-gray-600"}`}>{current ? `${c.here} · ` : ""}{a.states[state]}</p>
-                <h3 className="mt-2 break-words text-xl font-bold text-gray-900">{step.unit.title[locale]}</h3>
-                <p className="mt-3 text-sm leading-6 text-gray-700">{step.unit.objectives[0]?.[locale] ?? step.unit.subtitle[locale]}</p>
-                {step.unit.objectives.length > 1 ? <details className="mt-2 text-sm text-gray-700"><summary className="min-h-11 cursor-pointer py-3 font-semibold">{c.goals}</summary><ul className="list-disc space-y-2 pl-5">{step.unit.objectives.slice(1).map((goal, i) => <li key={i}>{goal[locale]}</li>)}</ul></details> : null}
-              </div>
-              {step.unit.photo ? <div className="hidden sm:block"><CourseCulturePhoto photo={step.unit.photo} locale={locale} compact /></div> : null}
-            </div>
-            {ready && open ? <>
-              <p className="mt-4 text-xs leading-6 text-gray-600">{c.practice} : {step.practiced}/{step.unit.activityIds.length} · {c.independent} : {step.independent}</p>
-              <Link href={href(step.unit.id)} className={`${action} mt-4`}>{step.passed ? <RotateCcw size={16} aria-hidden /> : <ArrowRight size={16} aria-hidden />}{step.passed ? c.replay : c.enter}</Link>
-            </> : null}
-          </article>
-        </li>;
-      })}
-    </ol>
-    <p className="text-xs leading-6 text-gray-600">{c.proof} {c.review}</p>
+    <WorldJourneyMap model={model} locale={locale} ready={ready} href={id => href(id)}/>
+    <details className="mt-4 text-sm leading-6 text-gray-700"><summary className="min-h-11 cursor-pointer py-3">{c.goals}</summary><p>{c.rule}</p><p>{c.proof} {c.review}</p></details>
   </section>;
 }
 

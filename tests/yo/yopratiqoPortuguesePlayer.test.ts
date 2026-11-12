@@ -140,8 +140,11 @@ for (const locale of ["fr", "en", "es"] as const)
     const links = dashboard
       .getAllByRole("link")
       .filter((a) => /\/parcours\/u\d/.test(a.getAttribute("href") ?? ""));
-    assert.equal(links.length, 2);
-    assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,catalog.units.length-1);
+    assert.equal(links.length, 1);
+    assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,3);
+    click(dashboard.getByRole('button',{name:{fr:'Étapes suivantes',en:'Next stops',es:'Etapas siguientes'}[locale]}));
+    assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,catalog.units.length-4);
+    assert.equal(dashboard.container.querySelector('.yo-shared-continue'),null);
     assert.equal(
       dashboard
         .getAllByRole("link")
