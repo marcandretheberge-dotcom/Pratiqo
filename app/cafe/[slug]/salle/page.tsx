@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { CafeConversationRoomLive } from "./CafeConversationRoomLive";
 import { isCafeV1Enabled } from "@/lib/cafe/featureFlag";
+import { resolveCafeRoomCourseReturn } from "@/lib/cafe/roomCourseReturn";
 import { isCafeRoomProviderEnabled } from "@/lib/cafe/roomFeatureFlag";
 
 export const metadata: Metadata = {
@@ -25,10 +26,7 @@ export default async function CafeSessionRoomPage({
 
   const { slug } = await params;
   const query = (await searchParams) ?? {};
-  const yoReturn =
-    typeof query.yoReturn === "string" && query.yoReturn.startsWith("/")
-      ? query.yoReturn
-      : null;
+  const yoReturn = resolveCafeRoomCourseReturn(query.yoReturn);
   const title =
     typeof query.title === "string" && query.title.trim()
       ? query.title.trim().slice(0, 120)

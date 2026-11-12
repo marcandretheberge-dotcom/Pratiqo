@@ -4,6 +4,11 @@ import Link from "next/link";
 import { useEffect, useReducer, useRef } from "react";
 import styles from "@/app/cafe/cafe.module.css";
 import { cafeCopy, type CafeLocale } from "@/lib/cafe/copy";
+import {
+  CafeDailyJoinGeneration,
+  destroyCafeDailyCall,
+  type CafeDailyCallHandle,
+} from "@/lib/cafe/dailyRoomSession";
 import { requestCafeRoomJoin } from "@/lib/cafe/roomClient";
 import {
   cafeRoomReduce,
@@ -52,52 +57,73 @@ export function CafeConversationRoom({
 }: Props) {
   const copy = cafeCopy[locale];
   const [state, dispatch] = useReducer(cafeRoomReduce, mode, initialCafeRoomUiState);
-  const callRef = useRef<{ destroy: () => void } | null>(null);
+  const callRef = useRef<CafeDailyCallHandle | null>(null);
   const tokenRef = useRef<string | null>(null);
   const frameHostRef = useRef<HTMLDivElement | null>(null);
   const mediaPrefsRef = useRef({ cameraArmed: false, micArmed: false });
+  const joinGenRef = useRef(new CafeDailyJoinGeneration());
 
   useEffect(() => {
     mediaPrefsRef.current = { cameraArmed: state.cameraArmed, micArmed: state.micArmed };
   }, [state.cameraArmed, state.micArmed]);
 
   useEffect(() => {
+    const joinGen = joinGenRef.current;
     return () => {
+      joinGen.invalidate();
       tokenRef.current = null;
-      try {
-        callRef.current?.destroy();
-      } catch {
-        // ignore teardown races
-      }
-      callRef.current = null;
+      callRef.current = destroyCafeDailyCall(callRef.current);
     };
   }, []);
 
-  async function enterLiveRoom() {
+  function cleanupDailyCall() {
+    tokenRef.current = null;
+    callRef.current = destroyCafeDailyCall(callRef.current);
+  }
+
+  async function enterLiveRoom(attempt: number) {
     if (!getAccessToken) {
-      dispatch({ type: "join_failed", code: "demo_only" });
+      if (joinGenRef.current.isCurrent(attempt)) {
+        dispatch({ type: "join_failed", code: "demo_only" });
+      }
       return;
     }
+
     const accessToken = await getAccessToken();
+    if (!joinGenRef.current.isCurrent(attempt)) return;
     if (!accessToken) {
       dispatch({ type: "join_failed", code: "access_denied" });
       return;
     }
 
     const joined = await requestCafeRoomJoin({ slug, accessToken });
+    if (!joinGenRef.current.isCurrent(attempt)) {
+      // Stale after leave/unmount — never keep a token around.
+      return;
+    }
     if (!joined.ok) {
+      cleanupDailyCall();
       dispatch({ type: "join_failed", code: joined.code });
       return;
     }
 
-    tokenRef.current = joined.token;
     try {
       const host = frameHostRef.current;
       if (!host) {
-        dispatch({ type: "join_failed", code: "provider_unavailable" });
+        cleanupDailyCall();
+        if (joinGenRef.current.isCurrent(attempt)) {
+          dispatch({ type: "join_failed", code: "provider_unavailable" });
+        }
         return;
       }
+
+      // Destroy any leftover frame before creating a new one (retry path).
+      cleanupDailyCall();
+      if (!joinGenRef.current.isCurrent(attempt)) return;
+
       const DailyIframe = (await import("@daily-co/daily-js")).default;
+      if (!joinGenRef.current.isCurrent(attempt)) return;
+
       const call = DailyIframe.createFrame(host, {
         showLeaveButton: false,
         showFullscreenButton: false,
@@ -108,15 +134,22 @@ export function CafeConversationRoom({
           borderRadius: "20px",
           background: "#120f0d",
         },
-      });
+      }) as CafeDailyCallHandle;
+
       callRef.current = call;
-      call.on("left-meeting", () => {
-        tokenRef.current = null;
+      tokenRef.current = joined.token;
+      call.on?.("left-meeting", () => {
+        if (!joinGenRef.current.isCurrent(attempt)) return;
+        cleanupDailyCall();
         dispatch({ type: "leave" });
       });
-      call.on("error", () => {
+      call.on?.("error", () => {
+        if (!joinGenRef.current.isCurrent(attempt)) return;
+        joinGenRef.current.invalidate();
+        cleanupDailyCall();
         dispatch({ type: "join_failed", code: "provider_unavailable" });
       });
+
       const prefs = mediaPrefsRef.current;
       await call.join({
         url: joined.roomUrl,
@@ -124,35 +157,52 @@ export function CafeConversationRoom({
         startVideoOff: !prefs.cameraArmed,
         startAudioOff: !prefs.micArmed,
       });
+
+      if (!joinGenRef.current.isCurrent(attempt)) {
+        // Left/unmounted during join — tear down the late connection.
+        cleanupDailyCall();
+        return;
+      }
       dispatch({ type: "join_succeeded" });
     } catch {
-      tokenRef.current = null;
-      dispatch({ type: "join_failed", code: "provider_unavailable" });
+      cleanupDailyCall();
+      if (joinGenRef.current.isCurrent(attempt)) {
+        joinGenRef.current.invalidate();
+        dispatch({ type: "join_failed", code: "provider_unavailable" });
+      }
     }
   }
 
   async function onJoin() {
+    // Invalidate any previous in-flight join before starting a new attempt.
+    cleanupDailyCall();
+    const attempt = joinGenRef.current.beginAttempt();
     dispatch({ type: "request_join" });
+
     if (mode === "demo") {
       // Labeled demonstration only — never presents as a real Daily session.
       await new Promise((r) => setTimeout(r, 450));
+      if (!joinGenRef.current.isCurrent(attempt)) return;
       dispatch({ type: "join_succeeded" });
       return;
     }
+
     // Frame host must mount while phase === joining (live mode).
     await new Promise((r) => requestAnimationFrame(() => r(null)));
-    await enterLiveRoom();
+    if (!joinGenRef.current.isCurrent(attempt)) return;
+    await enterLiveRoom(attempt);
   }
 
   function onLeave() {
-    tokenRef.current = null;
-    try {
-      callRef.current?.destroy();
-    } catch {
-      // ignore
-    }
-    callRef.current = null;
+    joinGenRef.current.invalidate();
+    cleanupDailyCall();
     dispatch({ type: "leave" });
+  }
+
+  function onRetry() {
+    joinGenRef.current.invalidate();
+    cleanupDailyCall();
+    dispatch({ type: "start_media_prep" });
   }
 
   return (
@@ -261,7 +311,7 @@ export function CafeConversationRoom({
               <button
                 type="button"
                 className={styles.primaryButton}
-                onClick={() => dispatch({ type: "start_media_prep" })}
+                onClick={onRetry}
               >
                 {copy.roomRetry}
               </button>
