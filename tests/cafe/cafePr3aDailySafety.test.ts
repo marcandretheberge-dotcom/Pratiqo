@@ -75,9 +75,31 @@ async function main() {
       assert.ok(error instanceof CafeRoomProviderError);
       assert.equal(error.code, "internal_error");
       assert.equal(error.message.includes("never expose this"), false);
+      assert.equal(JSON.stringify(error.diagnostic ?? {}).includes("never expose this"), false);
       return true;
     },
   );
+
+  // Omitted enable_recording in returned config is accepted (recording disabled).
+  const omittedRecordingProvider = createDailyRoomProvider({
+    ...baseConfig,
+    fetchImpl: (async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as {
+        name: string;
+        privacy: string;
+        properties: Record<string, unknown>;
+      };
+      const { enable_recording: _ignored, ...safeConfig } = body.properties;
+      return Response.json({
+        name: body.name,
+        privacy: body.privacy,
+        url: `https://pratiqo.daily.co/${body.name}`,
+        config: safeConfig,
+      });
+    }) as typeof fetch,
+  });
+  const safeRoom = await omittedRecordingProvider.ensureRoom(input);
+  assert.match(safeRoom.roomId, /^cafe-/);
 
   assert.throws(() => createDailyRoomProvider({ ...baseConfig, domain: "evil.example.com" }));
   assert.throws(() => createDailyRoomProvider({ ...baseConfig, roomHmacSecret: "short" }));

@@ -10,12 +10,16 @@ const workflow = read(".github/workflows/cafe-daily-live-validation.yml");
 const runbook = read("docs/operations/cafe-daily-live-validation.md");
 
 assert.match(script, /createDailyRoomProvider/);
+assert.match(script, /verifyDailyAccountDomainMatch/);
 assert.equal((script.match(/provider\.ensureRoom\(roomInput\)/g) ?? []).length, 2);
 assert.match(script, /role: "participant"/);
 assert.match(script, /role: "host"/);
 assert.match(script, /finally \{/);
+assert.match(script, /deterministicRoomId\(sessionId\)/);
 assert.match(script, /await provider\.deleteRoom\(roomId\)/);
 assert.match(script, /temporary room deleted/);
+assert.match(script, /cleanup failed/);
+assert.match(script, /diagnostic/);
 assert.doesNotMatch(script, /console\.(?:log|info|error)\([^\n]*(?:\.token|roomUrl)/i);
 assert.doesNotMatch(script, /NEXT_PUBLIC_DAILY|NEXT_PUBLIC_CAFE_DAILY/);
 

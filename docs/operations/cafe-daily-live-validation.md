@@ -34,9 +34,12 @@ Dans GitHub Actions, lancer manuellement **Cafe Daily live validation** avec `Ru
 Le résultat attendu est :
 
 ```text
+[cafe:daily-live] account lookup { httpStatus: 200, domainMatches: true }
 [cafe:daily-live] PASS
 [cafe:daily-live] temporary room deleted
 ```
+
+En cas d’échec, le journal peut inclure un diagnostic expurgé (`operation`, `httpStatus`, `errorCode`, `rejectedField`, `requestId`) — jamais de secret, jeton, URL de salle ou corps brut Daily.
 
 Ne pas copier dans une issue ou un rapport une valeur de secret, un jeton ou une URL de salle. Conserver seulement le lien du run, le commit, le domaine Daily testé et la date.
 

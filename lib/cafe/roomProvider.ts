@@ -48,14 +48,36 @@ export interface CafeRoomProvider {
 
 export type CafeRoomProviderErrorCode = "provider_unavailable" | "internal_error";
 
+export type CafeRoomProviderDiagnostic = {
+  operation: string;
+  httpStatus: number | null;
+  errorCode: string | null;
+  info: string | null;
+  rejectedField: string | null;
+  requestId: string | null;
+};
+
 export class CafeRoomProviderError extends Error {
   readonly code: CafeRoomProviderErrorCode;
   readonly retryAfterSeconds?: number;
+  /** Sanitized provider diagnostics for server/workflow logs only. */
+  readonly diagnostic?: CafeRoomProviderDiagnostic;
+  readonly priorDiagnostics?: CafeRoomProviderDiagnostic[];
 
-  constructor(code: CafeRoomProviderErrorCode, message: string, retryAfterSeconds?: number) {
+  constructor(
+    code: CafeRoomProviderErrorCode,
+    message: string,
+    retryAfterSeconds?: number,
+    options?: {
+      diagnostic?: CafeRoomProviderDiagnostic;
+      priorDiagnostics?: CafeRoomProviderDiagnostic[];
+    },
+  ) {
     super(message);
     this.name = "CafeRoomProviderError";
     this.code = code;
     this.retryAfterSeconds = retryAfterSeconds;
+    this.diagnostic = options?.diagnostic;
+    this.priorDiagnostics = options?.priorDiagnostics;
   }
 }

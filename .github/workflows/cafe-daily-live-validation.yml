@@ -33,7 +33,9 @@ jobs:
         run: >-
           npx eslint
           scripts/validate_cafe_daily_live.ts
+          lib/cafe/providers/dailyDiagnostics.ts
           tests/cafe/cafeDailyLiveValidationContract.test.ts
+          tests/cafe/cafeDailyDiagnostics.test.ts
       - name: Whitespace check
         run: git diff --check
 

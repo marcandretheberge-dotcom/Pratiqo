@@ -93,10 +93,10 @@ async function main() {
     start_video_off: true,
     start_audio_off: true,
     enable_hidden_participants: false,
-    enable_recording: "off",
     enable_transcription_storage: false,
     enable_dialout: false,
   });
+  assert.equal("enable_recording" in roomBody.properties, false);
   assert.equal("geo" in roomBody.properties, false);
 
   await provider.createToken({
@@ -133,7 +133,7 @@ async function main() {
     assert.equal(tokenBody.properties.start_audio_off, true);
     assert.equal(tokenBody.properties.enable_screenshare, false);
     assert.equal(tokenBody.properties.enable_live_captions_ui, false);
-    assert.equal(tokenBody.properties.enable_recording, "off");
+    assert.equal("enable_recording" in tokenBody.properties, false);
     assert.equal(tokenBody.properties.enable_recording_ui, false);
     assert.equal(tokenBody.properties.start_cloud_recording, false);
     assert.equal(tokenBody.properties.auto_start_transcription, false);
@@ -149,8 +149,7 @@ async function main() {
   assert.deepEqual(ejectCall.body, { user_ids: [opaqueId], ban: true });
   await provider.deleteRoom(roomId);
 
-  // A concurrent deterministic create may receive a duplicate error. The provider
-  // verifies the existing room through GET without parsing/logging the error body.
+  // Identified existing-room conflict (409) recovers via GET.
   const duplicateCalls: Call[] = [];
   const duplicateFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
@@ -180,6 +179,118 @@ async function main() {
   const duplicateRoom = await duplicateProvider.ensureRoom(roomInput);
   assert.equal(duplicateRoom.roomId, roomId);
   assert.equal(duplicateCalls.length, 2);
+
+  // 400 "already exists" also recovers via GET.
+  const existsCalls: Call[] = [];
+  const existsFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    const method = init?.method ?? "GET";
+    existsCalls.push({ url, method, body: null, authorization: null });
+    if (url.endsWith("/rooms") && method === "POST") {
+      return Response.json(
+        { error: "invalid-request-error", info: "a room with that name already exists" },
+        { status: 400 },
+      );
+    }
+    if (url.endsWith(`/rooms/${roomId}`) && method === "GET") {
+      return Response.json({
+        name: roomId,
+        url: `https://pratiqo.daily.co/${roomId}`,
+        privacy: "private",
+        config: roomBody.properties,
+      });
+    }
+    return new Response(null, { status: 404 });
+  }) as typeof fetch;
+  const existsProvider = createDailyRoomProvider({
+    apiKey: API_KEY,
+    domain: "pratiqo.daily.co",
+    roomHmacSecret: ROOM_SECRET,
+    participantHmacSecret: PARTICIPANT_SECRET,
+    fetchImpl: existsFetch,
+  });
+  assert.equal((await existsProvider.ensureRoom(roomInput)).roomId, roomId);
+  assert.equal(existsCalls.length, 2);
+
+  // Invalid payload 400 must NOT fall through to GET — preserves create diagnostic.
+  const invalidCalls: Call[] = [];
+  const invalidFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    const method = init?.method ?? "GET";
+    invalidCalls.push({ url, method, body: null, authorization: null });
+    if (url.endsWith("/rooms") && method === "POST") {
+      return new Response(
+        JSON.stringify({
+          error: "invalid-request-error",
+          info: "invalid value for property enable_recording: off",
+        }),
+        {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "x-daily-request-id": "req_test_recording",
+          },
+        },
+      );
+    }
+    return new Response(null, { status: 404 });
+  }) as typeof fetch;
+  const invalidProvider = createDailyRoomProvider({
+    apiKey: API_KEY,
+    domain: "pratiqo.daily.co",
+    roomHmacSecret: ROOM_SECRET,
+    participantHmacSecret: PARTICIPANT_SECRET,
+    fetchImpl: invalidFetch,
+  });
+  await assert.rejects(
+    invalidProvider.ensureRoom(roomInput),
+    (error: unknown) => {
+      assert.ok(error instanceof CafeRoomProviderError);
+      assert.equal(error.message, "Daily room creation rejected");
+      assert.equal(error.diagnostic?.operation, "room_create");
+      assert.equal(error.diagnostic?.httpStatus, 400);
+      assert.equal(error.diagnostic?.rejectedField, "enable_recording");
+      assert.equal(error.diagnostic?.requestId, "req_test_recording");
+      assert.equal(error.message.includes("off"), false);
+      assert.equal(invalidCalls.some((call) => call.method === "GET"), false);
+      return true;
+    },
+  );
+
+  // Conflict POST then failed GET keeps prior create diagnostic.
+  const conflictFailFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    const method = init?.method ?? "GET";
+    if (url.endsWith("/rooms") && method === "POST") {
+      return Response.json(
+        { error: "invalid-request-error", info: "a room named cafe-x already exists" },
+        { status: 400 },
+      );
+    }
+    if (url.includes("/rooms/") && method === "GET") {
+      return Response.json({ error: "not-found", info: "room missing" }, { status: 404 });
+    }
+    return new Response(null, { status: 404 });
+  }) as typeof fetch;
+  const conflictFailProvider = createDailyRoomProvider({
+    apiKey: API_KEY,
+    domain: "pratiqo.daily.co",
+    roomHmacSecret: ROOM_SECRET,
+    participantHmacSecret: PARTICIPANT_SECRET,
+    fetchImpl: conflictFailFetch,
+  });
+  await assert.rejects(
+    conflictFailProvider.ensureRoom(roomInput),
+    (error: unknown) => {
+      assert.ok(error instanceof CafeRoomProviderError);
+      assert.equal(error.message, "Daily room recovery rejected");
+      assert.equal(error.diagnostic?.operation, "room_get");
+      assert.equal(error.diagnostic?.httpStatus, 404);
+      assert.equal(error.priorDiagnostics?.[0]?.operation, "room_create");
+      assert.equal(error.priorDiagnostics?.[0]?.httpStatus, 400);
+      return true;
+    },
+  );
 
   const outageProvider = createDailyRoomProvider({
     apiKey: API_KEY,
