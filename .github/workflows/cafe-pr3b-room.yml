@@ -1,0 +1,107 @@
+name: Cafe conversation room
+
+on:
+  pull_request:
+    paths:
+      - "app/cafe/**"
+      - "components/cafe/**"
+      - "lib/cafe/**"
+      - "lib/security/cafeRoomHeaders.ts"
+      - "tests/cafe/**"
+      - "scripts/cafe-pr3b-demo-screenshots.ts"
+      - "next.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/cafe-pr3b-room.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  room-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Room authorization, lifecycle and UI regression checks
+        run: npm run test:cafe-pr3b-room
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Focused lint
+        run: >-
+          npx eslint
+          components/cafe/CafeConversationRoom.tsx
+          app/cafe/[slug]/CafeSessionDetails.tsx
+          app/cafe/[slug]/page.tsx
+          app/cafe/[slug]/salle/CafeConversationRoomLive.tsx
+          app/cafe/[slug]/salle/page.tsx
+          lib/cafe/roomClient.ts
+          lib/cafe/roomCourseReturn.ts
+          lib/cafe/dailyRoomSession.ts
+          tests/cafe/cafeRoomUiState.test.ts
+          tests/cafe/cafePr3bRoomHardening.test.ts
+          tests/cafe/cafeConversationRoom.test.tsx
+          scripts/cafe-pr3b-demo-screenshots.ts
+      - name: Whitespace check
+        run: git diff --check
+
+  room-demo-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      CAFE_V1_ENABLED: "true"
+      CAFE_ROOM_PROVIDER_ENABLED: "false"
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "cafe-demo-unconfigured"
+      SUPABASE_SERVICE_ROLE_KEY: "cafe-demo-unconfigured"
+      CAFE_LOCAL_SUPABASE_CONNECT_ORIGIN: "http://127.0.0.1:54321"
+      CAFE_PR3B_BASE: "http://127.0.0.1:3471"
+      NEXT_TELEMETRY_DISABLED: "1"
+      VERCEL_ENV: "development"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Build the demo routes with the normal CSP (no hosted catalogue)
+        run: npm run build -- --debug-build-paths="app/cafe/preview/salle/page.tsx,app/api/geo/route.ts"
+      - name: Desktop and mobile demo interactions (no Daily session)
+        shell: bash
+        run: |
+          mkdir -p artifacts/cafe-pr3b-room
+          npm run start -- --hostname 127.0.0.1 --port 3471 > artifacts/cafe-pr3b-room/next.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for attempt in $(seq 1 90); do
+            if curl --silent --fail --max-time 3 "$CAFE_PR3B_BASE/cafe/preview/salle" > /dev/null; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$ready" != true ]; then
+            echo "The demo server did not become ready."
+            exit 1
+          fi
+          node --import tsx scripts/cafe-pr3b-demo-screenshots.ts
+      - name: Demo screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cafe-room-demo-browser
+          path: artifacts/cafe-pr3b-room/
+          retention-days: 7
+          if-no-files-found: warn

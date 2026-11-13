@@ -8,6 +8,16 @@ import {
   type CafeRoomProvider,
   type CafeTokenInput,
 } from "@/lib/cafe/roomProvider";
+import {
+  effectiveDailyBool,
+  fingerprintDailyRequestId,
+  isDailyExistingRoomConflict,
+  isDailyRecordingEnabled,
+  publicCafeDailyDiagnostic,
+  readDailyErrorDiagnostic,
+  type CafeDailyDiagnostic,
+  type CafeDailyOperation,
+} from "@/lib/cafe/providers/dailyDiagnostics";
 
 const DAILY_API_BASE = "https://api.daily.co/v1";
 const REQUEST_TIMEOUT_MS = 6_000;
@@ -33,6 +43,10 @@ type DailyRoomResponse = {
 
 type DailyTokenResponse = {
   token?: unknown;
+};
+
+type DailyAccountResponse = {
+  domain_name?: unknown;
 };
 
 function normalizeSecret(value: string, name: string): string {
@@ -61,6 +75,45 @@ function safeFirstName(value: string): string {
   return first || "Participant";
 }
 
+function providerError(
+  code: "provider_unavailable" | "internal_error",
+  message: string,
+  options?: {
+    retryAfterSeconds?: number;
+    diagnostic?: CafeDailyDiagnostic;
+    priorDiagnostics?: CafeDailyDiagnostic[];
+  },
+): CafeRoomProviderError {
+  return new CafeRoomProviderError(code, message, options?.retryAfterSeconds, {
+    diagnostic: options?.diagnostic ? publicCafeDailyDiagnostic(options.diagnostic) : undefined,
+    priorDiagnostics: options?.priorDiagnostics?.map(publicCafeDailyDiagnostic),
+  });
+}
+
+/** Room properties for create — recording omitted (Daily has no `"off"` enum). */
+export function buildCafeDailyRoomProperties(input: CafeRoomInput): Record<string, unknown> {
+  return {
+    nbf: input.roomNbf,
+    exp: input.roomExp,
+    eject_at_room_exp: true,
+    max_participants: Math.min(8, input.maxParticipants),
+    enable_prejoin_ui: true,
+    enable_knocking: false,
+    enable_chat: false,
+    enable_advanced_chat: false,
+    enable_shared_chat_history: false,
+    enable_screenshare: false,
+    enable_live_captions_ui: false,
+    start_video_off: true,
+    start_audio_off: true,
+    enable_hidden_participants: false,
+    // Omit enable_recording: Daily accepts only cloud|cloud-audio-only|local|raw-tracks.
+    // Absence keeps recording disabled per Daily's documented contract.
+    enable_transcription_storage: false,
+    enable_dialout: false,
+  };
+}
+
 export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
   const apiKey = normalizeSecret(config.apiKey, "DAILY_API_KEY");
   const domain = normalizeDailyDomain(config.domain);
@@ -76,7 +129,12 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
   const opaqueParticipantId = (sessionId: string, profileId: string) =>
     `cp_${hmacId(participantHmacSecret, "participant", `${sessionId}:${profileId}`, 24)}`;
 
-  async function dailyRequest(path: string, init: RequestInit): Promise<Response> {
+  async function dailyRequest(
+    operation: CafeDailyOperation,
+    path: string,
+    init: RequestInit,
+    priorDiagnostics?: CafeDailyDiagnostic[],
+  ): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     try {
@@ -91,7 +149,18 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
         cache: "no-store",
       });
     } catch {
-      throw new CafeRoomProviderError("provider_unavailable", "Daily request failed", 15);
+      throw providerError("provider_unavailable", "Daily request failed", {
+        retryAfterSeconds: 15,
+        diagnostic: {
+          operation,
+          httpStatus: null,
+          errorCode: "network_error",
+          info: null,
+          rejectedField: null,
+          requestId: null,
+        },
+        priorDiagnostics,
+      });
     } finally {
       clearTimeout(timer);
     }
@@ -101,33 +170,68 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
     return `https://${domain}/${roomId}`;
   }
 
-  function validateRoom(raw: DailyRoomResponse, expected: CafeRoomInput, expectedRoomId: string): CafeProviderRoom {
+  function validateRoom(
+    raw: DailyRoomResponse,
+    expected: CafeRoomInput,
+    expectedRoomId: string,
+  ): CafeProviderRoom {
     if (raw.name !== expectedRoomId || raw.privacy !== "private") {
-      throw new CafeRoomProviderError("internal_error", "Daily room identity/config mismatch");
+      throw providerError("internal_error", "Daily room identity/config mismatch");
     }
     const roomConfig = raw.config ?? {};
+
+    // Documented Daily defaults apply when fields are omitted from `config`.
+    const chatOff = effectiveDailyBool(roomConfig.enable_chat, false) === false;
+    const advancedChatOff = effectiveDailyBool(roomConfig.enable_advanced_chat, false) === false;
+    // enable_shared_chat_history defaults to true; we require an explicit disable.
+    const sharedChatOff = roomConfig.enable_shared_chat_history === false;
+    const screenshareOff = roomConfig.enable_screenshare === false;
+    const captionsOff = effectiveDailyBool(roomConfig.enable_live_captions_ui, false) === false;
+    const knockingOff = effectiveDailyBool(roomConfig.enable_knocking, false) === false;
+    const hiddenOff = effectiveDailyBool(roomConfig.enable_hidden_participants, false) === false;
+    const transcriptionOff =
+      effectiveDailyBool(roomConfig.enable_transcription_storage, false) === false;
+    const dialoutOff = effectiveDailyBool(roomConfig.enable_dialout, false) === false;
+    const recordingEnabled = isDailyRecordingEnabled(roomConfig.enable_recording);
+    const recordingOff = recordingEnabled === false;
+    const cloudRecordingNotForced =
+      effectiveDailyBool(roomConfig.start_cloud_recording, false) === false;
+    const autoTranscriptionOff =
+      effectiveDailyBool(roomConfig.auto_start_transcription, false) === false;
+
     if (
-      Number(roomConfig.nbf) !== expected.roomNbf ||
-      Number(roomConfig.exp) !== expected.roomExp ||
-      Number(roomConfig.max_participants) !== Math.min(8, expected.maxParticipants) ||
-      roomConfig.enable_prejoin_ui !== true ||
-      roomConfig.enable_knocking !== false ||
-      roomConfig.enable_chat !== false ||
-      roomConfig.enable_advanced_chat !== false ||
-      roomConfig.enable_shared_chat_history !== false ||
-      roomConfig.enable_screenshare !== false ||
-      roomConfig.enable_live_captions_ui !== false ||
-      roomConfig.start_video_off !== true ||
-      roomConfig.start_audio_off !== true ||
-      roomConfig.eject_at_room_exp !== true ||
-      roomConfig.enable_hidden_participants !== false ||
-      roomConfig.enable_recording !== "off" ||
-      roomConfig.enable_transcription_storage !== false ||
-      roomConfig.enable_dialout !== false ||
-      roomConfig.start_cloud_recording === true ||
-      roomConfig.auto_start_transcription === true
+      Number(roomConfig.nbf) !== expected.roomNbf
+      || Number(roomConfig.exp) !== expected.roomExp
+      || Number(roomConfig.max_participants) !== Math.min(8, expected.maxParticipants)
+      || roomConfig.enable_prejoin_ui !== true
+      || knockingOff !== true
+      || chatOff !== true
+      || advancedChatOff !== true
+      || sharedChatOff !== true
+      || screenshareOff !== true
+      || captionsOff !== true
+      || roomConfig.start_video_off !== true
+      || roomConfig.start_audio_off !== true
+      || roomConfig.eject_at_room_exp !== true
+      || hiddenOff !== true
+      || recordingOff !== true
+      || transcriptionOff !== true
+      || dialoutOff !== true
+      || cloudRecordingNotForced !== true
+      || autoTranscriptionOff !== true
     ) {
-      throw new CafeRoomProviderError("internal_error", "Daily room safety config mismatch");
+      throw providerError("internal_error", "Daily room safety config mismatch", {
+        diagnostic: {
+          operation: "room_get",
+          httpStatus: 200,
+          errorCode: "safety_config_mismatch",
+          info: recordingEnabled === null
+            ? "recording_config_unrecognized"
+            : recordingEnabled ? "recording_enabled_in_config" : null,
+          rejectedField: recordingOff ? null : "enable_recording",
+          requestId: null,
+        },
+      });
     }
 
     if (typeof raw.url === "string") {
@@ -135,27 +239,79 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
       try {
         parsed = new URL(raw.url);
       } catch {
-        throw new CafeRoomProviderError("internal_error", "Daily room URL invalid");
+        throw providerError("internal_error", "Daily room URL invalid");
       }
       const normalizedPath = parsed.pathname.replace(/\/$/, "");
-      if (parsed.protocol !== "https:" || parsed.hostname !== domain || normalizedPath !== `/${expectedRoomId}`) {
-        throw new CafeRoomProviderError("internal_error", "Daily room URL mismatch");
+      if (
+        parsed.protocol !== "https:"
+        || parsed.hostname !== domain
+        || normalizedPath !== `/${expectedRoomId}`
+      ) {
+        throw providerError("internal_error", "Daily room URL mismatch");
       }
     }
 
     return { provider: "daily", roomId: expectedRoomId, roomUrl: roomUrl(expectedRoomId) };
   }
 
-  async function getRoom(expected: CafeRoomInput, roomId: string): Promise<CafeProviderRoom> {
-    const response = await dailyRequest(`/rooms/${encodeURIComponent(roomId)}`, { method: "GET" });
+  async function rejectFromResponse(
+    response: Response,
+    operation: CafeDailyOperation,
+    message: string,
+    code: "provider_unavailable" | "internal_error",
+    priorDiagnostics?: CafeDailyDiagnostic[],
+  ): Promise<never> {
+    const diagnostic = await readDailyErrorDiagnostic(response, operation);
+    throw providerError(code, message, {
+      retryAfterSeconds: code === "provider_unavailable" ? 15 : undefined,
+      diagnostic,
+      priorDiagnostics,
+    });
+  }
+
+  async function getRoom(
+    expected: CafeRoomInput,
+    roomId: string,
+    priorDiagnostics?: CafeDailyDiagnostic[],
+  ): Promise<CafeProviderRoom> {
+    const response = await dailyRequest(
+      "room_get",
+      `/rooms/${encodeURIComponent(roomId)}`,
+      { method: "GET" },
+      priorDiagnostics,
+    );
     if (response.status >= 500) {
-      throw new CafeRoomProviderError("provider_unavailable", "Daily room lookup unavailable", 15);
+      await rejectFromResponse(
+        response,
+        "room_get",
+        "Daily room lookup unavailable",
+        "provider_unavailable",
+        priorDiagnostics,
+      );
     }
     if (!response.ok) {
-      throw new CafeRoomProviderError("internal_error", "Daily room provisioning rejected");
+      await rejectFromResponse(
+        response,
+        "room_get",
+        "Daily room recovery rejected",
+        "internal_error",
+        priorDiagnostics,
+      );
     }
     const payload = (await response.json().catch(() => null)) as DailyRoomResponse | null;
-    if (!payload) throw new CafeRoomProviderError("internal_error", "Daily room response invalid");
+    if (!payload) {
+      throw providerError("internal_error", "Daily room response invalid", {
+        diagnostic: {
+          operation: "room_get",
+          httpStatus: response.status,
+          errorCode: "invalid_json",
+          info: null,
+          rejectedField: null,
+          requestId: null,
+        },
+        priorDiagnostics,
+      });
+    }
     return validateRoom(payload, expected, roomId);
   }
 
@@ -164,47 +320,50 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
     const createPayload = {
       name: roomId,
       privacy: "private",
-      properties: {
-        nbf: input.roomNbf,
-        exp: input.roomExp,
-        eject_at_room_exp: true,
-        max_participants: Math.min(8, input.maxParticipants),
-        enable_prejoin_ui: true,
-        enable_knocking: false,
-        enable_chat: false,
-        enable_advanced_chat: false,
-        enable_shared_chat_history: false,
-        enable_screenshare: false,
-        enable_live_captions_ui: false,
-        start_video_off: true,
-        start_audio_off: true,
-        enable_hidden_participants: false,
-        enable_recording: "off",
-        enable_transcription_storage: false,
-        enable_dialout: false,
-      },
+      properties: buildCafeDailyRoomProperties(input),
     };
 
-    const response = await dailyRequest("/rooms", {
+    const response = await dailyRequest("room_create", "/rooms", {
       method: "POST",
       body: JSON.stringify(createPayload),
     });
 
     if (response.ok) {
       const payload = (await response.json().catch(() => null)) as DailyRoomResponse | null;
-      if (!payload) throw new CafeRoomProviderError("internal_error", "Daily room response invalid");
+      if (!payload) {
+        throw providerError("internal_error", "Daily room response invalid", {
+          diagnostic: {
+            operation: "room_create",
+            httpStatus: response.status,
+            errorCode: "invalid_json",
+            info: null,
+            rejectedField: null,
+            requestId: null,
+          },
+        });
+      }
       return validateRoom(payload, input, roomId);
     }
 
-    // Daily returns a client error when a deterministic room already exists.
-    // Never inspect or log the provider body: verify the room through GET instead.
-    if (response.status === 400 || response.status === 409) {
-      return getRoom(input, roomId);
-    }
     if (response.status >= 500) {
-      throw new CafeRoomProviderError("provider_unavailable", "Daily room creation unavailable", 15);
+      await rejectFromResponse(
+        response,
+        "room_create",
+        "Daily room creation unavailable",
+        "provider_unavailable",
+      );
     }
-    throw new CafeRoomProviderError("internal_error", "Daily room creation rejected");
+
+    const createDiagnostic = await readDailyErrorDiagnostic(response, "room_create");
+
+    // Only recover when Daily identifies an existing-room conflict — not every 400.
+    if (isDailyExistingRoomConflict(response.status, createDiagnostic)) {
+      return getRoom(input, roomId, [createDiagnostic]);
+    }
+
+    throw providerError("internal_error", "Daily room creation rejected", {
+      diagnostic: createDiagnostic,
+    });
   }
 
   async function createToken(input: CafeTokenInput): Promise<CafeProviderToken> {
@@ -223,7 +382,7 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
         enable_prejoin_ui: true,
         enable_screenshare: false,
         enable_live_captions_ui: false,
-        enable_recording: "off",
+        // Omit enable_recording — same enum contract as rooms; absence denies recording.
         enable_recording_ui: false,
         start_cloud_recording: false,
         auto_start_transcription: false,
@@ -238,25 +397,44 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
       },
     };
 
-    const response = await dailyRequest("/meeting-tokens", {
+    const response = await dailyRequest("token_create", "/meeting-tokens", {
       method: "POST",
       body: JSON.stringify(tokenPayload),
     });
     if (response.status >= 500) {
-      throw new CafeRoomProviderError("provider_unavailable", "Daily token service unavailable", 15);
+      await rejectFromResponse(
+        response,
+        "token_create",
+        "Daily token service unavailable",
+        "provider_unavailable",
+      );
     }
     if (!response.ok) {
-      throw new CafeRoomProviderError("internal_error", "Daily token request rejected");
+      await rejectFromResponse(
+        response,
+        "token_create",
+        "Daily token request rejected",
+        "internal_error",
+      );
     }
     const payload = (await response.json().catch(() => null)) as DailyTokenResponse | null;
     if (!payload || typeof payload.token !== "string" || payload.token.length < 20) {
-      throw new CafeRoomProviderError("internal_error", "Daily token response invalid");
+      throw providerError("internal_error", "Daily token response invalid", {
+        diagnostic: {
+          operation: "token_create",
+          httpStatus: response.status,
+          errorCode: "invalid_token_payload",
+          info: null,
+          rejectedField: null,
+          requestId: null,
+        },
+      });
     }
     return { token: payload.token, expiresAt: new Date(input.exp * 1000).toISOString() };
   }
 
   async function removeParticipant(input: CafeRemovalInput) {
-    const response = await dailyRequest(`/rooms/${encodeURIComponent(input.roomId)}/eject`, {
+    const response = await dailyRequest("participant_remove", `/rooms/${encodeURIComponent(input.roomId)}/eject`, {
       method: "POST",
       body: JSON.stringify({
         user_ids: [opaqueParticipantId(input.sessionId, input.profileId)],
@@ -264,21 +442,41 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
       }),
     });
     if (response.status >= 500) {
-      throw new CafeRoomProviderError("provider_unavailable", "Daily removal unavailable", 15);
+      await rejectFromResponse(
+        response,
+        "participant_remove",
+        "Daily removal unavailable",
+        "provider_unavailable",
+      );
     }
     if (!response.ok) {
-      throw new CafeRoomProviderError("internal_error", "Daily removal rejected");
+      await rejectFromResponse(
+        response,
+        "participant_remove",
+        "Daily removal rejected",
+        "internal_error",
+      );
     }
   }
 
   async function deleteRoom(roomId: string) {
-    const response = await dailyRequest(`/rooms/${encodeURIComponent(roomId)}`, { method: "DELETE" });
+    const response = await dailyRequest("room_delete", `/rooms/${encodeURIComponent(roomId)}`, { method: "DELETE" });
     if (response.status === 404) return;
     if (response.status >= 500) {
-      throw new CafeRoomProviderError("provider_unavailable", "Daily room deletion unavailable", 15);
+      await rejectFromResponse(
+        response,
+        "room_delete",
+        "Daily room deletion unavailable",
+        "provider_unavailable",
+      );
     }
     if (!response.ok) {
-      throw new CafeRoomProviderError("internal_error", "Daily room deletion rejected");
+      await rejectFromResponse(
+        response,
+        "room_delete",
+        "Daily room deletion rejected",
+        "internal_error",
+      );
     }
   }
 
@@ -291,6 +489,102 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
     removeParticipant,
     deleteRoom,
   };
+}
+
+/**
+ * Daily GET / returns `domain_name` as the subdomain label (e.g. `pratiqo`),
+ * while room URLs and DAILY_DOMAIN use the hostname (`pratiqo.daily.co`).
+ */
+export function dailyDomainLabelsMatch(
+  configuredHostname: string,
+  returnedDomainName: string | null | undefined,
+): boolean {
+  if (!returnedDomainName) return false;
+  const configured = normalizeDailyDomain(configuredHostname);
+  const configuredLabel = configured.replace(/\.daily\.co$/, "");
+  const returned = returnedDomainName
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/$/, "")
+    .replace(/\.daily\.co$/, "");
+  return returned.length > 0 && returned === configuredLabel;
+}
+
+/**
+ * Read-only account check: GET /v1/ and compare domain_name to configured DAILY_DOMAIN.
+ * Logs only status + match boolean — never secret values.
+ */
+export async function verifyDailyAccountDomainMatch(input: {
+  apiKey: string;
+  domain: string;
+  fetchImpl?: DailyFetch;
+}): Promise<{
+  httpStatus: number;
+  domainMatches: boolean;
+  returnedDomainPresent: boolean;
+  diagnostic: CafeDailyDiagnostic;
+}> {
+  const apiKey = normalizeSecret(input.apiKey, "DAILY_API_KEY");
+  const domain = normalizeDailyDomain(input.domain);
+  const fetchImpl = input.fetchImpl ?? fetch;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetchImpl(`${DAILY_API_BASE}/`, {
+      method: "GET",
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      const diagnostic = await readDailyErrorDiagnostic(response, "account_lookup");
+      return {
+        httpStatus: response.status,
+        domainMatches: false,
+        returnedDomainPresent: false,
+        diagnostic,
+      };
+    }
+    const payload = (await response.json().catch(() => null)) as DailyAccountResponse | null;
+    const returned =
+      typeof payload?.domain_name === "string" ? payload.domain_name : null;
+    const returnedDomainPresent = typeof returned === "string" && returned.trim().length > 0;
+    const domainMatches = dailyDomainLabelsMatch(domain, returned);
+    return {
+      httpStatus: response.status,
+      domainMatches,
+      returnedDomainPresent,
+      diagnostic: publicCafeDailyDiagnostic({
+        operation: "account_lookup",
+        httpStatus: response.status,
+        errorCode: domainMatches ? null : "domain_mismatch",
+        info: returnedDomainPresent ? null : "domain_name_missing",
+        rejectedField: domainMatches ? null : "domain_name",
+        requestId: fingerprintDailyRequestId(
+          response.headers.get("x-daily-request-id")
+          ?? response.headers.get("x-request-id"),
+        ),
+      }),
+    };
+  } catch {
+    throw providerError("provider_unavailable", "Daily account lookup failed", {
+      retryAfterSeconds: 15,
+      diagnostic: {
+        operation: "account_lookup",
+        httpStatus: null,
+        errorCode: "network_error",
+        info: null,
+        rejectedField: null,
+        requestId: null,
+      },
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function getDailyRoomProviderFromEnv(): CafeRoomProvider {

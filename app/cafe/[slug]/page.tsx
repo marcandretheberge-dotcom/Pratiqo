@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CafeSessionDetails } from "./CafeSessionDetails";
+import { isCafeRoomProviderEnabled } from "@/lib/cafe/roomFeatureFlag";
 
 export const metadata: Metadata = {
   title: "Table — Café des langues",
@@ -18,7 +19,7 @@ export default async function CafeSessionPage({
   const { slug } = await params;
   return (
     <Suspense fallback={null}>
-      <CafeSessionDetails slug={slug} />
+      <CafeSessionDetails slug={slug} roomEnabled={isCafeRoomProviderEnabled()} />
     </Suspense>
   );
 }

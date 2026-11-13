@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 import { cafeLocalSandboxConnectSrcExtra } from "./lib/security/cafeLocalSandboxCsp";
+import {
+  buildCafeRoomPermissionsPolicy,
+  buildDefaultPermissionsPolicy,
+  orderCafeHeaderRules,
+} from "./lib/security/cafeRoomHeaders";
 import { localDiscoveryRedirects } from "./lib/seo/localDiscoveryRedirects";
 
 /** Base connect-src (production-safe). Optional local sandbox origin appended only via CAFE_LOCAL_SUPABASE_CONNECT_ORIGIN. */
@@ -10,6 +15,8 @@ function buildConnectSrcDirective(env: NodeJS.ProcessEnv | Record<string, string
     + " https://*.stripe.com https://api.stripe.com"
     + " https://maps.googleapis.com https://*.googleapis.com https://maps.gstatic.com"
     + " https://us.i.posthog.com"
+    // Daily room media (PR3b) — additive; café room stays feature-flagged off in production.
+    + " https://*.daily.co wss://*.daily.co https://*.wss.daily.co wss://*.wss.daily.co"
     + cafeLocalSandboxConnectSrcExtra(env)
   );
 }
@@ -33,7 +40,8 @@ function buildCspValue(env: NodeJS.ProcessEnv = process.env): string {
     "font-src 'self' data: https://fonts.gstatic.com",
     "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com"
       + " https://www.youtube.com https://www.youtube-nocookie.com"
-      + " https://player.vimeo.com",
+      + " https://player.vimeo.com"
+      + " https://*.daily.co",
     // Phase A — additive hardening (no domain narrowing)
     "object-src 'none'",
     "base-uri 'self'",
@@ -61,7 +69,8 @@ function buildCspReportOnlyValue(env: NodeJS.ProcessEnv = process.env): string {
     "font-src 'self' data: https://fonts.gstatic.com",
     "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com"
       + " https://www.youtube.com https://www.youtube-nocookie.com"
-      + " https://player.vimeo.com",
+      + " https://player.vimeo.com"
+      + " https://*.daily.co",
     "object-src 'none'",
     "base-uri 'self'",
     "frame-ancestors 'self'",
@@ -161,22 +170,9 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    // Permissions-Policy: Pratiqo does not currently request camera, microphone,
-    // geolocation, payment, USB, or other privileged surfaces from the browser
-    // (Stripe handles payment inside its own iframe, Maps uses lat/lng we
-    // compute server-side). Disabling these by default reduces blast radius
-    // from XSS or compromised third-party scripts.
-    const permissionsPolicy = [
-      "camera=()",
-      "microphone=()",
-      "geolocation=()",
-      "payment=()",
-      "usb=()",
-      "magnetometer=()",
-      "accelerometer=()",
-      "gyroscope=()",
-    ].join(", ");
-
+    // Permissions-Policy: site-wide deny by default. Café room routes override
+    // afterward (last matching source wins) and may delegate camera/mic to the
+    // configured Daily origin only. Screen capture stays disabled.
     const routeHeaders: { key: string; value: string }[] = [
       { key: "Content-Security-Policy", value: buildCspValue() },
       { key: "X-Frame-Options", value: "SAMEORIGIN" },
@@ -187,7 +183,7 @@ const nextConfig: NextConfig = {
       // Privacy: prevent the full URL (which can include a sanitized `next`
       // query string or a teacher slug) from leaking to third-party origins.
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-      { key: "Permissions-Policy", value: permissionsPolicy },
+      { key: "Permissions-Policy", value: buildDefaultPermissionsPolicy() },
     ];
 
     if (isCspReportOnlyEnabled()) {
@@ -197,12 +193,10 @@ const nextConfig: NextConfig = {
       });
     }
 
-    return [
-      {
-        source: "/:path*",
-        headers: routeHeaders,
-      },
-    ];
+    return orderCafeHeaderRules({
+      defaultHeaders: routeHeaders,
+      cafeRoomPermissionsPolicy: buildCafeRoomPermissionsPolicy(),
+    });
   },
 };
 
