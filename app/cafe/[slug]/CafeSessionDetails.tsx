@@ -290,8 +290,8 @@ export function CafeSessionDetails({ slug, roomEnabled = false }: { slug: string
                 <>
                   <p className={styles.reservationNote} role="status">{copy.reserved}</p>
                   {roomEnabled ? (
-                    // Room camera/mic permissions require a new document: an
-                    // SPA transition would retain this page's deny-all policy.
+                    // Room device permissions require a new document: an
+                    // SPA transition would retain this page's restrictive policy.
                     <a
                       className={styles.primaryButton}
                       href={buildCafeRoomHref({ slug, title: session.title, yoReturn: yo.yoReturn })}
