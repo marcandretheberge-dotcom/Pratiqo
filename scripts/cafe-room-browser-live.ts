@@ -124,8 +124,8 @@ async function enter(page: Page) {
 async function mediaControls(page: Page, actor: string) {
   const frame = page.frameLocator("[data-cafe-daily-frame] iframe");
   const controls = [
-    { key: "camera", off: /turn on camera|turn camera on|start video|enable camera|activer.*caméra/i, on: /turn off camera|turn camera off|stop video|disable camera|désactiver.*caméra/i },
-    { key: "microphone", off: /unmute|turn on mic|turn mic(?:rophone)? on|enable microphone|activer.*micro/i, on: /^mute(?:\b|$)|turn off mic|turn mic(?:rophone)? off|disable microphone|couper.*micro/i },
+    { key: "camera", off: /turn on camera|turn camera on|start video|enable camera|\bactiver\b.*caméra/i, on: /turn off camera|turn camera off|stop video|disable camera|désactiver.*caméra/i },
+    { key: "microphone", off: /unmute|turn on mic|turn mic(?:rophone)? on|enable microphone|\bactiver\b.*micro/i, on: /^mute(?:\b|$)|turn off mic|turn mic(?:rophone)? off|disable microphone|couper.*micro/i },
   ];
   for (const control of controls) {
     currentStep = `${actor}_${control.key}_off_on_off_on`;
@@ -291,8 +291,8 @@ async function main() {
     check("learner_reserved_via_app_api", reserved.ok && reservation.status === "confirmed", { httpStatus: reserved.status });
 
     browser = await chromium.launch({ headless: true, args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", "--autoplay-policy=no-user-gesture-required"] });
-    const hostContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-    const learnerContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const hostContext = await browser.newContext({ locale: "fr-CA", viewport: { width: 1280, height: 900 } });
+    const learnerContext = await browser.newContext({ locale: "fr-CA", viewport: { width: 390, height: 844 } });
     for (const [index, context] of [hostContext, learnerContext].entries()) {
       await observeBrowser(context);
       await seedSession(context, actors[index].session, apiUrl, appBase);
@@ -382,7 +382,14 @@ async function main() {
     await learnerPage.locator('main[data-cafe-room-phase="left"]').waitFor();
     const returnLink = learnerPage.getByRole("link", { name: /Revenir à mon cours/i });
     check("course_return_preserved", await returnLink.getAttribute("href") === courseReturn);
-    await returnLink.click();
+    currentStep = "course_return_document_navigation";
+    const [returnResponse] = await Promise.all([
+      learnerPage.waitForNavigation({ waitUntil: "domcontentloaded", timeout: 60_000 }),
+      returnLink.click(),
+    ]);
+    check("course_return_loads_new_document", returnResponse?.ok() && returnResponse.request().isNavigationRequest());
+    const returnPermissions = (returnResponse?.headers()["permissions-policy"] ?? "").split(",").map((directive) => directive.trim());
+    check("course_return_restores_camera_microphone_denial", returnPermissions.includes("camera=()") && returnPermissions.includes("microphone=()"));
     await learnerPage.waitForURL(`${appBase}${courseReturn}`, { timeout: 60_000 });
     await learnerPage.getByTestId("yo-student-hub").waitFor({ state: "visible", timeout: 60_000 });
     check("course_return_navigation", true);

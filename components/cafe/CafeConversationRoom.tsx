@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useReducer, useRef } from "react";
 import styles from "@/app/cafe/cafe.module.css";
 import { cafeCopy, type CafeLocale } from "@/lib/cafe/copy";
@@ -214,6 +213,8 @@ export function CafeConversationRoom({
     dispatch({ type: "start_media_prep" });
   }
 
+  // Course links load a new document so the destination's Permissions-Policy
+  // replaces the room's camera/microphone delegation after leaving this route.
   return (
     <main className={styles.shell} lang={locale} data-cafe-room-phase={state.phase}>
       <div className={styles.stage}>
@@ -239,9 +240,9 @@ export function CafeConversationRoom({
                 {copy.roomPrepare}
               </button>
               {courseReturnHref ? (
-                <Link className={styles.secondaryButton} href={courseReturnHref}>
+                <a className={styles.secondaryButton} href={courseReturnHref}>
                   {copy.returnToCourse}
-                </Link>
+                </a>
               ) : null}
             </div>
           ) : null}
@@ -323,9 +324,9 @@ export function CafeConversationRoom({
                 {copy.roomRetry}
               </button>
               {courseReturnHref ? (
-                <Link className={styles.secondaryButton} href={courseReturnHref}>
+                <a className={styles.secondaryButton} href={courseReturnHref}>
                   {copy.returnToCourse}
-                </Link>
+                </a>
               ) : null}
             </div>
           ) : null}
@@ -334,9 +335,9 @@ export function CafeConversationRoom({
             <div className={styles.roomActions}>
               <p className={styles.reservationNote} role="status">{copy.roomLeft}</p>
               {courseReturnHref ? (
-                <Link className={styles.primaryButton} href={courseReturnHref}>
+                <a className={styles.primaryButton} href={courseReturnHref}>
                   {copy.returnToCourse}
-                </Link>
+                </a>
               ) : (
                 <button
                   type="button"
