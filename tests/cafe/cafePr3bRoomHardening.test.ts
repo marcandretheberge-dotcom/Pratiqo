@@ -95,6 +95,9 @@ function mockCall(label: string, destroyed: string[]): CafeDailyCallHandle {
   assert.equal(ordered[0]?.source, "/:path*");
   assert.equal(ordered[1]?.source, "/cafe/:slug/salle");
   assert.equal(ordered[2]?.source, "/cafe/preview/salle");
+  assert.equal(ordered[3]?.source, "/cafe/appels/:callId");
+  assert.equal(ordered.length, 4);
+  assert.deepEqual(ordered[3]?.headers, ordered[1]?.headers);
   const roomPolicy = ordered[1]?.headers.find((h) => h.key === "Permissions-Policy")?.value ?? "";
   assert.match(roomPolicy, /camera=\(self "https:\/\/pratiqo\.daily\.co"\)/);
   const sitePolicy = ordered[0]?.headers.find((h) => h.key === "Permissions-Policy")?.value ?? "";

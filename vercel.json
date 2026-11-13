@@ -20,6 +20,10 @@
     {
       "path": "/api/cron/learner-demand",
       "schedule": "15 13 * * *"
+    },
+    {
+      "path": "/api/cron/cafe-community-cleanup",
+      "schedule": "* * * * *"
     }
   ]
 }

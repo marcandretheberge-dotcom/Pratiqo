@@ -1,5 +1,6 @@
 "use client";
 import { YoLanguageQuickStart } from "./YoLanguageQuickStart";
+import { CafeNavLink } from "@/components/cafe/community/CafeNavLink";
 
 /**
  * YoStudentHubContent
@@ -453,6 +454,10 @@ export function YoStudentHubContent(): React.JSX.Element {
     >
       {brandedHeaderBlock}
       <YoLanguageQuickStart locale={l} />
+      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#D3D1C7] bg-[#FAFAF6] px-5 py-4" data-testid="yo-student-hub-cafe">
+        <div><h2 className="text-base font-semibold text-[#35372F]">Café des langues</h2><p className="mt-1 text-sm text-[#66665E]">{l === "en" ? "Meet other learners. Say hello by text, then decide together if you want to call." : l === "es" ? "Conoce a otros estudiantes. Saluda por texto y decidan juntos si quieren llamarse." : "Rencontrez d’autres personnes qui apprennent. Un bonjour par écrit, puis un appel si vous en avez envie tous les deux."}</p></div>
+        <CafeNavLink full preserveCourse />
+      </section>
 
       {/* Mobile (<lg): button-driven step navigator. The branded
           header above stays visible so the user always knows

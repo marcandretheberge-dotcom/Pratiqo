@@ -2,6 +2,8 @@
 
 Status: Proposed for PR 1
 
+Update 2026-11-13: [ADR 002](002-cafe-community-text-first.md) records the owner's later decision to allow adult members to create text rooms, with mutual video invitations. It supersedes this document's provisional host restriction for the new community surface; existing scheduled-session authorization is unchanged.
+
 Date: 2026-11-10
 
 Scope: architecture contract and regression safety only; no Café runtime feature, schema migration, routing change, or deployment behavior change.
