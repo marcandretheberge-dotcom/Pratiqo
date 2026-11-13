@@ -5,6 +5,7 @@ import { CafeFrontDoor } from "./CafeFrontDoor";
 import { CafeCommunity } from "@/components/cafe/community/CafeCommunity";
 import { isCafeCommunityEnabled } from "@/lib/cafe/communityFeatureFlag";
 import { isCafeRoomProviderEnabled } from "@/lib/cafe/roomFeatureFlag";
+import { cafeHeroMedia } from "@/lib/cafe/heroMedia";
 
 export const metadata: Metadata = {
   title: "Café des langues",
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 export default function CafePage() {
   return (
     <Suspense fallback={<AppLoadingFallback />}>
-      {isCafeCommunityEnabled() ? <CafeCommunity videoEnabled={isCafeRoomProviderEnabled()} /> : <CafeFrontDoor />}
+      {isCafeCommunityEnabled() ? <CafeCommunity videoEnabled={isCafeRoomProviderEnabled()} heroVideoSrc={cafeHeroMedia.videoSrc} /> : <CafeFrontDoor heroVideoSrc={cafeHeroMedia.videoSrc} />}
     </Suspense>
   );
 }

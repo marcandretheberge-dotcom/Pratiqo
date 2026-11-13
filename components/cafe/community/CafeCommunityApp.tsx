@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { CafeHeroMedia } from "@/components/cafe/CafeHeroMedia";
 import type { CafeCommunityTransport, CafeIdentity } from "@/lib/cafe/communityClient";
 import type { CafeCallInvitation, CafeChatMessage, CafeCommunityCommand, CafeCommunityCommandResult, CafeCommunityRoom, CafeCommunityRoomView, CafeMember, CafePerson, CafeReportReason } from "@/lib/cafe/communityTypes";
 import { cafeLanguageLabel, cafeLanguageOptions, cafeLocalDate, cafeScheduledIso, cafeViewerTimeZone } from "@/lib/cafe/communityLanguages";
@@ -277,9 +278,9 @@ function ReportForm({ draft, locale, execute, onClose }: { draft: ReportDraft; l
 }
 
 /** The production view also accepts an explicit transport for deterministic component tests. */
-export function CafeCommunityApp({ identity, locale, transport, initialRoomId = null, languageHint, courseReturnHref, videoEnabled = false }: {
+export function CafeCommunityApp({ identity, locale, transport, initialRoomId = null, languageHint, courseReturnHref, videoEnabled = false, heroVideoSrc = null }: {
   identity: CafeIdentity; locale: CommunityLocale; transport?: CafeCommunityTransport; initialRoomId?: string | null;
-  languageHint?: string | null; courseReturnHref?: string | null; videoEnabled?: boolean;
+  languageHint?: string | null; courseReturnHref?: string | null; videoEnabled?: boolean; heroVideoSrc?: string | null;
 }) {
   const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
   const community = useCafeCommunity(identity, transport, initialRoomId);
@@ -314,7 +315,7 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
     {community.connection === "stale" && snapshot && <p className={styles.notice}>{t("Connexion à rétablir · les informations affichées peuvent dater. L’envoi et les nouvelles invitations sont en pause.", "Connection needs refreshing · displayed information may be old. Sending and new invitations are paused.", "Es necesario restablecer la conexión · los datos pueden estar desactualizados. Se pausan los envíos y las nuevas invitaciones.")}</p>}
     {notice && <div className={failedBlock ? styles.error : styles.notice} role="status">{notice}{failedBlock && <button className={styles.button} onClick={() => void blockMember(failedBlock)}>{t("Réessayer le blocage", "Retry block", "Reintentar bloqueo")}</button>}</div>}
     {!snapshot && <p className={styles.loading} role="status">{community.connection === "loading" ? t("Ouverture du Café…", "Opening the Café…", "Abriendo el Café…") : t("Le Café ne peut pas être chargé pour le moment.", "The Café cannot be loaded right now.", "No se puede cargar el Café en este momento.")}</p>}
-    {snapshot && !snapshot.me && <section className={`${styles.panel} ${styles.narrow}`}><h2 className={styles.heading}>{t("Avant d’entrer, présentez-vous.", "Before you enter, introduce yourself.", "Antes de entrar, preséntate.")}</h2><ProfileForm member={null} locale={locale} languageHint={languageHint} busy={community.busy} onSave={execute} /></section>}
+    {snapshot && !snapshot.me && <section className={`${styles.panel} ${styles.narrow}`}><CafeHeroMedia locale={locale} videoSrc={heroVideoSrc} className={styles.entryMedia} /><h2 className={styles.heading}>{t("Avant d’entrer, présentez-vous.", "Before you enter, introduce yourself.", "Antes de entrar, preséntate.")}</h2><ProfileForm member={null} locale={locale} languageHint={languageHint} busy={community.busy} onSave={execute} /></section>}
     {snapshot?.me && (snapshot.room ? <RoomChat key={snapshot.room.id} room={snapshot.room} me={snapshot.me} locale={locale} execute={execute} disabled={!community.canWrite} videoEnabled={videoEnabled} onReport={beginReport} onBlock={(member) => void blockMember(member)} calls={snapshot.calls} serverTime={snapshot.serverTime} courseReturnHref={courseReturnHref} /> : <>
       <div className={styles.spread}><div className={styles.filters}><div className={styles.tabs} aria-label={t("Explorer le Café", "Explore the Café", "Explorar el Café")}>{(["now", "scheduled", "people"] as const).map((item) => <button key={item} className={styles.tab} aria-pressed={tab === item} onClick={() => setTab(item)}>{item === "now" ? t("Maintenant", "Now", "Ahora") : item === "scheduled" ? t("À venir", "Upcoming", "Próximas") : t("Les gens", "People", "Personas")}</button>)}</div><label className={styles.small}>{t("Langue", "Language", "Idioma")} <select className={styles.filterSelect} value={filter} onChange={(event) => setFilter(event.target.value)} aria-label={t("Filtrer par langue", "Filter by language", "Filtrar por idioma")}><option value="">{t("Toutes les langues", "All languages", "Todos los idiomas")}</option>{languageOptions.map((option) => <option key={option.code} value={option.code}>{option.label}</option>)}</select></label></div><div className={styles.row}><button className={styles.primary} disabled={!community.canWrite} onClick={() => setCreate("now")}>{t("Créer un salon", "Create a room", "Crear una sala")}</button><button className={styles.button} disabled={!community.canWrite} onClick={() => setCreate("scheduled")}>{t("Fixer une date", "Pick a date", "Elegir una fecha")}</button></div></div>
       <div className={`${styles.lobby} ${styles.section}`}><section>

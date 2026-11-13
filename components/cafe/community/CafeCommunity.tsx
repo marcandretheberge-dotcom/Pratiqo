@@ -7,9 +7,10 @@ import { resolveCafeRoomCourseReturn } from "@/lib/cafe/roomCourseReturn";
 import { CafeCommunityApp, CommunityFrame } from "./CafeCommunityApp";
 import { cafeText, communityLocale } from "./copy";
 import { useCafeIdentity } from "./useCafeIdentity";
+import { CafeHeroMedia } from "@/components/cafe/CafeHeroMedia";
 import styles from "./community.module.css";
 
-export function CafeCommunity({ videoEnabled }: { videoEnabled: boolean }) {
+export function CafeCommunity({ videoEnabled, heroVideoSrc = null }: { videoEnabled: boolean; heroVideoSrc?: string | null }) {
   const { locale: rawLocale } = useLocale();
   const locale = communityLocale(rawLocale);
   const query = useSearchParams();
@@ -26,6 +27,7 @@ export function CafeCommunity({ videoEnabled }: { videoEnabled: boolean }) {
   const cafeHref = `/cafe${returnQuery.size ? `?${returnQuery.toString()}` : ""}`;
   if (!identity) return <CommunityFrame locale={locale} courseReturnHref={courseReturnHref}>
     {identity === undefined ? <p className={styles.loading} role="status">{t("Ouverture du Café…", "Opening the Café…", "Abriendo el Café…")}</p> : <section className={`${styles.panel} ${styles.narrow}`}>
+      <CafeHeroMedia locale={locale} videoSrc={heroVideoSrc} className={styles.entryMedia} />
       <p className={styles.eyebrow}>{t("Toutes les langues sont les bienvenues", "All languages are welcome", "Todos los idiomas son bienvenidos")}</p>
       <h1 className={styles.title}>{t("Entrez. Dites bonjour.", "Come in. Say hello.", "Entra. Di hola.")}</h1>
       <p className={styles.subtitle}>{t("Rencontrez des personnes qui apprennent, comme vous. Entrez dans un salon, créez le vôtre ou fixez une date. Commencez par écrire et choisissez ensemble si vous voulez vous appeler.", "Meet people who are learning, just like you. Join a room, create your own or pick a date. Start by writing and decide together if you want to call.", "Conoce a personas que aprenden, como tú. Entra en una sala, crea la tuya o elige una fecha. Empiecen escribiendo y decidan juntos si quieren llamarse.")}</p>
@@ -34,5 +36,5 @@ export function CafeCommunity({ videoEnabled }: { videoEnabled: boolean }) {
       <p className={styles.footer}>{t("Réservé aux adultes (18+). Chat d’abord. Appels sur invitation acceptée. Blocage et signalement accessibles dans le Café.", "For adults (18+). Text first. Calls by accepted invitation. Block and report controls are available in the Café.", "Para adultos (18+). Primero texto. Llamadas por invitación aceptada. Puedes bloquear y denunciar en el Café.")}</p>
     </section>}
   </CommunityFrame>;
-  return <CafeCommunityApp key={identity.userId} identity={identity} locale={locale} videoEnabled={videoEnabled} initialRoomId={initialRoomId} languageHint={languageHint} courseReturnHref={courseReturnHref} />;
+  return <CafeCommunityApp key={identity.userId} identity={identity} locale={locale} videoEnabled={videoEnabled} initialRoomId={initialRoomId} languageHint={languageHint} courseReturnHref={courseReturnHref} heroVideoSrc={heroVideoSrc} />;
 }

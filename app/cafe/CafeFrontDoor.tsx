@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { cafeCopy, type CafeLocale } from "@/lib/cafe/copy";
 import type { CafePublicSession } from "@/lib/cafe/publicTypes";
 import { CafeSessionCard } from "@/components/cafe/CafeSessionCard";
+import { CafeHeroMedia } from "@/components/cafe/CafeHeroMedia";
 import styles from "./cafe.module.css";
 
 type View = "door" | "choice" | "groups";
@@ -21,7 +22,7 @@ function normalizeCafeLocale(value: string): CafeLocale {
   return value === "en" || value === "es" ? value : "fr";
 }
 
-export function CafeFrontDoor() {
+export function CafeFrontDoor({ heroVideoSrc = null }: { heroVideoSrc?: string | null }) {
   const { locale, setLocale } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,39 +32,53 @@ export function CafeFrontDoor() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [sessions, setSessions] = useState<CafePublicSession[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "opening" | "error">("idle");
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     headingRef.current?.focus();
   }, [view]);
 
   useEffect(() => {
-    if (view !== "groups" || status !== "idle") return;
+    if (view !== "groups") return;
     let active = true;
+    const controller = new AbortController();
+    // A request is scoped to entering the list or explicitly retrying it.
+    // Its own status changes must not clean up and invalidate its response.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Starting an external request resets its visible state.
     setStatus("loading");
-    void fetch("/api/cafe/sessions", { cache: "no-store" })
-      .then(async (response) => {
-        if (response.status === 404) return { opening: true, sessions: [] };
-        if (!response.ok) throw new Error("cafe listing unavailable");
-        return response.json() as Promise<{ ok?: boolean; sessions?: CafePublicSession[] }>;
-      })
-      .then((body) => {
+    const timeout = setTimeout(() => {
+      if (!active) return;
+      active = false;
+      controller.abort();
+      setStatus("error");
+    }, 10_000);
+    void (async () => {
+      try {
+        const response = await fetch("/api/cafe/sessions", { cache: "no-store", signal: controller.signal });
         if (!active) return;
-        if ("opening" in body && body.opening === true) {
+        if (response.status === 404) {
           setSessions([]);
           setStatus("opening");
           return;
         }
-        setSessions(Array.isArray(body.sessions) ? body.sessions : []);
-        setStatus("ready");
-      })
-      .catch(() => {
+        if (!response.ok) throw new Error("cafe listing unavailable");
+        const body = await response.json() as { ok?: boolean; sessions?: CafePublicSession[] } | null;
         if (!active) return;
-        setStatus("error");
-      });
+        if (body?.ok !== true || !Array.isArray(body.sessions)) throw new Error("invalid cafe listing");
+        setSessions(body.sessions);
+        setStatus("ready");
+      } catch {
+        if (active) setStatus("error");
+      } finally {
+        clearTimeout(timeout);
+      }
+    })();
     return () => {
       active = false;
+      clearTimeout(timeout);
+      controller.abort();
     };
-  }, [view, status]);
+  }, [view, retryCount]);
 
   const sortedSessions = useMemo(
     () => [...sessions].sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()),
@@ -93,7 +108,7 @@ export function CafeFrontDoor() {
                 {copy.privacy}
               </Link>
             </div>
-            <div className={styles.cafePhoto} aria-hidden="true" />
+            <CafeHeroMedia className={styles.cafePhoto} locale={cafeLocale} videoSrc={heroVideoSrc} />
             <h1 id="cafe-title" ref={headingRef} tabIndex={-1} className={styles.title}>{copy.title}</h1>
             <p className={styles.subtitle}>{copy.subtitle}</p>
             <button type="button" className={styles.primaryButton} onClick={() => router.push("/cafe?step=format")}>
@@ -145,7 +160,12 @@ export function CafeFrontDoor() {
             <div role="status" aria-live="polite" aria-atomic="true">
               {status === "loading" ? <div className={styles.noticeCard}>{copy.loading}</div> : null}
               {status === "opening" ? <div className={styles.noticeCard}>{copy.openingSoon}</div> : null}
-              {status === "error" ? <div className={styles.noticeCard}>{copy.error}</div> : null}
+              {status === "error" ? <div className={styles.noticeCard}>
+                <p>{copy.error}</p>
+                <button type="button" className={styles.secondaryButton} onClick={() => setRetryCount(count => count + 1)}>
+                  {copy.roomRetry}
+                </button>
+              </div> : null}
               {status === "ready" && sortedSessions.length === 0 ? (
                 <div className={styles.noticeCard}>{copy.empty}</div>
               ) : null}

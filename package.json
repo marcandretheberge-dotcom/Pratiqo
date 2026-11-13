@@ -6,7 +6,7 @@
     "test:cafe-community": "node --import tsx tests/cafe/communityDatabase.test.ts && node --import tsx tests/cafe/communityApi.test.ts && node --import tsx tests/cafe/communityIntegration.test.ts && node --import tsx tests/cafe/communityClient.test.ts && node --import tsx tests/cafe/communityUi.test.tsx && node --import tsx tests/cafe/communityCallProvider.test.ts && node --import tsx tests/cafe/communityCall.test.tsx && node --import tsx tests/cafe/communityCleanupCron.test.ts",
     "test:cafe-architecture": "tsx tests/cafe/cafeArchitectureContract.test.ts",
     "test:cafe-pr2a": "tsx tests/cafe/cafePr2aContract.test.ts",
-    "test:cafe-pr2b": "tsx tests/cafe/cafePr2bFrontDoor.test.ts",
+    "test:cafe-pr2b": "node --import tsx tests/cafe/cafePr2bFrontDoor.test.ts && node --import tsx tests/cafe/cafeFrontDoorLoading.test.tsx && node --import tsx tests/cafe/cafeHeroMedia.test.tsx",
     "test:cafe-invitation": "tsx tests/cafe/cafePracticeInvitation.test.ts && tsx tests/cafe/cafeReservationClient.test.ts && tsx tests/cafe/cafeLocalSandboxCsp.test.ts",
     "test:cafe-pr3b-room": "node --import tsx tests/cafe/cafeRoomUiState.test.ts && node --import tsx tests/cafe/cafePr3bRoomHardening.test.ts && node --import tsx tests/cafe/cafeConversationRoom.test.tsx",
     "probe:cafe-pr3b-headers": "tsx scripts/cafe-pr3b-header-probe.ts",
