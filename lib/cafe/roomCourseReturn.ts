@@ -7,3 +7,15 @@ export function resolveCafeRoomCourseReturn(
   const raw = typeof yoReturn === "string" ? yoReturn : null;
   return sanitizeRelativeRedirectPath(raw);
 }
+
+/** Preserve the course destination when moving from a confirmed seat to its room. */
+export function buildCafeRoomHref(input: {
+  slug: string;
+  title: string;
+  yoReturn?: string | null;
+}): string {
+  const query = new URLSearchParams({ title: input.title.trim().slice(0, 120) });
+  const courseReturn = resolveCafeRoomCourseReturn(input.yoReturn ?? undefined);
+  if (courseReturn) query.set("yoReturn", courseReturn);
+  return `/cafe/${encodeURIComponent(input.slug)}/salle?${query.toString()}`;
+}

@@ -1,11 +1,11 @@
 /**
- * Daily call lifecycle helpers for the Café room (simulated-unit friendly).
+ * Daily call lifecycle shared by the Café room and its focused tests.
  * Keeps destroy/cleanup explicit so retries and unmount cannot leave orphan frames.
  * Obsolete attempts may only tear down their own call instance — never a newer one.
  */
 
 export type CafeDailyCallHandle = {
-  destroy: () => void;
+  destroy: () => void | Promise<void>;
   join: (opts: {
     url: string;
     token: string;
@@ -19,21 +19,36 @@ export type CafeDailyCallSlot = {
   current: CafeDailyCallHandle | null;
 };
 
-const destroyedCalls = new WeakSet<object>();
+const destroyedCalls = new WeakMap<object, Promise<void>>();
+const pendingTeardowns = new Set<Promise<void>>();
 
 /** Destroy once — safe if unmount and a late stale attempt both release the same handle. */
 export function destroyCafeDailyCall(
   call: CafeDailyCallHandle | null | undefined,
-): null {
-  if (!call) return null;
-  if (destroyedCalls.has(call)) return null;
-  destroyedCalls.add(call);
-  try {
-    call.destroy();
-  } catch {
-    // Ignore teardown races from Daily's iframe shutdown.
+): Promise<void> {
+  if (!call) return Promise.resolve();
+  const existing = destroyedCalls.get(call);
+  if (existing) return existing;
+
+  // Daily.destroy() is asynchronous. Register before invoking it so reentrant
+  // events and late attempts reuse the same teardown instead of destroying twice.
+  const teardown = Promise.resolve()
+    .then(() => call.destroy())
+    .catch(() => {
+      // A teardown failure must not become an unhandled rejection or expose
+      // provider internals. A subsequent create/join still fails closed.
+    });
+  destroyedCalls.set(call, teardown);
+  pendingTeardowns.add(teardown);
+  void teardown.then(() => pendingTeardowns.delete(teardown));
+  return teardown;
+}
+
+/** A new Daily singleton must wait for old instances, including across remounts. */
+export async function waitForCafeDailyTeardown(): Promise<void> {
+  while (pendingTeardowns.size > 0) {
+    await Promise.all([...pendingTeardowns]);
   }
-  return null;
 }
 
 /**
@@ -43,8 +58,8 @@ export function destroyCafeDailyCall(
 export function releaseOwnedCafeDailyCall(
   slot: CafeDailyCallSlot,
   owned: CafeDailyCallHandle | null | undefined,
-): null {
-  if (!owned) return null;
+): Promise<void> {
+  if (!owned) return Promise.resolve();
   if (slot.current === owned) {
     slot.current = null;
   }
@@ -52,7 +67,7 @@ export function releaseOwnedCafeDailyCall(
 }
 
 /** Intentional clear of whatever is currently published (leave, retry, unmount, new join). */
-export function clearCafeDailyCallSlot(slot: CafeDailyCallSlot): null {
+export function clearCafeDailyCallSlot(slot: CafeDailyCallSlot): Promise<void> {
   const current = slot.current;
   slot.current = null;
   return destroyCafeDailyCall(current);
@@ -88,7 +103,7 @@ export class CafeDailyJoinGeneration {
 export type CafeDailyJoinAttemptResult = "connected" | "aborted" | "failed";
 
 /**
- * Simulated join body used by unit tests and mirrored by CafeConversationRoom.
+ * The actual create/join lifecycle used by CafeConversationRoom.
  * Each attempt owns its Daily handle; stale cleanup never destroys a newer call.
  */
 export async function runCafeDailyJoinAttempt(input: {
@@ -103,7 +118,8 @@ export async function runCafeDailyJoinAttempt(input: {
     if (!input.gen.isCurrent(input.attempt)) return "aborted";
 
     // Current attempt may clear leftovers before publishing its own frame.
-    clearCafeDailyCallSlot(input.slot);
+    await clearCafeDailyCallSlot(input.slot);
+    await waitForCafeDailyTeardown();
     if (!input.gen.isCurrent(input.attempt)) return "aborted";
 
     owned = input.createCall();
@@ -112,16 +128,15 @@ export async function runCafeDailyJoinAttempt(input: {
     await input.join(owned);
 
     if (!input.gen.isCurrent(input.attempt)) {
-      releaseOwnedCafeDailyCall(input.slot, owned);
+      void releaseOwnedCafeDailyCall(input.slot, owned);
       return "aborted";
     }
     return "connected";
   } catch {
     // Must not clear a newer attempt's call if this attempt never published, or
     // if the slot already moved on to a different instance.
-    releaseOwnedCafeDailyCall(input.slot, owned);
+    void releaseOwnedCafeDailyCall(input.slot, owned);
     if (input.gen.isCurrent(input.attempt)) {
-      input.gen.invalidate();
       return "failed";
     }
     return "aborted";

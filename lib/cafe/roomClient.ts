@@ -23,10 +23,29 @@ export type CafeRoomJoinResult = CafeRoomJoinSuccess | CafeRoomJoinFailure;
 export async function requestCafeRoomJoin(input: {
   slug: string;
   accessToken: string;
-  role?: "participant" | "host";
+  role?: "participant" | "host" | "auto";
   fetchImpl?: typeof fetch;
 }): Promise<CafeRoomJoinResult> {
   const role = input.role ?? "participant";
+  if (role === "auto") {
+    // The server checks the assigned host; the browser never grants a role.
+    // Only an explicit host-authorization denial may try participant admission.
+    const host = await requestCafeRoomJoinForRole({ ...input, role: "host" });
+    if (!host.result.ok && host.status === 403 && host.result.code === "access_denied") {
+      return (await requestCafeRoomJoinForRole({ ...input, role: "participant" })).result;
+    }
+    return host.result;
+  }
+  return (await requestCafeRoomJoinForRole({ ...input, role })).result;
+}
+
+async function requestCafeRoomJoinForRole(input: {
+  slug: string;
+  accessToken: string;
+  role: "participant" | "host";
+  fetchImpl?: typeof fetch;
+}): Promise<{ result: CafeRoomJoinResult; status: number | null }> {
+  const role = input.role;
   const fetchImpl = input.fetchImpl ?? fetch;
   const path =
     role === "host"
@@ -44,15 +63,19 @@ export async function requestCafeRoomJoin(input: {
       cache: "no-store",
     });
   } catch {
-    return { ok: false, code: "network_error" };
+    return { result: { ok: false, code: "network_error" }, status: null };
   }
 
-  let body: Record<string, unknown> = {};
+  let raw: unknown;
   try {
-    body = (await response.json()) as Record<string, unknown>;
+    raw = await response.json();
   } catch {
-    return { ok: false, code: "response_lost" };
+    return { result: { ok: false, code: "response_lost" }, status: response.status };
   }
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return { result: { ok: false, code: "response_lost" }, status: response.status };
+  }
+  const body = raw as Record<string, unknown>;
 
   if (
     response.ok
@@ -60,22 +83,28 @@ export async function requestCafeRoomJoin(input: {
     && typeof body.roomUrl === "string"
     && typeof body.token === "string"
     && typeof body.expiresAt === "string"
-    && (body.role === "participant" || body.role === "host")
+    && body.role === role
   ) {
     return {
-      ok: true,
-      role: body.role,
-      roomUrl: body.roomUrl,
-      token: body.token,
-      expiresAt: body.expiresAt,
+      status: response.status,
+      result: {
+        ok: true,
+        role,
+        roomUrl: body.roomUrl,
+        token: body.token,
+        expiresAt: body.expiresAt,
+      },
     };
   }
 
   return {
-    ok: false,
-    code: typeof body.code === "string" ? body.code : `http_${response.status}`,
-    ...(typeof body.opensAt === "string" ? { opensAt: body.opensAt } : {}),
-    ...(typeof body.retryAfter === "number" ? { retryAfter: body.retryAfter } : {}),
+    status: response.status,
+    result: {
+      ok: false,
+      code: body.ok === false && typeof body.code === "string" ? body.code : `http_${response.status}`,
+      ...(typeof body.opensAt === "string" ? { opensAt: body.opensAt } : {}),
+      ...(typeof body.retryAfter === "number" ? { retryAfter: body.retryAfter } : {}),
+    },
   };
 }
 

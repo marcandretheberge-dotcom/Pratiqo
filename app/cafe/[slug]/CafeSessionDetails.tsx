@@ -16,6 +16,7 @@ import {
   type CafeSeatState,
 } from "@/lib/cafe/reservationClient";
 import { getSupabaseClient } from "@/lib/supabase";
+import { buildCafeRoomHref } from "@/lib/cafe/roomCourseReturn";
 import styles from "../cafe.module.css";
 
 function normalizeCafeLocale(value: string): CafeLocale {
@@ -51,7 +52,7 @@ function reserveUiFromSeat(seat: CafeSeatState): Extract<ReserveUi, { kind: "rea
   return { kind: "ready", expectedVersion: seat.expectedVersion };
 }
 
-export function CafeSessionDetails({ slug }: { slug: string }) {
+export function CafeSessionDetails({ slug, roomEnabled = false }: { slug: string; roomEnabled?: boolean }) {
   const { locale } = useLocale();
   const searchParams = useSearchParams();
   const cafeLocale = normalizeCafeLocale(locale);
@@ -288,8 +289,18 @@ export function CafeSessionDetails({ slug }: { slug: string }) {
               {reserveUi.kind === "confirmed" ? (
                 <>
                   <p className={styles.reservationNote} role="status">{copy.reserved}</p>
+                  {roomEnabled ? (
+                    // Room camera/mic permissions require a new document: an
+                    // SPA transition would retain this page's deny-all policy.
+                    <a
+                      className={styles.primaryButton}
+                      href={buildCafeRoomHref({ slug, title: session.title, yoReturn: yo.yoReturn })}
+                    >
+                      {copy.roomEnter}
+                    </a>
+                  ) : null}
                   {yo.yoReturn ? (
-                    <Link className={styles.primaryButton} href={yo.yoReturn}>
+                    <Link className={roomEnabled ? styles.secondaryButton : styles.primaryButton} href={yo.yoReturn}>
                       {copy.returnToCourse}
                     </Link>
                   ) : null}

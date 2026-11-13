@@ -89,7 +89,8 @@ async function main() {
         privacy: string;
         properties: Record<string, unknown>;
       };
-      const { enable_recording: _ignored, ...safeConfig } = body.properties;
+      const safeConfig = { ...body.properties };
+      delete safeConfig.enable_recording;
       return Response.json({
         name: body.name,
         privacy: body.privacy,
@@ -100,6 +101,91 @@ async function main() {
   });
   const safeRoom = await omittedRecordingProvider.ensureRoom(input);
   assert.match(safeRoom.roomId, /^cafe-/);
+
+  const defaultFalseFields = [
+    "enable_chat",
+    "enable_advanced_chat",
+    "enable_live_captions_ui",
+    "enable_knocking",
+    "enable_hidden_participants",
+    "enable_transcription_storage",
+    "enable_dialout",
+    "start_cloud_recording",
+    "auto_start_transcription",
+  ];
+
+  function providerWithConfig(
+    override: Record<string, unknown>,
+    recoverExistingRoom = false,
+    omitDefaultFalseFields = false,
+  ) {
+    let roomId = "";
+    let properties: Record<string, unknown> = {};
+    return createDailyRoomProvider({
+      ...baseConfig,
+      fetchImpl: (async (_input: RequestInfo | URL, init?: RequestInit) => {
+        if (init?.method === "POST") {
+          const body = JSON.parse(String(init.body)) as {
+            name: string;
+            properties: Record<string, unknown>;
+          };
+          roomId = body.name;
+          properties = { ...body.properties };
+          if (recoverExistingRoom) {
+            return Response.json(
+              { error: "invalid-request-error", info: "a room with that name already exists" },
+              { status: 400 },
+            );
+          }
+        }
+        if (omitDefaultFalseFields) {
+          for (const field of defaultFalseFields) delete properties[field];
+        }
+        return Response.json({
+          name: roomId,
+          privacy: "private",
+          url: `https://pratiqo.daily.co/${roomId}`,
+          config: { ...properties, ...override },
+        });
+      }) as typeof fetch,
+    });
+  }
+
+  // A successful create and conflict recovery must both reject enabled or
+  // unrecognized recording configurations, including future provider modes.
+  for (const recoverExistingRoom of [false, true]) {
+    for (const value of [
+      "cloud", "cloud-audio-only", "local", "raw-tracks", ["local"],
+      true, null, "", "off", 1, {}, "future-mode", ["future-mode"], ["cloud", null],
+    ]) {
+      await assert.rejects(
+        providerWithConfig({ enable_recording: value }, recoverExistingRoom).ensureRoom(input),
+        (error: unknown) => {
+          assert.ok(error instanceof CafeRoomProviderError);
+          assert.equal(error.code, "internal_error");
+          assert.equal(error.diagnostic?.rejectedField, "enable_recording");
+          return true;
+        },
+        `Unsafe recording config must be rejected: ${JSON.stringify(value)}`,
+      );
+    }
+    // Daily omits default-disabled fields; that valid response remains usable.
+    assert.match(
+      (await providerWithConfig({}, recoverExistingRoom, true).ensureRoom(input)).roomId,
+      /^cafe-/,
+    );
+  }
+
+  // Truthy strings, nulls and other malformed values must never become false.
+  for (const field of defaultFalseFields) {
+    for (const value of [true, "true", "false", null, 1, {}, []]) {
+      await assert.rejects(
+        providerWithConfig({ [field]: value }).ensureRoom(input),
+        (error: unknown) => error instanceof CafeRoomProviderError && error.code === "internal_error",
+        `Unsafe ${field} config must be rejected: ${JSON.stringify(value)}`,
+      );
+    }
+  }
 
   assert.throws(() => createDailyRoomProvider({ ...baseConfig, domain: "evil.example.com" }));
   assert.throws(() => createDailyRoomProvider({ ...baseConfig, roomHmacSecret: "short" }));

@@ -32,6 +32,14 @@ assert.match(workflow, /CAFE_DAILY_ROOM_HMAC_SECRET/);
 assert.match(workflow, /CAFE_DAILY_PARTICIPANT_HMAC_SECRET/);
 assert.match(workflow, /github\.event_name == 'workflow_dispatch'/);
 assert.doesNotMatch(workflow, /pull_request_target/);
+const browserJob = workflow.split("  browser-daily:\n")[1];
+assert.ok(browserJob, "real browser job is present");
+assert.match(browserJob, /if: github\.event_name == 'workflow_dispatch' && inputs\.browser/);
+assert.match(browserJob, /needs: live-daily/);
+assert.match(browserJob, /environment: cafe-daily-development/);
+assert.match(workflow, /browser:\n(?:[^\n]*\n)*?\s+type: boolean\n\s+default: false/);
+assert.match(browserJob, /supabase@3\.1\.0/);
+assert.doesNotMatch(browserJob, /\.env|status\.json|next\.log|build\.log|trace\.zip|\.har/);
 
 assert.match(runbook, /URL de salle seule/i);
 assert.match(runbook, /iPhone Safari/);

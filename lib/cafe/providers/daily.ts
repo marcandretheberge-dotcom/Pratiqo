@@ -10,6 +10,7 @@ import {
 } from "@/lib/cafe/roomProvider";
 import {
   effectiveDailyBool,
+  fingerprintDailyRequestId,
   isDailyExistingRoomConflict,
   isDailyRecordingEnabled,
   publicCafeDailyDiagnostic,
@@ -128,7 +129,12 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
   const opaqueParticipantId = (sessionId: string, profileId: string) =>
     `cp_${hmacId(participantHmacSecret, "participant", `${sessionId}:${profileId}`, 24)}`;
 
-  async function dailyRequest(path: string, init: RequestInit): Promise<Response> {
+  async function dailyRequest(
+    operation: CafeDailyOperation,
+    path: string,
+    init: RequestInit,
+    priorDiagnostics?: CafeDailyDiagnostic[],
+  ): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     try {
@@ -146,13 +152,14 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
       throw providerError("provider_unavailable", "Daily request failed", {
         retryAfterSeconds: 15,
         diagnostic: {
-          operation: "account_lookup",
+          operation,
           httpStatus: null,
           errorCode: "network_error",
           info: null,
           rejectedField: null,
           requestId: null,
         },
+        priorDiagnostics,
       });
     } finally {
       clearTimeout(timer);
@@ -185,9 +192,12 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
     const transcriptionOff =
       effectiveDailyBool(roomConfig.enable_transcription_storage, false) === false;
     const dialoutOff = effectiveDailyBool(roomConfig.enable_dialout, false) === false;
-    const recordingOff = !isDailyRecordingEnabled(roomConfig.enable_recording);
-    const cloudRecordingNotForced = roomConfig.start_cloud_recording !== true;
-    const autoTranscriptionOff = roomConfig.auto_start_transcription !== true;
+    const recordingEnabled = isDailyRecordingEnabled(roomConfig.enable_recording);
+    const recordingOff = recordingEnabled === false;
+    const cloudRecordingNotForced =
+      effectiveDailyBool(roomConfig.start_cloud_recording, false) === false;
+    const autoTranscriptionOff =
+      effectiveDailyBool(roomConfig.auto_start_transcription, false) === false;
 
     if (
       Number(roomConfig.nbf) !== expected.roomNbf
@@ -215,12 +225,10 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
           operation: "room_get",
           httpStatus: 200,
           errorCode: "safety_config_mismatch",
-          info: recordingOff
-            ? null
-            : "recording_enabled_in_config",
-          rejectedField: isDailyRecordingEnabled(roomConfig.enable_recording)
-            ? "enable_recording"
-            : null,
+          info: recordingEnabled === null
+            ? "recording_config_unrecognized"
+            : recordingEnabled ? "recording_enabled_in_config" : null,
+          rejectedField: recordingOff ? null : "enable_recording",
           requestId: null,
         },
       });
@@ -266,7 +274,12 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
     roomId: string,
     priorDiagnostics?: CafeDailyDiagnostic[],
   ): Promise<CafeProviderRoom> {
-    const response = await dailyRequest(`/rooms/${encodeURIComponent(roomId)}`, { method: "GET" });
+    const response = await dailyRequest(
+      "room_get",
+      `/rooms/${encodeURIComponent(roomId)}`,
+      { method: "GET" },
+      priorDiagnostics,
+    );
     if (response.status >= 500) {
       await rejectFromResponse(
         response,
@@ -310,7 +323,7 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
       properties: buildCafeDailyRoomProperties(input),
     };
 
-    const response = await dailyRequest("/rooms", {
+    const response = await dailyRequest("room_create", "/rooms", {
       method: "POST",
       body: JSON.stringify(createPayload),
     });
@@ -384,7 +397,7 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
       },
     };
 
-    const response = await dailyRequest("/meeting-tokens", {
+    const response = await dailyRequest("token_create", "/meeting-tokens", {
       method: "POST",
       body: JSON.stringify(tokenPayload),
     });
@@ -421,7 +434,7 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
   }
 
   async function removeParticipant(input: CafeRemovalInput) {
-    const response = await dailyRequest(`/rooms/${encodeURIComponent(input.roomId)}/eject`, {
+    const response = await dailyRequest("participant_remove", `/rooms/${encodeURIComponent(input.roomId)}/eject`, {
       method: "POST",
       body: JSON.stringify({
         user_ids: [opaqueParticipantId(input.sessionId, input.profileId)],
@@ -447,7 +460,7 @@ export function createDailyRoomProvider(config: DailyConfig): CafeRoomProvider {
   }
 
   async function deleteRoom(roomId: string) {
-    const response = await dailyRequest(`/rooms/${encodeURIComponent(roomId)}`, { method: "DELETE" });
+    const response = await dailyRequest("room_delete", `/rooms/${encodeURIComponent(roomId)}`, { method: "DELETE" });
     if (response.status === 404) return;
     if (response.status >= 500) {
       await rejectFromResponse(
@@ -551,11 +564,24 @@ export async function verifyDailyAccountDomainMatch(input: {
         errorCode: domainMatches ? null : "domain_mismatch",
         info: returnedDomainPresent ? null : "domain_name_missing",
         rejectedField: domainMatches ? null : "domain_name",
-        requestId:
+        requestId: fingerprintDailyRequestId(
           response.headers.get("x-daily-request-id")
           ?? response.headers.get("x-request-id"),
+        ),
       }),
     };
+  } catch {
+    throw providerError("provider_unavailable", "Daily account lookup failed", {
+      retryAfterSeconds: 15,
+      diagnostic: {
+        operation: "account_lookup",
+        httpStatus: null,
+        errorCode: "network_error",
+        info: null,
+        rejectedField: null,
+        requestId: null,
+      },
+    });
   } finally {
     clearTimeout(timer);
   }
