@@ -64,6 +64,8 @@ async function joinAndIdempotentPlainTextRetry() {
     return result;
   } };
   const view = mount(transport); await join(view);
+  assert.ok(view.getByRole("heading", { name: "Your Café conversation" }));
+  assert.equal(view.queryByRole("heading", { name: "Come in. Say hello." }), null);
   const text = "<script>alert('escaped')</script> Hello!";
   fireEvent.change(view.getByLabelText("Your message"), { target: { value: text } });
   fireEvent.click(view.getByRole("button", { name: "Send" })); await flush();

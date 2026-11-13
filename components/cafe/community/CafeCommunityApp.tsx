@@ -14,7 +14,7 @@ import styles from "./community.module.css";
 type Execute = (command: CafeCommunityCommand) => Promise<CafeCommunityCommandResult>;
 type ReportDraft = { target: CafeMember; roomId: string | null; messages: CafeChatMessage[]; selectedIds: string[] };
 
-export function CommunityFrame({ locale, courseReturnHref, children }: { locale: CommunityLocale; courseReturnHref?: string | null; children: ReactNode }) {
+export function CommunityFrame({ locale, courseReturnHref, children, compact = false }: { locale: CommunityLocale; courseReturnHref?: string | null; children: ReactNode; compact?: boolean }) {
   const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
   const back = resolveCafeRoomCourseReturn(courseReturnHref ?? undefined);
   return <main className={styles.page} lang={locale}>
@@ -27,7 +27,7 @@ export function CommunityFrame({ locale, courseReturnHref, children }: { locale:
         <Link href="/" prefetch={false}>Pratiqo</Link><Link href="/yo" prefetch={false}>YoPratiqo</Link>
       </nav>
     </div></header>
-    <div className={styles.wrap}>{children}</div>
+    <div className={`${styles.wrap} ${compact ? styles.activeWrap : ""}`}>{children}</div>
   </main>;
 }
 
@@ -305,8 +305,11 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
     if (block) void blockMember(member);
   };
 
-  return <CommunityFrame locale={locale} courseReturnHref={courseReturnHref}>
-    <div className={styles.intro}><div><p className={styles.eyebrow}>{t("Des langues, des gens, des conversations", "Languages, people, conversations", "Idiomas, personas, conversaciones")}</p><h1 className={styles.title}>{t("Entrez. Dites bonjour.", "Come in. Say hello.", "Entra. Di hola.")}</h1><p className={styles.subtitle}>{t("Rencontrez des personnes qui apprennent, comme vous. Commencez par le chat, puis choisissez ensemble si vous voulez vous appeler.", "Meet people who are learning, just like you. Start with chat, then decide together if you want to call.", "Conoce a personas que aprenden, como tú. Empiecen por el chat y decidan juntos si quieren llamarse.")}</p></div>{snapshot?.me && <button className={styles.button} onClick={() => setSettings(true)}>{t("Mon profil", "My profile", "Mi perfil")} · {snapshot.me.displayName}</button>}</div>
+  return <CommunityFrame locale={locale} courseReturnHref={courseReturnHref} compact={Boolean(snapshot?.room)}>
+    <div className={`${styles.intro} ${snapshot?.room ? styles.activeIntro : ""}`}>
+      {snapshot?.room ? <h1 className={styles.activeTitle}>{t("Votre conversation au Café", "Your Café conversation", "Tu conversación en el Café")}</h1> : <div><p className={styles.eyebrow}>{t("Des langues, des gens, des conversations", "Languages, people, conversations", "Idiomas, personas, conversaciones")}</p><h1 className={styles.title}>{t("Entrez. Dites bonjour.", "Come in. Say hello.", "Entra. Di hola.")}</h1><p className={styles.subtitle}>{t("Rencontrez des personnes qui apprennent, comme vous. Commencez par le chat, puis choisissez ensemble si vous voulez vous appeler.", "Meet people who are learning, just like you. Start with chat, then decide together if you want to call.", "Conoce a personas que aprenden, como tú. Empiecen por el chat y decidan juntos si quieren llamarse.")}</p></div>}
+      {snapshot?.me && <button className={styles.button} onClick={() => setSettings(true)}>{t("Mon profil", "My profile", "Mi perfil")} · {snapshot.me.displayName}</button>}
+    </div>
     {community.error && <div className={styles.error} role="alert"><p>{communityError(community.error, locale)}</p><div className={styles.row}><button className={styles.button} onClick={() => void community.refresh()}>{t("Actualiser", "Refresh", "Actualizar")}</button>{community.error === "unauthenticated" && <a className={styles.button} href="/connexion?next=%2Fcafe">{t("Me reconnecter", "Sign in again", "Volver a entrar")}</a>}</div></div>}
     {community.connection === "stale" && snapshot && <p className={styles.notice}>{t("Connexion à rétablir · les informations affichées peuvent dater. L’envoi et les nouvelles invitations sont en pause.", "Connection needs refreshing · displayed information may be old. Sending and new invitations are paused.", "Es necesario restablecer la conexión · los datos pueden estar desactualizados. Se pausan los envíos y las nuevas invitaciones.")}</p>}
     {notice && <div className={failedBlock ? styles.error : styles.notice} role="status">{notice}{failedBlock && <button className={styles.button} onClick={() => void blockMember(failedBlock)}>{t("Réessayer le blocage", "Retry block", "Reintentar bloqueo")}</button>}</div>}

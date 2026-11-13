@@ -1,9 +1,19 @@
 import assert from "node:assert/strict";
 import { createCafeCommunityTransport } from "../../lib/cafe/communityClient";
-import { CAFE_LANGUAGE_CODES, cafeLanguageOptions, canonicalCafeLanguage, cafeScheduledIso } from "../../lib/cafe/communityLanguages";
+import { CAFE_LANGUAGE_CODES, cafeLanguageLabel, cafeLanguageOptions, canonicalCafeLanguage, cafeScheduledIso } from "../../lib/cafe/communityLanguages";
 
 void (async () => {
   assert.equal(new Set(CAFE_LANGUAGE_CODES).size, 184);
+  const originalDisplayNames = Intl.DisplayNames;
+  try {
+    // Chromium may ship smaller ICU locale data than the server runtime.
+    Object.defineProperty(Intl, "DisplayNames", { configurable: true, writable: true, value: class { of() { return undefined; } } });
+    for (const locale of ["fr", "en", "es"]) {
+      assert.ok(CAFE_LANGUAGE_CODES.every((code) => cafeLanguageLabel(code, locale) !== code));
+    }
+    assert.equal(cafeLanguageLabel("aa", "en"), "Afar");
+    assert.equal(cafeLanguageLabel("ab", "en"), "Abkhazian");
+  } finally { Object.defineProperty(Intl, "DisplayNames", { configurable: true, writable: true, value: originalDisplayNames }); }
   assert.ok(cafeLanguageOptions("en").some((language) => language.code === "hi" && language.label === "Hindi"));
   assert.equal(canonicalCafeLanguage("espagnol"), "es"); assert.equal(canonicalCafeLanguage("PT-br"), "pt-br"); assert.equal(canonicalCafeLanguage("yue"), "yue"); assert.equal(canonicalCafeLanguage("not a language"), null);
   const originalZone = process.env.TZ; process.env.TZ = "America/Toronto";

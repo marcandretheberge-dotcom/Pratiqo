@@ -30,17 +30,18 @@ async function dismissConsent(page: Page) {
 
 async function exercise(browser: Browser, label: string, options: BrowserContextOptions) {
   const context = await browser.newContext({ ...options, locale: "en-US", timezoneId: "America/Toronto" });
-  await context.addInitScript(() => {
-    (window as unknown as { __cafeMediaRequests: number }).__cafeMediaRequests = 0;
+  // Raw browser source avoids tsx's __name helper leaking into Playwright's isolated realm.
+  await context.addInitScript({ content: `
+    window.__cafeMediaRequests = 0;
     const forbidden = () => {
-      (window as unknown as { __cafeMediaRequests: number }).__cafeMediaRequests++;
+      window.__cafeMediaRequests++;
       return Promise.reject(new Error("The text-only preview must not request media"));
     };
     if (navigator.mediaDevices) {
       Object.defineProperty(navigator.mediaDevices, "getUserMedia", { configurable: true, value: forbidden });
       Object.defineProperty(navigator.mediaDevices, "getDisplayMedia", { configurable: true, value: forbidden });
     }
-  });
+  ` });
   const page = await context.newPage();
   const runtimeErrors: string[] = [];
   let communityRequests = 0;
@@ -85,6 +86,18 @@ async function exercise(browser: Browser, label: string, options: BrowserContext
     await page.getByRole("button", { name: "My profile · Asha · browser demo" }).waitFor();
 
     await page.getByRole("button", { name: "Join the chat", exact: true }).click();
+    await page.getByRole("heading", { name: "Your Café conversation", exact: true }).waitFor();
+    if ((options.viewport?.width ?? 0) >= 760) {
+      const originalViewport = page.viewportSize()!;
+      for (const height of [800, 900]) {
+        await page.setViewportSize({ ...originalViewport, height });
+        await page.evaluate(() => window.scrollTo(0, 0));
+        const composer = await page.getByLabel("Your message", { exact: true }).locator("..").boundingBox();
+        assert.ok(composer && composer.y >= 0 && composer.y + composer.height <= height + 1,
+          `desktop composer must fit the ${height}px viewport without scrolling`);
+      }
+      await page.setViewportSize(originalViewport);
+    }
     const plainMessage = "Hello! <strong>This stays plain text.</strong>";
     await page.getByLabel("Your message", { exact: true }).fill(plainMessage);
     await page.getByRole("button", { name: "Send", exact: true }).click();
@@ -111,8 +124,7 @@ async function exercise(browser: Browser, label: string, options: BrowserContext
     await schedule.getByLabel("Room name", { exact: true }).fill("Tomorrow over coffee · demo");
     const localFuture = await page.evaluate(() => {
       const date = new Date(Date.now() + 2 * 86_400_000);
-      const pad = (value: number) => String(value).padStart(2, "0");
-      return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T18:30`;
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T18:30`;
     });
     await schedule.locator('input[type="datetime-local"]').fill(localFuture);
     await screenshot("schedule");
@@ -141,7 +153,7 @@ async function exercise(browser: Browser, label: string, options: BrowserContext
     const mediaRequests = await page.evaluate(() => (window as unknown as { __cafeMediaRequests: number }).__cafeMediaRequests);
     assert.equal(mediaRequests, 0); assert.equal(dailyRequests, 0); assert.equal(communityRequests, 0);
     assert.deepEqual(runtimeErrors, [], "no hydration or runtime exceptions");
-    return { viewport: label, engine: "chromium", simulatedCommunity: true, realDatabase: false, realMedia: false, communityRequests, dailyRequests, mediaRequests, checks: ["normal_headers", "all_languages", "profile_agreements", "text_join_send", "plain_text", "create_now", "local_future_schedule", "independent_block", "report_controls", "empty_state", "no_horizontal_overflow"] };
+    return { viewport: label, engine: "chromium", simulatedCommunity: true, realDatabase: false, realMedia: false, communityRequests, dailyRequests, mediaRequests, checks: ["normal_headers", "all_languages", "profile_agreements", "text_join_send", "plain_text", ...((options.viewport?.width ?? 0) >= 760 ? ["composer_fits_800_and_900px"] : []), "create_now", "local_future_schedule", "independent_block", "report_controls", "empty_state", "no_horizontal_overflow"] };
   } catch (error) {
     await page.screenshot({ path: join(outDir, `${label}-failure.png`), fullPage: true }).catch(() => undefined);
     throw error;
