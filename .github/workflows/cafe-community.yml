@@ -23,6 +23,7 @@ on:
       - "package-lock.json"
       - "vercel.json"
       - ".github/workflows/cafe-community.yml"
+      - ".github/workflows/cafe-community-cleanup.yml"
 
 permissions:
   contents: read

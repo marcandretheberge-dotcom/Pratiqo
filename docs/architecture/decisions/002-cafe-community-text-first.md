@@ -56,6 +56,8 @@ The private outbox retains the IDs needed for teardown independently of account,
 
 Each member mutation handles at most two authorized cleanup rows. The cron handles at most three, reserving time within the 60-second function duration. The cron can close calls even when feature flags are disabled. These are bounded retries, not a guarantee that a provider outage can be resolved instantly. Call room expiry remains an additional server-side bound.
 
+The current Vercel Hobby deployment cannot accept a sub-daily cron. An optional GitHub Actions workflow retries the authenticated close-only endpoint on a five-minute schedule instead. It is disabled until explicitly configured and enabled; scheduled runs use the default branch only. GitHub may delay or drop scheduled runs, so this interval is not a teardown deadline. Immediate member-triggered cleanup, authorization revocation and provider room expiry remain separate mechanisms. Verify the deployed retry worker, its capacity and its operating cost before opening video; see the [release runbook](../../operations/cafe-community-rollout.md).
+
 ## Data and concurrency boundary
 
 All community storage is in `cafe_private`, with RLS enabled and direct grants revoked from anonymous, authenticated and service roles. The trusted server derives actor IDs from `auth.getUser` and invokes explicitly granted service-only RPCs. Active-account status, bans, deletions and community agreements are checked again in the database. Public response DTOs expose only the member fields required by Café.

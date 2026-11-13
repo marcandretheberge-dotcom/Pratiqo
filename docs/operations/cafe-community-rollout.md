@@ -23,16 +23,31 @@ The navigation ships visibly from day one. All community languages are available
 | `CAFE_ROOM_PROVIDER_ENABLED` | Allow new call invitation acceptance and provider joins; active clients stop when their status check observes it off |
 | `CAFE_COMMUNITY_PREVIEW_ENABLED` | Explicit synthetic preview only; keep off in production |
 | `DAILY_API_KEY`, `DAILY_DOMAIN`, `CAFE_DAILY_ROOM_HMAC_SECRET`, `CAFE_DAILY_PARTICIPANT_HMAC_SECRET` | Existing server-only Daily credentials/configuration; never copy values into reports |
-| `CRON_SECRET` | Secures close-only cleanup; configure before deploying the cron schedule |
+| `CRON_SECRET` | Secures the deployed close-only cleanup endpoint |
 
-`vercel.json` schedules `/api/cron/cafe-community-cleanup` every minute on a deployment that supports that cadence. Configuration in a PR is not proof of a deployed scheduler: verify deployment support and actual authenticated executions before enabling calls. The cron is deliberately independent of Café/video feature gates. A missing secret, failed cleanup or incomplete backlog returns an opaque failure and retains pending obligations.
+### Optional cleanup retry scheduler
+
+The existing Vercel Hobby deployment rejected a one-minute cron before building the preview. This branch leaves the two pre-existing daily Vercel schedules unchanged and instead prepares `.github/workflows/cafe-community-cleanup.yml`. It makes an authenticated POST to `/api/cron/cafe-community-cleanup` every five minutes, offset to minutes 2, 7, 12, …, 57, only after an explicit opt-in. No hosted settings or account plan were changed.
+
+| GitHub setting | Required value |
+| --- | --- |
+| Repository variable `CAFE_COMMUNITY_CLEANUP_ENABLED` | `true`, only when deliberately enabling the deployed retry worker |
+| Environment | `cafe-community-cleanup`, with deployment branches restricted to the reviewed default branch |
+| Environment variable `CAFE_COMMUNITY_CLEANUP_ORIGIN` | `https://www.pratiqo.ca`, the canonical production origin |
+| Environment secret `CAFE_COMMUNITY_CLEANUP_CRON_SECRET` | The same value as the deployed `CRON_SECRET`; never put it in workflow source or command arguments |
+
+The workflow performs no checkout or dependency execution. It sends the credential only to the exact cleanup path on an allowlisted HTTPS Pratiqo origin, refuses redirects, and stops the request after 45 seconds. Logs contain only status codes or generic failures. The same opt-in applies to manual dispatch. The fixed production origin allowlist intentionally cannot be repurposed to send its credential to an arbitrary development or preview deployment.
+
+[GitHub schedules](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule) run only from the default branch and may be delayed or dropped under load. This is a best-effort retry interval, not a five-minute teardown guarantee. Before enabling it, review Actions usage allowance/cost, environment access controls and monitoring of missed or failed runs. Configuration in a PR is not proof of a deployed scheduler: verify actual authenticated executions and backlog draining before enabling video. For the development acceptance pass, use the environment's own authenticated close-only endpoint without changing this production origin allowlist.
+
+Member mutations already attempt immediate provider teardown. The scheduled retry handles remaining durable obligations, at most three per invocation. The endpoint is deliberately independent of Café/video feature gates: missing credentials, failed cleanup or an incomplete backlog returns an opaque failure and retains pending obligations. Keep video closed if this retry capacity or the observed scheduling reliability is insufficient for the pilot.
 
 ## Deployment order
 
 1. Review the stacked PR and its dependency. Resolve any merge conflicts and rerun checks on the exact resulting commit.
 2. Apply the existing four Café migrations, then `20261113111051_cafe_community_text_first.sql`, to the linked development environment. Confirm intended migration history before applying; this change has not applied any hosted migration automatically.
 3. Verify exposed schemas, RLS and explicit function privileges in that actual environment. `anon` and `authenticated` must not invoke trusted-actor RPCs; service-role must not directly query community tables. Run the Supabase security/performance advisors there. Local fixtures are not a hosted advisor result.
-4. Configure the cleanup secret and verify the deployed schedule. Exercise a failed provider teardown followed by a successful retry; confirm a newer outbox generation cannot be acknowledged by an older worker.
+4. Configure the development cleanup secret and exercise its close-only endpoint with that environment's own credentials. Test a failed provider teardown followed by a successful retry; confirm a newer outbox generation cannot be acknowledged by an older worker. Before production video activation, configure and opt into the scheduler above after it reaches the default branch, then verify actual runs and backlog draining.
 5. Enable the community in development and perform the real member acceptance pass below. Keep the synthetic preview distinct from these checks.
 6. Review adult onboarding/rules, text/report retention and moderation coverage for the intended pilot. The current implementation has an attestation, not identity or age verification. It retains messages/reports until their documented deletion cascades; automatic time-based text/report purging is not yet implemented.
 7. Review the release candidate and production environment changes before activating it. Ship the visible navigation with the community. Enable video after real Daily validation succeeds. No automatic production activation is part of this branch.
