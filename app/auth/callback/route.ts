@@ -20,6 +20,7 @@ import { logAuthFlowDecision } from "@/lib/auth/authFlowDiagnostics";
 import { resolveOAuthCallbackRedirect } from "@/lib/auth/oauthCallbackRedirect";
 import type { ProfileRole } from "@/lib/auth/postAuthRedirect";
 import { ensureTeacherProfileRow } from "@/lib/teachers/ensureTeacherProfileRow";
+import { nativeAuthReturn } from "@/lib/mobile/server";
 
 type AuthCookie = { name: string; value: string; options: Record<string, unknown> };
 
@@ -54,6 +55,8 @@ async function trySendStudentWelcomeOnce(
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
+  const nativeReturn = nativeAuthReturn(requestUrl);
+  if (nativeReturn) return nativeReturn;
   const canonicalOrigin = resolveRequestCanonicalOrigin(requestUrl);
   const code = requestUrl.searchParams.get("code");
   const cookieStore = await cookies();

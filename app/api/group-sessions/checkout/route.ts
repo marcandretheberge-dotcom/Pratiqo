@@ -1,3 +1,4 @@
+import { blockUnsupportedNativePurchase } from "@/lib/mobile/server";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
@@ -21,6 +22,8 @@ const GROUP_COMMISSION = 0.05;
 type Body = { group_session_id?: string };
 
 export async function POST(req: Request) {
+  const nativeBlock = blockUnsupportedNativePurchase(req);
+  if (nativeBlock) return nativeBlock;
   try {
     if (!isGroupSessionsCheckoutEnabled()) {
       return NextResponse.json(

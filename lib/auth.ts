@@ -6,6 +6,7 @@ import { setPendingTeacherOnboardingCookie, clearPendingTeacherOnboardingCookie 
 import type { PreAuthOnboardingIntent } from "@/lib/auth/preAuthOnboardingIntent";
 import { CONNEXION_PATH } from "@/lib/auth/preAuthOnboardingIntent";
 import { hasTeacherOnboardingIntent } from "@/lib/auth/teacherOnboardingIntent";
+import { beginNativeGoogle } from "@/lib/mobile/client";
 
 function setPendingIntentCookiesForAuth(
   redirectPath: string,
@@ -33,35 +34,41 @@ export async function loginWithGoogle(
     forceAccountSelection?: boolean;
   },
 ) {
-  const supabase = getSupabaseClient();
-  const origin = resolveOAuthRedirectOrigin();
-  const callbackIntent = options?.intentQuery ?? options?.intent;
-  const redirectTo = buildOAuthCallbackUrl(origin, {
-    intent: callbackIntent,
-    role: options?.role ?? (options?.intent === "teacher" ? "teacher" : undefined),
-    next: redirectPath,
-    ref: options?.referralCode,
-  });
+  const nativeAttempt = await beginNativeGoogle();
+  try {
+    const supabase = getSupabaseClient();
+    const origin = resolveOAuthRedirectOrigin();
+    const callbackIntent = options?.intentQuery ?? options?.intent;
+    const redirectTo = buildOAuthCallbackUrl(origin, {
+      intent: callbackIntent,
+      role: options?.role ?? (options?.intent === "teacher" ? "teacher" : undefined),
+      next: redirectPath,
+      ref: options?.referralCode,
+    });
 
-  setPendingIntentCookiesForAuth(redirectPath, options?.intent, options?.role);
-  markOAuthReturnPending(options?.intent ?? null);
+    setPendingIntentCookiesForAuth(redirectPath, options?.intent, options?.role);
+    markOAuthReturnPending(options?.intent ?? null);
 
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo,
-      skipBrowserRedirect: true,
-      ...(options?.forceAccountSelection ? { queryParams: { prompt: "select_account" } } : {}),
-    },
-  });
-  if (error) {
-    console.error("Login failed", error);
-    throw error;
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+        skipBrowserRedirect: true,
+        ...(options?.forceAccountSelection ? { queryParams: { prompt: "select_account" } } : {}),
+      },
+    });
+    if (error) {
+      console.error("Login failed", error);
+      throw error;
+    }
+    if (!data.url) {
+      throw new Error("Google OAuth URL was not returned.");
+    }
+    if (nativeAttempt) await nativeAttempt.open(data.url);
+    else window.location.assign(data.url);
+  } finally {
+    nativeAttempt?.release();
   }
-  if (!data.url) {
-    throw new Error("Google OAuth URL was not returned.");
-  }
-  window.location.assign(data.url);
 }
 
 export async function logout(options?: { redirectTo?: string }) {

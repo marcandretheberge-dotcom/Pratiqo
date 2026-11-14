@@ -33,6 +33,7 @@ import {
 import { t as translate } from "@/lib/i18n/server";
 import type { Locale, TranslationKey } from "@/lib/i18n/types";
 import { normalizeLocale } from "@/lib/i18n/types";
+import { nativeCheckoutContext, nativeCheckoutUrls } from "@/lib/mobile/server";
 
 export const runtime = "nodejs";
 
@@ -109,6 +110,8 @@ function checkoutPricingErrorResponse(
 }
 
 export async function POST(req: Request) {
+  const nativeCheckout = nativeCheckoutContext(req);
+  if (nativeCheckout instanceof Response) return nativeCheckout;
   try {
     const hasStripeKey = Boolean(process.env.STRIPE_SECRET_KEY?.trim());
     console.log("[stripe/checkout] STRIPE_SECRET_KEY configured:", hasStripeKey);
@@ -406,12 +409,15 @@ export async function POST(req: Request) {
     // NOTE: Do NOT encodeURI here — encodeURI would percent-encode the { } in the Stripe
     // placeholder, turning {CHECKOUT_SESSION_ID} into %7BCHECKOUT_SESSION_ID%7D.
     // Stripe recognises the literal braces and replaces the placeholder on redirect.
-    const successUrl = `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${baseUrl}/booking`;
+    const nativeUrls = nativeCheckout ? nativeCheckoutUrls(nativeCheckout) : null;
+    const successUrl = nativeUrls?.success ?? `${baseUrl}/booking/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = nativeUrls?.cancel ?? `${baseUrl}/booking`;
 
     console.log("[stripe/checkout] redirect base (STRIPE_CHECKOUT_BASE_URL):", baseUrl);
-    console.log("[stripe/checkout] success_url:", successUrl);
-    console.log("[stripe/checkout] cancel_url:", cancelUrl);
+    if (!nativeCheckout) {
+      console.log("[stripe/checkout] success_url:", successUrl);
+      console.log("[stripe/checkout] cancel_url:", cancelUrl);
+    }
 
     // Commission based on teacher plan (default: free). The charge stays on
     // Pratiqo now; the teacher net is transferred after post-class completion.

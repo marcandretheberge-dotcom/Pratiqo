@@ -1,6 +1,9 @@
 ﻿# Native Wrapper Readiness Plan - Pratiqo
 
-Status: Planning only. This document does not add Capacitor, native projects, native checkout, or app-store submission configuration.
+Status (2026-10-18): A private Expo/React Native WebView prototype is prepared in
+[`mobile/`](../../mobile/README.md), with separate dependencies, browser-return bridges and
+default-off server flags. See that README for configuration, tests and remaining device checks.
+This is not a signed build, an enabled production feature or an app-store submission.
 
 ## Phase 1 - PWA And Mobile Web Hardening
 
@@ -16,7 +19,7 @@ Goal: Make the current web app and installable PWA reliable before a native shel
 
 Goal: Build a private prototype only after product, legal, and payment policy review.
 
-- Choose native wrapper technology.
+- Technology selected: Expo SDK 58, Expo Router and React Native WebView; retain the Next.js server.
 - Define allowed routes inside the shell.
 - Gate unsupported or policy-sensitive routes.
 - Confirm push notification, file upload, camera, microphone, and location permissions.
@@ -62,3 +65,4 @@ Goal: Submit only after policy, privacy, legal, and payment review.
 - Identity verification upload/start flows
 - Home-lesson flows involving minors
 - Any route that collects exact address or sensitive documents
+

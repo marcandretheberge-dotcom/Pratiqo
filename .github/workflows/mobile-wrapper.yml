@@ -1,0 +1,46 @@
+name: Mobile wrapper
+on:
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - 'shared/mobileProtocol.ts'
+      - 'lib/mobile/**'
+      - 'lib/auth.ts'
+      - 'app/auth/callback/route.ts'
+      - 'app/mobile/**'
+      - 'app/api/mobile/**'
+      - 'app/api/stripe/**'
+      - 'app/api/group-sessions/checkout/**'
+      - 'app/api/planned-packages/pending-orders/**'
+      - 'components/BookingModal.tsx'
+      - 'tsconfig.json'
+      - '.github/workflows/mobile-wrapper.yml'
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck && npm run lint && npm test
+      - name: Existing Web OAuth regression tests
+        working-directory: .
+        run: |
+          node --import ./mobile/node_modules/tsx/dist/loader.mjs tests/auth/oauthRedirectOrigin.test.ts
+          node --import ./mobile/node_modules/tsx/dist/loader.mjs tests/auth/deterministicGoogleCallback.test.ts
+      - name: Bundle iOS and Android (no account, signing, network test or deployment)
+        env:
+          EXPO_PUBLIC_WEB_ORIGIN: https://mobile-test.example.com
+        run: npm run export:beta
