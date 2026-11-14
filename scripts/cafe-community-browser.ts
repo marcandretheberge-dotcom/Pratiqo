@@ -236,6 +236,11 @@ async function exercise(browser: Browser, label: string, options: BrowserContext
     await page.getByRole("button", { name: "Continue", exact: true }).click();
     await page.getByRole("heading", { name: "Inside the Café", exact: true }).waitFor();
     await page.getByRole("button", { name: "My profile · Asha · browser demo" }).waitFor();
+    const practiceLanguage = page.getByRole("combobox", { name: "Practice language" });
+    assert.equal(await practiceLanguage.inputValue(), "sw", "saved practice language selects the lobby filter");
+    await page.getByText("No one has opened a room yet.", { exact: true }).waitFor();
+    // Explore the existing multilingual fixture after explicitly choosing all languages.
+    await practiceLanguage.selectOption("");
     await screenshot("lobby");
 
     await page.getByRole("button", { name: "Join the chat", exact: true }).click();
@@ -283,6 +288,7 @@ async function exercise(browser: Browser, label: string, options: BrowserContext
     await schedule.locator('input[type="datetime-local"]').fill(localFuture);
     await screenshot("schedule");
     await schedule.getByRole("button", { name: "Schedule the room", exact: true }).click();
+    await page.getByRole("region", { name: "Upcoming", exact: true }).getByRole("heading", { name: "Tomorrow over coffee · demo", exact: true }).waitFor();
     await screenshot("scheduled-room");
 
     // Discrete block control inside a shared room, independent of finishing a report.

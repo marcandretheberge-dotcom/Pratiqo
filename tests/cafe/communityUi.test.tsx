@@ -26,8 +26,8 @@ const roomId = "10000000-0000-4000-8000-000000000001";
 const targetId = "00000000-0000-4000-8000-000000000002";
 function deferred<T>() { let resolve!: (value:T)=>void; const promise = new Promise<T>((done) => { resolve = done; }); return { resolve, promise }; }
 async function flush() { await act(async () => { await new Promise<void>((resolve) => setImmediate(resolve)); }); }
-function mount(transport: CafeCommunityTransport, videoEnabled = false) {
-  return render(<CafeCommunityApp identity={identity} transport={transport} locale="en" videoEnabled={videoEnabled} courseReturnHref="/yo/langues/japonais?unit=2" />);
+function mount(transport: CafeCommunityTransport, videoEnabled = false, languageHint?: string) {
+  return render(<CafeCommunityApp identity={identity} transport={transport} locale="en" videoEnabled={videoEnabled} languageHint={languageHint} courseReturnHref="/yo/langues/japonais?unit=2" />);
 }
 async function enter(view: ReturnType<typeof mount>) {
   await flush();
@@ -241,9 +241,126 @@ async function emptyLobbyNeverFabricatesPeople() {
   assert.equal(view.queryByText("Maya · démo"), null); assert.equal(view.queryByText("Riku · démo"), null);
 }
 
+async function scheduledRoomsRemainActionable(capacity: 2 | 4) {
+  const source = createCommunityDemoTransport();
+  const now = Date.now();
+  const commands: CafeCommunityCommand[] = [];
+  for (const [title, hours] of [["Future owned room", 24], ["Ready owned room", 1]] as const) {
+    await source.command(identity.accessToken, { action: "room.create", requestId: crypto.randomUUID(), title, languages: ["fr"], mode: "scheduled", startsAt: new Date(now + hours * 3_600_000).toISOString(), capacity });
+  }
+  const transport: CafeCommunityTransport = {
+    async snapshot(...args) {
+      const result = await source.snapshot(...args);
+      return result.ok ? { ...result, serverTime: new Date(now + 2 * 3_600_000).toISOString(), rooms: result.rooms.map((room) => room.mode === "scheduled" ? { ...room, capacity } : room) } : result;
+    },
+    async command(...args) { commands.push(args[1]); return source.command(...args); },
+  };
+  const view = mount(transport); await enter(view);
+  const mode = capacity === 2 ? "One to one" : "In a group";
+  fireEvent.click(view.getByRole("button", { name: mode }));
+  const card = (title: string) => {
+    const article = view.getByRole("heading", { name: title }).closest("article");
+    assert.ok(article); return within(article);
+  };
+  const guestTitle = "Voyages, cuisine et mots à partager";
+  assert.ok(card(guestTitle).getByRole("button", { name: "I’m interested" }));
+  assert.equal((card("Future owned room").getByRole("button", { name: "Open my room" }) as HTMLButtonElement).disabled, true);
+  assert.equal((card("Ready owned room").getByRole("button", { name: "Open my room" }) as HTMLButtonElement).disabled, false);
+  fireEvent.click(view.getByRole("button", { name: capacity === 2 ? "In a group" : "One to one" }));
+  assert.equal(view.queryByRole("heading", { name: guestTitle }), null);
+  assert.equal(view.queryByRole("heading", { name: "Future owned room" }), null);
+  fireEvent.click(view.getByRole("button", { name: mode }));
+  fireEvent.change(view.getByRole("combobox", { name: "Practice language" }), { target: { value: "hi" } });
+  assert.equal(view.queryByRole("heading", { name: guestTitle }), null);
+  assert.equal(view.queryByRole("heading", { name: "Future owned room" }), null);
+  fireEvent.change(view.getByRole("combobox", { name: "Practice language" }), { target: { value: "fr" } });
+  fireEvent.click(card(guestTitle).getByRole("button", { name: "I’m interested" })); await flush();
+  fireEvent.click(card(guestTitle).getByRole("button", { name: "Cancel my RSVP" })); await flush();
+  assert.deepEqual(commands.filter((command) => command.action === "room.rsvp").map((command) => command.attending), [true, false]);
+  assert.ok(card(guestTitle).getByRole("button", { name: "I’m interested" }));
+  fireEvent.click(card("Future owned room").getByRole("button", { name: "Cancel this room" })); await flush();
+  assert.equal(view.queryByRole("heading", { name: "Future owned room" }), null);
+  fireEvent.click(card("Ready owned room").getByRole("button", { name: "Open my room" })); await flush();
+  assert.ok(view.getByRole("heading", { name: "Your Café conversation" }));
+  assert.ok(view.getByRole("heading", { name: "Ready owned room" }));
+  fireEvent.click(view.getByRole("button", { name: "Close the room" })); await flush();
+
+  // A successful future-room submission must remain visible and cancellable.
+  fireEvent.click(view.getByRole("button", { name: "Later" }));
+  const dialog = within(view.getByRole("dialog", { name: "Your room" }));
+  fireEvent.change(dialog.getByLabelText("Room name", { exact: true }), { target: { value: "Created scheduled room" } });
+  const date = new Date(now + 3 * 86_400_000);
+  const local = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T18:30`;
+  const dateInput = view.getByRole("dialog").querySelector('input[type="datetime-local"]');
+  assert.ok(dateInput); fireEvent.change(dateInput, { target: { value: local } });
+  fireEvent.click(dialog.getByRole("button", { name: "Schedule the room" })); await flush();
+  assert.equal(view.queryByRole("dialog"), null);
+  assert.ok(card("Created scheduled room").getByRole("button", { name: "Cancel this room" }));
+  const created = commands.find((command) => command.action === "room.create" && command.title === "Created scheduled room");
+  assert.ok(created?.action === "room.create");
+  assert.equal(created.mode, "scheduled"); assert.equal(created.capacity, capacity); assert.deepEqual(created.languages, ["fr"]);
+}
+
+async function scheduledGroupRoomsRemainActionable() { await scheduledRoomsRemainActionable(4); }
+async function scheduledPairRoomsRemainActionable() { await scheduledRoomsRemainActionable(2); }
+
+async function selectedLanguageOverridesCourseHint(onboarding: boolean) {
+  const source = createCommunityDemoTransport(onboarding);
+  if (!onboarding) await source.command(identity.accessToken, { action: "profile.save", displayName: "Alex", nativeLanguages: ["en"], learningLanguages: ["it"], adultAgreement: true, rulesAgreement: true });
+  const commands: CafeCommunityCommand[] = [];
+  let failSave = !onboarding;
+  const transport: CafeCommunityTransport = {
+    async snapshot(...args) {
+      const result = await source.snapshot(...args); if (!result.ok) return result;
+      const french = { ...result.rooms.find((room) => room.id === roomId)!, title: "French conversation", languages: ["fr"] };
+      return { ...result, rooms: [french, { ...french, id: "10000000-0000-4000-8000-000000000005", title: "Italian conversation", languages: ["it"] }] };
+    },
+    async command(...args) {
+      commands.push(args[1]);
+      if (args[1].action === "profile.save" && failSave) { failSave = false; return { ok: false, code: "unavailable" }; }
+      return source.command(...args);
+    },
+  };
+  const view = mount(transport, false, "it"); await enter(view);
+  if (!onboarding) fireEvent.click(view.getByRole("button", { name: "Languages" }));
+  else {
+    fireEvent.change(view.getByLabelText("Your Café name"), { target: { value: "Asha" } });
+    fireEvent.click(within(view.getByRole("group", { name: "Native language(s)" })).getByRole("checkbox", { name: "English" }));
+    fireEvent.click(view.getByRole("checkbox", { name: "I confirm I am 18 or older." }));
+    fireEvent.click(view.getByRole("checkbox", { name: "I agree to the Café rules." }));
+  }
+  const chooseFrench = () => {
+    const picker = within(view.getByRole("group", { name: "Language(s) to practise" }));
+    assert.equal((picker.getByRole("checkbox", { name: "Italian" }) as HTMLInputElement).checked, true);
+    fireEvent.click(picker.getByRole("checkbox", { name: "Italian" }));
+    fireEvent.click(picker.getByRole("checkbox", { name: "French" }));
+  };
+  chooseFrench();
+  if (!onboarding) {
+    fireEvent.click(view.getByRole("button", { name: "Save" })); await flush();
+    assert.ok(view.getByRole("heading", { name: "Which language are we practising?" }));
+    fireEvent.click(view.getByRole("button", { name: "Cancel" }));
+    assert.equal((view.getByRole("combobox", { name: "Practice language" }) as HTMLSelectElement).value, "it");
+    fireEvent.click(view.getByRole("button", { name: "Languages" })); chooseFrench();
+  }
+  fireEvent.click(view.getByRole("button", { name: onboarding ? "Continue" : "Save" })); await flush();
+  const saved = commands.filter((command) => command.action === "profile.save").at(-1);
+  assert.ok(saved); assert.deepEqual(saved.learningLanguages, ["fr"]);
+  assert.equal((view.getByRole("combobox", { name: "Practice language" }) as HTMLSelectElement).value, "fr");
+  assert.ok(view.getByRole("heading", { name: "French conversation" }));
+  assert.equal(view.queryByRole("heading", { name: "Italian conversation" }), null);
+  fireEvent.click(view.getByRole("button", { name: "Write now" }));
+  const picker = within(within(view.getByRole("dialog", { name: "Your room" })).getByRole("group", { name: "Conversation languages" }));
+  assert.equal((picker.getByRole("checkbox", { name: "French" }) as HTMLInputElement).checked, true);
+  assert.equal((picker.getByRole("checkbox", { name: "Italian" }) as HTMLInputElement).checked, false);
+}
+
+async function firstProfileLanguageOverridesCourseHint() { await selectedLanguageOverridesCourseHint(true); }
+async function changedProfileLanguageOverridesCourseHint() { await selectedLanguageOverridesCourseHint(false); }
+
 void (async () => {
-  for (const test of [profileChoosesLanguagesOutsideCourses, joinAndIdempotentPlainTextRetry, incomingInviteRequiresAcceptanceAndDocumentLink, blockDoesNotDependOnSubmittingReport, reportIncludesOnlySelectedMessages, failedBlockNeverClaimsPersistence, reportingWhileBlockPendingDoesNotCancelBlock, expiredMembershipReturnsToLobby, oldAuthAndRoomReadsNeverReviveState, emptyLobbyNeverFabricatesPeople]) {
+  for (const test of [profileChoosesLanguagesOutsideCourses, joinAndIdempotentPlainTextRetry, incomingInviteRequiresAcceptanceAndDocumentLink, blockDoesNotDependOnSubmittingReport, reportIncludesOnlySelectedMessages, failedBlockNeverClaimsPersistence, reportingWhileBlockPendingDoesNotCancelBlock, expiredMembershipReturnsToLobby, oldAuthAndRoomReadsNeverReviveState, emptyLobbyNeverFabricatesPeople, scheduledGroupRoomsRemainActionable, scheduledPairRoomsRemainActionable, firstProfileLanguageOverridesCourseHint, changedProfileLanguageOverridesCourseHint]) {
     try { await test(); console.log(`✓ ${test.name}`); } finally { cleanup(); await flush(); }
   }
-  assert.equal(mediaRequests, 0); console.log("communityUi: 10 production React/lifecycle scenarios passed; no media requests");
+  assert.equal(mediaRequests, 0); console.log("communityUi: 14 production React/lifecycle scenarios passed; no media requests");
 })().catch((error) => { console.error(error); process.exitCode = 1; }).finally(() => dom.window.close());

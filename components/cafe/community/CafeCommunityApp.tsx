@@ -328,15 +328,15 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
 
   const practiceLanguage = filter || snapshot?.me?.learningLanguages[0] || "";
   const onlinePeople = snapshot?.people.filter((person) => person.online) ?? [];
-  const liveRooms = (snapshot?.rooms ?? []).filter((room) => {
-    const open = room.state === "live" || room.state === "waiting";
-    if (!open) return false;
+  const matchingRooms = (snapshot?.rooms ?? []).filter((room) => {
     if (practiceMode === "pair" && room.capacity > 2) return false;
     if (practiceMode === "group" && room.capacity <= 2) return false;
     // Explicit filter only — practice language is a preference, never a dead end.
     if (filter && !room.languages.includes(filter)) return false;
     return true;
   });
+  const liveRooms = matchingRooms.filter((room) => room.state === "live" || room.state === "waiting");
+  const scheduledRooms = matchingRooms.filter((room) => room.state === "scheduled");
 
   const blockMember = async (member: CafeMember) => {
     setNotice(t("Blocage en cours…", "Blocking…", "Bloqueando…"));
@@ -352,7 +352,7 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
   const enterFromDoor = () => setScreen(snapshot?.me ? "lobby" : "language");
   const saveProfile: Execute = async (command) => {
     const result = await execute(command);
-    if (result.ok) setScreen("lobby");
+    if (result.ok && command.action === "profile.save") setFilter(command.learningLanguages[0] ?? "");
     return result;
   };
 
@@ -368,7 +368,7 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
     {snapshot && screen === "language" && <section className={`${styles.screen} ${styles.screenScroll}`} data-cafe-step="language" aria-labelledby="cafe-language-title">
       <h1 id="cafe-language-title" className={styles.screenTitle}>{t("On pratique quelle langue ?", "Which language are we practising?", "¿Qué idioma practicamos?")}</h1>
       <div className={`${styles.panel} ${styles.languagePanel}`}>
-        <ProfileForm member={snapshot.me} locale={locale} languageHint={languageHint ?? (filter || null)} busy={community.busy} onSave={saveProfile} onCancel={snapshot.me ? () => setScreen("lobby") : undefined} />
+        <ProfileForm member={snapshot.me} locale={locale} languageHint={languageHint ?? (filter || null)} busy={community.busy} onSave={async (command) => { const result = await saveProfile(command); if (result.ok) setScreen("lobby"); return result; }} onCancel={snapshot.me ? () => setScreen("lobby") : undefined} />
       </div>
     </section>}
 
@@ -412,6 +412,10 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
             <button className={styles.primary} type="button" disabled={!community.canWrite} onClick={() => setCreate("now")}>{t("Écrire maintenant", "Write now", "Escribir ahora")}</button>
             <button className={styles.button} type="button" disabled={!community.canWrite} onClick={() => setCreate("scheduled")}>{t("Plus tard", "Later", "Más tarde")}</button>
           </div>}
+          {scheduledRooms.length > 0 && <section className={styles.stack} aria-labelledby="cafe-upcoming-title">
+            <h2 id="cafe-upcoming-title" className={styles.smallHeading}>{t("À venir", "Upcoming", "Próximas")}</h2>
+            <div className={styles.grid}>{scheduledRooms.map((room) => <RoomCard key={room.id} room={room} me={snapshot.me!} locale={locale} disabled={!community.canWrite} execute={execute} serverTime={snapshot.serverTime} />)}</div>
+          </section>}
         </div>
         <aside className={styles.panel}>
           <h2 className={styles.smallHeading}>{t("Présents", "Present", "Presentes")} · {onlinePeople.length}</h2>
@@ -438,7 +442,7 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
       }} busy={community.busy} onCreated={() => setCreate(null)} />
     </Modal>}
     {settings && snapshot?.me && <Modal title={t("Mon profil", "My profile", "Mi perfil")} closeLabel={t("Fermer mon profil", "Close my profile", "Cerrar mi perfil")} onClose={() => { setSettings(false); setProfile(false); }}>
-      {profile ? <ProfileForm member={snapshot.me} locale={locale} busy={community.busy} onCancel={() => setProfile(false)} onSave={async (command) => { const result = await execute(command); if (result.ok) { setProfile(false); if (command.action === "profile.save" && command.learningLanguages[0]) setFilter(command.learningLanguages[0]); } return result; }} /> : <div className={styles.stack}><Member member={snapshot.me} locale={locale} /><button className={styles.button} onClick={() => setProfile(true)}>{t("Modifier", "Edit", "Editar")}</button><h3 className={styles.smallHeading}>{t("Bloqués", "Blocked", "Bloqueados")}</h3>{snapshot.blockedMembers.length ? snapshot.blockedMembers.map((member) => <div key={member.id} className={styles.spread}><span>{member.displayName}</span><button className={styles.button} disabled={community.busy} onClick={() => void execute({ action: "member.unblock", targetId: member.id })}>{t("Débloquer", "Unblock", "Desbloquear")}</button></div>) : <p className={styles.note}>{t("Aucun.", "None.", "Ninguno.")}</p>}</div>}
+      {profile ? <ProfileForm member={snapshot.me} locale={locale} busy={community.busy} onCancel={() => setProfile(false)} onSave={async (command) => { const result = await saveProfile(command); if (result.ok) setProfile(false); return result; }} /> : <div className={styles.stack}><Member member={snapshot.me} locale={locale} /><button className={styles.button} onClick={() => setProfile(true)}>{t("Modifier", "Edit", "Editar")}</button><h3 className={styles.smallHeading}>{t("Bloqués", "Blocked", "Bloqueados")}</h3>{snapshot.blockedMembers.length ? snapshot.blockedMembers.map((member) => <div key={member.id} className={styles.spread}><span>{member.displayName}</span><button className={styles.button} disabled={community.busy} onClick={() => void execute({ action: "member.unblock", targetId: member.id })}>{t("Débloquer", "Unblock", "Desbloquear")}</button></div>) : <p className={styles.note}>{t("Aucun.", "None.", "Ninguno.")}</p>}</div>}
     </Modal>}
     {report && <Modal title={t("Signaler", "Report", "Denunciar")} closeLabel={t("Fermer", "Close", "Cerrar")} onClose={() => setReport(null)}><ReportForm key={report.target.id} draft={report} locale={locale} execute={execute} onClose={() => setReport(null)} /></Modal>}
   </CommunityFrame>;
