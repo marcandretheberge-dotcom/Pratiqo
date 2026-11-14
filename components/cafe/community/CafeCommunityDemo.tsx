@@ -86,7 +86,7 @@ export function CafeCommunityDemo({ initialLocale = "fr", initialOnboarding = fa
     return createCommunityDemoTransport(onboarding);
   }, [revision, onboarding]);
   return <>
-    <div style={{ background: "#ffedbf", color: "#473b22", padding: "14px 20px", display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", fontSize: 13 }}>
+    <div style={{ position: "relative", zIndex: 20, background: "#ffedbf", color: "#473b22", padding: "14px 20px", display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap", fontSize: 13 }}>
       <strong>DÉMONSTRATION · Personnes, présence, salons et messages fictifs. Aucun appel ni enregistrement réel.</strong>
       <label>Interface <select aria-label="Langue de la démonstration" value={locale} onChange={(event) => { const next = event.target.value as CommunityLocale; setLocale(next); onLocaleChange?.(next); }}><option value="fr">Français</option><option value="en">English</option><option value="es">Español</option></select></label>
       <button onClick={() => { setOnboarding(true); setRevision((value) => value + 1); }}>Tester l’entrée</button>
