@@ -36,25 +36,37 @@ function languageLabel(copy: (typeof cafeCopy)[CafeLocale], code: string) {
 export function CafePracticeInvitationCard({
   invitation,
   caseLabel,
+  communityOpen = false,
 }: {
   invitation: CafePracticeInvitation;
   caseLabel?: string;
+  /** When the text community is gated on, avoid a tables-only dead end. */
+  communityOpen?: boolean;
 }) {
   const { locale } = useLocale();
   const cafeLocale = normalizeCafeLocale(locale);
   const copy = cafeCopy[cafeLocale];
 
   if (invitation.kind === "continue") {
+    const language = invitation.mission.language;
+    const communityHref = `/cafe?language=${encodeURIComponent(language)}&yoReturn=${encodeURIComponent(invitation.courseReturnPath)}`;
     return (
       <section className={styles.inviteCard} aria-labelledby={`invite-continue-${caseLabel ?? "default"}`}>
         {caseLabel ? <p className={styles.inviteEyebrow}>{caseLabel}</p> : null}
         <h2 id={`invite-continue-${caseLabel ?? "default"}`} className={styles.inviteTitle}>
           {copy.inviteContinueTitle}
         </h2>
-        <p className={styles.inviteBody}>{copy.inviteContinueBody}</p>
-        <Link className={styles.primaryButton} href={invitation.courseReturnPath}>
-          {copy.inviteResumeCourse}
-        </Link>
+        <p className={styles.inviteBody}>{communityOpen ? copy.inviteCommunityContinueBody : copy.inviteContinueBody}</p>
+        <div className={styles.inviteActions}>
+          {communityOpen ? (
+            <Link className={styles.primaryButton} href={communityHref}>
+              {copy.inviteEnterCommunity}
+            </Link>
+          ) : null}
+          <Link className={communityOpen ? styles.secondaryButton : styles.primaryButton} href={invitation.courseReturnPath}>
+            {copy.inviteResumeCourse}
+          </Link>
+        </div>
       </section>
     );
   }

@@ -32,6 +32,45 @@ async function dismissConsent(page: Page) {
   if (await install.isVisible()) await install.getByRole("button", { name: /Pas maintenant|Not now|Ahora no/i }).click();
 }
 
+/**
+ * Poll with locator.evaluate (CDP CallFunctionOn). Playwright's waitForFunction
+ * string/function forms use page eval and fail under the Café CSP (no unsafe-eval).
+ */
+async function waitVideo(
+  video: ReturnType<Page["locator"]>,
+  check: (element: HTMLVideoElement, arg: number) => boolean,
+  arg = 0,
+  timeout = 30_000,
+) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    if (await video.evaluate(check, arg)) return;
+    await video.page().waitForTimeout(100);
+  }
+  throw new Error("video condition timed out");
+}
+
+async function waitCueVisible(
+  page: Page,
+  cue: string,
+  time: number,
+  timeout = 10_000,
+) {
+  const deadline = Date.now() + timeout;
+  while (Date.now() < deadline) {
+    const ready = await page.evaluate(({ cueId, target }) => {
+      const video = document.querySelector('[data-cafe-hero="video-enabled"] video') as HTMLVideoElement | null;
+      const node = document.querySelector(`[data-cafe-cue="${cueId}"]`) as HTMLElement | null;
+      return Boolean(
+        video && node && video.paused && !video.seeking && video.readyState >= 2
+        && Math.abs(video.currentTime - target) < 0.1 && Number(node.style.opacity) > 0.95,
+      );
+    }, { cueId: cue, target: time });
+    if (ready) return;
+    await page.waitForTimeout(100);
+  }
+  throw new Error(`cue ${cue} not visible at ${time}`);
+}
 
 /** Actual committed video playback, separate from the simulated community journey. */
 async function exerciseHeroVideo(browser: Browser, label: string, options: BrowserContextOptions, locale = "en") {
@@ -55,15 +94,13 @@ async function exerciseHeroVideo(browser: Browser, label: string, options: Brows
     await hero.scrollIntoViewIfNeeded();
     const video = hero.locator("video");
     const control = hero.getByRole("button");
-    // Raw browser source avoids tsx's __name helper in the isolated browser realm.
-    await page.waitForFunction(`(() => {
-      const video = document.querySelector('[data-cafe-hero="video-enabled"] video');
-      return video && !video.error && !video.paused && video.readyState >= 2 &&
-        video.videoWidth === 1280 && video.videoHeight === 720 &&
-        video.getVideoPlaybackQuality().totalVideoFrames > 0;
-    })()`, undefined, { timeout: 30_000 });
+    await waitVideo(video, (element) => Boolean(
+      !element.error && !element.paused && element.readyState >= 2
+      && element.videoWidth === 1280 && element.videoHeight === 720
+      && element.getVideoPlaybackQuality().totalVideoFrames > 0,
+    ));
     const initialTime = await video.evaluate((element: HTMLVideoElement) => element.currentTime);
-    await page.waitForFunction(`document.querySelector('[data-cafe-hero="video-enabled"] video').currentTime > ${initialTime + 0.2}`);
+    await waitVideo(video, (element, threshold) => element.currentTime > threshold, initialTime + 0.2);
     const metadata = await video.evaluate((element: HTMLVideoElement) => ({
       width: element.videoWidth, height: element.videoHeight, duration: element.duration,
       muted: element.muted, loop: element.loop, playsInline: element.playsInline,
@@ -76,24 +113,19 @@ async function exerciseHeroVideo(browser: Browser, label: string, options: Brows
     assert.ok(controlBox && controlBox.width >= 44 && controlBox.height >= 44, "video control has an accessible touch target");
 
     await control.click();
-    await page.waitForFunction(`document.querySelector('[data-cafe-hero="video-enabled"] video').paused`);
+    await waitVideo(video, (element) => element.paused);
     const pausedAt = await video.evaluate((element: HTMLVideoElement) => element.currentTime);
     await page.waitForTimeout(300);
     assert.equal(await video.evaluate((element: HTMLVideoElement) => element.currentTime), pausedAt, "Pause stops the actual media clock");
     await control.click();
-    await page.waitForFunction(`document.querySelector('[data-cafe-hero="video-enabled"] video').currentTime > ${pausedAt + 0.2}`);
+    await waitVideo(video, (element, threshold) => element.currentTime > threshold, pausedAt + 0.2);
 
     // Verify all four invitation layouts over the actual decoded frames, including
     // the narrow signed-out entry where the film is smaller than the viewport.
     await control.click();
     for (const [cue, time] of [["japan", 3], ["marrakech", 13], ["paris", 23.5], ["welcome", 27.5]] as const) {
       await video.evaluate((element: HTMLVideoElement, target) => { element.currentTime = target; }, time);
-      await page.waitForFunction(`(() => {
-        const video = document.querySelector('[data-cafe-hero="video-enabled"] video');
-        const cue = document.querySelector('[data-cafe-cue="${cue}"]');
-        return video.paused && !video.seeking && video.readyState >= 2 &&
-          Math.abs(video.currentTime - ${time}) < 0.1 && cue && Number(cue.style.opacity) > .95;
-      })()`);
+      await waitCueVisible(page, cue, time);
       const invitation = hero.locator(`[data-cafe-cue="${cue}"]`);
       const invitationBox = await invitation.boundingBox();
       const currentControlBox = await control.boundingBox();
@@ -112,18 +144,18 @@ async function exerciseHeroVideo(browser: Browser, label: string, options: Brows
 
     // Exercise the wrapper contract in a real browser, without claiming a physical
     // WKWebView/device test. A deliberate Pause must survive native state changes.
-    for (const state of ["background", "active"]) {
-      await page.evaluate(`window.__PRATIQO_APP_STATE__ = "${state}"; window.dispatchEvent(new Event("pratiqo:app-state"));`);
+    for (const state of ["background", "active"] as const) {
+      await page.evaluate((next) => {
+        (window as Window & { __PRATIQO_APP_STATE__?: string }).__PRATIQO_APP_STATE__ = next;
+        window.dispatchEvent(new Event("pratiqo:app-state"));
+      }, state);
       await page.waitForTimeout(100);
       assert.equal(await video.evaluate((element: HTMLVideoElement) => element.paused), true, "native resume preserves manual Pause");
     }
 
     await video.evaluate((element: HTMLVideoElement) => { element.currentTime = element.duration - 0.3; });
     await control.click();
-    await page.waitForFunction(`(() => {
-      const video = document.querySelector('[data-cafe-hero="video-enabled"] video');
-      return !video.paused && !video.error && video.currentTime < 1.5;
-    })()`, undefined, { timeout: 10_000 });
+    await waitVideo(video, (element) => Boolean(!element.paused && !element.error && element.currentTime < 1.5), 0, 10_000);
     const decodedFrames = await video.evaluate((element: HTMLVideoElement) => element.getVideoPlaybackQuality().totalVideoFrames);
     assert.ok(mediaResponses.some(({ status, contentType }) => (status === 200 || status === 206) && /video\/mp4/.test(contentType)), "the committed MP4 is served as playable media");
     assert.deepEqual(runtimeErrors, [], "no entrance hydration or runtime exceptions");
@@ -253,7 +285,7 @@ async function exercise(browser: Browser, label: string, options: BrowserContext
     // Empty filter remains actionable and never invents people or rooms.
     await page.getByRole("button", { name: "Now", exact: true }).click();
     await page.getByRole("combobox", { name: "Filter by language" }).selectOption("hi");
-    await page.getByText("The first hello can come from you.", { exact: true }).waitFor();
+    await page.getByText("Chat is open. Start whenever you like.", { exact: true }).waitFor();
     await page.getByRole("button", { name: "See all languages", exact: true }).waitFor();
     await screenshot("empty-state");
     assert.equal(await page.locator("iframe").count(), 0, "text preview creates no media frames");

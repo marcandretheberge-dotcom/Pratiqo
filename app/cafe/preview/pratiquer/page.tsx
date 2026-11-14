@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CafePracticeInvitationCard } from "@/components/cafe/CafePracticeInvitationCard";
+import { isCafeCommunityEnabled } from "@/lib/cafe/communityFeatureFlag";
 import { isCafeV1Enabled } from "@/lib/cafe/featureFlag";
 import {
   CAFE_INVITATION_DEMO,
@@ -91,6 +92,7 @@ export default async function CafePratiquerPreviewPage({
         <CafePracticeInvitationCard
           caseLabel="Cas 2 · mission introductions · aucune table réservable"
           invitation={unavailable}
+          communityOpen={isCafeCommunityEnabled()}
         />
       </div>
     </main>
