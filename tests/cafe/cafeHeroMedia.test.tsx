@@ -65,6 +65,7 @@ async function flush() { await act(async () => { await new Promise<void>((resolv
 function resetEnvironment() {
   reducedMotion = false; hidden = false; connection.saveData = false; connection.effectiveType = "4g";
   playSources.length = 0; pauseCalls = 0; loadCalls = 0; observers.length = 0; rejectNextPlay = false; pendingPlay = null;
+  delete dom.window.__PRATIQO_APP_STATE__;
 }
 const mount = (locale: "fr" | "en" | "es" = "en") => render(<CafeHeroMedia locale={locale} videoSrc={CAFE_WORLD_VIDEO_SRC} />);
 const videoIn = (view: ReturnType<typeof mount>) => {
@@ -72,6 +73,26 @@ const videoIn = (view: ReturnType<typeof mount>) => {
 };
 const playLabel = "Play the cafés around the world video";
 const pauseLabel = "Pause the cafés around the world video";
+
+async function nativeAppState(state: "active" | "inactive" | "background") {
+  await act(async () => {
+    dom.window.__PRATIQO_APP_STATE__ = state;
+    window.dispatchEvent(new dom.window.Event("pratiqo:app-state"));
+  });
+}
+
+function invitationIn(view: ReturnType<typeof mount>, id: string) {
+  const invitation = view.container.querySelector<HTMLDivElement>(`[data-cafe-cue="${id}"]`);
+  assert.ok(invitation, `invitation ${id} is present`);
+  return invitation;
+}
+
+function assertVisibleInvitation(view: ReturnType<typeof mount>, expected: string | null) {
+  const visible = Array.from(view.container.querySelectorAll<HTMLDivElement>("[data-cafe-cue]"))
+    .filter((element) => Number(element.style.opacity) > 0)
+    .map((element) => element.dataset.cafeCue);
+  assert.deepEqual(visible, expected ? [expected] : []);
+}
 
 async function unconfiguredMediaKeepsPhotoWithoutVideoRequest() {
   assert.ok(existsSync(`public${CAFE_HERO_POSTER_SRC}`));
@@ -159,11 +180,26 @@ async function firstPlayClickRecoversFromAutoplayDenial() {
   assert.ok(view.getByRole("button", { name: pauseLabel }));
 }
 
+async function hiddenDocumentDefersFirstSourceAttachment() {
+  hidden = true;
+  const view = mount(); await flush();
+  const element = videoIn(view);
+  assert.equal(element.getAttribute("src"), null, "a hidden document must not attach the initial video source");
+  assert.equal(playSources.length, 0);
+  await act(async () => { hidden = false; document.dispatchEvent(new dom.window.Event("visibilitychange")); });
+  assert.equal(element.getAttribute("src"), CAFE_WORLD_VIDEO_SRC);
+  assert.ok(view.getByRole("button", { name: pauseLabel }));
+}
+
 async function hiddenAndOffscreenPlaybackPausesWithoutUndoingManualPause() {
   const view = mount(); await flush();
+  const element = videoIn(view);
+  element.currentTime = 13;
   const observer = observers.at(-1); assert.ok(observer);
   await act(async () => { hidden = true; document.dispatchEvent(new dom.window.Event("visibilitychange")); });
   assert.ok(view.getByRole("button", { name: playLabel }));
+  assert.equal(element.getAttribute("src"), CAFE_WORLD_VIDEO_SRC, "a visibility pause retains the loaded source");
+  assert.equal(element.currentTime, 13);
   const attempts = playSources.length;
   await act(async () => { hidden = false; document.dispatchEvent(new dom.window.Event("visibilitychange")); });
   assert.ok(playSources.length > attempts); assert.ok(view.getByRole("button", { name: pauseLabel }));
@@ -178,13 +214,219 @@ async function hiddenAndOffscreenPlaybackPausesWithoutUndoingManualPause() {
   assert.equal(playSources.length, pausedAttempts); assert.ok(view.getByRole("button", { name: playLabel }));
 }
 
+async function nativeBackgroundAndInactivePauseUntilBothNativeAndWebAreVisible() {
+  for (const initialState of ["background", "inactive"] as const) {
+    resetEnvironment();
+    dom.window.__PRATIQO_APP_STATE__ = initialState;
+    const view = mount(); await flush();
+    assert.equal(videoIn(view).getAttribute("src"), null, `a WebView loaded while ${initialState} must not attach a source`);
+    assert.equal(playSources.length, 0, `a WebView loaded while ${initialState} must not start playback`);
+    assert.ok(view.getByRole("button", { name: playLabel }));
+
+    await nativeAppState("active");
+    assert.ok(view.getByRole("button", { name: pauseLabel }));
+    const beforePause = pauseCalls;
+    await nativeAppState(initialState);
+    assert.ok(pauseCalls > beforePause);
+    assert.ok(view.getByRole("button", { name: playLabel }));
+    const attempts = playSources.length;
+
+    await act(async () => { hidden = true; document.dispatchEvent(new dom.window.Event("visibilitychange")); });
+    await nativeAppState("active");
+    assert.equal(playSources.length, attempts, "native activation must not override a still-hidden web document");
+    await act(async () => { hidden = false; document.dispatchEvent(new dom.window.Event("visibilitychange")); });
+    assert.ok(playSources.length > attempts);
+    assert.ok(view.getByRole("button", { name: pauseLabel }));
+    cleanup();
+  }
+}
+
+async function nativeResumeDoesNotUndoAnExplicitPause() {
+  const view = mount(); await flush();
+  fireEvent.click(view.getByRole("button", { name: pauseLabel })); await flush();
+  const attempts = playSources.length;
+  for (const state of ["inactive", "background", "active"] as const) await nativeAppState(state);
+  assert.equal(playSources.length, attempts, "returning to the native app must preserve the user's Pause choice");
+  assert.ok(view.getByRole("button", { name: playLabel }));
+  fireEvent.click(view.getByRole("button", { name: playLabel })); await flush();
+  assert.ok(playSources.length > attempts, "explicit Play remains available after the background round trip");
+  assert.ok(view.getByRole("button", { name: pauseLabel }));
+}
+
+async function queuedPlayWaitsForNativeActivationWithoutLosingIntent() {
+  const view = mount(); await flush();
+  fireEvent.click(view.getByRole("button", { name: pauseLabel })); await flush();
+  await nativeAppState("background");
+  const attempts = playSources.length;
+  fireEvent.click(view.getByRole("button", { name: playLabel })); await flush();
+  assert.equal(playSources.length, attempts, "a queued Play activation must not start media in the native background");
+  assert.ok(view.getByRole("button", { name: playLabel }));
+
+  const beforeLateEvent = pauseCalls;
+  await act(async () => { videoIn(view).dispatchEvent(new dom.window.Event("playing")); });
+  assert.ok(pauseCalls > beforeLateEvent, "a late playing event must remain blocked after the queued Play activation");
+  assert.ok(view.getByRole("button", { name: playLabel }));
+
+  await nativeAppState("active");
+  assert.ok(playSources.length > attempts, "the explicit Play intent must take effect once the app becomes active");
+  assert.ok(view.getByRole("button", { name: pauseLabel }));
+}
+
+async function queuedRestrictedPlayDefersSourceUntilVisible() {
+  for (const preference of ["reducedMotion", "saveData"] as const) {
+    resetEnvironment();
+    reducedMotion = preference === "reducedMotion";
+    connection.saveData = preference === "saveData";
+    dom.window.__PRATIQO_APP_STATE__ = "background";
+    const view = mount(); await flush();
+    const element = videoIn(view);
+    assert.equal(element.getAttribute("src"), null);
+    assert.equal(playSources.length, 0);
+
+    fireEvent.click(view.getByRole("button", { name: playLabel })); await flush();
+    assert.equal(playSources.length, 0, `${preference}: queued Play must wait for native activation`);
+    assert.equal(element.getAttribute("src"), null, `${preference}: keep the source absent while the opted-in film cannot play`);
+    assert.ok(view.getByRole("button", { name: playLabel }));
+
+    await nativeAppState("active");
+    assert.equal(element.getAttribute("src"), CAFE_WORLD_VIDEO_SRC);
+    assert.ok(playSources.length > 0, `${preference}: load and play once the queued intent becomes eligible`);
+    assert.ok(view.getByRole("button", { name: pauseLabel }));
+
+    fireEvent.click(view.getByRole("button", { name: pauseLabel })); await flush();
+    assert.equal(element.getAttribute("src"), null);
+    await nativeAppState("background");
+    const attempts = playSources.length;
+    fireEvent.click(view.getByRole("button", { name: playLabel })); await flush();
+    assert.equal(element.getAttribute("src"), null, `${preference}: previously played media must also defer a queued reload`);
+    assert.equal(playSources.length, attempts);
+    await nativeAppState("active");
+    assert.equal(element.getAttribute("src"), CAFE_WORLD_VIDEO_SRC);
+    assert.ok(playSources.length > attempts);
+    cleanup();
+  }
+}
+
+async function latePlayingEventCannotEscapeNativeBackgroundPause() {
+  let resolve!: () => void;
+  pendingPlay = new Promise<void>((done) => { resolve = done; });
+  const view = mount(); await flush();
+  const element = videoIn(view);
+  await nativeAppState("background");
+  const beforeLateEvent = pauseCalls;
+  await act(async () => { element.dispatchEvent(new dom.window.Event("playing")); resolve(); });
+  assert.ok(pauseCalls > beforeLateEvent, "a queued native playing event must be stopped after backgrounding");
+  assert.ok(view.getByRole("button", { name: playLabel }));
+  pendingPlay = null;
+  await nativeAppState("active");
+  assert.ok(view.getByRole("button", { name: pauseLabel }));
+}
+
+async function invitationsFollowSeekingPausedTimeAndLoopRestart() {
+  const view = mount(); await flush();
+  const element = videoIn(view);
+  assertVisibleInvitation(view, null);
+  for (const [time, id, text] of [
+    [2.5, "japan", "一緒にコーヒーでもどうですか？"],
+    [13, "marrakech", "أجي نشربو قهوة"],
+    [23, "paris", "On prend un café ensemble ?"],
+  ] as const) {
+    await act(async () => { element.currentTime = time; fireEvent.seeked(element); });
+    assertVisibleInvitation(view, id);
+    assert.equal(invitationIn(view, id).querySelector("p")?.textContent, text);
+  }
+  const arabic = invitationIn(view, "marrakech").querySelector("p");
+  assert.equal(arabic?.getAttribute("dir"), "rtl");
+  assert.equal(arabic?.getAttribute("lang"), "ary");
+
+  fireEvent.click(view.getByRole("button", { name: pauseLabel })); await flush();
+  await act(async () => { element.currentTime = 27; fireEvent.seeked(element); });
+  assertVisibleInvitation(view, "welcome");
+  assert.equal(invitationIn(view, "welcome").querySelector("p")?.textContent, "Ta place t’attend.");
+  assert.ok(view.getByRole("button", { name: playLabel }), "seeking must not implicitly resume paused media");
+
+  for (const time of [29.35, 0]) {
+    await act(async () => { element.currentTime = time; fireEvent.timeUpdate(element); });
+    assertVisibleInvitation(view, null);
+  }
+  await act(async () => { element.currentTime = 1.55; fireEvent.timeUpdate(element); });
+  assertVisibleInvitation(view, "japan");
+  const fade = Number(invitationIn(view, "japan").style.opacity);
+  assert.ok(fade > 0 && fade < 1, "the Japanese invitation fades in after the loop restarts");
+}
+
+async function invitationTranslationsChangeWithoutRestartingTheFilm() {
+  const view = mount("en"); await flush();
+  const element = videoIn(view);
+  await act(async () => { element.currentTime = 13; fireEvent.seeked(element); });
+  fireEvent.click(view.getByRole("button", { name: pauseLabel })); await flush();
+  const attempts = playSources.length;
+  const arabic = invitationIn(view, "marrakech");
+  assert.equal(arabic.querySelector('p[lang="en"]')?.textContent, "Shall we have a coffee together?");
+
+  view.rerender(<CafeHeroMedia locale="es" videoSrc={CAFE_WORLD_VIDEO_SRC} />); await flush();
+  assert.equal(videoIn(view), element);
+  assert.equal(element.currentTime, 13);
+  assert.equal(playSources.length, attempts, "a language change must not restart playback");
+  assertVisibleInvitation(view, "marrakech");
+  assert.equal(arabic.querySelector('p[lang="es"]')?.textContent, "¿Tomamos un café juntos?");
+  assert.equal(arabic.querySelector('p[lang="en"]'), null);
+  assert.equal(invitationIn(view, "welcome").querySelector('p[lang="es"]')?.textContent, "Tu sitio te espera.");
+  assert.ok(view.getByRole("button", { name: "Reproducir el vídeo de cafés del mundo" }), "a locale change preserves the deliberate pause");
+
+  view.rerender(<CafeHeroMedia locale="fr" videoSrc={CAFE_WORLD_VIDEO_SRC} />); await flush();
+  assert.equal(arabic.querySelector('p[lang="fr"]')?.textContent, "On prend un café ensemble ?");
+  assert.equal(invitationIn(view, "paris").querySelectorAll("p").length, 1, "French copy has no duplicate translation");
+  assert.equal(invitationIn(view, "welcome").querySelectorAll("p").length, 1);
+}
+
 async function failedVideoReturnsToPhotoWithoutBrokenControls() {
   const view = mount(); await flush();
-  fireEvent.error(videoIn(view)); await flush();
+  const element = videoIn(view);
+  const film = element.parentElement;
+  const footer = view.getByRole("button", { name: pauseLabel }).parentElement;
+  const reservedCaptions = [...view.container.querySelectorAll("[data-cafe-cue]")];
+  fireEvent.error(element); await flush();
   assert.equal(view.container.querySelector("video"), null);
   assert.equal(view.queryByRole("button"), null);
   assert.equal(view.getByRole("status").textContent, "The video is unavailable. A café photo is shown.");
   assert.ok(view.container.querySelector("[data-cafe-hero]"), "the poster wrapper remains in place");
+  assert.ok(film?.isConnected && footer?.isConnected, "the film and mobile footer remain after a media failure");
+  assert.ok(reservedCaptions.every(caption => caption.isConnected), "caption sizing remains reserved when the player fails");
+  assert.equal(element.getAttribute("src"), null, "failed playback releases the source");
+  assert.ok(observers.every(observer => observer.disconnected));
+}
+
+async function unmountUnsubscribesFromNativeLifecycleChanges() {
+  const nativeListeners = new Set<EventListenerOrEventListenerObject>();
+  const originalAdd = window.addEventListener;
+  const originalRemove = window.removeEventListener;
+  Object.defineProperties(window, {
+    addEventListener: { configurable: true, writable: true, value: function (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) {
+      if (type === "pratiqo:app-state") nativeListeners.add(listener);
+      return Reflect.apply(originalAdd, window, [type, listener, options]);
+    } },
+    removeEventListener: { configurable: true, writable: true, value: function (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions) {
+      if (type === "pratiqo:app-state") nativeListeners.delete(listener);
+      return Reflect.apply(originalRemove, window, [type, listener, options]);
+    } },
+  });
+  try {
+    const view = mount(); await flush();
+    assert.ok(nativeListeners.size > 0);
+    view.unmount(); await flush();
+    assert.equal(nativeListeners.size, 0, "leaving the entrance must release native lifecycle listeners");
+    const attempts = playSources.length;
+    await nativeAppState("background");
+    await nativeAppState("active");
+    assert.equal(playSources.length, attempts);
+  } finally {
+    cleanup();
+    Object.defineProperties(window, {
+      addEventListener: { configurable: true, writable: true, value: originalAdd },
+      removeEventListener: { configurable: true, writable: true, value: originalRemove },
+    });
+  }
 }
 
 async function strictModeReplaysRestoreTheLocalSource() {
@@ -209,7 +451,7 @@ async function unmountReleasesMediaAndIgnoresPendingPlaybackFailure() {
 }
 
 void (async () => {
-  const cases = [unconfiguredMediaKeepsPhotoWithoutVideoRequest, serverMarkupNeverAssumesMotionOrNetworkPermission, playbackHasSilentInlineControlsInEveryLocale, reducedMotionLoadsOnlyAfterExplicitPlay, savingDataAndSlowConnectionsAvoidAutomaticDownloads, firstPlayClickRecoversFromAutoplayDenial, hiddenAndOffscreenPlaybackPausesWithoutUndoingManualPause, failedVideoReturnsToPhotoWithoutBrokenControls, strictModeReplaysRestoreTheLocalSource, unmountReleasesMediaAndIgnoresPendingPlaybackFailure];
+  const cases = [unconfiguredMediaKeepsPhotoWithoutVideoRequest, serverMarkupNeverAssumesMotionOrNetworkPermission, playbackHasSilentInlineControlsInEveryLocale, reducedMotionLoadsOnlyAfterExplicitPlay, savingDataAndSlowConnectionsAvoidAutomaticDownloads, firstPlayClickRecoversFromAutoplayDenial, hiddenDocumentDefersFirstSourceAttachment, hiddenAndOffscreenPlaybackPausesWithoutUndoingManualPause, nativeBackgroundAndInactivePauseUntilBothNativeAndWebAreVisible, nativeResumeDoesNotUndoAnExplicitPause, queuedPlayWaitsForNativeActivationWithoutLosingIntent, queuedRestrictedPlayDefersSourceUntilVisible, latePlayingEventCannotEscapeNativeBackgroundPause, invitationsFollowSeekingPausedTimeAndLoopRestart, invitationTranslationsChangeWithoutRestartingTheFilm, failedVideoReturnsToPhotoWithoutBrokenControls, unmountUnsubscribesFromNativeLifecycleChanges, strictModeReplaysRestoreTheLocalSource, unmountReleasesMediaAndIgnoresPendingPlaybackFailure];
   for (const test of cases) {
     resetEnvironment();
     try { await test(); console.log(`✓ ${test.name}`); } finally { cleanup(); await flush(); }

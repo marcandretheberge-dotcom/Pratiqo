@@ -1,8 +1,11 @@
 /**
  * Real Chromium interactions with the labelled fixture-only community preview.
- * UI evidence only: no database, real members, Daily, microphone or camera.
+ * Community fixtures are UI evidence only: no database, real members or Daily.
+ * The separate signed-out /cafe check decodes the committed hero MP4 in Chromium.
+ * Neither check requests microphone or camera access.
  * Start Next with CAFE_V1_ENABLED=true, CAFE_COMMUNITY_ENABLED=true,
  * CAFE_COMMUNITY_PREVIEW_ENABLED=true. Run with node --import tsx.
+ * Set CAFE_HERO_ONLY=true to verify only the public entrance on a hosted preview.
  */
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -11,6 +14,7 @@ import { chromium, type Browser, type BrowserContextOptions, type Page } from "p
 
 const base = (process.env.CAFE_COMMUNITY_BASE || process.env.CAFE_PR3B_BASE || "http://localhost:3465").replace(/\/$/, "");
 const outDir = join("artifacts", "cafe-community");
+const heroOnly = process.env.CAFE_HERO_ONLY === "true";
 mkdirSync(outDir, { recursive: true });
 
 async function noOverflow(page: Page, label: string) {
@@ -26,6 +30,109 @@ async function dismissConsent(page: Page) {
   }
   const install = page.getByRole("complementary", { name: /Installer Pratiqo|Install Pratiqo|Instalar Pratiqo/i });
   if (await install.isVisible()) await install.getByRole("button", { name: /Pas maintenant|Not now|Ahora no/i }).click();
+}
+
+
+/** Actual committed video playback, separate from the simulated community journey. */
+async function exerciseHeroVideo(browser: Browser, label: string, options: BrowserContextOptions, locale = "en") {
+  const context = await browser.newContext({ ...options, locale: "en-US", reducedMotion: "no-preference" });
+  await context.addInitScript({ content: `localStorage.setItem("pratiqo-locale", ${JSON.stringify(locale)});` });
+  const page = await context.newPage();
+  const runtimeErrors: string[] = [];
+  const mediaResponses: { status: number; contentType: string }[] = [];
+  page.on("pageerror", (error) => runtimeErrors.push(error.message));
+  page.on("response", (response) => {
+    if (new URL(response.url()).pathname === "/videos/cafe-world-journey.mp4") {
+      mediaResponses.push({ status: response.status(), contentType: response.headers()["content-type"] ?? "" });
+    }
+  });
+  try {
+    const response = await page.goto(`${base}/cafe`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+    assert.equal(response?.status(), 200, "the public Café entrance must load");
+    await dismissConsent(page);
+    const hero = page.locator('[data-cafe-hero="video-enabled"]');
+    await hero.waitFor({ state: "visible" });
+    await hero.scrollIntoViewIfNeeded();
+    const video = hero.locator("video");
+    const control = hero.getByRole("button");
+    // Raw browser source avoids tsx's __name helper in the isolated browser realm.
+    await page.waitForFunction(`(() => {
+      const video = document.querySelector('[data-cafe-hero="video-enabled"] video');
+      return video && !video.error && !video.paused && video.readyState >= 2 &&
+        video.videoWidth === 1280 && video.videoHeight === 720 &&
+        video.getVideoPlaybackQuality().totalVideoFrames > 0;
+    })()`, undefined, { timeout: 30_000 });
+    const initialTime = await video.evaluate((element: HTMLVideoElement) => element.currentTime);
+    await page.waitForFunction(`document.querySelector('[data-cafe-hero="video-enabled"] video').currentTime > ${initialTime + 0.2}`);
+    const metadata = await video.evaluate((element: HTMLVideoElement) => ({
+      width: element.videoWidth, height: element.videoHeight, duration: element.duration,
+      muted: element.muted, loop: element.loop, playsInline: element.playsInline,
+      source: new URL(element.currentSrc).pathname,
+    }));
+    assert.equal(metadata.source, "/videos/cafe-world-journey.mp4");
+    assert.ok(metadata.muted && metadata.loop && metadata.playsInline);
+    assert.ok(metadata.duration > 28 && metadata.duration < 31, "the complete three-country loop is present");
+    const controlBox = await control.boundingBox();
+    assert.ok(controlBox && controlBox.width >= 44 && controlBox.height >= 44, "video control has an accessible touch target");
+
+    await control.click();
+    await page.waitForFunction(`document.querySelector('[data-cafe-hero="video-enabled"] video').paused`);
+    const pausedAt = await video.evaluate((element: HTMLVideoElement) => element.currentTime);
+    await page.waitForTimeout(300);
+    assert.equal(await video.evaluate((element: HTMLVideoElement) => element.currentTime), pausedAt, "Pause stops the actual media clock");
+    await control.click();
+    await page.waitForFunction(`document.querySelector('[data-cafe-hero="video-enabled"] video').currentTime > ${pausedAt + 0.2}`);
+
+    // Verify all four invitation layouts over the actual decoded frames, including
+    // the narrow signed-out entry where the film is smaller than the viewport.
+    await control.click();
+    for (const [cue, time] of [["japan", 3], ["marrakech", 13], ["paris", 23.5], ["welcome", 27.5]] as const) {
+      await video.evaluate((element: HTMLVideoElement, target) => { element.currentTime = target; }, time);
+      await page.waitForFunction(`(() => {
+        const video = document.querySelector('[data-cafe-hero="video-enabled"] video');
+        const cue = document.querySelector('[data-cafe-cue="${cue}"]');
+        return video.paused && !video.seeking && video.readyState >= 2 &&
+          Math.abs(video.currentTime - ${time}) < 0.1 && cue && Number(cue.style.opacity) > .95;
+      })()`);
+      const invitation = hero.locator(`[data-cafe-cue="${cue}"]`);
+      const invitationBox = await invitation.boundingBox();
+      const currentControlBox = await control.boundingBox();
+      const heroBox = await hero.boundingBox();
+      assert.ok(invitationBox && currentControlBox && heroBox);
+      assert.ok(invitationBox.x >= heroBox.x - 1 && invitationBox.x + invitationBox.width <= heroBox.x + heroBox.width + 1, `${label}/${cue}: invitation fits the player`);
+      const overlap = invitationBox.x < currentControlBox.x + currentControlBox.width && invitationBox.x + invitationBox.width > currentControlBox.x && invitationBox.y < currentControlBox.y + currentControlBox.height && invitationBox.y + invitationBox.height > currentControlBox.y;
+      assert.equal(overlap, false, `${label}/${cue}: invitation and control do not overlap`);
+      if (cue === "marrakech") assert.equal(await invitation.locator('[lang="ary"]').getAttribute("dir"), "rtl");
+      await noOverflow(page, `${label}/${cue}`);
+      await hero.screenshot({ path: join(outDir, `${label}-hero-${cue}.png`) });
+    }
+    await noOverflow(page, `${label}/hero-video-paris`);
+    await page.screenshot({ path: join(outDir, `${label}-hero-video-paris.png`), fullPage: true });
+    await hero.screenshot({ path: join(outDir, `${label}-hero-video-paris-detail.png`) });
+
+    // Exercise the wrapper contract in a real browser, without claiming a physical
+    // WKWebView/device test. A deliberate Pause must survive native state changes.
+    for (const state of ["background", "active"]) {
+      await page.evaluate(`window.__PRATIQO_APP_STATE__ = "${state}"; window.dispatchEvent(new Event("pratiqo:app-state"));`);
+      await page.waitForTimeout(100);
+      assert.equal(await video.evaluate((element: HTMLVideoElement) => element.paused), true, "native resume preserves manual Pause");
+    }
+
+    await video.evaluate((element: HTMLVideoElement) => { element.currentTime = element.duration - 0.3; });
+    await control.click();
+    await page.waitForFunction(`(() => {
+      const video = document.querySelector('[data-cafe-hero="video-enabled"] video');
+      return !video.paused && !video.error && video.currentTime < 1.5;
+    })()`, undefined, { timeout: 10_000 });
+    const decodedFrames = await video.evaluate((element: HTMLVideoElement) => element.getVideoPlaybackQuality().totalVideoFrames);
+    assert.ok(mediaResponses.some(({ status, contentType }) => (status === 200 || status === 206) && /video\/mp4/.test(contentType)), "the committed MP4 is served as playable media");
+    assert.deepEqual(runtimeErrors, [], "no entrance hydration or runtime exceptions");
+    return { viewport: label, locale, engine: "chromium", realVideoPlayback: true, liveConversation: false, ...metadata, decodedFrames, mediaResponses,
+      checks: ["real_mp4_decode", "muted_inline_autoplay", "advancing_media_clock", "pause_play", "loop_wrap", "four_invitation_layouts", "arabic_rtl", "native_event_preserves_pause", "paris_hold_screenshot", "no_horizontal_overflow"] };
+  } catch (error) {
+    await page.screenshot({ path: join(outDir, `${label}-hero-video-failure.png`), fullPage: true }).catch(() => undefined);
+    throw error;
+  } finally { await context.close(); }
 }
 
 async function exercise(browser: Browser, label: string, options: BrowserContextOptions) {
@@ -161,12 +268,21 @@ async function exercise(browser: Browser, label: string, options: BrowserContext
 }
 
 void (async () => {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.CAFE_BROWSER_EXECUTABLE_PATH || undefined });
   try {
-    const cases = [];
-    cases.push(await exercise(browser, "desktop-1280", { viewport: { width: 1280, height: 900 } }));
-    cases.push(await exercise(browser, "mobile-320", { viewport: { width: 320, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 }));
-    const report = { kind: "community_fixture_browser_ui", ok: true, notLiveValidation: true, cases };
+    const desktop = { viewport: { width: 1280, height: 900 } };
+    const mobile = { viewport: { width: 320, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 1 };
+    const heroVideoCases = [
+      await exerciseHeroVideo(browser, "desktop-1280", desktop),
+      await exerciseHeroVideo(browser, "mobile-320-fr", mobile, "fr"),
+      await exerciseHeroVideo(browser, "mobile-320-en", mobile, "en"),
+      await exerciseHeroVideo(browser, "mobile-320-es", mobile, "es"),
+    ];
+    const cases = heroOnly ? [] : [
+      await exercise(browser, "desktop-1280", desktop),
+      await exercise(browser, "mobile-320", mobile),
+    ];
+    const report = { kind: heroOnly ? "cafe_entrance_browser" : "community_fixture_browser_ui", ok: true, browserVersion: browser.version(), notLiveValidation: true, cases, heroVideoCases };
     writeFileSync(join(outDir, "community-browser-report.json"), JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report, null, 2));
   } finally { await browser.close(); }

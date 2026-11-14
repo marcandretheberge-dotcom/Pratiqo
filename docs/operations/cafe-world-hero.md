@@ -1,66 +1,122 @@
 # Café entrance film
 
-## Current creative direction
+## Current status
 
-The product owner requested an apparently continuous, silent FPV/drone journey through cafés in this exact order: **Japan → Marrakech, Morocco → Paris, France**. The creative target is approximately **30 seconds**, in **16:9 at 720p**. The camera enters and crosses the Japanese and Moroccan cafés, leaving through each opposite rear doorway to reveal the next city. In Paris, the journey ends at a table: a beautiful adult woman welcomes the viewer, one empty chair awaits, and exactly two coffees are already placed, one for each person. The Eiffel Tower must be clearly visible through a large window behind her shoulder. The camera approaches the side of the empty chair and lowers into a seated guest's point of view. A brief soft transition then returns to the Japanese entrance for the next loop.
+The product owner approved the Japan → Marrakech → Paris film, its multilingual invitation treatment, and installation in the Café entrance. The clean web asset is installed in this review branch at `public/videos/cafe-world-journey.mp4`. `lib/cafe/heroMedia.ts` now selects `/videos/cafe-world-journey.mp4`; the former `videoSrc: null` and “replacement awaiting approval” status are superseded.
 
-The selected model for the Paris replacement is **Seedance 2.5**, with an **11-second** target at **720p, 16:9**. Preserve the existing Japan and Marrakech footage from the completed source and replace only the Paris suffix. The existing Kyoto → Marrakech → Paris references remain part of the project's history; the targeted repair adds a corrected Paris endpoint image. Request no narration, music or other audio, and remove the original source's audio stream during final assembly. The seated ending uses an intentional loop reset, without implying a physically continuous movement from the chair back into flight in Japan.
+This records the approved media and application integration. It does not assert that this branch is merged, deployed to production, or accepted on physical iOS/Android devices. Café community and live-call release gates remain separate.
 
-### Targeted repair and timing
+## Approved creative direction
 
-The inspected source begins its Paris transition around **19.2 seconds**. Preserve the original footage for **0 ≤ t < 19 seconds** in shot `preserved-japan-marrakech`. Prepare one new **11-second Paris suffix**, shot `paris-eiffel-arrival`, to replace the remainder. Match the join at the doorway near 19 seconds before accepting the assembly. The timing below describes the planned correction; no replacement video has been rendered.
+The silent journey visits cafés in this order: **Japan → Marrakech, Morocco → Paris, France**. It enters and crosses the first two settings, then approaches a Paris café table. A naturally seated adult woman welcomes the visitor; two coffees are on the table, and the Eiffel Tower is visible beside her through the window. The ending settles at the table before a brief deliberate dissolve returns to the Japanese entrance.
 
-| Time | Camera path and setting |
+Preserve the approved footage and its restrained welcome. The woman, table, chairs, cups and landmark must remain stable; do not reintroduce the rejected furniture rotation or a missing Eiffel Tower. The loop reset is an edit, not a claim that the camera physically flies from the Paris chair back to Japan. The fictional café settings contain no product captions or city labels baked into the film. Invitations are application text layered separately.
+
+## Approved source and installed export
+
+The Creative Claw project is **Pratiqo — One café, three worlds**, ID `feb9712b-c117-4f5a-ada2-b944bda700bf`. The approved assembled film is asset `1b475b8e-2089-460b-8844-ebcff480d5c4`: [approved source MP4](https://cdn.creativeclaw.co/u/3ce57a61/videos/b4b37457-c05a-4110-9140-63db5144b2b0.mp4). Its inspected source contains **721 video frames**, is **1280×720**, lasts **30.041625 seconds**, and has an AAC audio stream. The source and separate captioned review export are retained outside this installed asset.
+
+| Installed asset property | Verified value |
 | --- | --- |
-| 0 ≤ t < 19 seconds | Reuse the completed source's Japan and Marrakech passage unchanged in the edit. Preserve its original file separately. |
-| 19–22 seconds | Continue through the doorway into Paris, matching the retained footage's camera height, direction, speed and lighting. Approach the café without regenerating the earlier countries. |
-| 22–24 seconds | Enter the Paris café and reveal the complete, stable arrangement: the woman already seated facing the visitor, her occupied chair, one empty visitor chair and exactly two coffees. The Eiffel Tower is visible through the large window from the first clear view of that background. |
-| 24–28.5 seconds | Gently slow while approaching along the side of the empty chair. Lower smoothly into the visitor's seated point of view without passing through the chair or tabletop. The woman, table, chairs and cups keep their positions. |
-| 28.5–30 seconds | Hold the settled view. The woman offers a small, natural smile and brief friendly eye contact, with restrained breathing and blinking. Generate a clean seated endpoint matching the corrected final reference. |
-| Loop boundary, during export | Add a brief soft dissolve, approximately 0.6 seconds, back to the opening Japanese entrance. Treat this as the deliberate restart of the journey; the camera does not leave through a Paris rear door. Verify the actual exported duration after overlap. |
+| Repository path | `public/videos/cafe-world-journey.mp4` |
+| Public URL path | `/videos/cafe-world-journey.mp4` |
+| Dimensions | 1280×720, 16:9 |
+| Video | H.264, `yuv420p`, 24 fps |
+| Frames | 706 |
+| Duration | 29.416667 seconds |
+| Byte size | 7,188,009 bytes, approximately 7.19 MB |
+| SHA-256 | `c057899c53239fd0baf806bf605877b1ec82ecef3dac73840976f96e214be9b6` |
+| Audio | No audio stream |
+| Embedded captions | None |
+| Fast start | Verified: MP4 `moov` precedes `mdat` |
+| Encoding | `libx264`, slow preset, CRF 25 |
 
-### Motion, transitions and composition
+The approved untouched source has SHA-256 `97175f826ce11ae10c32359ae9a95f80429edfd0bc2b43a75384c59b11be222a`. The captioned review export has SHA-256 `01bc2b3d3f49d721d8532d8dbb0c842894d99c1f4d226895e9525579499e67df`. Neither is the clean, responsive web asset above.
 
-Preserve the earlier footage's level horizon, camera height, perspective and forward pace at the Paris join. Reserve the final five to six seconds for the table approach, gentle deceleration and seated settling. Apply and inspect the soft loop reset separately during export.
+The application serves the committed local asset. The provider URL is source provenance, not a runtime dependency or a permanent player URL. If the binary is replaced, recheck its metadata, checksum and actual playback rather than assuming that the same filename means the same approved film.
 
-Retain the existing Japan-to-Marrakech transition. Conceal the retained-footage-to-Paris join within the doorway near 19 seconds, preserving the appearance of one continuous move. Keep visible architecture stable; avoid morphing rooms, passing through walls, abrupt turns, rolls or sudden speed changes. The empty chair is already positioned for sitting and stays still while the camera approaches its side and lowers. Review the deliberate seated-to-Japan dissolve at normal playback speed for a calm restart, with no abrupt exposure flash or prolonged black hold.
+### Loop mapping
 
-Preserve the same adult woman with a warm, natural appearance and understated styling. She is already naturally seated facing the visitor, with relaxed shoulders and hands comfortably at rest. Her welcome is modest and friendly: a small smile and brief eye contact. She does not rotate her body, handle furniture or move the cups. The featured table has her occupied chair, one empty guest chair and exactly two cups of coffee, one for each place. Keep the table, chairs, cups and saucers fixed throughout; avoid serving actions or object changes.
+The export uses the same **15-frame / 0.625-second** wrap dissolve as the approved text preview, at normal playback speed:
 
-Arrange the café's large window behind the woman so the Eiffel Tower appears clearly beside her shoulder at a plausible distance and orientation. The landmark must be present from the first view of that background and remain fixed in the world, with only natural perspective changes as the camera approaches and lowers. Keep its recognisable silhouette visible rather than obscured by the woman or lost in shallow-focus blur. Frame her face, both coffees and the tower for readability in smaller mobile frames.
+- Normalize the source to 24 fps and begin playback at source frame **15**.
+- Blend source frames **0–14** over the final 15 frames of the body, which correspond to source frames **706–720**.
+- Start that dissolve at output time **28.791666667 seconds**. The output ends at **29.416666667 seconds**, then restarts at source frame 15.
+- Before the wrap dissolve, a source cue maps to output time by subtracting **0.625 seconds**.
 
-Keep the route and doorways near the centre of the image so the journey remains clear at smaller display sizes. Use warm cream, terracotta and muted olive accents, natural light and realistic materials. Background adults may make subtle gestures without obstructing the path. These are fictional café settings. Keep drone hardware, lettering, brand logos, captions and city labels out of the image.
+The current source enters its Japan-to-Marrakech dissolve around **9.1–9.7 seconds** and its Marrakech-to-Paris dissolve around **21.6–22.2 seconds**. These are observed source boundaries, not the earlier proposed 19-second replacement cut. Do not reapply the historical cut plan to this approved assembly.
 
-## Project history and pending status
+## Invitations and localization
 
-The Creative Claw project is **Pratiqo — One café, three worlds**, ID `feb9712b-c117-4f5a-ada2-b944bda700bf`. Its original four-café plan is preserved in full snapshot `e50674ba-a32a-46cd-a382-5568120d5a9d`, labelled **Original four café entrances — 4 storyboards and 2 clips**. That version contains four location storyboards—Montréal, Paris, Kyoto and Marrakech—and two generated clips, Montréal and Kyoto. The ordered Kyoto, Marrakech and Paris storyboards provide references for the new direction; the earlier clips do not establish the requested continuous route or its loop.
+The film remains clean so typography can respond to the actual player width and interface language. `cafeHeroInvitations` defines exact cues on the **installed export's clock**:
 
-The preceding rear-door ending is preserved in full snapshot `2f057538-97b1-4347-b910-23038d672d40`, labelled **Three-country journey before the seated Paris ending**.
+| Scene | Visible main invitation | Language and direction | Start | End |
+| --- | --- | --- | --- | --- |
+| Japan | 一緒にコーヒーでもどうですか？ | Japanese, `ja`, left to right | 1.375 s | 5.875 s |
+| Marrakech | أجي نشربو قهوة | Moroccan Darija, `ary`, right to left | 11.375 s | 15.875 s |
+| Paris | On prend un café ensemble ? | French, `fr`, left to right | 21.875 s | 25.075 s |
+| Final table | Ta place t’attend. | French, `fr`, left to right | 25.575 s | 28.625 s |
 
-### Completed original render and quality findings
+Each interval includes a **0.4-second fade in and fade out**. Opacity follows the media clock, including pause, seeking, resume and loop restart. It does not run on a separate wall-clock timer. Decoded-frame callbacks update the small set of text styles; animation frames are the fallback, and time/seek events synchronize paused seeking.
 
-The first complete seated-ending render exists: [original journey MP4](https://cdn.creativeclaw.co/u/3ce57a61/videos/501e0204-b8e0-4089-99a8-97240ff2b237.mp4), generation job `c8c7254f-c23e-4b93-93bf-8118cff051c3`. Inspected source metadata: **30.08 seconds, 1280×720, 24 fps, with an audio stream**. The full original project is preserved in snapshot `1622f7c5-2fb9-49d4-8fd6-71a5433236a8`, labelled **First rendered film — Paris table-motion and landmark review**. Retain the original file as the source; it is not approved for installation.
+A smaller helper line uses the current interface locale when it differs from the main invitation's language:
 
-Frame inspection found unnatural rotation of the woman's body and table around **24–26 seconds**. The Eiffel Tower is absent. These findings motivate the targeted Paris replacement while retaining the first 19 seconds of Japan and Marrakech.
+| Interface | Coffee invitation helper | Final invitation helper |
+| --- | --- | --- |
+| French | On prend un café ensemble ? | Ta place t’attend. |
+| English | Shall we have a coffee together? | Your seat is waiting. |
+| Spanish | ¿Tomamos un café juntos? | Tu sitio te espera. |
 
-### Replacement status: awaiting Review approval
+French users therefore see helpers beneath Japanese and Darija, without a duplicate helper under the French scenes. English and Spanish users also receive their own helper for the Paris and final-table lines. Arabic text has its own right-to-left direction; its characters must not be manually reversed. Font stacks include Japanese and Arabic system fallbacks.
 
-A [corrected final keyframe](https://cdn.creativeclaw.co/u/3ce57a61/images/654623c0-9d9f-497e-b2b7-9ce9ae08635c.png) has been generated and imported with the same woman naturally seated facing the visitor, a fixed table, exactly two coffees and a clearly visible Eiffel Tower through the large window behind her shoulder. Its asset ID is `0d74139d-650b-4cfb-bf7e-64708b77c56f`. The [source boundary frame at 19.0 seconds](https://cdn.creativeclaw.co/u/3ce57a61/images/7487568e-c0be-4fb7-afc2-7da2057f4b22.jpg) is also imported for continuity. These are still references; they do not establish the replacement's motion quality.
+The wide layout places the invitation over the film. At narrow player widths, it moves into a **reserved strip directly below the 16:9 picture**, keeping text, faces and the Play/Pause control separate. Preserve the film's landscape composition; do not crop it into a portrait frame. Validate the actual nested entry layout at a 320px viewport, where the film can be substantially narrower than 320px, and check both helper lines and wrapped Japanese text.
 
-The native film is now split into `preserved-japan-marrakech` and `paris-eiffel-arrival`. The [preserved prefix MP4](https://cdn.creativeclaw.co/u/3ce57a61/videos/c9f03c54-db13-4760-8cdb-26329636d01e.mp4), asset `f7cebbc5-52e4-4aa3-aecd-fc950646c909`, is **19.000 seconds, 456 frames, 1280×720, 24 fps, with no audio**. It is a re-encoded extract of source [0, 19), visually preserving the existing footage; it is not a new generation.
+The visual invitation layer is decorative and hidden from assistive technology to avoid repeated announcements. A stable localized description provides its meaning. Play/Pause remains an actual translated button with an accessible label, visible focus and a 44px minimum target.
 
-Only the new 11-second Paris shot is awaiting the workspace's strict Review approval, request `d47c90c0-5a85-4ad5-82c6-0e4f03d7e9f3`, take `29e564f2-bbbc-4215-89d2-51d6b06cad1b`, batch `e58cff03-f962-498b-a778-b8749c2ed2e0`. Its Seedance 2.5 request uses the 19-second boundary as `image_url` and the corrected Eiffel still as `last_frame_url`, at 720p, 16:9. It includes no additional image references or source-motion input, avoiding reuse of the original faulty rotation. No new video job has started. No replacement video has been rendered or installed; its join, motion, landmark stability and final loop remain unverified.
+## Playback, performance and fallback
 
-The website manifest remains **`cafeHeroMedia.videoSrc: null`** in `lib/cafe/heroMedia.ts`. The existing photograph stays visible until a reviewed web asset is available and installed.
+The existing photo, `/images/yo/mandarin/cafe.webp`, remains the poster and background fallback. The layout reserves the media area before video loads. The player accepts the installed local video path; an unconfigured or unreviewed source keeps the photo instead of mounting a player for an arbitrary URL.
 
-## Integration and acceptance
+The video is muted, inline and looping, with `preload="none"`. Server markup omits its `src`. On the client, reduced-motion preferences, data saving, and reported `2g` or `slow-2g` connections suppress automatic source attachment and playback. An explicit Play action can opt into loading. Returning to manual Pause under those restrictions releases the source; do not promise that a later reload retains the former position.
 
-Before installation, verify that the edit retains the original footage for 0 ≤ t < 19 seconds and joins the new Paris suffix cleanly, preserving the exact Japan → Marrakech → Paris order. Inspect camera direction, height, movement and exposure at the join. In Paris, verify a clearly adult woman already naturally seated facing the visitor, one empty guest chair, exactly two coffees with one per place, fixed furniture and cups, and a gentle approach that settles at seated eye level without clipping through furniture. Check that her welcome stays restrained and that the woman and table do not rotate. The Eiffel Tower must remain clearly recognisable, geometrically plausible and stable through the window. The ending must stay at the table and use a brief, calm return to Japan; assess the intentional dissolve for frozen frames, distracting brightness changes or an abrupt restart. Revise or reject the export if these criteria are not met.
+Visibility and intersection changes pause ambient playback. A deliberate user pause must survive background/foreground and offscreen/onscreen transitions. Source cleanup releases the media on unmount, and stale play promises or late `playing` events must not restart a player that is no longer allowed to play.
 
-Review actual playback in the desktop entrance and at 320px mobile width, with Play/Pause controls visible. The current hero keeps a 16:9 frame on both and uses centred `object-fit: cover`; it does not switch to a portrait crop on mobile. This preserves the horizontal extent of a matching 16:9 export, but does not guarantee that the tower is recognisable at a small size or that the controls leave both coffees unobscured. Verify those conditions against the exported clip before installation.
+An autoplay refusal keeps the photo and a usable explicit Play control. A codec or load failure returns to the photo and a translated accessible status, without a broken player control. The film stays on entrance/profile-entry surfaces; it does not run inside an active text room or Daily conversation and never requests a camera or microphone.
 
-Export an approved film as a silent H.264 MP4 with no audio track, a browser-compatible pixel format and fast-start metadata. Target a compact 1280×720 file; record its actual duration, dimensions, byte size and SHA-256 alongside the reviewed source. Put the reviewed web asset at `public/videos/cafe-world-journey.mp4` and only then set the media manifest's local source. Do not use a temporary signed provider URL as a permanent site asset.
+The 7.19 MB export preserves the approved 720p image and loop timing. Fast-start metadata permits progressive playback; `preload="none"` is not a promise of zero transfer once playback is requested. Do not add duplicate video downloads or an external provider fetch for the background.
 
-The entrance player must keep the existing photograph as its poster/fallback, reserve its aspect ratio, expose a translated play/pause control and remain outside active text/video conversations. Reduced-motion and data-saving preferences should prevent automatic loading/playback; an explicit Play action may opt into loading. Pause offscreen or when the document is hidden, preserve a deliberate user pause, and fall back cleanly when the file cannot load or autoplay is rejected.
+## Native wrapper lifecycle contract
 
-Verify the real exported asset on desktop and mobile before claiming the world-café video is installed. Production activation is a separate release step.
+The web player consumes the wrapper's app lifecycle through these two browser-facing names:
+
+| Contract | Required behavior |
+| --- | --- |
+| `window.__PRATIQO_APP_STATE__` | Current state: `active`, `inactive` or `background` |
+| `pratiqo:app-state` window event | Notify the page after updating the state property |
+
+The host must inject the current state when a document is initialized and keep it current through native lifecycle changes. Set the property **before** dispatching the event: the player reads the property, not an event-detail payload. Without an injected native state, ordinary document visibility still applies.
+
+Both `inactive` and `background` are treated as hidden. Returning to `active` only permits playback when the document is also visible, the film is onscreen, user intent permits it and the motion/data policy is satisfied. An explicit or queued Play activation must not override a background/offscreen pause. Preserve a manual pause when the app returns to the foreground.
+
+This is the lifecycle interface for ambient media. Its existence does not establish that a native build was installed, background behavior was tested on a real device, or a store release was approved. Record those results separately for iOS and Android.
+
+The existing Expo wrapper implements this interface and a native Café tab in [draft PR #417](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/417), commit `9636e0d180d774b9c2f82accf2bf69855cbc35a0`. Its TypeScript, wrapper contract and nine policy/lifecycle tests passed during this integration. The previously produced iPhone binary predates these changes; no new signed build or physical-device acceptance is implied.
+
+## Validation and unchanged release gates
+
+The binary has been probed for dimensions, frame count, pixel format, audio absence, duration, size, checksum and fast-start placement. Encoded-frame inspection confirms the retained Paris face, coffees and Eiffel Tower are readable; the captioned preview was separately inspected for script rendering and the wrap dissolve. Frame inspection and mocked React media tests do not prove real browser playback, mobile typography or physical-device lifecycle behavior.
+
+Before declaring a hosted release accepted, record the exact deployed commit and inspect the real entry page in desktop and mobile browsers, including the narrow nested entry in FR/EN/ES. Verify start, pause, seek, resume, loop, loading refusal, load failure, reduced motion, data saving, hidden-document behavior and offscreen return. In the wrapper, test initial background state and background/foreground transitions while both playing and manually paused. Confirm the tower and both coffees remain visible, controls stay reachable and the caption strip does not clip. Verify actual normal-speed playback rather than relying only on screenshots.
+
+Installing this entrance asset does **not** enable `CAFE_V1_ENABLED`, `CAFE_COMMUNITY_ENABLED` or `CAFE_ROOM_PROVIDER_ENABLED`, apply database migrations, change Daily credentials, activate a cleanup scheduler, or establish live-call readiness. Keep `CAFE_COMMUNITY_PREVIEW_ENABLED` off in production. The community deployment sequence, real-account acceptance, moderation/retention review, provider/device checks and teardown obligations remain governed by [Café community release and verification](cafe-community-rollout.md) and [Daily live validation](cafe-daily-live-validation.md).
+
+Merge and deployment review, production feature activation and native-store release remain distinct steps. Do not describe an installed branch asset as a deployed or fully accepted production feature without the corresponding evidence.
+
+## Historical generations
+
+These records explain the earlier repair and remain separate from the approved installed asset:
+
+- Snapshot `e50674ba-a32a-46cd-a382-5568120d5a9d`, **Original four café entrances — 4 storyboards and 2 clips**, preserves the original Montréal, Paris, Kyoto and Marrakech plan. Snapshot `2f057538-97b1-4347-b910-23038d672d40`, **Three-country journey before the seated Paris ending**, preserves the preceding rear-door ending.
+- The [first seated-ending render](https://cdn.creativeclaw.co/u/3ce57a61/videos/501e0204-b8e0-4089-99a8-97240ff2b237.mp4), job `c8c7254f-c23e-4b93-93bf-8118cff051c3`, was 30.08 seconds at 1280×720/24 fps with audio. Snapshot `1622f7c5-2fb9-49d4-8fd6-71a5433236a8` preserves its review. Unnatural woman/table rotation around 24–26 seconds and the absent Eiffel Tower made it unsuitable for installation.
+- The repair prepared [a corrected Paris endpoint](https://cdn.creativeclaw.co/u/3ce57a61/images/654623c0-9d9f-497e-b2b7-9ce9ae08635c.png), asset `0d74139d-650b-4cfb-bf7e-64708b77c56f`, and [a 19-second boundary reference](https://cdn.creativeclaw.co/u/3ce57a61/images/7487568e-c0be-4fb7-afc2-7da2057f4b22.jpg). The [19-second preserved prefix](https://cdn.creativeclaw.co/u/3ce57a61/videos/c9f03c54-db13-4760-8cdb-26329636d01e.mp4), asset `f7cebbc5-52e4-4aa3-aecd-fc950646c909`, was 456 frames at 1280×720/24 fps without audio.
+- Historical shots `preserved-japan-marrakech` and `paris-eiffel-arrival` used an 11-second Seedance 2.5 Paris repair plan. Review request `d47c90c0-5a85-4ad5-82c6-0e4f03d7e9f3`, take `29e564f2-bbbc-4215-89d2-51d6b06cad1b`, and batch `e58cff03-f962-498b-a778-b8749c2ed2e0` belong to that earlier preparation. Their previously documented pending status is superseded by the approved assembled source identified above; they are not the current installation gate.
