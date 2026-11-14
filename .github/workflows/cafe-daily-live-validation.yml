@@ -4,10 +4,19 @@ on:
   pull_request:
     paths:
       - "scripts/validate_cafe_daily_live.ts"
+      - "scripts/cafe-room-browser-live.ts"
+      - "scripts/run-cafe-room-browser-live.sh"
+      - "tests/cafe/sql/browser-profiles.sql"
       - "tests/cafe/cafeDailyLiveValidationContract.test.ts"
       - "docs/operations/cafe-daily-live-validation.md"
       - ".github/workflows/cafe-daily-live-validation.yml"
   workflow_dispatch:
+    inputs:
+      browser:
+        description: "Run two real Daily browsers with disposable local Supabase (synthetic camera/mic)"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -29,11 +38,16 @@ jobs:
         run: npx tsx tests/cafe/cafeDailyLiveValidationContract.test.ts
       - name: TypeScript
         run: npx tsc --noEmit
+      - name: Browser harness shell syntax
+        run: bash -n scripts/run-cafe-room-browser-live.sh
       - name: Focused lint
         run: >-
           npx eslint
           scripts/validate_cafe_daily_live.ts
+          scripts/cafe-room-browser-live.ts
+          lib/cafe/providers/dailyDiagnostics.ts
           tests/cafe/cafeDailyLiveValidationContract.test.ts
+          tests/cafe/cafeDailyDiagnostics.test.ts
       - name: Whitespace check
         run: git diff --check
 
@@ -59,3 +73,41 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Validate real Daily development account
         run: npx tsx scripts/validate_cafe_daily_live.ts
+
+  browser-daily:
+    if: github.event_name == 'workflow_dispatch' && inputs.browser
+    needs: live-daily
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    environment: cafe-daily-development
+    env:
+      DAILY_API_KEY: ${{ secrets.DAILY_API_KEY }}
+      DAILY_DOMAIN: ${{ secrets.DAILY_DOMAIN }}
+      CAFE_DAILY_ROOM_HMAC_SECRET: ${{ secrets.CAFE_DAILY_ROOM_HMAC_SECRET }}
+      CAFE_DAILY_PARTICIPANT_HMAC_SECRET: ${{ secrets.CAFE_DAILY_PARTICIPANT_HMAC_SECRET }}
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install Chromium and dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Real host and learner browser journey
+        timeout-minutes: 20
+        run: npm exec --yes --package=supabase@3.1.0 -- bash scripts/run-cafe-room-browser-live.sh
+      - name: Sanitized browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cafe-room-browser-${{ github.sha }}
+          path: |
+            artifacts/cafe-room-browser-live/report.json
+            artifacts/cafe-room-browser-live/desktop-connected.png
+            artifacts/cafe-room-browser-live/mobile-connected.png
+          if-no-files-found: warn
+          retention-days: 7

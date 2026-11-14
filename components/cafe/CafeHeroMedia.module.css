@@ -1,0 +1,164 @@
+.frame {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  container-type: inline-size;
+  border-radius: 28px;
+}
+.presentation { position: relative; border-radius: inherit; }
+.film {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, rgba(17, 13, 11, .12), rgba(17, 13, 11, .5)),
+    url("/images/yo/mandarin/cafe.webp") center 46% / cover no-repeat;
+}
+.video, .shade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 700ms ease;
+  pointer-events: none;
+}
+.video { object-fit: cover; object-position: center; }
+.shade { background: linear-gradient(180deg, transparent 45%, rgba(17, 13, 11, .35)); }
+.footer { position: absolute; inset: 0; pointer-events: none; }
+.invitations {
+  position: absolute;
+  left: 6.25%;
+  right: 26%;
+  bottom: 11%;
+  display: grid;
+  min-width: 0;
+  opacity: 0;
+  transition: opacity 700ms ease;
+  pointer-events: none;
+}
+.visible { opacity: 1; }
+.invitation {
+  grid-area: 1 / 1;
+  align-self: end;
+  min-width: 0;
+  text-align: left;
+  color: #fbf8ef;
+  text-shadow: 0 2px 12px rgba(12, 12, 10, .9), 0 1px 3px rgba(12, 12, 10, .85);
+}
+.invitationText {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  font-family: "Iowan Old Style", "Noto Serif", Georgia, serif;
+  font-size: 26px;
+  font-size: clamp(18px, 3.3cqw, 42px);
+  font-weight: 400;
+  line-height: 1.4;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.invitationText:lang(ja) {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", serif;
+  font-size: 24px;
+  font-size: clamp(17px, 3.05cqw, 39px);
+  line-break: strict;
+}
+.invitationText:lang(ary) {
+  font-family: "Noto Naskh Arabic", "Geeza Pro", "Traditional Arabic", serif;
+  font-size: 36px;
+  font-size: clamp(28px, 4.76cqw, 61px);
+  line-height: 1.4;
+}
+.finalInvitation { max-width: 48%; }
+.translation {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-size: clamp(12px, 1.9cqw, 24px);
+  font-weight: 400;
+  line-height: 1.4;
+  color: #fbf8ef;
+}
+.control {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  max-width: calc(100% - 28px);
+  padding: 9px 14px;
+  border: 1px solid rgba(245, 236, 223, .4);
+  border-radius: 999px;
+  background: rgba(17, 13, 11, .82);
+  color: #f5ecdf;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.4;
+  text-align: start;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.control svg { flex-shrink: 0; }
+.control:hover { background: rgba(17, 13, 11, .96); }
+.control:focus-visible { outline: 3px solid #f0cfa8; outline-offset: 3px; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+@container (max-width: 460px) {
+  .presentation .film { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .footer {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    gap: 10px;
+    align-items: center;
+    min-height: 116px;
+    padding: 12px;
+    border-radius: inherit;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    background: #211b16;
+  }
+  .invitations { position: static; }
+  .invitation { align-self: center; text-shadow: none; }
+  .invitationText { font-size: 16px; }
+  .invitationText:lang(ja) { font-size: 16px; }
+  .invitationText:lang(ary) { font-size: 24px; }
+  .finalInvitation { max-width: 100%; }
+  .translation { margin-top: 4px; font-size: 12px; }
+  .control { position: static; width: 44px; height: 44px; max-width: none; justify-content: center; padding: 0; }
+  .control span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+/* Preserve readable captions and separate controls in older app WebViews. */
+@supports not (container-type: inline-size) {
+  @media (max-width: 600px) {
+    .presentation .film { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+    .footer {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 44px;
+      gap: 10px;
+      align-items: center;
+      min-height: 116px;
+      padding: 12px;
+      border-radius: inherit;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+      background: #211b16;
+    }
+    .invitations { position: static; }
+    .invitation { align-self: center; text-shadow: none; }
+    .invitationText { font-size: 16px; }
+    .invitationText:lang(ja) { font-size: 16px; }
+    .invitationText:lang(ary) { font-size: 24px; }
+    .finalInvitation { max-width: 100%; }
+    .translation { margin-top: 4px; font-size: 12px; }
+    .control { position: static; width: 44px; height: 44px; max-width: none; justify-content: center; padding: 0; }
+    .control span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  }
+}
+@media (prefers-reduced-motion: reduce) { .video, .shade, .invitations { transition: none; } }

@@ -12,11 +12,13 @@ const detailPage = read("app/cafe/[slug]/page.tsx");
 const card = read("components/cafe/CafeSessionCard.tsx");
 const copy = read("lib/cafe/copy.ts");
 const styles = read("app/cafe/cafe.module.css");
+const heroStyles = read("components/cafe/CafeHeroMedia.module.css");
 const publicTypes = read("lib/cafe/publicTypes.ts");
 
 assert.match(front, /cafeCopy/);
-assert.match(styles, /\/images\/yo\/mandarin\/cafe\.webp/);
-assert.doesNotMatch(front + styles, /coffee\.avif|styles\.steam|\.steam/);
+assert.match(front, /CafeHeroMedia/);
+assert.match(heroStyles, /\/images\/yo\/mandarin\/cafe\.webp/);
+assert.doesNotMatch(front + styles + heroStyles, /coffee\.avif|styles\.steam|\.steam/);
 
 assert.match(front, /router\.push\("\/cafe\?step=format"\)/);
 assert.match(front, /router\.push\("\/cafe\?step=groups"\)/);

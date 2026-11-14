@@ -7,6 +7,7 @@ import PratiqoLogo from "@/components/PratiqoLogo";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { useLocale } from "@/lib/locale-context";
 import { YoNavButton } from "@/components/yo/YoNavButton";
+import { CafeNavLink } from "@/components/cafe/community/CafeNavLink";
 import { resolveLoginHrefWithPendingTeacherIntent } from "@/lib/auth/pendingTeacherIntent";
 import { CONNEXION_PATH } from "@/lib/auth/preAuthOnboardingIntent";
 
@@ -21,6 +22,7 @@ export function LandingHeader() {
 
   const loginLabel = t("navLogin");
   const mobileLinks = [
+    { href: "/cafe", label: "Café des langues" },
     { href: "/trouver-un-prof", label: t("findTeacher") },
     { href: "/devenir-enseignant", label: t("becomeTeacher") },
     { href: "/tarifs", label: t("navPricing") || "Tarifs" },
@@ -32,7 +34,10 @@ export function LandingHeader() {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-[#D3D1C7] h-14 flex items-center justify-between px-4 sm:px-6">
       <Link href="/" className="flex items-center gap-2">
-        <span className="md:hidden">
+        <span className="sm:hidden">
+          <PratiqoLogo variant="icon" size="sm" priority={false} fetchPriority="low" loading="lazy" />
+        </span>
+        <span className="hidden sm:block md:hidden">
           <PratiqoLogo variant="full" size="sm" priority={false} fetchPriority="low" loading="lazy" />
         </span>
         <span className="hidden md:block">
@@ -40,6 +45,7 @@ export function LandingHeader() {
         </span>
       </Link>
       <div className="flex items-center gap-2 sm:gap-3">
+        <CafeNavLink />
         <div className="hidden lg:flex items-center gap-3">
           <YoNavButton />
           <LocaleSwitcher variant="light" />

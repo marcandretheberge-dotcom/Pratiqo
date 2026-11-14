@@ -32,6 +32,7 @@ import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
+import { CafeNavLink } from "@/components/cafe/community/CafeNavLink";
 import {
   YO_LESSON_DECK_CHROME,
   type YoLessonDeckChromeLabels,
@@ -133,6 +134,7 @@ export function YoLessonDeckHeader({
           </span>
         </div>
 
+        <CafeNavLink preserveCourse />
         <div data-testid="yo-lesson-deck-header-lang-toggle">
           <YoLanguageSelector
             locale={locale}
