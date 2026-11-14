@@ -259,7 +259,9 @@ function RoomChat({ room, me, locale, execute, disabled, videoEnabled, onReport,
             {room.creator.id === me.id && <button className={styles.quiet} disabled={disabled} onClick={() => void execute({ action: "room.remove", roomId: room.id, targetId: member.id })}>{t("Retirer du salon", "Remove from room", "Retirar de la sala")}</button>}
           </div>}
         </div>)}
-        <p className={styles.small}>{videoEnabled ? t("Discutez d’abord. Un appel se prépare seulement si vous acceptez tous les deux.", "Get to know each other first. A call is prepared only after you both accept.", "Conózcanse primero. La llamada se prepara solo cuando ambos aceptan.") : t("Les appels sont momentanément indisponibles. Vous pouvez continuer à écrire.", "Calls are temporarily unavailable. You can keep writing.", "Las llamadas no están disponibles por el momento. Pueden seguir escribiendo.")}</p>
+        {videoEnabled
+          ? <p className={styles.small}>{t("Discutez d’abord. Un appel se prépare seulement si vous acceptez tous les deux.", "Get to know each other first. A call is prepared only after you both accept.", "Conózcanse primero. La llamada se prepara solo cuando ambos aceptan.")}</p>
+          : null}
       </aside>
     </div>
   </>;
@@ -386,6 +388,9 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
         <button type="button" className={styles.tab} aria-pressed={practiceMode === "group"} onClick={() => setPracticeMode("group")}>{t("En groupe", "In a group", "En grupo")}</button>
         <button type="button" className={styles.tab} aria-pressed={practiceMode === "pair"} onClick={() => setPracticeMode("pair")}>{t("À deux", "One to one", "De dos")}</button>
       </div>
+      {practiceMode === "pair" && <p className={styles.note}>{videoEnabled
+        ? t("Conversation à deux par écrit. Un appel reste optionnel et demande le consentement de chacun.", "One-to-one text chat. A call stays optional and needs both people’s consent.", "Chat de dos por escrito. La llamada sigue siendo opcional y requiere el consentimiento de ambos.")
+        : t("Conversation à deux par écrit. Les appels vidéo ne sont pas ouverts pour le moment.", "One-to-one text chat. Video calls are not open yet.", "Chat de dos por escrito. Las videollamadas aún no están abiertas.")}</p>}
       <label className={styles.small}>{t("Filtrer", "Filter", "Filtrar")}
         <select className={styles.filterSelect} value={filter} onChange={(event) => setFilter(event.target.value)} aria-label={t("Langue de pratique", "Practice language", "Idioma de práctica")}>
           <option value="">{t("Toutes", "All", "Todos")}</option>
@@ -396,13 +401,17 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
         <div className={styles.stack}>
           <h2 className={styles.smallHeading}>{t("Conversations", "Conversations", "Conversaciones")}</h2>
           {liveRooms.length ? <div className={styles.grid}>{liveRooms.map((room) => <RoomCard key={room.id} room={room} me={snapshot.me!} locale={locale} disabled={!community.canWrite} execute={execute} serverTime={snapshot.serverTime} />)}</div> : <div className={styles.empty}>
-            <h3>{t("Le chat est ouvert.", "Chat is open.", "El chat está abierto.")}</h3>
-            <button className={styles.primary} type="button" disabled={!community.canWrite} onClick={() => setCreate("now")}>{practiceMode === "pair" ? t("Ouvrir une conversation à deux", "Open a one-to-one chat", "Abrir un chat de dos") : t("Ouvrir un salon", "Open a room", "Abrir una sala")}</button>
+            <h3>{t("Personne n’a encore ouvert de salon.", "No one has opened a room yet.", "Nadie ha abierto una sala todavía.")}</h3>
+            <p className={styles.note}>{t("Tu peux commencer. Seules les vraies présences apparaissent ici.", "You can start one. Only real presence appears here.", "Puedes empezar una. Aquí solo aparece la presencia real.")}</p>
+            <div className={styles.row}>
+              <button className={styles.primary} type="button" disabled={!community.canWrite} onClick={() => setCreate("now")}>{practiceMode === "pair" ? t("Ouvrir une conversation à deux", "Open a one-to-one chat", "Abrir un chat de dos") : t("Ouvrir un salon", "Open a room", "Abrir una sala")}</button>
+              <button className={styles.button} type="button" disabled={!community.canWrite} onClick={() => setCreate("scheduled")}>{t("Plus tard", "Later", "Más tarde")}</button>
+            </div>
           </div>}
-          <div className={styles.row}>
+          {liveRooms.length > 0 && <div className={styles.row}>
             <button className={styles.primary} type="button" disabled={!community.canWrite} onClick={() => setCreate("now")}>{t("Écrire maintenant", "Write now", "Escribir ahora")}</button>
             <button className={styles.button} type="button" disabled={!community.canWrite} onClick={() => setCreate("scheduled")}>{t("Plus tard", "Later", "Más tarde")}</button>
-          </div>
+          </div>}
         </div>
         <aside className={styles.panel}>
           <h2 className={styles.smallHeading}>{t("Présents", "Present", "Presentes")} · {onlinePeople.length}</h2>

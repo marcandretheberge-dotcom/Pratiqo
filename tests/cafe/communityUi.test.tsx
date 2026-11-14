@@ -236,7 +236,7 @@ async function emptyLobbyNeverFabricatesPeople() {
   const source = createCommunityDemoTransport();
   const transport: CafeCommunityTransport = { ...source, snapshot: async (...args) => { const data = await source.snapshot(...args); return data.ok ? { ...data, rooms: [], people: [] } : data; } };
   const view = mount(transport); await enter(view);
-  assert.ok(view.getByText("Chat is open."));
+  assert.ok(view.getByText("No one has opened a room yet."));
   assert.ok(view.getByRole("button", { name: "Open a room" }));
   assert.equal(view.queryByText("Maya · démo"), null); assert.equal(view.queryByText("Riku · démo"), null);
 }

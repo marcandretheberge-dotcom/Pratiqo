@@ -296,7 +296,7 @@ async function exercise(browser: Browser, label: string, options: BrowserContext
 
     // Empty filter remains actionable and never invents people or rooms.
     await page.getByRole("combobox", { name: "Practice language" }).selectOption("hi");
-    await page.getByText("Chat is open.", { exact: true }).waitFor();
+    await page.getByText("No one has opened a room yet.", { exact: true }).waitFor();
     await screenshot("empty-state");
     assert.equal(await page.locator("iframe").count(), 0, "text preview creates no media frames");
     const mediaRequests = await page.evaluate(() => (window as unknown as { __cafeMediaRequests: number }).__cafeMediaRequests);

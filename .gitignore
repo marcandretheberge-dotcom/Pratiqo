@@ -81,4 +81,9 @@ backups/
 artifacts/cafe-live-browser/
 artifacts/cafe-pr3b-room/
 artifacts/cafe-room-browser-live/
+artifacts/cafe-community-live/
+.env.cafe-community-local
+.env.cafe-local
 
+
+.env.cafe-community-runtime
