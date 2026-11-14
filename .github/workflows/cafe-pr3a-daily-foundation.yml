@@ -51,6 +51,7 @@ jobs:
       - name: PR3a static and provider contracts
         run: |
           npx tsx tests/cafe/cafePr3aContract.test.ts
+          npx tsx tests/cafe/cafeDailyDiagnostics.test.ts
           npx tsx tests/cafe/cafePr3aDailyProvider.test.ts
           npx tsx tests/cafe/cafePr3aDailySafety.test.ts
           npx tsx tests/cafe/cafePr3aCancellation.test.ts
@@ -71,10 +72,12 @@ jobs:
           lib/cafe/joinService.ts
           lib/cafe/adminRoomCancellation.ts
           lib/cafe/providers/daily.ts
+          lib/cafe/providers/dailyDiagnostics.ts
           app/api/admin/cafe/sessions/route.ts
           app/api/cafe/sessions/[slug]/join/route.ts
           app/api/cafe/sessions/[slug]/host/route.ts
           tests/cafe/cafePr3aContract.test.ts
+          tests/cafe/cafeDailyDiagnostics.test.ts
           tests/cafe/cafePr3aDailyProvider.test.ts
           tests/cafe/cafePr3aDailySafety.test.ts
           tests/cafe/cafePr3aCancellation.test.ts

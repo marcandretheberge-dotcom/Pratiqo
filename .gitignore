@@ -79,4 +79,6 @@ backups/
 
 # Local Cafe browser QA artifacts
 artifacts/cafe-live-browser/
+artifacts/cafe-pr3b-room/
+artifacts/cafe-room-browser-live/
 

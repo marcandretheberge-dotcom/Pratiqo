@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { createDailyRoomProvider } from "@/lib/cafe/providers/daily";
+import {
+  createDailyRoomProvider,
+  verifyDailyAccountDomainMatch,
+} from "@/lib/cafe/providers/daily";
+import { CafeRoomProviderError } from "@/lib/cafe/roomProvider";
 
 function requireSecret(name: string): string {
   const value = process.env[name]?.trim();
@@ -8,11 +12,41 @@ function requireSecret(name: string): string {
   return value;
 }
 
+function logProviderFailure(error: unknown) {
+  if (error instanceof CafeRoomProviderError) {
+    console.error("[cafe:daily-live] validation failed", {
+      errorClass: error.name,
+      message: error.message,
+      code: error.code,
+      diagnostic: error.diagnostic ?? null,
+      priorDiagnostics: error.priorDiagnostics ?? null,
+    });
+    return;
+  }
+  console.error("[cafe:daily-live] validation failed", {
+    errorClass: error instanceof Error ? error.name : "unknown",
+    message: error instanceof Error ? error.message : "unknown",
+  });
+}
+
 async function main() {
   const apiKey = requireSecret("DAILY_API_KEY");
   const domain = requireSecret("DAILY_DOMAIN");
   const roomHmacSecret = requireSecret("CAFE_DAILY_ROOM_HMAC_SECRET");
   const participantHmacSecret = requireSecret("CAFE_DAILY_PARTICIPANT_HMAC_SECRET");
+
+  const account = await verifyDailyAccountDomainMatch({ apiKey, domain });
+  console.log("[cafe:daily-live] account lookup", {
+    httpStatus: account.httpStatus,
+    domainMatches: account.domainMatches,
+    returnedDomainPresent: account.returnedDomainPresent,
+  });
+  assert.equal(account.httpStatus, 200, "Daily account lookup must return HTTP 200");
+  assert.equal(
+    account.domainMatches,
+    true,
+    "DAILY_DOMAIN hostname label must match Daily domain_name for this API key",
+  );
 
   const provider = createDailyRoomProvider({
     apiKey,
@@ -34,10 +68,13 @@ async function main() {
     maxParticipants: 8,
   };
 
-  let roomId: string | null = null;
+  // Known before ensureRoom so validate failures after create still clean up.
+  const roomId = provider.deterministicRoomId(sessionId);
+  let primaryError: unknown = null;
+
   try {
     const firstRoom = await provider.ensureRoom(roomInput);
-    roomId = firstRoom.roomId;
+    assert.equal(firstRoom.roomId, roomId);
     assert.equal(firstRoom.provider, "daily");
     assert.match(firstRoom.roomId, /^cafe-[A-Za-z0-9_-]{24}$/);
     assert.equal(firstRoom.roomUrl.includes("?"), false);
@@ -99,18 +136,29 @@ async function main() {
       chatDisabled: true,
       screenshareDisabled: true,
     });
+  } catch (error) {
+    primaryError = error;
+    logProviderFailure(error);
+    process.exitCode = 1;
   } finally {
-    if (roomId) {
+    try {
       await provider.deleteRoom(roomId);
       console.log("[cafe:daily-live] temporary room deleted");
+    } catch (cleanupError) {
+      console.error("[cafe:daily-live] cleanup failed", {
+        errorClass: cleanupError instanceof Error ? cleanupError.name : "unknown",
+        message: cleanupError instanceof Error ? cleanupError.message : "unknown",
+        diagnostic:
+          cleanupError instanceof CafeRoomProviderError
+            ? cleanupError.diagnostic ?? null
+            : null,
+      });
+      if (!primaryError) process.exitCode = 1;
     }
   }
 }
 
 main().catch((error) => {
-  console.error("[cafe:daily-live] validation failed", {
-    errorClass: error instanceof Error ? error.name : "unknown",
-    message: error instanceof Error ? error.message : "unknown",
-  });
+  logProviderFailure(error);
   process.exitCode = 1;
 });

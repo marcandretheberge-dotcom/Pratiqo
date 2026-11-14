@@ -13,13 +13,15 @@ const card = read("components/cafe/CafeSessionCard.tsx");
 const copy = read("lib/cafe/copy.ts");
 const styles = read("app/cafe/cafe.module.css");
 const publicTypes = read("lib/cafe/publicTypes.ts");
+const media = read("components/cafe/CafeEntranceMedia.tsx");
 
 assert.match(front, /cafeCopy/);
 assert.match(styles, /\/images\/yo\/mandarin\/cafe\.webp/);
+assert.match(media, /cafe-entrance\.mp4|cafe\.webp/);
 assert.doesNotMatch(front + styles, /coffee\.avif|styles\.steam|\.steam/);
 
-assert.match(front, /router\.push\("\/cafe\?step=format"\)/);
-assert.match(front, /router\.push\("\/cafe\?step=groups"\)/);
+assert.match(front, /go\("format"\)|step=format/);
+assert.match(front, /go\("groups"\)|step=groups/);
 assert.match(front, /useSearchParams/);
 assert.match(front, /headingRef\.current\?\.focus\(\)/);
 assert.match(front, /tabIndex=\{-1\}/);
@@ -30,8 +32,15 @@ assert.match(front, /aria-disabled="true"/);
 assert.match(front, /copy\.soon/);
 assert.match(front, /copy\.languageLabel/);
 assert.match(front, /\/legal\/confidentialite/);
+assert.match(front, /socialFlags/);
+assert.match(front, /CafeLanguagePicker|practiceLanguage/);
+assert.match(copy, /Une racine\. Mille langues/);
+assert.match(copy, /One root\. A thousand languages/);
+assert.match(copy, /Una raíz\. Mil idiomas/);
 
-const doorSection = front.match(/view === "door"[\s\S]*?view === "choice"/)?.[0] ?? "";
+const doorSection = front.match(/legacyView === "door"[\s\S]*?legacyView === "choice"/)?.[0]
+  ?? front.match(/socialView === "door"[\s\S]*?socialView === "language"/)?.[0]
+  ?? "";
 assert.doesNotMatch(doorSection, /remaining_spots|confirmed_count|sessionsTitle|CafeSessionCard/);
 
 assert.match(front, /fetch\("\/api\/cafe\/sessions"/);
@@ -50,6 +59,7 @@ assert.match(page, /index: false/);
 assert.match(detailPage, /index: false/);
 assert.match(page, /title: "Café des langues"/);
 assert.match(page, /Suspense/);
+assert.match(page, /getCafeSocialFlags/);
 assert.match(detailPage, /title: "Table — Café des langues"/);
 assert.doesNotMatch(page, /title: "[^"]*Pratiqo/);
 assert.doesNotMatch(detailPage, /title: "[^"]*Pratiqo/);
