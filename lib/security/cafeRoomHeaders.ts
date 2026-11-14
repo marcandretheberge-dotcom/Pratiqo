@@ -94,5 +94,9 @@ export function orderCafeHeaderRules(input: {
       source: "/cafe/preview/salle",
       headers: cafeRoomHeaders,
     },
+    {
+      source: "/cafe/appels/:callId",
+      headers: cafeRoomHeaders,
+    },
   ];
 }

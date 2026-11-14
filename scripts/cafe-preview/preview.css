@@ -1,0 +1,14 @@
+@import "tailwindcss/preflight.css";
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/inter.woff2") format("woff2");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 100 900;
+}
+
+:root { color-scheme: light; font-family: "Inter", Arial, sans-serif; }
+body { margin: 0; font-weight: 400; line-height: 1.6; background: #f7f7f2; color: #282823; }
+h1, h2, h3 { font-weight: 500; letter-spacing: -.8px; }
+#cafe-preview-loading { padding: 48px 24px; text-align: center; }

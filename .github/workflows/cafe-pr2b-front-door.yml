@@ -7,8 +7,12 @@ on:
       - "components/cafe/**"
       - "lib/cafe/copy.ts"
       - "lib/cafe/publicTypes.ts"
+      - "lib/cafe/heroMedia.ts"
       - "lib/cafe/sessionInput.ts"
       - "tests/cafe/cafePr2bFrontDoor.test.ts"
+      - "tests/cafe/cafeFrontDoorLoading.test.tsx"
+      - "tests/cafe/cafeHeroMedia.test.tsx"
+      - "public/videos/cafe-world-journey.mp4"
       - ".github/workflows/cafe-pr2b-front-door.yml"
       - "package.json"
 
@@ -33,6 +37,6 @@ jobs:
       - name: TypeScript
         run: npx tsc --noEmit
       - name: Focused lint
-        run: npx eslint app/cafe/page.tsx app/cafe/CafeFrontDoor.tsx app/cafe/[slug]/page.tsx app/cafe/[slug]/CafeSessionDetails.tsx components/cafe/CafeSessionCard.tsx lib/cafe/copy.ts lib/cafe/publicTypes.ts
+        run: npx eslint app/cafe/page.tsx app/cafe/CafeFrontDoor.tsx app/cafe/[slug]/page.tsx app/cafe/[slug]/CafeSessionDetails.tsx components/cafe/CafeSessionCard.tsx components/cafe/CafeHeroMedia.tsx lib/cafe/copy.ts lib/cafe/publicTypes.ts lib/cafe/heroMedia.ts tests/cafe/cafeFrontDoorLoading.test.tsx tests/cafe/cafeHeroMedia.test.tsx
       - name: Whitespace check
         run: git diff --check

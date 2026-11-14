@@ -1,0 +1,142 @@
+name: Cafe community
+
+on:
+  pull_request:
+    paths:
+      - "app/cafe/**"
+      - "app/admin/cafe/**"
+      - "app/api/cafe/**"
+      - "app/api/admin/cafe/**"
+      - "app/api/cron/cafe-community-cleanup/**"
+      - "components/cafe/**"
+      - "components/marketing/LandingHeader.tsx"
+      - "components/AppShell.tsx"
+      - "components/TeacherTopNav.tsx"
+      - "components/yo/Yo*Header.tsx"
+      - "components/yo/YoStudentHubContent.tsx"
+      - "lib/cafe/**"
+      - "lib/security/cafeRoomHeaders.ts"
+      - "supabase/migrations/*cafe*.sql"
+      - "tests/cafe/**"
+      - "scripts/cafe-community-browser.ts"
+      - "package.json"
+      - "package-lock.json"
+      - "vercel.json"
+      - ".github/workflows/cafe-community.yml"
+      - ".github/workflows/cafe-community-cleanup.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  community-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Database, HTTP integration, UI and private-call behavior
+        run: npm run test:cafe-community
+      - name: Native PostgreSQL permissions and separate-connection capacity race
+        run: bash tests/cafe/run-community-postgres-tests.sh
+      - name: Existing room and course-return regressions
+        run: npm run test:cafe-pr3b-room
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Focused lint
+        run: >-
+          npx eslint
+          lib/cafe/community*.ts
+          components/cafe/community
+          app/cafe/appels
+          app/cafe/preview/communaute
+          app/admin/cafe/community
+          app/api/cafe/community
+          app/api/admin/cafe/community
+          app/api/cron/cafe-community-cleanup
+          tests/cafe/community*.ts
+          tests/cafe/community*.tsx
+          scripts/cafe-community-browser.ts
+      - name: Whitespace check
+        run: git diff --check
+
+  community-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      CAFE_V1_ENABLED: "true"
+      CAFE_COMMUNITY_ENABLED: "true"
+      CAFE_COMMUNITY_PREVIEW_ENABLED: "true"
+      CAFE_ROOM_PROVIDER_ENABLED: "false"
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321"
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "cafe-community-unconfigured"
+      SUPABASE_SERVICE_ROLE_KEY: "cafe-community-unconfigured"
+      CAFE_LOCAL_SUPABASE_CONNECT_ORIGIN: "http://127.0.0.1:54321"
+      DAILY_DOMAIN: "community-preview.daily.co"
+      CAFE_COMMUNITY_BASE: "http://127.0.0.1:3472"
+      NEXT_TELEMETRY_DISABLED: "1"
+      VERCEL_ENV: "development"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Build community routes with the normal CSP
+        run: npm run build -- --debug-build-paths="app/cafe/**/page.tsx,app/api/cafe/community/**/route.ts,app/api/admin/cafe/community/reports/route.ts,app/admin/cafe/community/page.tsx,app/api/cron/cafe-community-cleanup/route.ts,app/api/geo/route.ts"
+      - name: Desktop and narrow-mobile interaction and layout
+        shell: bash
+        run: |
+          mkdir -p artifacts/cafe-community
+          npm run start -- --hostname 127.0.0.1 --port 3472 > artifacts/cafe-community/next.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=false
+          for attempt in $(seq 1 90); do
+            if curl --silent --fail --max-time 3 "$CAFE_COMMUNITY_BASE/cafe/preview/communaute" > /dev/null; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$ready" != true ]; then
+            echo "The community preview server did not become ready."
+            exit 1
+          fi
+          node --import tsx scripts/cafe-community-browser.ts
+      - name: Clearly labelled demo screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cafe-community-browser
+          path: artifacts/cafe-community/
+          retention-days: 7
+          if-no-files-found: warn

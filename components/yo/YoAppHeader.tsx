@@ -32,6 +32,7 @@ import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
+import { CafeNavLink } from "@/components/cafe/community/CafeNavLink";
 import type { YoLocale } from "@/lib/yo/types";
 
 const BACK_ARIA: Record<YoLocale, string> = {
@@ -120,8 +121,7 @@ function MobileBar({
       <div className="flex min-w-0 items-center justify-center gap-2">
         <span
           className={cn(
-            "inline-flex",
-            hideLogoOnMobile ? "hidden" : "",
+            hideLogoOnMobile ? "hidden" : "hidden sm:inline-flex",
           )}
         >
           <YoPratiqoLogo size="sm" priority={false} />
@@ -134,6 +134,7 @@ function MobileBar({
         </span>
       </div>
 
+      <CafeNavLink preserveCourse />
       <YoLanguageSelector
         locale={locale}
         pathname={selectorPath}
@@ -183,6 +184,7 @@ function DesktopBar({
         </span>
       </div>
 
+      <CafeNavLink preserveCourse full />
       <YoLanguageSelector
         locale={locale}
         pathname={selectorPath}
