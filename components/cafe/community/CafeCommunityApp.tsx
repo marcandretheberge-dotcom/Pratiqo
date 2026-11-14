@@ -3,9 +3,9 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { CafeHeroMedia } from "@/components/cafe/CafeHeroMedia";
-import { CafeBrandRootWords } from "./CafeBrandRootWords";
+import { CafePraktikosAnimation } from "./CafePraktikosAnimation";
 import type { CafeCommunityTransport, CafeIdentity } from "@/lib/cafe/communityClient";
-import type { CafeCallInvitation, CafeChatMessage, CafeCommunityCommand, CafeCommunityCommandResult, CafeCommunityRoom, CafeCommunityRoomView, CafeMember, CafePerson, CafeReportReason } from "@/lib/cafe/communityTypes";
+import type { CafeCallInvitation, CafeChatMessage, CafeCommunityCommand, CafeCommunityCommandResult, CafeCommunityRoom, CafeCommunityRoomView, CafeMember, CafeReportReason } from "@/lib/cafe/communityTypes";
 import { cafeLanguageLabel, cafeLanguageOptions, cafeLocalDate, cafeScheduledIso, cafeViewerTimeZone } from "@/lib/cafe/communityLanguages";
 import { resolveCafeRoomCourseReturn } from "@/lib/cafe/roomCourseReturn";
 import { cafeText, communityError, type CommunityLocale } from "./copy";
@@ -15,12 +15,16 @@ import styles from "./community.module.css";
 
 type Execute = (command: CafeCommunityCommand) => Promise<CafeCommunityCommandResult>;
 type ReportDraft = { target: CafeMember; roomId: string | null; messages: CafeChatMessage[]; selectedIds: string[] };
+type CafeScreen = "entrance" | "language" | "lobby" | "chat";
+type PracticeMode = "group" | "pair";
 
-export function CommunityFrame({ locale, courseReturnHref, children, compact = false }: { locale: CommunityLocale; courseReturnHref?: string | null; children: ReactNode; compact?: boolean }) {
+export function CommunityFrame({ locale, courseReturnHref, children, compact = false, cinematic = false }: {
+  locale: CommunityLocale; courseReturnHref?: string | null; children: ReactNode; compact?: boolean; cinematic?: boolean;
+}) {
   const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
   const back = resolveCafeRoomCourseReturn(courseReturnHref ?? undefined);
-  return <main className={styles.page} lang={locale}>
-    <header className={styles.topbar}><div className={styles.topbarInner}>
+  return <main className={`${styles.page} ${cinematic ? styles.cinematic : ""}`} lang={locale} data-cafe-screen={cinematic ? "cinematic" : "standard"}>
+    <header className={`${styles.topbar} ${cinematic ? styles.topbarCinematic : ""}`}><div className={styles.topbarInner}>
       {/* Full-document entry resets this private room view and tears down its presence lease. */}
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a className={styles.brand} href="/cafe">Café des langues <small>{t("par Pratiqo", "by Pratiqo", "por Pratiqo")}</small></a>
@@ -29,8 +33,22 @@ export function CommunityFrame({ locale, courseReturnHref, children, compact = f
         <Link href="/" prefetch={false}>Pratiqo</Link><Link href="/yo" prefetch={false}>YoPratiqo</Link>
       </nav>
     </div></header>
-    <div className={`${styles.wrap} ${compact ? styles.activeWrap : ""}`}>{children}</div>
+    <div className={`${styles.wrap} ${compact ? styles.activeWrap : ""} ${cinematic ? styles.wrapCinematic : ""}`}>{children}</div>
   </main>;
+}
+
+/** Screen 1 — video, title, fixed Praktikos animation, single Entrer CTA. */
+export function CafeEntranceScreen({ locale, heroVideoSrc = null, onEnter, enterHref, enterLabel }: {
+  locale: CommunityLocale; heroVideoSrc?: string | null; onEnter?: () => void; enterHref?: string; enterLabel?: string;
+}) {
+  const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
+  const label = enterLabel ?? t("Entrer", "Enter", "Entrar");
+  return <section className={styles.screen} data-cafe-step="entrance" aria-labelledby="cafe-entrance-title">
+    <CafeHeroMedia locale={locale} videoSrc={heroVideoSrc} className={styles.entranceFilm} />
+    <h1 id="cafe-entrance-title" className={styles.entranceTitle}>Café des langues</h1>
+    <CafePraktikosAnimation />
+    {enterHref ? <a className={styles.primary} href={enterHref}>{label}</a> : <button className={styles.primary} type="button" onClick={onEnter}>{label}</button>}
+  </section>;
 }
 
 function Modal({ title, onClose, children, closeLabel }: { title: string; onClose: () => void; children: ReactNode; closeLabel: string }) {
@@ -84,20 +102,16 @@ function ProfileForm({ member, languageHint, locale, busy, onSave, onCancel }: {
     const result = await onSave({ action: "profile.save", displayName: name.trim(), nativeLanguages: native, learningLanguages: learning, adultAgreement: adult, rulesAgreement: rules });
     if (!result.ok && result.code !== "superseded") setError(communityError(result.code, locale));
   }}>
-    <p className={styles.note}>{t("Choisissez le nom et les langues que les autres membres verront. Toutes les langues sont les bienvenues.", "Choose the name and languages other members will see. All languages are welcome.", "Elige el nombre y los idiomas que verán los demás. Todos los idiomas son bienvenidos.")}</p>
     <label className={styles.field}>{t("Votre nom au Café", "Your Café name", "Tu nombre en el Café")}<input value={name} onChange={(event) => setName(event.target.value)} minLength={1} maxLength={40} required autoComplete="nickname" /></label>
     <div className={styles.twoColumns}>
-      <LanguagePicker label={t("Ma ou mes langues maternelles", "My native language(s)", "Mi(s) lengua(s) materna(s)")} value={native} onChange={setNative} locale={locale} disabled={busy} />
-      <LanguagePicker label={t("Les langues que j’apprends", "Languages I am learning", "Idiomas que aprendo")} value={learning} onChange={setLearning} locale={locale} disabled={busy} />
-    </div>
-    <div className={styles.soft}>
-      <p className={styles.note}>{t("On commence par écrire. Un appel reste un choix partagé. Les propos sexuels non souhaités, le harcèlement et le spam ne sont pas acceptés. Vous pouvez signaler et bloquer à tout moment.", "Start by writing. A call is a shared choice. Unwanted sexual comments, harassment and spam are not welcome. You can report and block at any time.", "Empezamos escribiendo. Una llamada es una decisión compartida. No se aceptan comentarios sexuales no deseados, acoso ni spam. Puedes denunciar y bloquear en cualquier momento.")}</p>
+      <LanguagePicker label={t("Langue(s) maternelle(s)", "Native language(s)", "Lengua(s) materna(s)")} value={native} onChange={setNative} locale={locale} disabled={busy} />
+      <LanguagePicker label={t("Langue(s) à pratiquer", "Language(s) to practise", "Idioma(s) a practicar")} value={learning} onChange={setLearning} locale={locale} disabled={busy} />
     </div>
     <label className={styles.check}><input type="checkbox" checked={adult} onChange={(event) => setAdult(event.target.checked)} required />{t("Je confirme avoir 18 ans ou plus.", "I confirm I am 18 or older.", "Confirmo que tengo 18 años o más.")}</label>
-    <label className={styles.check}><input type="checkbox" checked={rules} onChange={(event) => setRules(event.target.checked)} required />{t("J’accepte ces règles et je respecte le choix des autres membres.", "I agree to these rules and respect other members’ choices.", "Acepto estas reglas y respeto las decisiones de los demás.")}</label>
+    <label className={styles.check}><input type="checkbox" checked={rules} onChange={(event) => setRules(event.target.checked)} required />{t("J’accepte les règles du Café.", "I agree to the Café rules.", "Acepto las reglas del Café.")}</label>
     {error && <p className={styles.error} role="alert">{error}</p>}
     <div className={styles.row}>
-      <button className={styles.primary} type="submit" disabled={busy || !name.trim() || !native.length || !learning.length || !adult || !rules}>{member ? t("Enregistrer mon profil", "Save my profile", "Guardar mi perfil") : t("Entrer au Café", "Enter the Café", "Entrar al Café")}</button>
+      <button className={styles.primary} type="submit" disabled={busy || !name.trim() || !native.length || !learning.length || !adult || !rules}>{member ? t("Enregistrer", "Save", "Guardar") : t("Continuer", "Continue", "Continuar")}</button>
       {onCancel && <button className={styles.button} type="button" onClick={onCancel}>{t("Annuler", "Cancel", "Cancelar")}</button>}
     </div>
   </form>;
@@ -286,7 +300,8 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
   const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
   const community = useCafeCommunity(identity, transport, initialRoomId);
   const { snapshot, execute } = community;
-  const [tab, setTab] = useState<"now" | "scheduled" | "people">("now");
+  const [screen, setScreen] = useState<CafeScreen>("entrance");
+  const [practiceMode, setPracticeMode] = useState<PracticeMode>("group");
   const [filter, setFilter] = useState(languageHint ?? "");
   const [create, setCreate] = useState<"now" | "scheduled" | null>(null);
   const [profile, setProfile] = useState(false);
@@ -294,49 +309,130 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
   const [report, setReport] = useState<ReportDraft | null>(null);
   const [notice, setNotice] = useState("");
   const [failedBlock, setFailedBlock] = useState<CafeMember | null>(null);
-  const languageOptions = useMemo(() => cafeLanguageOptions(locale, snapshot?.rooms.flatMap((room) => room.languages) ?? []), [locale, snapshot?.rooms]);
+
+  useEffect(() => {
+    if (snapshot?.room) setScreen("chat");
+    else if (screen === "chat") setScreen("lobby");
+  }, [snapshot?.room, screen]);
+
+  useEffect(() => {
+    if (languageHint) setFilter(languageHint);
+  }, [languageHint]);
+
+  const languageOptions = useMemo(() => cafeLanguageOptions(locale, [
+    ...(snapshot?.me?.learningLanguages ?? []),
+    ...(snapshot?.rooms.flatMap((room) => room.languages) ?? []),
+  ]), [locale, snapshot?.me?.learningLanguages, snapshot?.rooms]);
+
+  const practiceLanguage = filter || snapshot?.me?.learningLanguages[0] || "";
+  const onlinePeople = snapshot?.people.filter((person) => person.online) ?? [];
+  const liveRooms = (snapshot?.rooms ?? []).filter((room) => {
+    const open = room.state === "live" || room.state === "waiting";
+    if (!open) return false;
+    if (practiceMode === "pair" && room.capacity > 2) return false;
+    if (practiceMode === "group" && room.capacity <= 2) return false;
+    // Explicit filter only — practice language is a preference, never a dead end.
+    if (filter && !room.languages.includes(filter)) return false;
+    return true;
+  });
+
   const blockMember = async (member: CafeMember) => {
     setNotice(t("Blocage en cours…", "Blocking…", "Bloqueando…"));
     const result = await community.block(member);
-    if (result.ok) { setFailedBlock(null); setNotice(t("Cette personne est bloquée. Vous pouvez gérer vos blocages dans Mon profil.", "This person is blocked. You can manage blocks in My profile.", "Esta persona está bloqueada. Puedes gestionar los bloqueos en Mi perfil.")); }
-    else if (result.code !== "superseded") { setFailedBlock(member); setNotice(t("Cette personne est masquée sur cet écran, mais le blocage n’a pas pu être confirmé. Réessayez.", "This person is hidden on this screen, but the block could not be confirmed. Try again.", "Esta persona está oculta en esta pantalla, pero no se pudo confirmar el bloqueo. Vuelve a intentarlo.")); }
+    if (result.ok) { setFailedBlock(null); setNotice(t("Personne bloquée.", "Person blocked.", "Persona bloqueada.")); }
+    else if (result.code !== "superseded") { setFailedBlock(member); setNotice(t("Blocage non confirmé. Réessayez.", "Block not confirmed. Try again.", "Bloqueo no confirmado. Reintenta.")); }
   };
   const beginReport = (member: CafeMember, messageId?: string, block = false) => {
     const messages = snapshot?.room?.messages.filter((message) => message.sender.id === member.id) ?? [];
     setReport({ target: { ...member }, roomId: snapshot?.room?.id ?? null, messages: messages.map((message) => ({ ...message })), selectedIds: messageId ? [messageId] : [] });
     if (block) void blockMember(member);
   };
+  const enterFromDoor = () => setScreen(snapshot?.me ? "lobby" : "language");
+  const saveProfile: Execute = async (command) => {
+    const result = await execute(command);
+    if (result.ok) setScreen("lobby");
+    return result;
+  };
 
-  return <CommunityFrame locale={locale} courseReturnHref={courseReturnHref} compact={Boolean(snapshot?.room)}>
-    <div className={`${styles.intro} ${snapshot?.room ? styles.activeIntro : ""}`}>
-      {snapshot?.room ? <h1 className={styles.activeTitle}>{t("Votre conversation au Café", "Your Café conversation", "Tu conversación en el Café")}</h1> : <div><p className={styles.eyebrow}>{t("Des langues, des gens, des conversations", "Languages, people, conversations", "Idiomas, personas, conversaciones")}</p><h1 className={styles.title}>{t("Entrez. Dites bonjour.", "Come in. Say hello.", "Entra. Di hola.")}</h1><p className={styles.subtitle}>{t("Rencontrez des personnes qui apprennent, comme vous. Commencez par le chat, puis choisissez ensemble si vous voulez vous appeler.", "Meet people who are learning, just like you. Start with chat, then decide together if you want to call.", "Conoce a personas que aprenden, como tú. Empiecen por el chat y decidan juntos si quieren llamarse.")}</p></div>}
-      {snapshot?.me && <button className={styles.button} onClick={() => setSettings(true)}>{t("Mon profil", "My profile", "Mi perfil")} · {snapshot.me.displayName}</button>}
-    </div>
+  const cinematic = screen === "entrance";
+  return <CommunityFrame locale={locale} courseReturnHref={courseReturnHref} compact={screen === "chat"} cinematic={cinematic}>
     {community.error && <div className={styles.error} role="alert"><p>{communityError(community.error, locale)}</p><div className={styles.row}><button className={styles.button} onClick={() => void community.refresh()}>{t("Actualiser", "Refresh", "Actualizar")}</button>{community.error === "unauthenticated" && <a className={styles.button} href="/connexion?next=%2Fcafe">{t("Me reconnecter", "Sign in again", "Volver a entrar")}</a>}</div></div>}
-    {community.connection === "stale" && snapshot && <p className={styles.notice}>{t("Connexion à rétablir · les informations affichées peuvent dater. L’envoi et les nouvelles invitations sont en pause.", "Connection needs refreshing · displayed information may be old. Sending and new invitations are paused.", "Es necesario restablecer la conexión · los datos pueden estar desactualizados. Se pausan los envíos y las nuevas invitaciones.")}</p>}
-    {notice && <div className={failedBlock ? styles.error : styles.notice} role="status">{notice}{failedBlock && <button className={styles.button} onClick={() => void blockMember(failedBlock)}>{t("Réessayer le blocage", "Retry block", "Reintentar bloqueo")}</button>}</div>}
+    {community.connection === "stale" && snapshot && <p className={styles.notice}>{t("Connexion à rétablir.", "Connection needs refreshing.", "Hay que restablecer la conexión.")}</p>}
+    {notice && <div className={failedBlock ? styles.error : styles.notice} role="status">{notice}{failedBlock && <button className={styles.button} onClick={() => void blockMember(failedBlock)}>{t("Réessayer", "Retry", "Reintentar")}</button>}</div>}
     {!snapshot && <p className={styles.loading} role="status">{community.connection === "loading" ? t("Ouverture du Café…", "Opening the Café…", "Abriendo el Café…") : t("Le Café ne peut pas être chargé pour le moment.", "The Café cannot be loaded right now.", "No se puede cargar el Café en este momento.")}</p>}
-    {snapshot && !snapshot.me && <section className={`${styles.panel} ${styles.narrow}`}><CafeHeroMedia locale={locale} videoSrc={heroVideoSrc} className={styles.entryMedia} /><CafeBrandRootWords /><p className={styles.brandLine}>{t("Une racine. Mille langues. Le plaisir de pratiquer.", "One root. A thousand languages. Practice brings us together.", "Una raíz. Mil idiomas. El placer de practicar.")}</p><p className={styles.encourage}>{t("Pas besoin de parler parfaitement. Viens pratiquer.", "You don’t need to speak perfectly. Come practise.", "No hace falta hablar perfectamente. Ven a practicar.")}</p><h2 className={styles.heading}>{t("Avant d’entrer, présentez-vous.", "Before you enter, introduce yourself.", "Antes de entrar, preséntate.")}</h2><ProfileForm member={null} locale={locale} languageHint={languageHint} busy={community.busy} onSave={execute} /></section>}
-    {snapshot?.me && (snapshot.room ? <RoomChat key={snapshot.room.id} room={snapshot.room} me={snapshot.me} locale={locale} execute={execute} disabled={!community.canWrite} videoEnabled={videoEnabled} onReport={beginReport} onBlock={(member) => void blockMember(member)} calls={snapshot.calls} serverTime={snapshot.serverTime} courseReturnHref={courseReturnHref} /> : <>
-      <div className={styles.spread}><div className={styles.filters}><div className={styles.tabs} aria-label={t("Explorer le Café", "Explore the Café", "Explorar el Café")}>{(["now", "scheduled", "people"] as const).map((item) => <button key={item} className={styles.tab} aria-pressed={tab === item} onClick={() => setTab(item)}>{item === "now" ? t("Maintenant", "Now", "Ahora") : item === "scheduled" ? t("À venir", "Upcoming", "Próximas") : t("Les gens", "People", "Personas")}</button>)}</div><label className={styles.small}>{t("Langue", "Language", "Idioma")} <select className={styles.filterSelect} value={filter} onChange={(event) => setFilter(event.target.value)} aria-label={t("Filtrer par langue", "Filter by language", "Filtrar por idioma")}><option value="">{t("Toutes les langues", "All languages", "Todos los idiomas")}</option>{languageOptions.map((option) => <option key={option.code} value={option.code}>{option.label}</option>)}</select></label></div><div className={styles.row}><button className={styles.primary} disabled={!community.canWrite} onClick={() => setCreate("now")}>{t("Créer un salon", "Create a room", "Crear una sala")}</button><button className={styles.button} disabled={!community.canWrite} onClick={() => setCreate("scheduled")}>{t("Fixer une date", "Pick a date", "Elegir una fecha")}</button></div></div>
-      <div className={`${styles.lobby} ${styles.section}`}><section>
-        {tab === "people" ? <People people={snapshot.people.filter((person) => !filter || person.nativeLanguages.includes(filter) || person.learningLanguages.includes(filter))} locale={locale} meId={snapshot.me.id} onBlock={(member) => void blockMember(member)} onReport={beginReport} /> : (() => {
-          const rooms = snapshot.rooms.filter((room) => (tab === "scheduled" ? room.state === "scheduled" : room.state === "live" || room.state === "waiting") && (!filter || room.languages.includes(filter)));
-          return rooms.length ? <div className={styles.grid}>{rooms.map((room) => <RoomCard key={room.id} room={room} me={snapshot.me!} locale={locale} disabled={!community.canWrite} execute={execute} serverTime={snapshot.serverTime} />)}</div> : <div className={styles.empty}><h3>{tab === "scheduled" ? t("Et si vous fixiez le prochain rendez-vous ?", "Make the next get-together happen?", "¿Organizas el próximo encuentro?") : t("Le chat est ouvert. Commencez quand vous voulez.", "Chat is open. Start whenever you like.", "El chat está abierto. Empieza cuando quieras.")}</h3><p className={styles.note}>{tab === "scheduled" ? t("Aucun salon programmé ne correspond pour le moment. Proposez un moment pour revenir ensemble.", "No matching scheduled rooms right now. Suggest a time to meet again.", "No hay salas programadas que coincidan. Propón una hora para encontrarse.") : t("Pas de table réservée requise. Ouvrez un salon pour écrire tout de suite, même si personne n’a encore fixé d’horaire.", "No reserved table required. Open a room to write right away, even when nothing is scheduled.", "No hace falta mesa reservada. Abre una sala para escribir ya, aunque no haya nada programado.")}</p><div className={styles.row}><button className={styles.primary} disabled={!community.canWrite} onClick={() => setCreate(tab === "scheduled" ? "scheduled" : "now")}>{tab === "scheduled" ? t("Programmer un salon", "Schedule a room", "Programar una sala") : t("Ouvrir mon salon et écrire", "Open my room and write", "Abrir mi sala y escribir")}</button>{filter && <button className={styles.quiet} onClick={() => setFilter("")}>{t("Voir toutes les langues", "See all languages", "Ver todos los idiomas")}</button>}</div></div>;
-        })()}
-      </section><aside className={styles.panel}><h2 className={styles.smallHeading}>{t("Au Café en ce moment", "At the Café now", "En el Café ahora")}</h2><p className={styles.small}>{t("La présence correspond aux membres actuellement connectés au Café.", "Presence shows members currently connected to the Café.", "La presencia muestra a los miembros conectados al Café.")}</p>{snapshot.people.filter((person) => person.online).length ? snapshot.people.filter((person) => person.online).slice(0,8).map((person) => <div className={styles.memberRow} key={person.id}><Member member={person} locale={locale} /></div>) : <p className={styles.note}>{t("Personne d’autre n’est visible pour le moment.", "No other members are visible right now.", "No hay otros miembros visibles por el momento.")}</p>}<button className={styles.quiet} onClick={() => setTab("people")}>{t("Voir les gens et les créateurs de salons", "See people and room creators", "Ver personas y creadores de salas")}</button><hr className={styles.divider}/><p className={styles.note}>{t("Un petit groupe, un sujet simple, un peu de curiosité. C’est assez pour commencer.", "A small group, a simple topic, a little curiosity. That’s enough to get started.", "Un grupo pequeño, un tema sencillo y algo de curiosidad. Basta para empezar.")}</p></aside></div>
-    </>)}
-    <p className={styles.footer}>{t("Café réservé aux adultes (18+). Votre profil Café est visible par les membres. Vous pouvez bloquer et signaler depuis un profil ou un message.", "For adults (18+) only. Your Café profile is visible to members. You can block and report from a profile or message.", "Solo para adultos (18+). Tu perfil del Café es visible para los miembros. Puedes bloquear y denunciar desde un perfil o mensaje.")}</p>
-    {create && snapshot?.me && <Modal title={t("Votre salon", "Your room", "Tu sala")} closeLabel={t("Fermer la création du salon", "Close room creation", "Cerrar creación de sala")} onClose={() => setCreate(null)}><CreateRoomForm locale={locale} mode={create} languages={filter ? [filter] : snapshot.me.learningLanguages} execute={execute} busy={community.busy} onCreated={() => setCreate(null)} /></Modal>}
-    {settings && snapshot?.me && <Modal title={t("Mon profil Café", "My Café profile", "Mi perfil del Café")} closeLabel={t("Fermer mon profil", "Close my profile", "Cerrar mi perfil")} onClose={() => { setSettings(false); setProfile(false); }}>
-      {profile ? <ProfileForm member={snapshot.me} locale={locale} busy={community.busy} onCancel={() => setProfile(false)} onSave={async (command) => { const result = await execute(command); if (result.ok) setProfile(false); return result; }} /> : <div className={styles.stack}><Member member={snapshot.me} locale={locale} /><button className={styles.button} onClick={() => setProfile(true)}>{t("Modifier mes langues et mon nom", "Edit my languages and name", "Editar mis idiomas y nombre")}</button><h3 className={styles.smallHeading}>{t("Personnes bloquées", "Blocked people", "Personas bloqueadas")}</h3>{snapshot.blockedMembers.length ? snapshot.blockedMembers.map((member) => <div key={member.id} className={styles.spread}><span>{member.displayName}</span><button className={styles.button} disabled={community.busy} onClick={() => void execute({ action: "member.unblock", targetId: member.id })}>{t("Débloquer", "Unblock", "Desbloquear")}</button></div>) : <p className={styles.note}>{t("Vous n’avez bloqué personne.", "You have not blocked anyone.", "No has bloqueado a nadie.")}</p>}</div>}
+
+    {snapshot && screen === "entrance" && <CafeEntranceScreen locale={locale} heroVideoSrc={heroVideoSrc} onEnter={enterFromDoor} />}
+
+    {snapshot && screen === "language" && <section className={`${styles.screen} ${styles.screenScroll}`} data-cafe-step="language" aria-labelledby="cafe-language-title">
+      <h1 id="cafe-language-title" className={styles.screenTitle}>{t("On pratique quelle langue ?", "Which language are we practising?", "¿Qué idioma practicamos?")}</h1>
+      <div className={`${styles.panel} ${styles.languagePanel}`}>
+        <ProfileForm member={snapshot.me} locale={locale} languageHint={languageHint ?? (filter || null)} busy={community.busy} onSave={saveProfile} onCancel={snapshot.me ? () => setScreen("lobby") : undefined} />
+      </div>
+    </section>}
+
+    {snapshot?.me && screen === "lobby" && <section className={`${styles.screen} ${styles.screenScroll}`} data-cafe-step="lobby" aria-labelledby="cafe-lobby-title">
+      <div className={styles.lobbyHeader}>
+        <div>
+          <p className={styles.eyebrow}>{practiceLanguage ? cafeLanguageLabel(practiceLanguage, locale) : t("Toutes les langues", "All languages", "Todos los idiomas")}</p>
+          <h1 id="cafe-lobby-title" className={styles.screenTitle}>{t("Au Café", "Inside the Café", "En el Café")}</h1>
+          <p className={styles.onlineCount}>{onlinePeople.length === 1 ? t("1 personne en ligne", "1 person online", "1 persona en línea") : t(`${onlinePeople.length} personnes en ligne`, `${onlinePeople.length} people online`, `${onlinePeople.length} personas en línea`)}</p>
+        </div>
+        <div className={styles.row}>
+          <button className={styles.button} type="button" onClick={() => setScreen("language")}>{t("Langues", "Languages", "Idiomas")}</button>
+          <button className={styles.button} type="button" onClick={() => setSettings(true)}>{t("Mon profil", "My profile", "Mi perfil")} · {snapshot.me.displayName}</button>
+        </div>
+      </div>
+      <div className={styles.modeTabs} role="group" aria-label={t("Mode", "Mode", "Modo")}>
+        <button type="button" className={styles.tab} aria-pressed={practiceMode === "group"} onClick={() => setPracticeMode("group")}>{t("En groupe", "In a group", "En grupo")}</button>
+        <button type="button" className={styles.tab} aria-pressed={practiceMode === "pair"} onClick={() => setPracticeMode("pair")}>{t("À deux", "One to one", "De dos")}</button>
+      </div>
+      <label className={styles.small}>{t("Filtrer", "Filter", "Filtrar")}
+        <select className={styles.filterSelect} value={filter} onChange={(event) => setFilter(event.target.value)} aria-label={t("Langue de pratique", "Practice language", "Idioma de práctica")}>
+          <option value="">{t("Toutes", "All", "Todos")}</option>
+          {languageOptions.map((option) => <option key={option.code} value={option.code}>{option.label}</option>)}
+        </select>
+      </label>
+      <div className={styles.lobbyGrid}>
+        <div className={styles.stack}>
+          <h2 className={styles.smallHeading}>{t("Conversations", "Conversations", "Conversaciones")}</h2>
+          {liveRooms.length ? <div className={styles.grid}>{liveRooms.map((room) => <RoomCard key={room.id} room={room} me={snapshot.me!} locale={locale} disabled={!community.canWrite} execute={execute} serverTime={snapshot.serverTime} />)}</div> : <div className={styles.empty}>
+            <h3>{t("Le chat est ouvert.", "Chat is open.", "El chat está abierto.")}</h3>
+            <button className={styles.primary} type="button" disabled={!community.canWrite} onClick={() => setCreate("now")}>{practiceMode === "pair" ? t("Ouvrir une conversation à deux", "Open a one-to-one chat", "Abrir un chat de dos") : t("Ouvrir un salon", "Open a room", "Abrir una sala")}</button>
+          </div>}
+          <div className={styles.row}>
+            <button className={styles.primary} type="button" disabled={!community.canWrite} onClick={() => setCreate("now")}>{t("Écrire maintenant", "Write now", "Escribir ahora")}</button>
+            <button className={styles.button} type="button" disabled={!community.canWrite} onClick={() => setCreate("scheduled")}>{t("Plus tard", "Later", "Más tarde")}</button>
+          </div>
+        </div>
+        <aside className={styles.panel}>
+          <h2 className={styles.smallHeading}>{t("Présents", "Present", "Presentes")} · {onlinePeople.length}</h2>
+          {onlinePeople.length ? onlinePeople.slice(0, 8).map((person) => <div className={styles.memberRow} key={person.id}><Member member={person} locale={locale} online /></div>) : <p className={styles.note}>{t("Personne d’autre pour le moment.", "No one else right now.", "Nadie más por ahora.")}</p>}
+        </aside>
+      </div>
+    </section>}
+
+    {snapshot?.me && screen === "chat" && snapshot.room && <>
+      <div className={styles.chatTop}>
+        <h1 className={styles.activeTitle}>{t("Votre conversation au Café", "Your Café conversation", "Tu conversación en el Café")}</h1>
+        <button className={styles.button} type="button" onClick={() => setSettings(true)}>{t("Mon profil", "My profile", "Mi perfil")} · {snapshot.me.displayName}</button>
+      </div>
+      <RoomChat key={snapshot.room.id} room={snapshot.room} me={snapshot.me} locale={locale} execute={execute} disabled={!community.canWrite} videoEnabled={videoEnabled} onReport={beginReport} onBlock={(member) => void blockMember(member)} calls={snapshot.calls} serverTime={snapshot.serverTime} courseReturnHref={courseReturnHref} />
+    </>}
+
+    {create && snapshot?.me && <Modal title={t("Votre salon", "Your room", "Tu sala")} closeLabel={t("Fermer", "Close", "Cerrar")} onClose={() => setCreate(null)}>
+      <CreateRoomForm locale={locale} mode={create} languages={practiceLanguage ? [practiceLanguage] : snapshot.me.learningLanguages} execute={async (command) => {
+        if (command.action === "room.create") {
+          const capacity = practiceMode === "pair" ? 2 : Math.max(command.capacity, 3);
+          return execute({ ...command, capacity });
+        }
+        return execute(command);
+      }} busy={community.busy} onCreated={() => setCreate(null)} />
     </Modal>}
-    {report && <Modal title={t("Signaler un comportement", "Report behaviour", "Denunciar un comportamiento")} closeLabel={t("Fermer le signalement", "Close report", "Cerrar denuncia")} onClose={() => setReport(null)}><ReportForm key={report.target.id} draft={report} locale={locale} execute={execute} onClose={() => setReport(null)} /></Modal>}
+    {settings && snapshot?.me && <Modal title={t("Mon profil", "My profile", "Mi perfil")} closeLabel={t("Fermer mon profil", "Close my profile", "Cerrar mi perfil")} onClose={() => { setSettings(false); setProfile(false); }}>
+      {profile ? <ProfileForm member={snapshot.me} locale={locale} busy={community.busy} onCancel={() => setProfile(false)} onSave={async (command) => { const result = await execute(command); if (result.ok) { setProfile(false); if (command.action === "profile.save" && command.learningLanguages[0]) setFilter(command.learningLanguages[0]); } return result; }} /> : <div className={styles.stack}><Member member={snapshot.me} locale={locale} /><button className={styles.button} onClick={() => setProfile(true)}>{t("Modifier", "Edit", "Editar")}</button><h3 className={styles.smallHeading}>{t("Bloqués", "Blocked", "Bloqueados")}</h3>{snapshot.blockedMembers.length ? snapshot.blockedMembers.map((member) => <div key={member.id} className={styles.spread}><span>{member.displayName}</span><button className={styles.button} disabled={community.busy} onClick={() => void execute({ action: "member.unblock", targetId: member.id })}>{t("Débloquer", "Unblock", "Desbloquear")}</button></div>) : <p className={styles.note}>{t("Aucun.", "None.", "Ninguno.")}</p>}</div>}
+    </Modal>}
+    {report && <Modal title={t("Signaler", "Report", "Denunciar")} closeLabel={t("Fermer", "Close", "Cerrar")} onClose={() => setReport(null)}><ReportForm key={report.target.id} draft={report} locale={locale} execute={execute} onClose={() => setReport(null)} /></Modal>}
   </CommunityFrame>;
 }
 
-function People({ people, locale, meId, onBlock, onReport }: { people: CafePerson[]; locale: CommunityLocale; meId: string; onBlock: (member: CafeMember) => void; onReport: (member: CafeMember) => void }) {
-  const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
-  if (!people.length) return <div className={styles.empty}><h3>{t("Personne ne correspond pour le moment.", "No matching members right now.", "No hay miembros que coincidan por ahora.")}</h3><p className={styles.note}>{t("Les membres en ligne et les créateurs de salons à venir apparaîtront ici.", "Online members and creators of upcoming rooms will appear here.", "Aquí aparecerán los miembros conectados y los creadores de próximas salas.")}</p></div>;
-  return <div className={styles.grid}>{people.map((member) => <article className={styles.roomCard} key={member.id}><Member member={member} locale={locale} online={member.online} />{member.id !== meId && <div className={styles.memberActions}><button className={styles.button} onClick={() => onBlock(member)}>{t("Bloquer", "Block", "Bloquear")}</button><button className={styles.button} onClick={() => onReport(member)}>{t("Signaler", "Report", "Denunciar")}</button></div>}</article>)}</div>;
-}
+

@@ -29,20 +29,29 @@ async function flush() { await act(async () => { await new Promise<void>((resolv
 function mount(transport: CafeCommunityTransport, videoEnabled = false) {
   return render(<CafeCommunityApp identity={identity} transport={transport} locale="en" videoEnabled={videoEnabled} courseReturnHref="/yo/langues/japonais?unit=2" />);
 }
-async function join(view: ReturnType<typeof mount>) { await flush(); fireEvent.click(view.getByRole("button", { name: "Join the chat" })); await flush(); }
+async function enter(view: ReturnType<typeof mount>) {
+  await flush();
+  fireEvent.click(view.getByRole("button", { name: "Enter" }));
+  await flush();
+}
+async function join(view: ReturnType<typeof mount>) {
+  await enter(view);
+  fireEvent.click(view.getByRole("button", { name: "Join the chat" }));
+  await flush();
+}
 
 async function profileChoosesLanguagesOutsideCourses() {
   const source = createCommunityDemoTransport(true);
   const commands: CafeCommunityCommand[] = [];
   const transport: CafeCommunityTransport = { ...source, command: async (...args) => { commands.push(args[1]); return source.command(...args); } };
-  const view = mount(transport); await flush();
-  const submit = view.getByRole("button", { name: "Enter the Café" }) as HTMLButtonElement;
+  const view = mount(transport); await enter(view);
+  const submit = view.getByRole("button", { name: "Continue" }) as HTMLButtonElement;
   assert.equal(submit.disabled, true);
   fireEvent.change(view.getByLabelText("Your Café name"), { target: { value: "Asha" } });
-  fireEvent.click(within(view.getByRole("group", { name: "My native language(s)" })).getByRole("checkbox", { name: "Hindi" }));
-  fireEvent.click(within(view.getByRole("group", { name: "Languages I am learning" })).getByRole("checkbox", { name: "Swahili" }));
+  fireEvent.click(within(view.getByRole("group", { name: "Native language(s)" })).getByRole("checkbox", { name: "Hindi" }));
+  fireEvent.click(within(view.getByRole("group", { name: "Language(s) to practise" })).getByRole("checkbox", { name: "Swahili" }));
   fireEvent.click(view.getByRole("checkbox", { name: "I confirm I am 18 or older." }));
-  fireEvent.click(view.getByRole("checkbox", { name: "I agree to these rules and respect other members’ choices." }));
+  fireEvent.click(view.getByRole("checkbox", { name: "I agree to the Café rules." }));
   fireEvent.click(submit); await flush();
   const profile = commands.find((command) => command.action === "profile.save");
   assert.equal(profile?.action, "profile.save");
@@ -65,7 +74,7 @@ async function joinAndIdempotentPlainTextRetry() {
   } };
   const view = mount(transport); await join(view);
   assert.ok(view.getByRole("heading", { name: "Your Café conversation" }));
-  assert.equal(view.queryByRole("heading", { name: "Come in. Say hello." }), null);
+  assert.equal(view.queryByRole("heading", { name: "Café des langues" }), null);
   const text = "<script>alert('escaped')</script> Hello!";
   fireEvent.change(view.getByLabelText("Your message"), { target: { value: text } });
   fireEvent.click(view.getByRole("button", { name: "Send" })); await flush();
@@ -114,7 +123,7 @@ async function blockDoesNotDependOnSubmittingReport() {
   };
   const view = mount(transport); await join(view);
   fireEvent.click(view.getByRole("button", { name: "Block and report" })); await flush();
-  assert.ok(view.getByRole("dialog", { name: "Report behaviour" }));
+  assert.ok(view.getByRole("dialog", { name: "Report" }));
   assert.ok(view.getByText("Unwanted comment fixture"));
   assert.equal(commands.filter((command) => command.action === "member.block").length, 1);
   assert.equal(commands.filter((command) => command.action === "report.submit").length, 0);
@@ -122,7 +131,7 @@ async function blockDoesNotDependOnSubmittingReport() {
   assert.equal(view.queryByText("Unwanted comment fixture"), null);
   assert.equal(view.queryByRole("log"), null);
   fireEvent.click(view.getByRole("button", { name: "My profile · Alex · démo" }));
-  const modal = within(view.getByRole("dialog", { name: "My Café profile" }));
+  const modal = within(view.getByRole("dialog", { name: "My profile" }));
   assert.ok(modal.getByText("Maya · démo")); assert.ok(modal.getByRole("button", { name: "Unblock" }));
   assert.equal(commands.filter((command) => command.action === "member.unblock").length, 0);
 }
@@ -151,8 +160,8 @@ async function failedBlockNeverClaimsPersistence() {
   const transport: CafeCommunityTransport = { ...source, command: async (...args) => args[1].action === "member.block" ? { ok: false, code: "unavailable" } : source.command(...args) };
   const view = mount(transport); await join(view);
   fireEvent.click(view.getByRole("button", { name: "Block" })); await flush();
-  assert.ok(view.getByRole("button", { name: "Retry block" }));
-  assert.equal(view.queryByText("This person is blocked. You can manage blocks in My profile."), null);
+  assert.ok(view.getByRole("button", { name: "Retry" }));
+  assert.equal(view.queryByText("Person blocked."), null);
   assert.equal(view.queryByRole("log"), null);
 }
 
@@ -171,7 +180,7 @@ async function reportingWhileBlockPendingDoesNotCancelBlock() {
   fireEvent.click(view.getByRole("button", { name: "Submit report" })); await flush();
   assert.ok(view.getByText("Your report was saved for the moderation team."));
   pending.resolve(); await flush();
-  assert.ok(view.getByText("This person is blocked. You can manage blocks in My profile."));
+  assert.ok(view.getByText("Person blocked."));
   assert.equal(view.queryByText("Blocking…"), null);
   assert.equal(view.queryByRole("log"), null);
 }
@@ -226,9 +235,9 @@ async function oldAuthAndRoomReadsNeverReviveState() {
 async function emptyLobbyNeverFabricatesPeople() {
   const source = createCommunityDemoTransport();
   const transport: CafeCommunityTransport = { ...source, snapshot: async (...args) => { const data = await source.snapshot(...args); return data.ok ? { ...data, rooms: [], people: [] } : data; } };
-  const view = mount(transport); await flush();
-  assert.ok(view.getByText("Chat is open. Start whenever you like."));
-  assert.ok(view.getByRole("button", { name: "Open my room and write" }));
+  const view = mount(transport); await enter(view);
+  assert.ok(view.getByText("Chat is open."));
+  assert.ok(view.getByRole("button", { name: "Open a room" }));
   assert.equal(view.queryByText("Maya · démo"), null); assert.equal(view.queryByText("Riku · démo"), null);
 }
 
