@@ -22,6 +22,32 @@ The wrapper is intentionally more than a blind WebView:
 - PWA service-worker/install-prompt disabled while inside the native app;
 - digital purchase routes blocked in the native binary.
 
+## Café entrance and ambient video — 2026-11-13
+
+The native bottom navigation includes **Café**, opening the shared `/cafe` route.
+The web feature gates and the isolated gateway remain authoritative; this tab
+does not enable Café in production or authorize its network mutations.
+
+The WebView keeps inline playback and the existing user-gesture requirement.
+The Café entrance therefore retains a poster and an explicit Play control when
+autoplay is refused. Its entry button must work immediately whether video plays
+or not. The outer native SafeAreaView owns top and bottom insets; automatic iOS
+WebView content insets are disabled to avoid reserving the same space twice.
+
+On page load and native AppState changes, the shell publishes
+`window.__PRATIQO_APP_STATE__` as `active`, `inactive` or `background`, then emits
+`pratiqo:app-state`. It runs in isolated mode as well as normal mode, without
+requiring a native Supabase client. Both the queued page and the executing page
+must have the configured HTTPS origin. Unknown native states map to background.
+The web ambient-video controller can pause while hidden and respect the user's
+play/pause choice when the app returns. This signal grants no playback or media
+capture permission.
+
+This source update does not produce a new signed binary. The historical trial
+tunnel has expired; a new isolated environment and physical-device checks are
+still needed before native distribution. Daily camera/microphone use inside the
+wrapper is not validated by background-video support and remains a separate gate.
+
 ## Authentication
 
 The existing web login page posts an `auth.oauth` message to React Native when it detects the native bridge. React Native performs Supabase OAuth with `WebBrowser.openAuthSessionAsync` and returns the resulting access/refresh pair to the web layer through an in-memory WebView event. Tokens are never placed in a Pratiqo-controlled URL.

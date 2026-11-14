@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import {
   resolveOrigin, navigationPolicy, internalTarget, deepLinkTarget, parseBridgeMessage,
   oauthCode, validIsolatedConfig,
 } from "../../apps/mobile/src/policy";
+import { nativeAppStateScript } from "../../apps/mobile/src/lifecycle";
 
 const origin = "https://isolated.example.test";
 test("explicit isolated origin, no production default or ambiguous mode", () => {
@@ -18,11 +20,43 @@ test("explicit isolated origin, no production default or ambiguous mode", () => 
 test("only configured origin is internal, including query and deep link destinations", () => {
   assert.equal(navigationPolicy(origin + "/student/search?discipline=piano", origin, true), "internal");
   assert.equal(deepLinkTarget("pratiqo://open?path=%2Fstudent%2Fsearch%3Fdiscipline%3Dpiano", origin, true), origin + "/student/search?discipline=piano");
+  assert.equal(internalTarget("/cafe", origin, true), origin + "/cafe");
+  assert.equal(deepLinkTarget("pratiqo://cafe?lang=fr", origin, true), origin + "/cafe?lang=fr");
   for (const path of ["//evil.test", "/\\evil.test", "/%2f%2fevil.test", "/%252f%252fevil.test", "/%75pgrade", "/yo/checkout"]) {
     assert.equal(internalTarget(path, origin, true), null, path);
   }
   assert.equal(deepLinkTarget("pratiqo://auth/callback?code=123", origin, true), null);
   assert.equal(deepLinkTarget("https://www.pratiqo.ca", origin, true), null);
+});
+test("native lifecycle reaches trusted web media even without a native auth client", () => {
+  for (const [input, expected] of [["active", "active"], ["inactive", "inactive"],
+    ["background", "background"], ["unknown", "background"], [null, "background"]]) {
+    const events: string[] = [];
+    const page: { location: { origin: string }; dispatchEvent: (event: { type: string }) => void; __PRATIQO_APP_STATE__?: string } = {
+      location: { origin }, dispatchEvent: (event) => { events.push(event.type); },
+    };
+    const script = nativeAppStateScript(origin + "/cafe", origin, input);
+    assert.ok(script);
+    runInNewContext(script, { window: page, Event: class { constructor(public type: string) {} } });
+    assert.equal(page.__PRATIQO_APP_STATE__, expected);
+    assert.deepEqual(events, ["pratiqo:app-state"]);
+  }
+});
+test("native lifecycle refuses external pages and a page changed after injection was queued", () => {
+  for (const page of ["https://evil.test/cafe", "http://isolated.example.test/cafe",
+    "https://user:pass@isolated.example.test/cafe", "javascript:alert(1)"]) {
+    assert.equal(nativeAppStateScript(page, origin, "active"), null);
+  }
+  assert.equal(nativeAppStateScript(origin + "/cafe", null, "active"), null);
+  const script = nativeAppStateScript(origin + "/cafe", origin, "background");
+  assert.ok(script);
+  const events: string[] = [];
+  const changedPage: { location: { origin: string }; dispatchEvent: (event: { type: string }) => void; __PRATIQO_APP_STATE__?: string } = {
+    location: { origin: "https://evil.test" }, dispatchEvent: (event) => { events.push(event.type); },
+  };
+  runInNewContext(script, { window: changedPage, Event: class { constructor(public type: string) {} } });
+  assert.equal(changedPage.__PRATIQO_APP_STATE__, undefined);
+  assert.deepEqual(events, []);
 });
 test("all schemes, external hosts and financial routes fail closed in the isolated build", () => {
   for (const url of ["javascript:alert(1)", "file:///tmp/a", "data:text/html,x", "about:blank", "tel:123", "mailto:test@example.invalid", "https://checkout.stripe.com/c/pay/cs_live_x", "https://www.pratiqo.ca/", origin + "/api/stripe/checkout", origin + "/booking/new", origin + "/messages", origin + "/teacher/setup-payments"]) {

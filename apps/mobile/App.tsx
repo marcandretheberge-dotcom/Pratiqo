@@ -27,6 +27,7 @@ import {
 } from "./src/config";
 import { getMobileSupabase } from "./src/supabase";
 import { deepLinkTarget, oauthCode, parseBridgeMessage, validIsolatedConfig } from "./src/policy";
+import { nativeAppStateScript } from "./src/lifecycle";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { label: "Accueil", glyph: "⌂", path: "/" },
   { label: "Profs", glyph: "⌕", path: "/trouver-un-prof" },
   { label: "YoPratiqo", glyph: "✦", path: "/yo" },
+  { label: "Café", glyph: "☕", path: "/cafe" },
   { label: "Compte", glyph: "●", path: "/connexion" },
 ] as const;
 
@@ -75,6 +77,11 @@ function NativeShell() {
   const [loading, setLoading] = useState(true);
   const currentPage = useRef(uri);
   const authBusy = useRef(false);
+
+  const publishAppState = useCallback((state: string | null | undefined, page = currentPage.current) => {
+    const script = nativeAppStateScript(page, WEB_ORIGIN, state);
+    if (script) webViewRef.current?.injectJavaScript(script);
+  }, []);
 
   const injectSession = useCallback(
     (session: Session, intent?: "learner" | "teacher" | null) => {
@@ -216,13 +223,13 @@ function NativeShell() {
 
   useEffect(() => {
     const supabase = getMobileSupabase();
-    if (!supabase) return;
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") supabase.auth.startAutoRefresh();
-      else supabase.auth.stopAutoRefresh();
+      publishAppState(state);
+      if (state === "active") supabase?.auth.startAutoRefresh();
+      else supabase?.auth.stopAutoRefresh();
     });
     return () => subscription.remove();
-  }, []);
+  }, [publishAppState]);
 
   const bootstrap = useMemo(() => injectedBootstrap(), []);
 
@@ -250,7 +257,10 @@ function NativeShell() {
           onNavigationStateChange={navigationChanged}
           onError={() => setWebFailed(true)}
           onLoadStart={() => setLoading(true)}
-          onLoadEnd={() => setLoading(false)}
+          onLoadEnd={({ nativeEvent }) => {
+            setLoading(false);
+            publishAppState(AppState.currentState, nativeEvent.url);
+          }}
           onHttpError={({ nativeEvent }) => {
             if (nativeEvent.url === currentPage.current && nativeEvent.statusCode >= 400) setWebFailed(true);
           }}
@@ -266,6 +276,9 @@ function NativeShell() {
           javaScriptEnabled
           allowsInlineMediaPlayback
           mediaPlaybackRequiresUserAction
+          // SafeAreaView owns device insets; do not apply a second iOS inset.
+          automaticallyAdjustContentInsets={false}
+          contentInsetAdjustmentBehavior="never"
           pullToRefreshEnabled
           setSupportMultipleWindows
           javaScriptCanOpenWindowsAutomatically={false}
@@ -292,6 +305,7 @@ function NativeShell() {
                 key={item.path}
                 accessibilityRole="button"
                 accessibilityLabel={item.label}
+                accessibilityState={{ selected }}
                 onPress={() => navigate(item.path)}
                 style={styles.tab}
               >
