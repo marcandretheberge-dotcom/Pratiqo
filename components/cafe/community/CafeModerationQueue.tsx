@@ -6,7 +6,7 @@ import type { CafeModerationReport } from "@/lib/cafe/communityTypes";
 import { useLocale } from "@/lib/locale-context";
 import { cafeLocalDate } from "@/lib/cafe/communityLanguages";
 import { useCafeIdentity } from "./useCafeIdentity";
-import { CommunityFrame } from "./CafeCommunityApp";
+import { CommunityFrame } from "./CafeCommunityChrome";
 import { cafeText, communityError, communityLocale } from "./copy";
 import styles from "./community.module.css";
 

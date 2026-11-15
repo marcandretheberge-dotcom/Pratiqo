@@ -20,3 +20,10 @@
 .filterSelect,.pill button { color:var(--ink); }
 .tab[aria-pressed=true] { background:#efe3d2; color:#211914; }
 @media(max-width:460px) { .wrapCinematic{padding-top:94px}.screen[data-cafe-step="entrance"]{min-height:calc(100dvh - 160px);gap:22px}.praktikosOverlay .praktikos{top:62%;height:5rem;min-height:5rem}.praktikosCue{grid-template-rows:3.5rem 1.2rem}.praktikosText{font-size:1.05rem}.praktikosLang{font-size:.65rem}.entranceTitle{font-size:2.7rem} }
+
+/* Public gated entrance — interface language vs practice language. */
+.publicEntrance { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.interfaceLang { display: inline-flex; gap: 4px; border: 1px solid var(--line); border-radius: 999px; padding: 4px; background: #2d241e; }
+.interfaceLangButton,.interfaceLangActive { min-width: 44px; min-height: 36px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; font: inherit; font-size: 12px; font-weight: 650; letter-spacing: .04em; }
+.interfaceLangActive { background: #efe3d2; color: #211914; }
+.publicEntrance .interfaceLang { align-self: flex-end; }
