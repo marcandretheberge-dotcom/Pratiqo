@@ -162,3 +162,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) { .video, .shade, .invitations { transition: none; } }
+
+/* Custom copy uses the same untouched 16:9 film; controls stay out of its slot. */
+.customPresentation .film { border-radius: inherit; }
+.customPresentation .footer { position: absolute; inset: 0; display: block; min-height: 0; padding: 0; background: transparent; }
+.customPresentation .control { position: absolute; top: 10px; right: 10px; bottom: auto; width: 44px; height: 44px; min-width: 44px; max-width: 44px; padding: 0; justify-content: center; }
+.customPresentation .control span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

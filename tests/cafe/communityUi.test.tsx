@@ -33,6 +33,8 @@ async function enter(view: ReturnType<typeof mount>) {
   await flush();
   fireEvent.click(view.getByRole("button", { name: "Enter" }));
   await flush();
+  const cancel = view.queryByRole("button", { name: "Cancel" });
+  if (cancel) { fireEvent.click(cancel); await flush(); }
 }
 async function join(view: ReturnType<typeof mount>) {
   await enter(view);
@@ -358,9 +360,28 @@ async function selectedLanguageOverridesCourseHint(onboarding: boolean) {
 async function firstProfileLanguageOverridesCourseHint() { await selectedLanguageOverridesCourseHint(true); }
 async function changedProfileLanguageOverridesCourseHint() { await selectedLanguageOverridesCourseHint(false); }
 
+async function returningMemberChoosesLanguagesBeforeLobby() {
+  const source = createCommunityDemoTransport();
+  const view = mount(source, false, "it");
+  await flush();
+  fireEvent.click(view.getByRole("button", { name: "Enter" }));
+  await flush();
+  assert.ok(view.getByRole("heading", { name: "Which language are we practising?" }));
+  assert.equal(view.queryByRole("heading", { name: "Inside the Café" }), null);
+  const picker = within(view.getByRole("group", { name: "Language(s) to practise" }));
+  for (const checkbox of picker.getAllByRole("checkbox") as HTMLInputElement[]) {
+    if (checkbox.checked) fireEvent.click(checkbox);
+  }
+  fireEvent.click(picker.getByRole("checkbox", { name: "French" }));
+  fireEvent.click(view.getByRole("button", { name: "Save" }));
+  await flush();
+  assert.ok(view.getByRole("heading", { name: "Inside the Café" }));
+  assert.equal((view.getByRole("combobox", { name: "Practice language" }) as HTMLSelectElement).value, "fr");
+}
+
 void (async () => {
-  for (const test of [profileChoosesLanguagesOutsideCourses, joinAndIdempotentPlainTextRetry, incomingInviteRequiresAcceptanceAndDocumentLink, blockDoesNotDependOnSubmittingReport, reportIncludesOnlySelectedMessages, failedBlockNeverClaimsPersistence, reportingWhileBlockPendingDoesNotCancelBlock, expiredMembershipReturnsToLobby, oldAuthAndRoomReadsNeverReviveState, emptyLobbyNeverFabricatesPeople, scheduledGroupRoomsRemainActionable, scheduledPairRoomsRemainActionable, firstProfileLanguageOverridesCourseHint, changedProfileLanguageOverridesCourseHint]) {
+  for (const test of [profileChoosesLanguagesOutsideCourses, joinAndIdempotentPlainTextRetry, incomingInviteRequiresAcceptanceAndDocumentLink, blockDoesNotDependOnSubmittingReport, reportIncludesOnlySelectedMessages, failedBlockNeverClaimsPersistence, reportingWhileBlockPendingDoesNotCancelBlock, expiredMembershipReturnsToLobby, oldAuthAndRoomReadsNeverReviveState, emptyLobbyNeverFabricatesPeople, scheduledGroupRoomsRemainActionable, scheduledPairRoomsRemainActionable, firstProfileLanguageOverridesCourseHint, changedProfileLanguageOverridesCourseHint, returningMemberChoosesLanguagesBeforeLobby]) {
     try { await test(); console.log(`✓ ${test.name}`); } finally { cleanup(); await flush(); }
   }
-  assert.equal(mediaRequests, 0); console.log("communityUi: 14 production React/lifecycle scenarios passed; no media requests");
+  assert.equal(mediaRequests, 0); console.log("communityUi: 15 production React/lifecycle scenarios passed; no media requests");
 })().catch((error) => { console.error(error); process.exitCode = 1; }).finally(() => dom.window.close());
