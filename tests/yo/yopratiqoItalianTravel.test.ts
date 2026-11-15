@@ -43,4 +43,14 @@ assert.ok(source.includes("openCurrentMission"));
 const shell = readFileSync("tools/italian-travel-review/main.tsx", "utf8");
 assert.ok(shell.includes('yo.review.travel.course.v1'));
 assert.ok(shell.includes('italian-travel-review-only'));
+for (const route of ["app/yo/langues/italien/parcours/page.tsx", "app/yo/langues/italien/parcours/[unitId]/page.tsx"]) {
+  const page = readFileSync(route, "utf8");
+  assert.ok(page.includes("travelFlorence={personalizedItalianUnits[5]}"), "Real routes activate the reviewed navigator");
+  assert.ok(page.includes("...FLORENCE_DISCOVERY_PHRASES"), "Discovery audio is available from every current unit");
+  assert.ok(!page.includes("yo.review.") && !page.includes("fixtures"), "No demonstration state in real routes");
+}
+const player = readFileSync("components/yo/italian/guided/GuidedItalianCourse.tsx", "utf8");
+assert.ok(player.includes('storageKey="yo.it.travel.cosmetics.v1"'));
+assert.ok(player.includes("canReview={placedReview}"), "Keep the existing placement access policy");
+assert.ok(player.includes("italianMissionHref(locale, id)"), "Continue uses the real resume route");
 console.log("PASS: geography, real course IDs/order, checkpoint boundary, cosmetic persistence, unchanged unlock rules, preview isolation");

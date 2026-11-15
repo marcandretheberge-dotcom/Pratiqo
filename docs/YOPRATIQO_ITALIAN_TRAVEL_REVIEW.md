@@ -230,3 +230,33 @@ The shared origin is rebuilt from the reviewed commit and records its SHA and
 bundle hash in `review-build.json`. The PR description carries the current URL.
 This remains a visual-review draft, not approval for production or an iPhone
 physical-device validation.
+
+## Release integration, 2026-11-15
+
+The sections above describe the historical review-only implementation. The user
+has now authorized push, merge and production deployment. Release verification
+found that the standalone preview was the only consumer of the new navigator.
+The real Italian entry and unit routes now provide the existing Florence unit
+and its three discovery audio paths to the guided player. They use real course
+progress and the existing placement review policy, never review fixtures.
+
+- Cosmetic position/equipment: `yo.it.travel.cosmetics.v1`, separate from the
+  established first-meeting progress key and all `yo.review.*` keys.
+- Continue uses the existing `italianMissionHref` route; a city tap does not
+  navigate. Existing notebook, trivia for every eligible unit, and the earned
+  magic-flute transition remain available. No access or assessment rule changes.
+- The real map occupies one viewport; the standalone preview retains its own
+  review-toolbar sizing. No changes to Café, its worktrees, billing or migrations.
+- Current main was integrated without conflicts at `f622274`.
+- The two Yo whitespace jobs previously compared against old feature branches,
+  including a trailing blank line already on main in Café. They now check the
+  exact PR base/push-before SHA against the tested tree, across all changed files.
+  No test, lint rule or check is disabled, and the Café file is untouched.
+- Previous production rollback candidate: `dpl_FTJGcXu5azMBDYsxa8P6oWvC6Sn3`,
+  commit `e7ba5a0fde2505f4197108c0633fbec4b19131b3` (Pratiqo project, READY).
+  The synthetic static preview must never be promoted to production.
+
+Release validation and deployment results are recorded in the PR after execution.
+Physical Safari and cross-device synchronization remain unverified. Reverting
+the application release preserves canonical progress; the cosmetic key can remain
+in storage unused. No database rollback or production data edit is required.

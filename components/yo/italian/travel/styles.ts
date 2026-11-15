@@ -1,5 +1,6 @@
 export const travelStyles = `
-[data-travel-shell]{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);background:#dceeee;letter-spacing:0}
+[data-travel-shell]{height:100dvh;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);background:#dceeee;letter-spacing:0}
+.review-app [data-travel-shell]{height:100%}
 [data-travel-shell] .yo-course-header{background:#f7faf6;border:0}
 [data-travel-shell] .yo-course-header-inner{min-height:52px;padding:4px 16px;max-width:none}
 [data-travel-shell] .yo-course-main{height:100%;max-width:none;min-height:0;padding:0}

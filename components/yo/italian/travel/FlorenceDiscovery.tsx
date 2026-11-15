@@ -9,13 +9,14 @@ import { t } from "@/lib/yo/italian/course/courseAuthoring";
 import { LearningAudio } from "../../personalized/LearningAudio";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { useLearningFeedback } from "../../feedback/LearningFeedback";
+import { FLORENCE_DISCOVERY_PHRASES } from "@/lib/yo/italian/travel/journey";
 
 export function FlorenceDiscovery({ locale, unit, initialQuiz = false, onClose, onContinue, onCultureComplete }: {
   locale: YoLocale; unit: CourseUnit; initialQuiz?: boolean; onClose: () => void; onContinue: () => void; onCultureComplete: () => void;
 }) {
   const [quiz, setQuiz] = useState(initialQuiz), [answer, setAnswer] = useState<number | null>(null);
   const feedback = useLearningFeedback();
-  const phrases = unit.lessons[2].vocabulary.filter(p => ["Gira a destra.", "Gira a sinistra.", "Attraversa la piazza."].includes(p.it));
+  const phrases = unit.lessons[2].vocabulary.filter(p => FLORENCE_DISCOVERY_PHRASES.includes(p.it));
   function close() { stopLessonAudio(); onClose(); }
   return <Dialog.Root open onOpenChange={open => { if (!open) close(); }}><Dialog.Portal>
     <Dialog.Overlay className="travel-overlay"/><Dialog.Content className="travel-discovery" aria-describedby="florence-description">

@@ -29,6 +29,7 @@ export function geographicRoad(world: number): MapRoad {
   }) };
 }
 export const GEOGRAPHIC_ROADS = ITALIAN_WORLDS.map((_, i) => geographicRoad(i));
+export const FLORENCE_DISCOVERY_PHRASES = ["Gira a destra.", "Gira a sinistra.", "Attraversa la piazza."];
 export type TravelMemory = {
   version: 1; arrived: boolean; discovered: boolean; cultureComplete: boolean;
   equipped: boolean; selected: string; positions: Record<string, number>;
