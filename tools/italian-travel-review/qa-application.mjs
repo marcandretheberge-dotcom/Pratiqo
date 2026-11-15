@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createRequire } from 'node:module';
-import { personalizedItalianCatalog as catalog, personalizedItalianUnits as units } from '../../lib/yo/personalized/courseData.ts';
-import { emptyCourseProgress, recordCourseAssessment } from '../../lib/yo/italian/course/courseProgress.ts';
+const require = createRequire(import.meta.url);
+const { personalizedItalianCatalog: catalog, personalizedItalianUnits: units } = require('../../lib/yo/personalized/courseData.ts');
+const { emptyCourseProgress, recordCourseAssessment } = require('../../lib/yo/italian/course/courseProgress.ts');
 
 const base = process.env.REVIEW_URL || 'http://127.0.0.1:55812';
 assert.match(base, /^http:\/\/127\.0\.0\.1:\d+$/, 'Synthetic progress must never run on a hosted origin');
@@ -33,9 +34,15 @@ try {
   const response = await page.goto(base + '/yo/langues/italien/parcours/u06?lang=en');
   assert.equal(response.status(),200);
   await page.locator('[data-city=u06]').waitFor();
-  const consent = page.getByRole('button',{name:/Refuser|Reject|Rechazar/i});
-  if (await consent.count()) await consent.first().click();
+  const banner = page.getByTestId('cookie-consent-banner');
+  await banner.waitFor();
+  await banner.getByRole('button',{name:/Nécessaires seulement|Necessary only|Solo necesarias/i}).click();
+  await banner.waitFor({state:'hidden'});
+  await page.addLocatorHandler(page.getByRole('complementary',{name:/Install Pratiqo|Installer Pratiqo|Instalar Pratiqo/}), async prompt => {
+   await prompt.getByRole('button',{name:/Not now|Pas maintenant|Ahora no/}).click();
+  });
   await page.evaluate(()=>document.fonts.ready);
+  await page.screenshot({path:path.join(out,`application-initial-${width}.png`),fullPage:true});
   const initial = await page.evaluate(()=>({ledger:localStorage.getItem('yo.italian.course.first-meeting.v2'),url:location.href,scroll:scrollY}));
   await page.evaluate(()=>{window.releaseMap=document.querySelector('[data-geographic-map]');});
   await page.locator('[data-city=u08]').click();

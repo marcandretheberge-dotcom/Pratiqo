@@ -260,3 +260,42 @@ Release validation and deployment results are recorded in the PR after execution
 Physical Safari and cross-device synchronization remain unverified. Reverting
 the application release preserves canonical progress; the cosmetic key can remain
 in storage unused. No database rollback or production data edit is required.
+
+### Release checks actually executed
+
+- `npm ci --ignore-scripts --no-audit --no-fund`: PASS against current main's lockfile.
+- `node tools/world-map-review/build-full-local.mjs`: PASS with the isolated
+  backend, exit 0, finished `2026-11-15T13:09:57.474Z`. Includes complete TypeScript
+  and all 372 static pages. No production credentials or data used.
+- `node --import tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx`: 7/7.
+  The added cases run the real entry/player, beginner locks, mission return,
+  notebook, cosmetic persistence and placement access without earned rewards.
+- `npm run test:yo-italian-course`: all nine suites PASS.
+- Individual `tests/yo/yopratiqoItalianTravel.test.ts`,
+  `yopratiqoMapCharacter.test.ts`, `yopratiqoSharedWorldMap.test.tsx` (8 groups),
+  and `yopratiqoTravelAudioPolicy.test.tsx`: PASS using `node --import tsx`.
+- Targeted ESLint over changed application routes, travel components, guided
+  player, journey model and regression tests: PASS.
+- `node --import tsx scripts/validate_i18n.ts`: 3562 keys/locale PASS.
+- `git diff --check origin/main`: PASS; no Café or migration changes in PR diff.
+- `node --import tsx tools/italian-travel-review/qa-application.mjs <runtime-package.json>`:
+  PASS against the complete local Next production runtime, 390x844 and 1280x900.
+  Screenshots visually inspected. Exactly one screen at both sizes; no JavaScript
+  errors and no network write attempts. Actual u06 -> u08 Continue/resume route,
+  mission closing, equipment reload, mid-walk retarget, unchanged ledger and
+  reduced motion checked. Fixtures are refused on every non-loopback origin.
+- Six GitHub workflows on `20e42708e85740ec127f95865c434f2612699f26`: SUCCESS;
+  the Pratiqo Vercel Preview build also succeeded. Final-head status is in the PR.
+
+Intermediate failures were corrected, not hidden: three unsupported `exact`
+options in Testing Library role queries failed CI TypeScript; the runtime
+assertions were unchanged when correcting those types. The new browser runner
+needed CommonJS loading for existing TypeScript fixtures and normal, ordered
+dismissal of the consent banner and optional PWA invitation. No UI was removed,
+force-clicked or disabled to make the checks pass.
+
+Read-only GitHub branch/ruleset inspection found no required check contexts.
+The independent `pratiqo-cafe-pr3b` Vercel project remains outside this release:
+its previous build failed on missing Supabase variables, not Italian code. No
+configuration from that project was changed or copied. Its status is reported
+separately, never represented as a green check for the main Pratiqo deployment.
