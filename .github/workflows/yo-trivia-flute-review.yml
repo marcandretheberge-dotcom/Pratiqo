@@ -44,4 +44,10 @@ jobs:
       - name: Targeted lint
         run: npx eslint lib/yo/italian/trivia.ts lib/yo/italian/worlds.ts components/yo/italian/guided/ItalianTriviaCheckpoint.tsx components/yo/italian/guided/ItalianWorldNavigator.tsx components/yo/italian/guided/GuidedItalianCourse.tsx tests/yo/yopratiqoItalianTriviaFlute.test.ts tests/yo/yopratiqoItalianTriviaPlayer.test.tsx
       - name: Diff safety
-        run: git diff --check origin/feat/yoppo-worlds-warmup-20261108...HEAD
+        env:
+          DIFF_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          # Check this PR/push, not an unrelated historical feature branch.
+          test -n "$DIFF_BASE"
+          git diff --check "$DIFF_BASE" HEAD
