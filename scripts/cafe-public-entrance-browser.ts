@@ -16,8 +16,21 @@ const outDir = join("artifacts", "cafe-public-entrance");
 mkdirSync(outDir, { recursive: true });
 
 async function dismissConsent(page: Page) {
-  const button = page.getByRole("button", { name: /accept|accepter|aceptar|ok/i }).first();
-  if (await button.isVisible().catch(() => false)) await button.click().catch(() => undefined);
+  const banner = page.getByTestId("cookie-consent-banner");
+  if (!(await banner.isVisible().catch(() => false))) return;
+  const candidates = [
+    banner.getByRole("button", { name: /Accepter/i }),
+    banner.getByRole("button", { name: /Accept/i }),
+    banner.getByRole("button", { name: /Aceptar/i }),
+    banner.getByRole("button", { name: /Nécessaires|Necessary|Solo necesarias/i }),
+  ];
+  for (const button of candidates) {
+    if (await button.isVisible().catch(() => false)) {
+      await button.click({ force: true });
+      break;
+    }
+  }
+  await banner.waitFor({ state: "hidden", timeout: 15_000 }).catch(() => undefined);
 }
 
 async function noOverflow(page: Page, label: string) {
