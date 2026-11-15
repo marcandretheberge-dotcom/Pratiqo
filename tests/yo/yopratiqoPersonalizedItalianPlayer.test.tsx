@@ -19,7 +19,7 @@ process.env.NEXT_PUBLIC_SUPABASE_URL="https://audio.example.test";
 const {render,cleanup,fireEvent,act,within}=require("@testing-library/react") as typeof import("@testing-library/react");
 
 import { firstMeetingUnit, firstMeetingVisuals, firstMeetingBank } from "@/lib/yo/personalized/firstMeeting";
-import { personalizedItalianCatalog, placementChecks } from "@/lib/yo/personalized/courseData";
+import { personalizedItalianCatalog, personalizedItalianUnits, placementChecks } from "@/lib/yo/personalized/courseData";
 import { profileKey, GUIDED_PROGRESS_KEY, type LearningProfile } from "@/lib/yo/personalized/profile";
 import { activitySpeech } from "@/lib/yo/italian/course/courseSpeech";
 const { ItalianOnboarding }=require("@/components/yo/personalized/ItalianOnboarding") as typeof import("@/components/yo/personalized/ItalianOnboarding");
@@ -63,4 +63,32 @@ tests.push(["meaning recall replaces labelled portraits, checks taps and preserv
  assert.equal(tasks,Math.min(3,words.length),"warmup checks each target once and stays short");click(v.getByRole('button',{name:'Enter the mission'}));assert.equal(entered,1);assert.equal(v.container.querySelectorAll('textarea,input').length,0);
 }]);
 tests.push(["returning learner skips onboarding; notebook is complete before any exercise",()=>{localStorage.setItem(profileKey("it"),JSON.stringify({version:1,language:"it",experience:"new",goal:"thorough",weeklyMinutes:60,startUnitId:"u01",placement:"beginner",reviewUnitIds:[],updatedAt:Date.now()}));const v=render(<ItalianLearningEntry unit={firstMeetingUnit} catalog={personalizedItalianCatalog} locale="en" audioPaths={courseAudioPaths(unitSpeech(firstMeetingUnit))} wordBank={firstMeetingBank} visualWords={firstMeetingVisuals} checks={placementChecks} placementAudio={audio}/>);flush();assert.equal(v.container.querySelector("[data-yoppo-onboarding]"),null);const skip=v.queryByRole("button",{name:"Skip the tour"});if(skip)click(skip);click(v.getByRole("button",{name:"Word notebook"}));const box=within(v.getByRole("dialog"));assert.ok(box.getByText("Quanti anni hai?",{exact:true}));assert.ok(box.getByRole("link",{name:"Print the complete bank"}));assert.equal(localStorage.getItem(GUIDED_PROGRESS_KEY),null);}]);
+tests.push(["live travel entry preserves beginner locks, notebook, mission and cosmetic-only resume",()=>{
+ localStorage.setItem(profileKey("it"),JSON.stringify({version:1,language:"it",experience:"new",goal:"thorough",weeklyMinutes:60,startUnitId:"u01",placement:"beginner",reviewUnitIds:[],updatedAt:Date.now()}));
+ const mount=()=>render(<ItalianLearningEntry unit={firstMeetingUnit} travelFlorence={personalizedItalianUnits[5]} catalog={personalizedItalianCatalog} locale="en" audioPaths={courseAudioPaths(unitSpeech(firstMeetingUnit))} wordBank={firstMeetingBank} checks={placementChecks} placementAudio={audio}/>);
+ let v=mount();flush();click(v.getByRole("button",{name:"Skip"}));
+ const blocked=v.container.querySelector('[data-city="u02"]') as HTMLElement;
+ assert.equal(blocked.getAttribute("aria-disabled"),"true");click(blocked);
+ assert.equal(v.container.querySelector('[data-city="u01"]')?.getAttribute("aria-pressed"),"true");
+ assert.equal(localStorage.getItem(GUIDED_PROGRESS_KEY),null);
+ click(v.getByRole("button",{name:"Continue in Bologna"}));
+ assert.ok(v.getByRole("dialog"));
+ const close=v.getByRole("button",{name:"Leave and save my place"});click(close);
+ assert.ok(v.getByRole("button",{name:"Continue in Bologna"}));
+ click(v.getByRole("button",{name:"Word notebook"}));assert.ok(v.getByRole("link",{name:"Print the complete bank"}));
+ cleanup();v=mount();flush();assert.equal(v.queryByRole("button",{name:"Skip"}),null);
+ assert.equal(JSON.parse(localStorage.getItem("yo.it.travel.cosmetics.v1")!).arrived,true);
+ assert.equal(localStorage.getItem("yo.review.travel.course.v1"),null);
+}]);
+tests.push(["live travel honors existing placement review without awarding stamps or scooter",()=>{
+ localStorage.setItem(profileKey("it"),JSON.stringify({version:1,language:"it",experience:"words",goal:"travel",weeklyMinutes:60,startUnitId:"u06",placement:"manual",reviewUnitIds:["u01","u02","u03","u04","u05","u06"],updatedAt:Date.now()}));
+ const unit=personalizedItalianUnits[5];
+ const v=render(<ItalianLearningEntry unit={unit} travelFlorence={unit} catalog={personalizedItalianCatalog} locale="en" audioPaths={courseAudioPaths(unitSpeech(unit))} checks={placementChecks} placementAudio={audio}/>);flush();
+ click(v.getByRole("button",{name:"Skip"}));
+ assert.equal(v.container.querySelector('[data-city="u06"]')?.getAttribute("aria-disabled"),"false");
+ assert.equal(v.container.querySelector('[data-city="u07"]')?.getAttribute("aria-disabled"),"true");
+ click(v.getByRole("button",{name:"Journey and equipment"}));
+ assert.ok(v.getByText("A scooter to earn"));assert.equal(v.queryByRole("switch",{name:"Equip scooter"}),null);
+ assert.equal(localStorage.getItem(GUIDED_PROGRESS_KEY),null);
+}]);
 let failures=0;for(const[name,test]of tests){cleanup();localStorage.clear();frames.clear();localStorage.setItem("yo.practice.auto-next.v1","off");try{test();console.log(`PASS ${name}`);}catch(e){failures++;console.error(`FAIL ${name}`,e);}finally{cleanup();frames.clear();}}console.log(`${tests.length-failures}/${tests.length} personalized player checks passed`);if(failures)process.exitCode=1;
