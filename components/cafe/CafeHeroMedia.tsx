@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { CafeLocale } from "@/lib/cafe/copy";
 import { CAFE_HERO_POSTER_SRC, CAFE_WORLD_VIDEO_SRC, cafeHeroInvitations, cafeHeroInvitationCopy, cafeHeroInvitationOpacity } from "@/lib/cafe/heroMedia";
 import styles from "./CafeHeroMedia.module.css";
@@ -46,14 +46,14 @@ function subscribeMediaEnvironment(update: () => void) {
 const serverMediaEnvironment = () => REDUCED_MOTION | SAVE_DATA | HIDDEN;
 
 /** Silent decorative footage. No player, request or control is mounted until real media is enabled. */
-export function CafeHeroMedia({ locale, videoSrc = null, className = "" }: { locale: CafeLocale; videoSrc?: string | null; className?: string }) {
+export function CafeHeroMedia({ locale, videoSrc = null, className = "", overlay }: { locale: CafeLocale; videoSrc?: string | null; className?: string; overlay?: ReactNode }) {
   const availableSource = videoSrc === CAFE_WORLD_VIDEO_SRC ? videoSrc : null;
   return <div className={`${styles.frame} ${className}`} data-cafe-hero={availableSource ? "video-enabled" : "photo"}>
-    {availableSource ? <AmbientCafeVideo key={availableSource} src={availableSource} locale={locale} /> : <div className={styles.film} />}
+    {availableSource ? <AmbientCafeVideo key={availableSource} src={availableSource} locale={locale} overlay={overlay} /> : <div className={styles.film}>{overlay}</div>}
   </div>;
 }
 
-function AmbientCafeVideo({ src, locale }: { src: string; locale: CafeLocale }) {
+function AmbientCafeVideo({ src, locale, overlay }: { src: string; locale: CafeLocale; overlay?: ReactNode }) {
   const copy = COPY[locale];
   const invitationCopy = cafeHeroInvitationCopy[locale];
   const id = useId();
@@ -150,7 +150,7 @@ function AmbientCafeVideo({ src, locale }: { src: string; locale: CafeLocale }) 
     };
   }, [failed]);
 
-  return <div className={styles.presentation}>
+  return <div className={`${styles.presentation} ${overlay ? styles.customPresentation : ""}`}>
     <div className={styles.film}>
       {!failed && <>
         <video
@@ -169,15 +169,16 @@ function AmbientCafeVideo({ src, locale }: { src: string; locale: CafeLocale }) 
         />
         <div className={`${styles.shade} ${shown && sourceAllowed ? styles.visible : ""}`} aria-hidden="true" />
       </>}
+      {overlay}
     </div>
     <div className={styles.footer}>
       {/* All cues share a grid cell, reserving the tallest caption even on gaps or media failure. */}
-      <div className={`${styles.invitations} ${shown && sourceAllowed ? styles.visible : ""}`} aria-hidden="true">
+      {!overlay && <div className={`${styles.invitations} ${shown && sourceAllowed ? styles.visible : ""}`} aria-hidden="true">
         {cafeHeroInvitations.map((cue, index) => <div key={cue.id} ref={element => { invitations.current[index] = element; }} className={styles.invitation} data-cafe-cue={cue.id} style={{ opacity: 0 }}>
           <p className={`${styles.invitationText} ${cue.id === "welcome" ? styles.finalInvitation : ""}`} lang={cue.lang} dir={cue.dir}>{cue.text}</p>
           {cue.lang !== locale && <p className={styles.translation} lang={locale}>{cue.id === "welcome" ? invitationCopy.seat : invitationCopy.coffee}</p>}
         </div>)}
-      </div>
+      </div>}
       {!failed && <button type="button" className={styles.control} aria-controls={id} aria-label={playing ? copy.pauseLabel : copy.playLabel} onClick={() => {
         const element = player.current;
         if (!element) return;

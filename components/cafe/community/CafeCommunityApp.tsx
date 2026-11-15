@@ -44,9 +44,8 @@ export function CafeEntranceScreen({ locale, heroVideoSrc = null, onEnter, enter
   const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
   const label = enterLabel ?? t("Entrer", "Enter", "Entrar");
   return <section className={styles.screen} data-cafe-step="entrance" aria-labelledby="cafe-entrance-title">
-    <CafeHeroMedia locale={locale} videoSrc={heroVideoSrc} className={styles.entranceFilm} />
+    <CafeHeroMedia locale={locale} videoSrc={heroVideoSrc} className={styles.entranceFilm} overlay={<CafePraktikosAnimation locale={locale} />} />
     <h1 id="cafe-entrance-title" className={styles.entranceTitle}>Café des langues</h1>
-    <CafePraktikosAnimation />
     {enterHref ? <a className={styles.primary} href={enterHref}>{label}</a> : <button className={styles.primary} type="button" onClick={onEnter}>{label}</button>}
   </section>;
 }
@@ -349,7 +348,7 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
     setReport({ target: { ...member }, roomId: snapshot?.room?.id ?? null, messages: messages.map((message) => ({ ...message })), selectedIds: messageId ? [messageId] : [] });
     if (block) void blockMember(member);
   };
-  const enterFromDoor = () => setScreen(snapshot?.me ? "lobby" : "language");
+  const enterFromDoor = () => setScreen("language");
   const saveProfile: Execute = async (command) => {
     const result = await execute(command);
     if (result.ok && command.action === "profile.save") setFilter(command.learningLanguages[0] ?? "");
