@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Formats d’écran · Café des langues</title>
+  <link rel="stylesheet" href="/review.css">
+  <script src="/review.js" defer></script>
+</head>
+<body>
+  <header>
+    <div><h1>Revue du Café des langues</h1><p>Le même aperçu, dans une fenêtre de la largeur choisie. Les échanges restent fictifs.</p></div>
+    <a href="/cafe">Ouvrir le Café</a>
+  </header>
+  <nav aria-label="Formats d’écran">
+    <button type="button" data-width="320" aria-pressed="true">Mobile · 320 px</button>
+    <button type="button" data-width="375" aria-pressed="false">Mobile · 375 px</button>
+    <button type="button" data-width="1280" aria-pressed="false">Bureau · 1280 px</button>
+    <label>Écran <select id="review-route"><option value="/cafe">Entrée et film</option><option value="/cafe/preview/communaute">Salons et conversation</option></select></label>
+    <span id="review-width" role="status">Fenêtre de 320 px</span>
+  </nav>
+  <main>
+    <div id="review-device"><iframe id="review-frame" title="Aperçu interactif du Café" src="/cafe" allow="camera 'none'; microphone 'none'; display-capture 'none'"></iframe></div>
+  </main>
+</body>
+</html>

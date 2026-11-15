@@ -1,0 +1,65 @@
+name: Cafe community cleanup retry
+
+# Vercel Hobby rejects sub-daily cron schedules. This optional external retry
+# keeps the existing deployment plan and does not activate the community.
+# GitHub schedules run from the default branch, have a five-minute minimum,
+# and may be delayed. This is reconciliation, not an immediate revocation timer.
+on:
+  schedule:
+    - cron: "2-59/5 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: cafe-community-cleanup
+  cancel-in-progress: false
+
+jobs:
+  retry:
+    # Repository variable, intentionally absent/false until a deliberate release.
+    if: ${{ vars.CAFE_COMMUNITY_CLEANUP_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    environment: cafe-community-cleanup
+    steps:
+      # No checkout or dependency scripts receive the production cron credential.
+      - name: Retry pending community call cleanup
+        env:
+          CAFE_COMMUNITY_CLEANUP_ORIGIN: ${{ vars.CAFE_COMMUNITY_CLEANUP_ORIGIN }}
+          CAFE_COMMUNITY_CLEANUP_CRON_SECRET: ${{ secrets.CAFE_COMMUNITY_CLEANUP_CRON_SECRET }}
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          async function run() {
+            const origin = process.env.CAFE_COMMUNITY_CLEANUP_ORIGIN?.trim();
+            const secret = process.env.CAFE_COMMUNITY_CLEANUP_CRON_SECRET?.trim();
+            if (origin !== 'https://www.pratiqo.ca' || !secret) {
+              console.error('Cafe cleanup: missing or invalid configuration.');
+              process.exitCode = 1;
+              return;
+            }
+            const endpoint = new URL('/api/cron/cafe-community-cleanup', origin);
+            if (endpoint.origin !== origin || endpoint.pathname !== '/api/cron/cafe-community-cleanup' || endpoint.search || endpoint.hash) {
+              console.error('Cafe cleanup: invalid endpoint.');
+              process.exitCode = 1;
+              return;
+            }
+            try {
+              const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${secret}` },
+                redirect: 'error',
+                cache: 'no-store',
+                signal: AbortSignal.timeout(45_000),
+              });
+              console.log(`Cafe cleanup: HTTP ${response.status}.`);
+              if (!response.ok) process.exitCode = 1;
+              await response.body?.cancel();
+            } catch {
+              console.error('Cafe cleanup: request failed.');
+              process.exitCode = 1;
+            }
+          }
+          await run();
+          NODE

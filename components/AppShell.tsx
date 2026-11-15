@@ -15,6 +15,7 @@ import { LocaleSwitcher } from "./LocaleSwitcher";
 import { TeacherTopNav } from "./TeacherTopNav";
 import { TeacherSidebarNav } from "@/components/teacher/TeacherSidebarNav";
 import { YoNavButton } from "@/components/yo/YoNavButton";
+import { CafeNavLink } from "@/components/cafe/community/CafeNavLink";
 import { isStudentPackageDashboardUiEnabled } from "@/lib/offers/studentPackages";
 import { isStudentPlannedPackageDashboardUiEnabled } from "@/lib/offers/plannedPackageStudentDashboard";
 
@@ -119,6 +120,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/dashboard", labelKey: "studentTabLessons" },
     { href: "/student/progress", labelKey: "studentTabProgress" },
     { href: "/student/yopratiqo", label: "YoPratiqo" },
+    { href: "/cafe", label: "Café des langues" },
     { href: "/student/learners", labelKey: "studentTabLearners" },
     ...(studentPackagesNavEnabled
       ? ([{ href: "/student/packages", labelKey: "studentTabPackages" as const }] as const)
@@ -264,11 +266,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     >
       {/* Default top bar (non-student, non-teacher: logged-out or unknown role) */}
       {!isStudent ? (
-        <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-[var(--p-border-light)] bg-white flex items-center justify-between px-4 sm:px-5">
+        <header className="sticky top-0 z-40 min-h-14 shrink-0 border-b border-[var(--p-border-light)] bg-white flex flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-5">
           <Link href={logoHref} className="flex items-center gap-2 min-w-0" aria-label={t("ariaHome")}>
-            <PratiqoLogo variant="full" size="md" />
+            <span className="sm:hidden"><PratiqoLogo variant="icon" size="sm" /></span>
+            <span className="hidden sm:inline"><PratiqoLogo variant="full" size="md" /></span>
           </Link>
-          <div className="flex shrink-0 items-center gap-3 origin-right scale-[0.98]">
+          <div className="flex shrink-0 flex-wrap items-center gap-2 origin-right scale-[0.98]">
+            <CafeNavLink />
             <YoNavButton className="hidden sm:inline-flex" />
             <YoNavButton variant="mobile" className="sm:hidden" />
             <LocaleSwitcher variant="light" />
@@ -298,6 +302,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <PratiqoLogo variant="full" size="md" />
               </Link>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <CafeNavLink />
                 <YoNavButton />
                 <Link
                   href="/messages"
@@ -373,18 +378,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
           {/* Student mobile: minimal header */}
           <header
-            className="sticky top-0 z-50 md:hidden shrink-0 flex items-center justify-between bg-white"
+            className="sticky top-0 z-50 md:hidden shrink-0 flex flex-wrap items-center justify-between gap-y-2 bg-white py-2"
             style={{
               borderBottom: "0.5px solid #D3D1C7",
               padding: "0 16px",
-              height: 52,
+              minHeight: 52,
             }}
           >
             <Link href="/student/search" className="shrink-0" aria-label={t("ariaHome")}>
               <PratiqoLogo variant="icon" size="sm" />
             </Link>
             <YoNavButton variant="mobile" className="mx-2" />
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <CafeNavLink />
+            <div className="flex w-full items-center justify-end gap-2.5 min-[420px]:w-auto">
               <Link
                 href="/messages"
                 className={cn(
