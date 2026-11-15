@@ -66,7 +66,7 @@ tests.push(["returning learner skips onboarding; notebook is complete before any
 tests.push(["live travel entry preserves beginner locks, notebook, mission and cosmetic-only resume",()=>{
  localStorage.setItem(profileKey("it"),JSON.stringify({version:1,language:"it",experience:"new",goal:"thorough",weeklyMinutes:60,startUnitId:"u01",placement:"beginner",reviewUnitIds:[],updatedAt:Date.now()}));
  const mount=()=>render(<ItalianLearningEntry unit={firstMeetingUnit} travelFlorence={personalizedItalianUnits[5]} catalog={personalizedItalianCatalog} locale="en" audioPaths={courseAudioPaths(unitSpeech(firstMeetingUnit))} wordBank={firstMeetingBank} checks={placementChecks} placementAudio={audio}/>);
- let v=mount();flush();click(v.getByRole("button",{name:"Skip",exact:true}));
+ let v=mount();flush();click(v.getByRole("button",{name:"Skip"}));
  const blocked=v.container.querySelector('[data-city="u02"]') as HTMLElement;
  assert.equal(blocked.getAttribute("aria-disabled"),"true");click(blocked);
  assert.equal(v.container.querySelector('[data-city="u01"]')?.getAttribute("aria-pressed"),"true");
@@ -76,7 +76,7 @@ tests.push(["live travel entry preserves beginner locks, notebook, mission and c
  const close=v.getByRole("button",{name:"Leave and save my place"});click(close);
  assert.ok(v.getByRole("button",{name:"Continue in Bologna"}));
  click(v.getByRole("button",{name:"Word notebook"}));assert.ok(v.getByRole("link",{name:"Print the complete bank"}));
- cleanup();v=mount();flush();assert.equal(v.queryByRole("button",{name:"Skip",exact:true}),null);
+ cleanup();v=mount();flush();assert.equal(v.queryByRole("button",{name:"Skip"}),null);
  assert.equal(JSON.parse(localStorage.getItem("yo.it.travel.cosmetics.v1")!).arrived,true);
  assert.equal(localStorage.getItem("yo.review.travel.course.v1"),null);
 }]);
@@ -84,7 +84,7 @@ tests.push(["live travel honors existing placement review without awarding stamp
  localStorage.setItem(profileKey("it"),JSON.stringify({version:1,language:"it",experience:"words",goal:"travel",weeklyMinutes:60,startUnitId:"u06",placement:"manual",reviewUnitIds:["u01","u02","u03","u04","u05","u06"],updatedAt:Date.now()}));
  const unit=personalizedItalianUnits[5];
  const v=render(<ItalianLearningEntry unit={unit} travelFlorence={unit} catalog={personalizedItalianCatalog} locale="en" audioPaths={courseAudioPaths(unitSpeech(unit))} checks={placementChecks} placementAudio={audio}/>);flush();
- click(v.getByRole("button",{name:"Skip",exact:true}));
+ click(v.getByRole("button",{name:"Skip"}));
  assert.equal(v.container.querySelector('[data-city="u06"]')?.getAttribute("aria-disabled"),"false");
  assert.equal(v.container.querySelector('[data-city="u07"]')?.getAttribute("aria-disabled"),"true");
  click(v.getByRole("button",{name:"Journey and equipment"}));
