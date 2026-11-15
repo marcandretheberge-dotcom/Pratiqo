@@ -222,7 +222,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   if (ready && loaded && !allowed) return <main lang={locale} className="mx-auto max-w-xl p-8"><h1 className="text-2xl font-bold">{c.locked}</h1><p className="my-4">{say("Tu connais déjà ces notions ? Change ton point de départ avec Yoppo, sans gagner de tampon ni dépenser de Pass.","Already know these topics? Change your starting point with Yoppo, without earning stamps or spending a Pass.","¿Ya conoces estos temas? Cambia tu inicio con Yoppo sin ganar sellos ni gastar Pass.")}</p><button type="button" className={primary} onClick={onConfigure}>{say("Choisir mon départ","Choose my start","Elegir mi inicio")}</button><Link className={`${secondary} mt-4`} href={italianCourseHref(locale)}>{c.home}</Link></main>;
   if (!ready || !loaded) return <main lang={locale} className="mx-auto max-w-xl p-10"><p role="status">{c.loading}</p></main>;
   const teacherUrl = getYoPratiqoModuleBySlug("italien")?.teacherSearchUrl ?? "/trouver-un-prof?q=italien";
-  return <ItalianAudioProvider paths={audioPaths}><div lang={locale} className="min-h-screen bg-[#fbf9f3] text-stone-800" data-guided-italian>
+  return <ItalianAudioProvider paths={audioPaths}><div lang={locale} className="min-h-screen bg-[#fbf9f3] text-stone-800" data-guided-italian data-travel-shell={Navigator ? true : undefined}>
     <header className="yo-course-header"><div className="yo-course-header-inner">
       <Link href={`/yo/langues${locale !== "fr" ? `?lang=${locale}` : ""}`} className="text-lg font-black text-emerald-900">Yo<span className="text-orange-700">Pratiqo</span></Link>
 

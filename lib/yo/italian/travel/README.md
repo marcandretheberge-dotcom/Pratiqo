@@ -46,9 +46,12 @@ The full three-lesson unit and its final assessment remain unchanged.
 
 ## Artwork
 
-MapYoppo.tsx is unchanged. Pose changes articulate its existing groups; the
-scooter is a separate SVG accessory. No approved PNG, travel film or Rive pilot
-file is modified.
+MapYoppo retains all 37 approved vector shapes and their colors. The far arm is
+painted above the backpack/body so it cannot disappear. Quill groups and the bag
+respond to travel; reduced motion and an inactive scene stop those animations.
+Pose changes articulate existing groups. The separate scooter and rider share
+one facing transform so both hands retain their alignment with the handlebar.
+No approved PNG, travel film or Rive pilot file is modified.
 
 No approved boarding/flight/riding movie exists in the repository. Boarding and
 flight use a short procedural transition with the approved vector and a Lucide

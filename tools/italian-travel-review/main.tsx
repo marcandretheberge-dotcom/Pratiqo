@@ -42,13 +42,13 @@ function App() {
   const [resume, setResume] = useState(false);
   const unit = units.find(u => u.id === unitId)!;
   const paths = courseAudioPaths([...unitSpeech(unit), ...units[5].lessons[2].vocabulary.map(p => p.it)]);
-  return <OnDemandLearningAudio><LearningFeedbackProvider><aside className="review-banner">
-    <strong>Preview isolée · aucun acquis réel</strong><label>Scénario <select aria-label="Scénario de démonstration" value={scenario} onChange={e => location.assign("/?lang=" + locale + "&scenario=" + e.target.value)}><option value="beginner">Débutant</option><option value="florence">Arrivée à Florence</option><option value="checkpoint">Checkpoint de Florence acquis</option></select></label>
+  return <OnDemandLearningAudio><LearningFeedbackProvider><div className="review-app"><details className="review-banner">
+    <summary>Preview isolée · aucun acquis réel</summary><div><label>Scénario <select aria-label="Scénario de démonstration" value={scenario} onChange={e => location.assign("/?lang=" + locale + "&scenario=" + e.target.value)}><option value="beginner">Débutant</option><option value="florence">Arrivée à Florence</option><option value="checkpoint">Checkpoint de Florence acquis</option></select></label>
     <label>Interface <select aria-label="Langue" value={locale} onChange={e => location.assign("/?lang=" + e.target.value)}><option>fr</option><option>en</option><option>es</option></select></label><a href="/evidence/index.html">Captures et vidéo</a>
-  </aside>
+  </div></details>
   <PreviewContext.Provider value={{ unitId, openUnit: id => { setResume(true); setUnitId(id); } }}><GuidedItalianCourse key={unitId} unit={unit} catalog={catalog} locale={locale} profile={profile}
     progressKey={COURSE_KEY} wordBank={moduleBank(unit)} visualWords={moduleVisuals(unit)} audioPaths={paths} resumeMission={resume}
     Navigator={PreviewNavigator}
-  /></PreviewContext.Provider></LearningFeedbackProvider></OnDemandLearningAudio>;
+  /></PreviewContext.Provider></div></LearningFeedbackProvider></OnDemandLearningAudio>;
 }
 createRoot(document.getElementById("root")!).render(<App/>);

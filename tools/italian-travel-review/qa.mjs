@@ -9,8 +9,8 @@ assert(/^http:\/\/127\.0\.0\.1:\d+$|^https:\/\/[a-z0-9-]+\.vercel\.app$/.test(ba
 const out=path.resolve('build/italian-travel-review/evidence');await fs.mkdir(out,{recursive:true});
 const results=[];
 try{
- for(const width of [390,1280]){
-  const context=await browser.newContext({viewport:{width,height:width===390?844:900},isMobile:width===390,hasTouch:width===390,...(width===390?{recordVideo:{dir:path.join(out,'video'),size:{width:390,height:844}}}:{})});
+ for(const [width,height] of [[375,667],[390,844],[1280,900]]){
+  const context=await browser.newContext({viewport:{width,height},isMobile:width<700,hasTouch:width<700,...(width===390?{recordVideo:{dir:path.join(out,'video'),size:{width:390,height:844}}}:{})});
   const page=await context.newPage(), errors=[],writes=[];
   await page.addInitScript(()=>{
     window.heard=[];
@@ -26,6 +26,11 @@ try{
   await page.getByRole('button',{name:'Passer',exact:true}).click();
   await page.locator('[data-city=u06]').waitFor();
   await page.evaluate(()=>document.fonts.ready);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight+1),true,'Map and Continue fit one app screen');
+  const quills=page.locator('[data-yoppo-traveler] .yo-map-quills').first();
+  const quillBefore=await quills.evaluate(el=>getComputedStyle(el).transform);
+  await page.waitForTimeout(250);
+  assert.notEqual(await quills.evaluate(el=>getComputedStyle(el).transform),quillBefore,'Idle breeze moves quills');
   assert.equal(await page.locator('[data-geographic-map]').evaluate(map=>{
     const bounds=map.getBoundingClientRect();
     return [...map.querySelectorAll('[data-city]')].every(city=>{const box=city.getBoundingClientRect();return box.left>=bounds.left&&box.right<=bounds.right&&box.top>=bounds.top&&box.bottom<=bounds.bottom;});
@@ -44,6 +49,7 @@ try{
     function frame(time){
       const traveler=document.querySelector('[data-yoppo-traveler]'), x=parseFloat(traveler.style.left)*4.8,y=parseFloat(traveler.style.top)*6;
       window.travelFrames.push({same:traveler===window.travelerBefore&&document.querySelector('[data-geographic-map]')===window.mapBefore,
+        motion:traveler.dataset.motion,packAnimation:getComputedStyle(traveler.querySelector('.yo-map-backpack')).animationName,
         visible:getComputedStyle(traveler).opacity==='1'&&getComputedStyle(window.mapBefore).visibility==='visible',
         distance:Math.min(...line.map(p=>Math.hypot(p.x-x,p.y-y))),scroll:scrollY,x,y,time});
       if(window.trackTravel)requestAnimationFrame(frame);
@@ -51,19 +57,21 @@ try{
   });
   await page.locator('[data-city=u05]').click();
   await page.waitForTimeout(450);
-  assert.equal(await page.locator('[data-yoppo-traveler]').getAttribute('data-motion'),'walking');
   await page.locator('[data-city=u06]').evaluate(city=>city.addEventListener('click',()=>{
     const traveler=document.querySelector('[data-yoppo-traveler]'), before=traveler.getAttribute('style');
+    window.retargetWasWalking=traveler.dataset.motion==='walking';
     queueMicrotask(()=>window.retargetStable=before===traveler.getAttribute('style'));
   },{capture:true,once:true}));
   await page.locator('[data-city=u06]').click();
   assert.equal(await page.evaluate(()=>window.retargetStable),true,'Retarget leaves the displayed point intact at click');
+  assert.equal(await page.evaluate(()=>window.retargetWasWalking),true,'Destination changes while the traveler is still walking');
   await page.waitForTimeout(2400);
   assert.equal(await page.locator('[data-yoppo-traveler]').getAttribute('data-motion'),'idle');
   assert.equal(await page.evaluate(()=>window.mapBefore===document.querySelector('[data-geographic-map]')&&window.travelerBefore===document.querySelector('[data-yoppo-traveler]')),true);
   const frames=await page.evaluate(()=>{window.trackTravel=false;return window.travelFrames;});
   await fs.writeFile(path.join(out,'walk-frames-'+width+'.json'),JSON.stringify(frames));
   assert.ok(frames.length>10);assert.ok(frames.every(f=>f.same&&f.visible&&f.distance<1),'Continuous visible road walk, no remount or flash');
+  assert.ok(frames.some(f=>f.motion==='walking'&&f.packAnimation==='yo-pack-sway'),'Backpack sways during actual recorded movement');
   // Motion writes styles in its own render phase. Our rAF observer can see the
   // preceding frame; include that interval instead of treating a delayed write as teleportation.
   assert.ok(frames.slice(1).every((f,i)=>Math.hypot(f.x-frames[i].x,f.y-frames[i].y)<=220*(f.time-frames[Math.max(0,i-1)].time)/1000+2),'No sampled movement exceeds the road speed over its render window');
@@ -82,18 +90,40 @@ try{
   assert.deepEqual(await ledger(),initialLedger,'Culture never grants learning evidence');
   await page.getByRole('button',{name:'Continuer le module complet',exact:true}).click();
   await page.locator('[data-yoppo-mission-window]').waitFor();
+  assert.equal(await quills.evaluate(el=>getComputedStyle(el).animationName),'none','Background motion stops during a lesson');
   await page.screenshot({path:path.join(out,'mission-'+width+'.png'),fullPage:true});
   await page.keyboard.press('Escape');
   await page.locator('[data-yoppo-mission-window]').waitFor({state:'hidden'});
   assert.equal(await page.locator('[data-yoppo-traveler]').getAttribute('style'),pos);
   await page.reload();await page.locator('[data-geographic-map]').waitFor();
   assert.equal(await page.getByRole('button',{name:'Passer',exact:true}).count(),0,'Arrival stays completed');
+  await page.locator('.review-banner summary').click();
   await page.getByLabel('Scénario de démonstration').selectOption('checkpoint');
   await page.getByRole('button',{name:'Passer',exact:true}).click();
+  await page.getByRole('button',{name:'Voyage et équipement',exact:true}).click();
   await page.getByRole('switch',{name:'Équiper le scooter'}).click();
+  await page.getByRole('button',{name:'Fermer l’équipement',exact:true}).click();
   assert.equal(await page.locator('[data-yoppo-traveler]').getAttribute('data-pose'),'riding');
-  await page.locator('[data-city=u05]').click();await page.waitForTimeout(2400);
-  await page.locator('[data-city=u06]').click();await page.waitForTimeout(2400);
+  const handMeasurements=[];
+  const checkHands=async()=>{
+    const geometry=await page.locator('[data-yoppo-traveler]').evaluate(rig=>{
+      const point=(selector,x,y)=>new DOMPoint(x,y).matrixTransform(rig.querySelector(selector).getScreenCTM());
+      const hands=[point('.yo-map-front-arm',14,88),point('.yo-map-back-arm',84,85)];
+      const grips=[point('.yo-travel-scooter',45,22),point('.yo-travel-scooter',72,22)];
+      return {distances:hands.map((hand,i)=>Math.hypot(hand.x-grips[i].x,hand.y-grips[i].y)),
+        hands:hands.map(p=>[p.x,p.y]),grips:grips.map(p=>[p.x,p.y]),facing:rig.dataset.facing,
+        arms:['.yo-map-front-arm','.yo-map-back-arm'].map(selector=>{const style=getComputedStyle(rig.querySelector(selector));return[style.transform,style.animationName];})};
+    });
+    assert.ok(geometry.distances.every(distance=>distance<8),'Both articulated hands reach the handlebar: '+JSON.stringify(geometry));
+    handMeasurements.push(...geometry.distances);
+  };
+  await checkHands();
+  await page.locator('[data-city=u05]').click();await page.waitForTimeout(450);
+  await checkHands();await page.waitForTimeout(1950);
+  await checkHands();
+  await page.locator('[data-city=u06]').click();await page.waitForTimeout(450);
+  await checkHands();await page.waitForTimeout(1950);
+  await checkHands();
   assert.equal(await page.locator('[data-city=u06]').evaluate(city=>{
     const label=city.querySelector('span').getBoundingClientRect(), scooter=document.querySelector('.yo-travel-scooter').getBoundingClientRect();
     return label.right>scooter.left&&label.left<scooter.right&&label.bottom>scooter.top&&label.top<scooter.bottom;
@@ -101,11 +131,15 @@ try{
   await page.screenshot({path:path.join(out,'scooter-'+width+'.png'),fullPage:true});
   await page.reload();await page.locator('[data-geographic-map]').waitFor();
   assert.equal(await page.locator('[data-yoppo-traveler]').getAttribute('data-pose'),'riding');
+  await page.getByRole('button',{name:'Voyage et équipement',exact:true}).click();
   await page.getByRole('switch',{name:'Descendre du scooter'}).click();
+  await page.getByRole('button',{name:'Fermer l’équipement',exact:true}).click();
   assert.equal(await page.locator('[data-yoppo-traveler]').getAttribute('data-pose'),'walking');
   await page.emulateMedia({reducedMotion:'reduce'});
   await page.locator('[data-city=u05]').click();await page.waitForTimeout(150);
   assert.equal(await page.locator('[data-yoppo-traveler]').getAttribute('data-motion'),'idle');
+  assert.equal(await quills.evaluate(el=>getComputedStyle(el).animationName),'none','Reduced motion disables wind');
+  await page.locator('.review-banner summary').click();
   await page.getByLabel('Scénario de démonstration').selectOption('beginner');
   await page.getByRole('button',{name:'Embarquer',exact:true}).click();
   await page.getByRole('button',{name:'Passer',exact:true}).waitFor({state:'hidden'});
@@ -121,7 +155,7 @@ try{
   assert.ok(Date.now()-flightStart>=2500,'Normal flight visibly runs before arrival');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false,'No horizontal overflow');
   assert.deepEqual(errors,[]);assert.deepEqual(writes,[]);
-  results.push({width,passed:true,frames:frames.length,maxRoadError:Math.max(...frames.map(f=>f.distance)),checks:['skip','smooth-retarget','stable-map-url-scroll','locked','culture-no-mastery','real-MP3-on-request','real-mission','resume-position','flight-not-replayed','normal-flight','scooter-equip-remove-persist','live-reduced-motion','beginner','no-network-writes']});
+  results.push({width,passed:true,frames:frames.length,maxRoadError:Math.max(...frames.map(f=>f.distance)),maxHandGripError:Math.max(...handMeasurements),checks:['one-screen-app','idle-wind','travel-backpack-sway','both-hands-on-handlebar','skip','smooth-retarget','stable-map-url-scroll','locked','culture-no-mastery','real-MP3-on-request','real-mission','resume-position','flight-not-replayed','normal-flight','scooter-equip-remove-persist','live-reduced-motion','beginner','no-network-writes']});
   const video=page.video();await context.close();
   if(video)await video.saveAs(path.join(out,'mobile-journey.webm'));
  }

@@ -1,0 +1,9 @@
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:#dceeee}
+.review-app{height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr);overflow:hidden}
+.review-banner{background:#e5eeea;color:#36554c;font-size:11px}
+.review-banner summary{cursor:pointer;padding:8px 12px;min-height:32px}
+.review-banner>div{padding:4px 12px 10px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.review-banner select{max-width:220px;min-height:44px;padding:5px;border:1px solid #adc4b7;background:white;border-radius:4px}
+.review-banner a{text-decoration:underline;min-height:44px;display:inline-flex;align-items:center}
+@media(max-height:600px){.review-app{height:auto;min-height:100dvh;overflow:visible}}
+@font-face{font-family:Inter;src:url(/fonts/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}

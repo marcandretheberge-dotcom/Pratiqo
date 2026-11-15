@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, LockKeyhole, MapPin, Bike, Footprints, Plane } from "lucide-react";
+import { ArrowRight, LockKeyhole, MapPin, Bike, Footprints, Plane, Backpack, X } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
 import type { ItalianNavigatorContext } from "../guided/GuidedItalianCourse";
 import type { CourseUnit } from "@/lib/yo/italian/course/courseTypes";
 import type { YoLocale } from "@/lib/yo/types";
@@ -24,6 +25,7 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
   const [memory, setMemory] = useState<TravelMemory>(() => parseTravelMemory(null));
   const latest = useRef(memory), [ready, setReady] = useState(false), [stored, setStored] = useState(true);
   const [discovery, setDiscovery] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   const guideBefore = useRef(guide);
   const initialJourney = useRef({ guide, steps: journey.steps });
   const persist = useCallback(() => {
@@ -67,14 +69,15 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
     if (city.unitId === unit.id) openCurrentMission(); else openUnit(city.unitId);
   }
   if (!ready) return <p role="status">{t("Ton voyage se prépare…", "Preparing your journey…", "Preparando tu viaje…")[locale]}</p>;
-  return <section className="italian-travel" data-travel-review>
+  return <section className="italian-travel" data-travel-review data-scene-active={active && !toolsOpen && !discovery && memory.arrived}>
     <style>{travelStyles}</style>
-    <header className="travel-heading"><div><p className="travel-eyebrow">IL TUO VIAGGIO</p><h1>{t("L’Italie, pas à pas", "Italy, one step at a time", "Italia, paso a paso")[locale]}</h1></div><button type="button" className="travel-icon" title={t("Revoir l’arrivée", "Replay arrival", "Repetir la llegada")[locale]} onClick={() => commit({ arrived: false })}><Plane size={21}/></button></header>
+    <header className="travel-heading"><h1>{t("Mon voyage en Italie", "My Italian journey", "Mi viaje por Italia")[locale]}</h1><div className="travel-heading-tools"><button type="button" className="travel-icon" title={t("Revoir l’arrivée", "Replay arrival", "Repetir la llegada")[locale]} onClick={() => commit({ arrived: false })}><Plane size={21}/></button><button type="button" className="travel-icon" aria-label={t("Voyage et équipement", "Journey and equipment", "Viaje y equipo")[locale]} title={t("Voyage et équipement", "Journey and equipment", "Viaje y equipo")[locale]} onClick={() => setToolsOpen(true)}><Backpack size={21}/></button></div></header>
     {!stored && <p role="status">{t("La reprise est limitée à cette session : le stockage est indisponible.", "Resume is limited to this session: storage is unavailable.", "La reanudación se limita a esta sesión: el almacenamiento no está disponible.")[locale]}</p>}
     <nav className="travel-chapters" aria-label={t("Régions du voyage", "Journey regions", "Regiones del viaje")[locale]}>
       {worlds.map((w, i) => <button type="button" key={w.id} aria-pressed={i === worldIndex} disabled={!w.open} onClick={() => { const destination = w.citiesWithProgress.find(c => c.unlocked && !c.mastered) ?? w.citiesWithProgress[0]; commit({ selected: destination.unitId }); }}><span>0{i + 1}</span>{w.title[locale]}{!w.open && <LockKeyhole size={14}/>}</button>)}
     </nav>
     <div className="travel-layout">
+      <div className="travel-stage">
       <div className="travel-map" data-geographic-map={world.id}>
         <svg viewBox="0 0 480 600" aria-hidden className="travel-geography">
           <defs><pattern id="sea-lines" width="40" height="38" patternUnits="userSpaceOnUse"><path d="M4 18 Q10 13 16 18 T28 18" fill="none" stroke="#88b9bc" strokeWidth=".8" opacity=".5"/></pattern><pattern id="land-dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="4" cy="8" r=".9" fill="#88a87d" opacity=".35"/></pattern></defs>
@@ -88,22 +91,28 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
         </svg>
         {world.citiesWithProgress.map((c, i) => { const [x,y] = project(CITY_COORDINATES[c.unitId], bounds); return <button type="button" key={c.unitId} className="travel-city" data-city={c.unitId} data-side={x < 160 || i % 2 ? "right" : "left"} aria-pressed={memory.selected === c.unitId} aria-disabled={!c.unlocked} style={{ left: x / 480 * 100 + "%", top: y / 600 * 100 + "%" }}
           onClick={() => { if (!c.unlocked || memory.selected === c.unitId) return; feedback.step(); commit({ selected: c.unitId }); }}><span>{c.name}</span>{!c.unlocked ? <LockKeyhole size={13}/> : <span className="travel-city-number">{i + worldIndex * 4 + 1}</span>}</button>; })}
-        <MapTraveler key={world.id} index={index} locale={locale} road={road} initialPosition={memory.positions[world.id] ?? index} onPosition={positionChanged} active={active && memory.arrived && !discovery} pose={equipped ? "riding" : "walking"} accessory={equipped ? <MapScooter/> : undefined}/>
+        <MapTraveler key={world.id} index={index} locale={locale} road={road} initialPosition={memory.positions[world.id] ?? index} onPosition={positionChanged} active={active && memory.arrived && !discovery && !toolsOpen} pose={equipped ? "riding" : "walking"} accessory={equipped ? <MapScooter/> : undefined}/>
         <span className="travel-map-credit">Natural Earth · WGS84</span>
       </div>
+      </div>
       <div className="travel-destination" aria-live="polite">
-        <p className="travel-eyebrow"><MapPin size={14}/>{city.name} · {t("Étape", "Stage", "Etapa")[locale]} {city.step?.unit.number}</p>
-        <h2>{city.step?.unit.title[locale]}</h2><p>{city.step?.unit.objectives[0]?.[locale]}</p>
+        <div className="travel-dock-copy"><p className="travel-eyebrow"><MapPin size={14}/>{city.name} · {t("Étape", "Stage", "Etapa")[locale]} {city.step?.unit.number}</p>
+        <h2>{city.step?.unit.title[locale]}</h2></div>
         <button data-travel-continue type="button" className="travel-primary" disabled={!city.unlocked} onClick={enterMission}>{t("Continuer à", "Continue in", "Continuar en")[locale]} {city.name}<ArrowRight size={19}/></button>
-        {city.unitId === "u06" && <button type="button" className="travel-text-button" onClick={() => setDiscovery(true)}>{t("Découvrir Florence", "Discover Florence", "Descubrir Florencia")[locale]}</button>}
+      </div>
+    </div>
+    <Dialog.Root open={toolsOpen} onOpenChange={setToolsOpen}><Dialog.Portal><Dialog.Overlay className="travel-overlay"/><Dialog.Content className="travel-tool-sheet">
+      <Dialog.Close className="travel-close" aria-label={t("Fermer l’équipement", "Close equipment", "Cerrar equipo")[locale]}><X size={20}/></Dialog.Close>
+      <Dialog.Title>{t("Mon carnet de voyage", "My travel notebook", "Mi diario de viaje")[locale]}</Dialog.Title>
+      <Dialog.Description>{city.step?.unit.objectives[0]?.[locale]}</Dialog.Description>
+        {city.unitId === "u06" && <button type="button" className="travel-text-button" onClick={() => { setToolsOpen(false); setDiscovery(true); }}>{t("Découvrir Florence", "Discover Florence", "Descubrir Florencia")[locale]}</button>}
         <div className="travel-equipment"><div className="travel-equipment-icon">{equipped ? <Bike/> : <Footprints/>}</div><div><h3>{earned ? t("Ton scooter est prêt", "Your scooter is ready", "Tu scooter está listo")[locale] : t("Un scooter à gagner", "A scooter to earn", "Un scooter por ganar")[locale]}</h3>
           <p>{earned ? t("Un souvenir de ton checkpoint à Florence.", "A keepsake from your Florence checkpoint.", "Un recuerdo de tu checkpoint en Florencia.")[locale] : t("Termine les activités des deux premières leçons de Florence.", "Complete the activities in Florence’s first two lessons.", "Completa las actividades de las dos primeras lecciones de Florencia.")[locale]}</p>
           {earned && <button type="button" role="switch" aria-checked={equipped} onClick={() => { commit({ equipped: !equipped }); feedback.sample("step"); }}>{equipped ? t("Descendre du scooter", "Get off the scooter", "Bajar del scooter")[locale] : t("Équiper le scooter", "Equip scooter", "Equipar el scooter")[locale]}</button>}
         </div></div>
-        {city.unitId === "u06" && unit.id === "u06" && earned && <button className="travel-text-button" type="button" onClick={openTrivia}>{t("Pause : jouer avec les expressions apprises", "Break: play with the expressions you learned", "Pausa: juega con las expresiones aprendidas")[locale]}</button>}
+        {city.unitId === "u06" && unit.id === "u06" && earned && <button className="travel-text-button" type="button" onClick={() => { setToolsOpen(false); openTrivia(); }}>{t("Pause : jouer avec les expressions apprises", "Break: play with the expressions you learned", "Pausa: juega con las expresiones aprendidas")[locale]}</button>}
         <details className="travel-details"><summary>{t("Carnet de voyage", "Travel notebook", "Diario de viaje")[locale]}</summary><p>{t("Les trajets suivent les modules, pas les routes. Le scooter et le trivia ne débloquent aucune ville.", "Paths follow the modules, not roads. The scooter and trivia do not unlock cities.", "Los caminos siguen los módulos, no las carreteras. El scooter y el trivia no desbloquean ciudades.")[locale]}</p><FeedbackSettings locale={locale}/></details>
-      </div>
-    </div>
+    </Dialog.Content></Dialog.Portal></Dialog.Root>
     {!memory.arrived && active && <TravelArrival locale={locale} onArrive={arrive}/>}
     {discovery && <FlorenceDiscovery locale={locale} unit={florence} onClose={() => setDiscovery(false)} onCultureComplete={() => commit({ cultureComplete: true })} onContinue={() => { commit({ discovered: true }); setDiscovery(false); if (unit.id === "u06") openCurrentMission(); else openUnit("u06"); }}/>}
   </section>;

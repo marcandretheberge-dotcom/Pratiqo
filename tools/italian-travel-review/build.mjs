@@ -14,7 +14,7 @@ await build({entryPoints:['tools/italian-travel-review/main.tsx'],outfile:path.j
   b.onLoad({filter:/.*/,namespace:'review-next'},a=>({contents:a.path.endsWith('navigation')?`export {usePathname,useSearchParams,useRouter,notFound} from ${JSON.stringify(shim)};`:`export {${a.path.endsWith('image')?'Image':'Link'} as default} from ${JSON.stringify(shim)}`,loader:'tsx',resolveDir:root}));
  }}]});
 const css=await postcss([tailwind()]).process('@import "tailwindcss" source(none);\n@source "../../components/yo";\n@source "../../components/companion";\n@source "./main.tsx";',{from:path.join(root,'tools/italian-travel-review/styles.css')});
-await fs.writeFile(path.join(out,'app.css'),css.css+'\n'+await fs.readFile('components/yo/italian/guided/ItalianCourseExperience.css','utf8')+'\nbody{margin:0;font-family:Inter,system-ui,sans-serif}.review-banner{padding:8px 12px;background:#e5eeea;color:#36554c;font-size:12px;display:flex;flex-wrap:wrap;align-items:center;gap:10px}.review-banner select{max-width:220px;padding:5px;border:1px solid #adc4b7;background:white;border-radius:4px}.review-banner a{text-decoration:underline}@font-face{font-family:Inter;src:url(/fonts/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}');
+await fs.writeFile(path.join(out,'app.css'),css.css+'\n'+await fs.readFile('components/yo/italian/guided/ItalianCourseExperience.css','utf8')+'\n'+await fs.readFile('tools/italian-travel-review/review.css','utf8'));
 for(const sub of ['images/yo/italian','images/yo/vocabulary','companion/travel','fonts']) {
  await fs.mkdir(path.dirname(path.join(out,sub)),{recursive:true});
  await fs.cp(path.join(root,'public',sub),path.join(out,sub),{recursive:true});

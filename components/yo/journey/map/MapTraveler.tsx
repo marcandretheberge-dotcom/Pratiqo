@@ -55,9 +55,9 @@ export function MapTraveler({ index, locale, active = true, road = approvedRoad,
     es: walking ? pose === "riding" ? "Yoppo va en scooter hacia tu ciudad" : "Yoppo camina hacia tu ciudad" : "Yoppo te espera",
   }[locale];
   return <motion.div data-yoppo-traveler data-destination-index={index} data-motion={walking ? "walking" : "idle"}
-    data-facing={facing} data-pose={pose} className="yo-map-companion" initial={false} style={{ left, top }} role="img" aria-label={label}>
+    data-facing={facing} data-pose={pose} data-active={active} data-reduced={reduce} className="yo-map-companion" initial={false} style={{ left, top }} role="img" aria-label={label}>
     <style>{travelerStyles}</style>
-    <MapYoppo/>{accessory}
+    <div className="yo-map-rig"><MapYoppo/>{accessory}</div>
     <span className="yo-map-avatar-fallback" aria-hidden><CompanionAvatar visualId="travel" state="map" locale={locale} size="sm" compact/></span>
   </motion.div>;
 }

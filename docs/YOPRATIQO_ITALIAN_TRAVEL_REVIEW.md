@@ -59,9 +59,11 @@ separate. A city tap moves Yoppo on the visible path without a route change or
 mission opening. Retargeting starts at the displayed point. One Continue button
 opens/resumes the real mission; closing it retains the exact cosmetic position.
 
-`MapYoppo.tsx` is unchanged. The scooter is a separate accessory; existing arm and
-leg groups articulate into a riding pose. The face, colors and proportions are not
-redrawn. The original avatar fallback and approved taxi clip remain unchanged.
+`MapYoppo.tsx` preserves every original vector shape, color and proportion. Its far
+arm now paints above the backpack/body, and its existing quill shapes are grouped
+for wind animation. The scooter is a separate accessory; arm and leg groups
+articulate into a riding pose. The original avatar fallback and approved taxi clip
+remain unchanged.
 
 Scooter eligibility reuses `canPlayItalianTrivia(u06, progress)`: all activities
 in the first two Florence lessons, or its existing independent final assessment.
@@ -96,7 +98,7 @@ bottom inset and large touch target.
 - `tests/yo/yopratiqoTravelAudioPolicy.test.tsx`: inherited autoplay suppression,
   explicit listening and preservation of existing course defaults.
 
-## Validation performed
+## Initial validation at c4cd16e7
 
 Commands run in this isolated worktree, with Node 24.15.0 and locked dependencies:
 
@@ -154,3 +156,77 @@ permission; the restricted attempt was not counted as a passing build.
 
 Final preview URL, tested commit and draft PR are recorded in the PR description.
 Visual approval is required before any merge or production activation.
+
+## App-feel and visible-arm follow-up
+
+The user's open Site was the earlier Italian design preview, not this isolated
+geographic prototype. Its screenshot confirmed the shared vector's far arm was
+mostly covered by the backpack. This follow-up stays in draft PR #463.
+
+- Correct paint order, with no new facial features or changed primitive geometry.
+  A regression hash checks the same 37 approved shapes/color attributes.
+- Subtle idle breathing, moving quills, stronger travel wind and backpack sway.
+  Effects stop during lessons/equipment dialogs and under reduced motion.
+- A shared rider/accessory facing transform keeps both hands on the handlebar
+  when reversing direction. The scooter remains removable and cosmetic.
+- Single-screen, unframed map instead of a long page and side panel. Continue is
+  in a compact bottom dock; equipment and preferences are in a keyboard-accessible
+  sheet. Existing notebook and course tools stay available.
+- Review fixtures remain clearly identified but their controls are collapsible.
+  Small-height/landscape screens may scroll so controls remain reachable.
+- No progression, entitlement, sound preference, purchase or production changes.
+
+The follow-up adds browser assertions for viewport fit, moving idle quills,
+backpack sway, motion pause, and both hand-to-handlebar distances in both directions.
+Final executed results and the updated Preview URL are recorded in the draft PR.
+Initial full-build results above are historical, not a claim that a changed
+revision has automatically passed the same checks.
+
+### Follow-up validation, 2026-11-14 (America/Toronto)
+
+- `node tools/world-map-review/build-full-local.mjs`: PASS, exit 0 at
+  `2026-11-15T04:17:49Z`, including the complete application TypeScript check.
+  Only the established local backend was used. The existing Turbopack warning
+  about `experimental.forceSwcTransforms` remains; no check was disabled.
+- The final preview-only proportional scooter sizing was rebuilt with
+  `node tools/italian-travel-review/build.mjs`, then `--share` for publication.
+  This navigator is still not activated by an application route.
+- `node --import tsx tests/yo/yopratiqoMapCharacter.test.ts`: PASS. The 37 original
+  vector primitives retain SHA-256
+  `3207d17679aac4aec486e592d7c7024260fb92815531a4eb8c005898171a0b2d`.
+- `node --import tsx tests/yo/yopratiqoSharedWorldMap.test.tsx`: PASS, 8 groups.
+- `node --import tsx tests/yo/yopratiqoTapFlow.test.tsx`: PASS, 23 checks.
+- `node --import tsx tests/yo/yopratiqoItalianTravel.test.ts`: PASS.
+- `npm run test:yo-italian-course`: PASS, all nine constituent suites. Includes
+  30 progress checks, 32 player checks, 9 audio checks, 9 navigation checks,
+  16 guided checks, 14 personalization checks, content, culture and worlds.
+- Targeted ESLint over the seven changed component/style files, the character
+  regression test and preview entry: PASS. Browserslist age warning only.
+- `node --import tsx scripts/validate_i18n.ts`: PASS, 3562 keys per locale.
+- `git diff --check`: PASS.
+- `node tools/italian-travel-review/qa.mjs <bundled-runtime-package.json>`: PASS
+  in Chromium at 375x667, 390x844 and 1280x900. The runtime used Node 24.15.0.
+  The recorded walks contain 217, 225 and 159 frames respectively. Maximum road
+  deviations are below 0.18 map units. Maximum hand-to-grip distances are
+  4.22px, 4.22px and 4.75px, below the unchanged 8px assertion.
+- `node tools/italian-travel-review/character.mjs <bundled-runtime-package.json>`:
+  PASS; enlarged riding capture and transformed hand/grip coordinates saved.
+
+The browser checks cover the single-screen map, visible idle quill movement,
+backpack sway, actual mid-walk retargeting, continuous road travel, stable DOM,
+URL/scroll and course ledger, locked destinations, voluntary real MP3 playback,
+mission return position, paused background motion, Skip, remembered arrival,
+full flight, scooter equip/remove/reload, live reduced motion, and no network
+writes or uncaught page errors. Mobile and desktop captures were visually read.
+
+Two actual pose defects were fixed: walking limb animation could override the
+riding pose, and the desktop character grew while the scooter stayed fixed-size.
+Both now share a proportional rig and facing transform. A separate browser
+assertion initially read the backpack after arrival under heavy build load; it
+now records motion and animation in the same animation frame. It also explicitly
+requires the retarget click to occur while walking. No threshold was loosened.
+
+The shared origin is rebuilt from the reviewed commit and records its SHA and
+bundle hash in `review-build.json`. The PR description carries the current URL.
+This remains a visual-review draft, not approval for production or an iPhone
+physical-device validation.
