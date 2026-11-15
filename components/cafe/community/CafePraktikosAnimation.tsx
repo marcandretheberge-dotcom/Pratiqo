@@ -55,7 +55,8 @@ export function CafePraktikosAnimation({ locale = "fr" }: { locale?: CommunityLo
     };
   }, [cue.holdMs, position, reducedMotion, hidden, paused, sequence.length]);
 
-  return <div className={styles.praktikosOverlay} data-cafe-praktikos={reducedMotion ? "static" : paused ? "paused" : "live"}>
+  // Normal-flow band beneath the film — never an absolute video overlay.
+  return <div className={styles.praktikosBand} data-cafe-praktikos={reducedMotion ? "static" : paused ? "paused" : "live"}>
     {/* Do not announce a changing decorative slogan every two seconds. */}
     <span className={styles.srOnly} lang="fr">Une racine. Mille langues. Le plaisir de pratiquer. Pas besoin de parler parfaitement. Viens pratiquer.</span>
     <div className={styles.praktikos} aria-hidden="true" data-cafe-praktikos-slot>

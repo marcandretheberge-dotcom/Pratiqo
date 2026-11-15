@@ -27,6 +27,15 @@ assert.doesNotMatch(publicEntrance, /useCafeCommunity|createCommunityDemoTranspo
 assert.doesNotMatch(publicEntrance, /preferences were saved|préférences ont été enregistr|preferencias se guardaron/i);
 assert.doesNotMatch(publicEntrance, /from ["']\.\/CafeCommunityApp["']|from ["']@\/components\/cafe\/community\/CafeCommunityApp["']/);
 
+const chrome = read("components/cafe/community/CafeCommunityChrome.tsx");
+assert.match(chrome, /<CafeHeroMedia[^>]*\/>/);
+assert.match(chrome, /<CafePraktikosAnimation/);
+assert.doesNotMatch(chrome, /overlay=\{/);
+assert.doesNotMatch(chrome, /overlay=\{<CafePraktikosAnimation/);
+const praktikosCss = read("components/cafe/community/community.module.css");
+assert.match(praktikosCss, /\.praktikosBand/);
+assert.doesNotMatch(praktikosCss, /\.praktikosOverlay\s*\{[^}]*inset\s*:\s*0/);
+
 assert.equal(hash, "c057899c53239fd0baf806bf605877b1ec82ecef3dac73840976f96e214be9b6");
 
 console.log("[cafe:public-entrance] route contract and video hash passed");

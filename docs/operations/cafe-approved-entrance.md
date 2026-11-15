@@ -6,8 +6,9 @@
 - Preserve public/videos/cafe-world-journey.mp4 byte-for-byte. Approved SHA-256: c057899c53239fd0baf806bf605877b1ec82ecef3dac73840976f96e214be9b6.
 - Enter is immediately usable; never require completion of the film or typography loop.
 - Enter → explicit native/learning-language selection → lobby → text conversation. Do not silently bypass language selection for a returning profile.
-- One practice-family word and its native language label at a time, followed by the four individual French brand lines: Une racine. Mille langues. / Le plaisir de pratiquer. / Pas besoin de parler parfaitement. / Viens pratiquer.
-- Six words per loop, rotating through a curated pool. Fixed-position, reserved-height typography with understated opacity fades. The typography never controls or remounts the video.
+- Keep the original CafeHeroMedia multilingual invitations inside the film (timing, translations and final invitation unchanged). Do not replace them with PRAKTIKÓS.
+- Below the film, run the separate PRAKTIKÓS sequence: one practice-family word and its native language label at a time, then the four individual French brand lines: Une racine. Mille langues. / Le plaisir de pratiquer. / Pas besoin de parler parfaitement. / Viens pratiquer.
+- Six words per loop, rotating through a curated pool. Reserved-height typography in normal flow beneath the video with understated opacity fades. The typography never overlays, controls or remounts the video.
 - Reduced motion uses static copy. A separate accessible word-pause control must not pause the film. No repeated screen-reader live announcements of decorative copy.
 - Keep this review isolated: fixture data, no Supabase client, no real authentication, no Daily calls. Do not enable production flags to display a design.
 - Review destination: pratiqo-cafe-pr3b.vercel.app. No new PR. Continue on feat/cafe-community-text-first; #464 was already merged, so later branch commits are not retroactively part of that merged PR.

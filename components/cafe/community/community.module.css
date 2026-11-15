@@ -10,16 +10,17 @@
 .entranceFilm { width: min(100%,760px); border-radius: 28px; }
 .entranceTitle { font-family: Georgia,"Times New Roman",serif; font-size: clamp(2.7rem,7vw,5.6rem); font-weight: 400; letter-spacing: -.055em; line-height: .96; color: #f6eee3; }
 .screen[data-cafe-step="entrance"] > .primary { border-radius: 999px; min-height:52px; padding:12px 28px; margin-top:12px; }
-.praktikosOverlay { position:absolute; inset:0; z-index:1; pointer-events:none; }
-.praktikosOverlay .praktikos { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:calc(100% - 32px); max-width:40rem; height:6.2rem; min-height:6.2rem; margin:0; }
-.praktikosCue { width:100%; display:grid; grid-template-rows:4.4rem 1.4rem; align-items:center; }
-.praktikosText { align-self:center; color:#fff8ed; font-family:Georgia,"Times New Roman",serif; font-size:clamp(1.05rem,4vw,2.1rem); font-weight:400; line-height:1.3; text-wrap:balance; text-shadow:0 2px 8px #000,0 1px 24px #000; }
-.praktikosLang { color:#fff8ed; margin:0; text-shadow:0 1px 6px #000; }
-.praktikosControl { position:absolute; top:10px; left:10px; pointer-events:auto; display:grid; place-items:center; width:44px; height:44px; padding:0; border:1px solid #f5ecdf66; border-radius:999px; background:#110d0bd1; color:#f5ecdf; cursor:pointer; font-size:12px; }
+/* Praktikos sits below the film in normal flow; in-video invitations stay in CafeHeroMedia. */
+.praktikosBand { position:relative; width:min(100%,40rem); margin:2px auto 0; display:grid; justify-items:center; gap:10px; pointer-events:none; }
+.praktikosBand .praktikos { position:relative; width:100%; height:7rem; min-height:7rem; margin:0; display:grid; place-items:center; }
+.praktikosCue { width:100%; display:grid; grid-template-rows:5.2rem 1.5rem; align-items:center; text-align:center; }
+.praktikosText { align-self:center; margin:0; color:#f6eee3; font-family:Georgia,"Times New Roman",serif; font-size:clamp(1.05rem,3.6vw,1.85rem); font-weight:400; line-height:1.3; text-wrap:balance; }
+.praktikosLang { margin:0; color:#d8cfc0; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; }
+.praktikosControl { position:relative; pointer-events:auto; display:grid; place-items:center; width:44px; height:44px; padding:0; border:1px solid #f5ecdf66; border-radius:999px; background:#110d0bd1; color:#f5ecdf; cursor:pointer; font-size:12px; }
 .srOnly { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0; }
 .filterSelect,.pill button { color:var(--ink); }
 .tab[aria-pressed=true] { background:#efe3d2; color:#211914; }
-@media(max-width:460px) { .wrapCinematic{padding-top:94px}.screen[data-cafe-step="entrance"]{min-height:calc(100dvh - 160px);gap:22px}.praktikosOverlay .praktikos{top:62%;height:5rem;min-height:5rem}.praktikosCue{grid-template-rows:3.5rem 1.2rem}.praktikosText{font-size:1.05rem}.praktikosLang{font-size:.65rem}.entranceTitle{font-size:2.7rem} }
+@media(max-width:460px) { .wrapCinematic{padding-top:94px}.screen[data-cafe-step="entrance"]{min-height:calc(100dvh - 160px);gap:22px}.praktikosBand .praktikos{height:6.2rem;min-height:6.2rem}.praktikosCue{grid-template-rows:4.4rem 1.3rem}.praktikosText{font-size:1.05rem}.praktikosLang{font-size:.65rem}.entranceTitle{font-size:2.7rem} }
 
 /* Public gated entrance — interface language vs practice language. */
 .publicEntrance { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }

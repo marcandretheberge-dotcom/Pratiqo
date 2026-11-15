@@ -27,14 +27,16 @@ export function CommunityFrame({ locale, courseReturnHref, children, compact = f
   </main>;
 }
 
-/** Screen 1 — video, title, fixed Praktikos animation, single Entrer CTA. */
+/** Screen 1 — video with its own invitations, Praktikos below, title, Entrer CTA. */
 export function CafeEntranceScreen({ locale, heroVideoSrc = null, onEnter, enterHref, enterLabel }: {
   locale: CommunityLocale; heroVideoSrc?: string | null; onEnter?: () => void; enterHref?: string; enterLabel?: string;
 }) {
   const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
   const label = enterLabel ?? t("Entrer", "Enter", "Entrar");
   return <section className={styles.screen} data-cafe-step="entrance" aria-labelledby="cafe-entrance-title">
-    <CafeHeroMedia locale={locale} videoSrc={heroVideoSrc} className={styles.entranceFilm} overlay={<CafePraktikosAnimation locale={locale} />} />
+    {/* No overlay: CafeHeroMedia keeps its original in-film invitation captions. */}
+    <CafeHeroMedia locale={locale} videoSrc={heroVideoSrc} className={styles.entranceFilm} />
+    <CafePraktikosAnimation locale={locale} />
     <h1 id="cafe-entrance-title" className={styles.entranceTitle}>Café des langues</h1>
     {enterHref ? <a className={styles.primary} href={enterHref}>{label}</a> : <button className={styles.primary} type="button" onClick={onEnter}>{label}</button>}
   </section>;
