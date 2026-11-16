@@ -1,4 +1,4 @@
-import { isCafeCommunityEnabled } from "./communityFeatureFlag";
+import { isCafeCommunityEnabled, isCafePeopleEnabled } from "./communityFeatureFlag";
 import { isCafeRoomProviderEnabled } from "./roomFeatureFlag";
 import { authenticateCafeRequest, type CafeAuthenticatedUser } from "./serverAuth";
 import { getSupabaseAdmin } from "../supabaseAdmin";
@@ -18,6 +18,7 @@ export type CafeCommunityLimit = { status: 429 | 503; retryAfter: number } | nul
 export type CafeCommunityServerDependencies = {
   enabled: () => boolean;
   videoEnabled: () => boolean;
+  peopleEnabled?: () => boolean;
   authenticate: (request: Request) => Promise<CafeAuthenticatedUser>;
   rpc: (name: string, args: Record<string, unknown>) => Promise<CafeCommunityRpcReply>;
   limit: (request: Request, actorId: string, operation: string) => Promise<CafeCommunityLimit>;
@@ -37,6 +38,7 @@ const SAFE_FAILURES = new Set([
   "call_declined", "call_ended", "call_limit", "invitation_cooldown", "already_in_call", "not_call_recipient",
   "room_access_denied", "call_access_denied", "report_access_denied", "report_not_found", "already_in_room", "call_busy",
   "rate_limited", "too_many_requests", "operation_conflict", "conflict", "cafe_unavailable", "provider_unavailable",
+  "friendship_not_found", "friendship_limit", "friendship_cooldown", "request_pending", "not_friend_recipient",
 ]);
 const FORBIDDEN = new Set([
   "profile_required", "profile_incomplete", "account_unavailable", "account_inactive", "adult_agreement_required",
@@ -81,7 +83,7 @@ function publicCommandResult(raw: unknown, action: CafeCommunityCommand["action"
   const value = communityRecord(raw);
   if (!value || value.ok !== true) return null;
   const result: Record<string, unknown> = { ok: true };
-  for (const key of ["roomId", "callId", "reportId"] as const) {
+  for (const key of ["roomId", "callId", "reportId", "friendshipId"] as const) {
     if (value[key] !== undefined) {
       const id = communityUuid(value[key]);
       if (!id) return null;
@@ -117,7 +119,7 @@ export function createCafeCommunityHandlers(deps: CafeCommunityServerDependencie
     requireVideo = false,
   ): Promise<Response> => {
     try {
-      if (!deps.enabled() || (requireVideo && !deps.videoEnabled())) return failure("not_found", 404);
+      if (!deps.enabled() || (requireVideo && (!deps.videoEnabled() || deps.peopleEnabled?.()))) return failure("not_found", 404);
       if (request.method !== method) return communityJson({ ok: false, code: "method_not_allowed" }, 405, { Allow: method });
       if (method === "POST" && !isCommunitySameOrigin(request)) return failure("origin_not_allowed", 403);
       const auth = await deps.authenticate(request);
@@ -147,7 +149,7 @@ export function createCafeCommunityHandlers(deps: CafeCommunityServerDependencie
         if (rawRoomId !== null && !roomId) return failure("invalid_request", 400);
         const limit = await limited(request, actorId, "snapshot");
         if (limit) return limit;
-        const result = await rpc("snapshot", "cafe_community_snapshot_server", { p_actor_id: actorId, p_room_id: roomId });
+        const result = await rpc("snapshot", deps.peopleEnabled?.() ? "cafe_community_people_snapshot_server" : "cafe_community_snapshot_server", { p_actor_id: actorId, p_room_id: roomId });
         if (result.error) return failure("cafe_unavailable");
         const denied = databaseFailure(result.data);
         if (denied) return denied;
@@ -162,12 +164,15 @@ export function createCafeCommunityHandlers(deps: CafeCommunityServerDependencie
         if (!body.ok) return failure(body.code, body.status);
         const command = parseCommunityCommand(body.value, now());
         if (!command) return failure("invalid_request", 400);
-        if ((command.action === "call.invite" || (command.action === "call.respond" && command.accept)) && !deps.videoEnabled()) return failure("not_found", 404);
+        const people = deps.peopleEnabled?.() === true;
+        if (!people && (command.action.startsWith("friend.") || (command.action === "profile.save" && command.discoverable !== undefined)
+          || (command.action === "report.submit" && !command.roomId && !command.callId))) return failure("not_found", 404);
+        if ((command.action === "call.invite" || (command.action === "call.respond" && command.accept)) && (!deps.videoEnabled() || people)) return failure("not_found", 404);
         if (("targetId" in command && command.targetId === actorId)) return failure("invalid_request", 400);
         const limit = await limited(request, actorId, command.action);
         if (limit) return limit;
         const { action, ...payload } = command;
-        const result = await rpc(action, "cafe_community_command_server", { p_actor_id: actorId, p_action: action, p_payload: payload });
+        const result = await rpc(action, people ? "cafe_community_people_command_server" : "cafe_community_command_server", { p_actor_id: actorId, p_action: action, p_payload: payload });
         if (result.error) return failure("cafe_unavailable");
         const denied = databaseFailure(result.data);
         if (denied) return denied;
@@ -197,7 +202,7 @@ export function createCafeCommunityHandlers(deps: CafeCommunityServerDependencie
       return withActor(request, "GET", "call.status", async actorId => {
         // Existing call pages stop their media on the next status poll when video is disabled.
         // Ending and blocking remain available so the provider outbox can still be drained.
-        if (!deps.videoEnabled()) return failure("call_unavailable", 409);
+        if (!deps.videoEnabled() || deps.peopleEnabled?.()) return failure("call_unavailable", 409);
         const callId = communityUuid(rawCallId);
         if (!callId) return failure("invalid_request", 400);
         const limit = await limited(request, actorId, "call.status");
@@ -262,6 +267,7 @@ export function createCafeCommunityHandlers(deps: CafeCommunityServerDependencie
 }
 
 function operationLimit(operation: string): number {
+  if (operation === "friend.request" || operation === "photo.write") return 6;
   if (operation === "snapshot" || operation === "call.status") return 180;
   if (operation === "presence.heartbeat" || operation === "presence.leave") return 120;
   if (operation === "room.create") return 6;
@@ -274,6 +280,7 @@ function operationLimit(operation: string): number {
 /** Production dependencies stay server-side; tests inject all access and provider boundaries. */
 export const cafeCommunityHandlers = createCafeCommunityHandlers({
   enabled: isCafeCommunityEnabled,
+  peopleEnabled: isCafePeopleEnabled,
   videoEnabled: isCafeRoomProviderEnabled,
   authenticate: authenticateCafeRequest,
   rpc: async (name, args) => {

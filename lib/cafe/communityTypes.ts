@@ -4,11 +4,23 @@ export type CafeMember = {
   displayName: string;
   nativeLanguages: string[];
   learningLanguages: string[];
+  avatarVersion?: string | null;
+  discoverable?: boolean;
+};
+
+export type CafeFriend = {
+  id: string;
+  member: CafePerson;
+  direction: "incoming" | "outgoing";
+  status: "pending" | "accepted";
+  introduction: string;
+  updatedAt: string;
 };
 
 export type CafePerson = CafeMember & { online: boolean; roomId: string | null };
 export type CafeCommunityRoomState = "scheduled" | "waiting" | "live" | "ended" | "cancelled";
 export type CafeCommunityRoom = {
+  kind?: "direct";
   id: string;
   title: string;
   languages: string[];
@@ -49,10 +61,14 @@ export type CafeCommunitySnapshot = {
   calls: CafeCallInvitation[];
   blockedMembers: CafeMember[];
   serverTime: string;
+  friends?: CafeFriend[];
 };
 export type CafeReportReason = "sexual_harassment" | "harassment" | "spam" | "other";
 export type CafeCommunityCommand =
-  | { action: "profile.save"; displayName: string; nativeLanguages: string[]; learningLanguages: string[]; adultAgreement: boolean; rulesAgreement: boolean }
+  | { action: "profile.save"; displayName: string; nativeLanguages: string[]; learningLanguages: string[]; adultAgreement: boolean; rulesAgreement: boolean; discoverable?: boolean }
+  | { action: "friend.request"; targetId: string; introduction: string; requestId: string }
+  | { action: "friend.respond"; friendshipId: string; accept: boolean }
+  | { action: "friend.remove"; friendshipId: string }
   | { action: "presence.heartbeat"; presenceSessionId: string; roomId?: string | null }
   | { action: "presence.leave"; presenceSessionId: string }
   | { action: "room.create"; requestId: string; title: string; languages: string[]; mode: "now" | "scheduled"; startsAt?: string | null; capacity: number }
@@ -68,7 +84,7 @@ export type CafeCommunityCommand =
 
 export type CafeCommunityFailure = { ok: false; code: string; retryAfter?: number };
 export type CafeCommunityCommandResult =
-  | { ok: true; roomId?: string; callId?: string; reportId?: string; cleanupPending?: boolean }
+  | { ok: true; roomId?: string; callId?: string; reportId?: string; friendshipId?: string; cleanupPending?: boolean }
   | CafeCommunityFailure;
 
 /** Private RPC result, consumed on the server and never returned wholesale to browsers. */

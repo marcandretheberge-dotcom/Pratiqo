@@ -16,6 +16,7 @@ PSQL=(psql -X -h "$CAFE_DB_HOST" -p "$CAFE_DB_PORT" -U "$CAFE_DB_USER" -d "$CAFE
 "${PSQL[@]}" -f supabase/migrations/20261111133000_cafe_daily_room_hardening.sql
 "${PSQL[@]}" -f supabase/migrations/20261111140000_cafe_daily_binding_race_hardening.sql
 "${PSQL[@]}" -f supabase/migrations/20261113111051_cafe_community_text_first.sql
+"${PSQL[@]}" -f supabase/migrations/20261116201115_cafe_people_first.sql
 "${PSQL[@]}" -f tests/cafe/sql/community.sql
 
 CAFE_TEMP_DIR=$(mktemp -d)
@@ -175,3 +176,44 @@ if ! wait "$CAFE_MESSAGE_PID"; then fail "message connection failed or deadlocke
 [[ "$("${PSQL[@]}" -c "SELECT count(*) FROM cafe_private.community_memberships WHERE room_id='$CAFE_ROOM_ID' AND left_at IS NULL;")" == 1 ]] || fail "blocked member retained active membership"
 echo '[cafe:community-postgres] concurrent block/message authorization passed without deadlock'
 echo '[cafe:community-postgres] native SQL permissions, behavior and concurrency tests passed'
+
+"${PSQL[@]}" -f tests/cafe/sql/people-concurrency.sql
+CAFE_A='00000000-0000-4000-8000-000000000005'
+CAFE_B='00000000-0000-4000-8000-000000000006'
+start_gate "BEGIN; SET LOCAL idle_in_transaction_session_timeout='25s'; SELECT cafe_private.community_lock();"
+for contender in first second; do
+  if [[ "$contender" == first ]]; then actor=$CAFE_A; target=$CAFE_B; else actor=$CAFE_B; target=$CAFE_A; fi
+  PGAPPNAME="$CAFE_TEST_PREFIX-friend-$contender" "${PSQL[@]}" -c "
+    SET statement_timeout='20s'; SET lock_timeout='15s'; SET ROLE service_role;
+    SELECT public.cafe_community_people_command_server('$actor','friend.request',
+      jsonb_build_object('targetId','$target','requestId',gen_random_uuid(),'introduction','Hello')) ->> 'friendshipId';
+  " >"$CAFE_TEMP_DIR/friend-$contender.log" 2>&1 &
+  if [[ "$contender" == first ]]; then CAFE_FIRST_PID=$!; else CAFE_SECOND_PID=$!; fi
+done
+wait_for_sql "SELECT count(*) FROM pg_stat_activity a WHERE a.application_name IN ('$CAFE_TEST_PREFIX-friend-first','$CAFE_TEST_PREFIX-friend-second')
+ AND EXISTS(SELECT 1 FROM pg_locks l WHERE l.pid=a.pid AND l.locktype='advisory' AND NOT l.granted);" 2 "both crossed requests"
+release_gate
+wait "$CAFE_FIRST_PID"
+wait "$CAFE_SECOND_PID"
+[[ "$(<"$CAFE_TEMP_DIR/friend-first.log")" == "$(<"$CAFE_TEMP_DIR/friend-second.log")" ]] || fail "crossed invitations produced different connections"
+CAFE_CONNECTION=$(<"$CAFE_TEMP_DIR/friend-first.log")
+[[ "$CAFE_CONNECTION" =~ ^[0-9a-f-]{36}$ ]] || fail "missing friendship ID"
+[[ "$("${PSQL[@]}" -c "SELECT count(*) FROM cafe_private.community_connections WHERE status='pending' AND requester_id IN ('$CAFE_A','$CAFE_B');")" == 1 ]] || fail "crossed requests created more than one pending invitation"
+CAFE_RECIPIENT=$("${PSQL[@]}" -c "SELECT recipient_id FROM cafe_private.community_connections WHERE id='$CAFE_CONNECTION';")
+"${PSQL[@]}" -c "SET ROLE service_role; SELECT public.cafe_community_people_command_server('$CAFE_RECIPIENT','friend.respond',
+ jsonb_build_object('friendshipId','$CAFE_CONNECTION','accept',true));" >/dev/null
+start_gate "BEGIN; SET LOCAL idle_in_transaction_session_timeout='25s'; SET ROLE service_role;
+ SELECT public.cafe_community_people_command_server('$CAFE_A','member.block',jsonb_build_object('targetId','$CAFE_B'));"
+PGAPPNAME="$CAFE_TEST_PREFIX-private-send" "${PSQL[@]}" -c "
+ SET statement_timeout='20s'; SET lock_timeout='15s'; SET ROLE service_role;
+ SELECT public.cafe_community_people_command_server('$CAFE_B','message.send',jsonb_build_object(
+ 'roomId','$CAFE_CONNECTION','requestId','30000000-0000-4000-8000-000000000001','body','Must not arrive')) ->> 'code';
+" >"$CAFE_TEMP_DIR/private-send.log" 2>&1 &
+CAFE_SEND_PID=$!
+wait_for_sql "SELECT count(*) FROM pg_stat_activity a WHERE a.application_name='$CAFE_TEST_PREFIX-private-send'
+ AND EXISTS(SELECT 1 FROM pg_locks l WHERE l.pid=a.pid AND l.locktype='advisory' AND NOT l.granted);" 1 "private send behind block"
+release_gate
+wait "$CAFE_SEND_PID"
+[[ "$(<"$CAFE_TEMP_DIR/private-send.log")" == room_access_denied ]] || fail "blocked private message was not denied"
+[[ "$("${PSQL[@]}" -c "SELECT count(*) FROM cafe_private.community_messages WHERE connection_id='$CAFE_CONNECTION';")" == 0 ]] || fail "private send persisted after block"
+echo '[cafe:people-postgres] crossed invites and concurrent block/private-send passed'

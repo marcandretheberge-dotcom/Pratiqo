@@ -10,6 +10,8 @@ import { cafeText, communityError, type CommunityLocale } from "./copy";
 import { LanguagePicker } from "./LanguagePicker";
 import { useCafeCommunity } from "./useCafeCommunity";
 import styles from "./community.module.css";
+import { CafeAvatar, CafePhotoEditor, CafePhotoProvider } from "./CafeAvatar";
+import { CafePeople, CafePeopleNav, type CafePeopleTab } from "./CafePeople";
 
 export { CafeEntranceScreen, CommunityFrame } from "./CafeCommunityChrome";
 
@@ -44,7 +46,7 @@ function Modal({ title, onClose, children, closeLabel }: { title: string; onClos
 function Member({ member, locale, online }: { member: CafeMember; locale: CommunityLocale; online?: boolean }) {
   const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
   return <div className={styles.member}>
-    <span className={styles.avatar} aria-hidden>{Array.from(member.displayName)[0]?.toLocaleUpperCase(locale)}</span>
+    <CafeAvatar member={member} />
     <div className={styles.memberBody}>
       <p className={styles.memberName}>{member.displayName}{online !== undefined && <> · <span className={styles.small}>{online ? t("En ligne", "Online", "En línea") : t("Hors ligne · salon prévu", "Offline · scheduled room", "Sin conexión · sala programada")}</span></>}</p>
       <p className={styles.memberLanguages}>{t("Langue maternelle", "Native", "Lengua materna")} : {member.nativeLanguages.map((code) => cafeLanguageLabel(code, locale)).join(", ")}</p>
@@ -53,9 +55,9 @@ function Member({ member, locale, online }: { member: CafeMember; locale: Commun
   </div>;
 }
 
-function ProfileForm({ member, languageHint, locale, busy, onSave, onCancel }: {
+function ProfileForm({ member, languageHint, locale, busy, onSave, onCancel, peopleEnabled = false }: {
   member: CafeMember | null; languageHint?: string | null; locale: CommunityLocale; busy: boolean;
-  onSave: Execute; onCancel?: () => void;
+  onSave: Execute; onCancel?: () => void; peopleEnabled?: boolean;
 }) {
   const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
   const [name, setName] = useState(member?.displayName ?? "");
@@ -63,10 +65,11 @@ function ProfileForm({ member, languageHint, locale, busy, onSave, onCancel }: {
   const [learning, setLearning] = useState(member?.learningLanguages ?? (languageHint ? [languageHint] : []));
   const [adult, setAdult] = useState(Boolean(member));
   const [rules, setRules] = useState(Boolean(member));
+  const [discoverable, setDiscoverable] = useState(member?.discoverable ?? false);
   const [error, setError] = useState("");
   return <form className={styles.form} onSubmit={async (event) => {
     event.preventDefault(); setError("");
-    const result = await onSave({ action: "profile.save", displayName: name.trim(), nativeLanguages: native, learningLanguages: learning, adultAgreement: adult, rulesAgreement: rules });
+    const result = await onSave({ action: "profile.save", displayName: name.trim(), nativeLanguages: native, learningLanguages: learning, adultAgreement: adult, rulesAgreement: rules, ...(peopleEnabled ? { discoverable } : {}) });
     if (!result.ok && result.code !== "superseded") setError(communityError(result.code, locale));
   }}>
     <label className={styles.field}>{t("Votre nom au Café", "Your Café name", "Tu nombre en el Café")}<input value={name} onChange={(event) => setName(event.target.value)} minLength={1} maxLength={40} required autoComplete="nickname" /></label>
@@ -76,6 +79,7 @@ function ProfileForm({ member, languageHint, locale, busy, onSave, onCancel }: {
     </div>
     <label className={styles.check}><input type="checkbox" checked={adult} onChange={(event) => setAdult(event.target.checked)} required />{t("Je confirme avoir 18 ans ou plus.", "I confirm I am 18 or older.", "Confirmo que tengo 18 años o más.")}</label>
     <label className={styles.check}><input type="checkbox" checked={rules} onChange={(event) => setRules(event.target.checked)} required />{t("J’accepte les règles du Café.", "I agree to the Café rules.", "Acepto las reglas del Café.")}</label>
+    {peopleEnabled && <label className={styles.check}><input type="checkbox" checked={discoverable} onChange={event => setDiscoverable(event.target.checked)} />{t("Rester visible dans Personnes quand je suis hors ligne et recevoir des invitations. Facultatif.", "Remain visible in People while offline and receive requests. Optional.", "Seguir visible en Personas sin conexión y recibir invitaciones. Opcional.")}</label>}
     <p className={styles.note}>
       <a href="/legal/code-de-conduite" target="_blank" rel="noopener noreferrer">{t("Code de conduite (nouvel onglet)", "Code of conduct (new tab)", "Código de conducta (nueva pestaña)")}</a>
       {" · "}
@@ -196,7 +200,7 @@ function RoomChat({ room, me, locale, execute, disabled, videoEnabled, onReport,
     <CallInvitations calls={calls} me={me} locale={locale} execute={execute} disabled={disabled} videoEnabled={videoEnabled} serverTime={serverTime} courseReturnHref={courseReturnHref} />
     <div className={styles.chatLayout}>
       <section className={`${styles.panel} ${styles.chatPanel}`} aria-label={t("Conversation écrite", "Text conversation", "Conversación por texto")}>
-        <div className={styles.chatHeader}><div className={styles.spread}><div><h2 className={styles.heading}>{room.title}</h2><div className={styles.pills}>{room.languages.map((code) => <span className={styles.badge} key={code}>{cafeLanguageLabel(code, locale)}</span>)}</div></div><button className={styles.button} onClick={() => void execute({ action: room.creator.id === me.id ? "room.end" : "room.leave", roomId: room.id })}>{room.creator.id === me.id ? t("Fermer le salon", "Close the room", "Cerrar la sala") : t("Quitter le salon", "Leave the room", "Salir de la sala")}</button></div></div>
+        <div className={styles.chatHeader}><div className={styles.spread}><div><h2 className={styles.heading}>{room.title}</h2><div className={styles.pills}>{room.kind === "direct" && <span className={styles.badge}>{t("Conversation privée", "Private conversation", "Conversación privada")}</span>}{room.languages.map((code) => <span className={styles.badge} key={code}>{cafeLanguageLabel(code, locale)}</span>)}</div></div><button className={styles.button} onClick={() => void execute({ action: room.kind !== "direct" && room.creator.id === me.id ? "room.end" : "room.leave", roomId: room.id })}>{room.kind === "direct" ? t("Retour aux messages", "Back to messages", "Volver a mensajes") : room.creator.id === me.id ? t("Fermer le salon", "Close the room", "Cerrar la sala") : t("Quitter le salon", "Leave the room", "Salir de la sala")}</button></div></div>
         <div ref={messages} className={styles.messages} role="log" aria-live="polite" aria-relevant="additions" aria-label={t("Messages du salon", "Room messages", "Mensajes de la sala")} onScroll={() => {
           const element = messages.current; if (element) nearBottom.current = element.scrollHeight - element.scrollTop - element.clientHeight < 80;
         }}>
@@ -223,12 +227,12 @@ function RoomChat({ room, me, locale, execute, disabled, videoEnabled, onReport,
           <div className={styles.spread}><span className={styles.small}>{body.length}/2000 · {t("Texte d’abord, à votre rythme.", "Text first, at your pace.", "Primero texto, a tu ritmo.")}</span><button className={styles.primary} type="submit" disabled={disabled || sending || !body.trim()}>{sending ? t("Envoi…", "Sending…", "Enviando…") : t("Envoyer", "Send", "Enviar")}</button></div>
         </form>
       </section>
-      <aside className={styles.panel}><h2 className={styles.smallHeading}>{t("Dans ce salon", "In this room", "En esta sala")} · {room.participants.length}</h2>
+      <aside className={styles.panel}><h2 className={styles.smallHeading}>{room.kind === "direct" ? t("Entre vous", "Between you", "Entre ustedes") : t("Dans ce salon", "In this room", "En esta sala")} · {room.participants.length}</h2>
         {room.participants.map((member) => <div key={member.id} className={styles.memberRow}><Member member={member} locale={locale} />
           {member.id !== me.id && <div className={styles.memberActions}>
-            {videoEnabled && <button className={styles.button} disabled={disabled || callBusy} onClick={() => void invite(member.id)}>{t("Proposer un appel", "Invite to a call", "Proponer una llamada")}</button>}
+            {videoEnabled && room.kind !== "direct" && <button className={styles.button} disabled={disabled || callBusy} onClick={() => void invite(member.id)}>{t("Proposer un appel", "Invite to a call", "Proponer una llamada")}</button>}
             <button className={styles.quiet} onClick={() => onBlock(member)}>{t("Bloquer", "Block", "Bloquear")}</button><button className={styles.quiet} onClick={() => onReport(member)}>{t("Signaler", "Report", "Denunciar")}</button>
-            {room.creator.id === me.id && <button className={styles.quiet} disabled={disabled} onClick={() => void execute({ action: "room.remove", roomId: room.id, targetId: member.id })}>{t("Retirer du salon", "Remove from room", "Retirar de la sala")}</button>}
+            {room.kind !== "direct" && room.creator.id === me.id && <button className={styles.quiet} disabled={disabled} onClick={() => void execute({ action: "room.remove", roomId: room.id, targetId: member.id })}>{t("Retirer du salon", "Remove from room", "Retirar de la sala")}</button>}
           </div>}
         </div>)}
         {videoEnabled
@@ -267,14 +271,16 @@ function ReportForm({ draft, locale, execute, onClose }: { draft: ReportDraft; l
 }
 
 /** The production view also accepts an explicit transport for deterministic component tests. */
-export function CafeCommunityApp({ identity, locale, transport, initialRoomId = null, languageHint, courseReturnHref, videoEnabled = false, heroVideoSrc = null }: {
+export function CafeCommunityApp({ identity, locale, transport, initialRoomId = null, languageHint, courseReturnHref, videoEnabled = false, heroVideoSrc = null, peopleEnabled = false }: {
   identity: CafeIdentity; locale: CommunityLocale; transport?: CafeCommunityTransport; initialRoomId?: string | null;
-  languageHint?: string | null; courseReturnHref?: string | null; videoEnabled?: boolean; heroVideoSrc?: string | null;
+  languageHint?: string | null; courseReturnHref?: string | null; videoEnabled?: boolean; heroVideoSrc?: string | null; peopleEnabled?: boolean;
 }) {
   const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
   const community = useCafeCommunity(identity, transport, initialRoomId);
   const { snapshot, execute } = community;
-  const [screen, setScreen] = useState<CafeScreen>("entrance");
+  const [requestedScreen, setScreen] = useState<CafeScreen>(peopleEnabled || initialRoomId ? "lobby" : "entrance");
+  const screen: CafeScreen = snapshot?.room ? "chat" : peopleEnabled && snapshot && !snapshot.me ? "language" : requestedScreen;
+  const [peopleTab, setPeopleTab] = useState<CafePeopleTab>("people");
   const [practiceMode, setPracticeMode] = useState<PracticeMode>("group");
   const [filter, setFilter] = useState(languageHint ?? "");
   const [create, setCreate] = useState<"now" | "scheduled" | null>(null);
@@ -283,11 +289,6 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
   const [report, setReport] = useState<ReportDraft | null>(null);
   const [notice, setNotice] = useState("");
   const [failedBlock, setFailedBlock] = useState<CafeMember | null>(null);
-
-  useEffect(() => {
-    if (snapshot?.room) setScreen("chat");
-    else if (screen === "chat") setScreen("lobby");
-  }, [snapshot?.room, screen]);
 
   useEffect(() => {
     if (languageHint) setFilter(languageHint);
@@ -321,7 +322,7 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
     setReport({ target: { ...member }, roomId: snapshot?.room?.id ?? null, messages: messages.map((message) => ({ ...message })), selectedIds: messageId ? [messageId] : [] });
     if (block) void blockMember(member);
   };
-  const enterFromDoor = () => setScreen("language");
+  const enterFromDoor = () => setScreen(peopleEnabled && snapshot?.me ? "lobby" : "language");
   const saveProfile: Execute = async (command) => {
     const result = await execute(command);
     if (result.ok && command.action === "profile.save") setFilter(command.learningLanguages[0] ?? "");
@@ -329,7 +330,7 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
   };
 
   const cinematic = screen === "entrance";
-  return <CommunityFrame locale={locale} courseReturnHref={courseReturnHref} compact={screen === "chat"} cinematic={cinematic}>
+  return <CafePhotoProvider identity={identity} transport={transport}><CommunityFrame locale={locale} courseReturnHref={courseReturnHref} compact={screen === "chat"} cinematic={cinematic} people={peopleEnabled}>
     {community.error && <div className={styles.error} role="alert"><p>{communityError(community.error, locale)}</p><div className={styles.row}><button className={styles.button} onClick={() => void community.refresh()}>{t("Actualiser", "Refresh", "Actualizar")}</button>{community.error === "unauthenticated" && <a className={styles.button} href="/connexion?next=%2Fcafe">{t("Me reconnecter", "Sign in again", "Volver a entrar")}</a>}</div></div>}
     {community.connection === "stale" && snapshot && <p className={styles.notice}>{t("Connexion à rétablir.", "Connection needs refreshing.", "Hay que restablecer la conexión.")}</p>}
     {notice && <div className={failedBlock ? styles.error : styles.notice} role="status">{notice}{failedBlock && <button className={styles.button} onClick={() => void blockMember(failedBlock)}>{t("Réessayer", "Retry", "Reintentar")}</button>}</div>}
@@ -340,22 +341,28 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
     {snapshot && screen === "language" && <section className={`${styles.screen} ${styles.screenScroll}`} data-cafe-step="language" aria-labelledby="cafe-language-title">
       <h1 id="cafe-language-title" className={styles.screenTitle}>{t("On pratique quelle langue ?", "Which language are we practising?", "¿Qué idioma practicamos?")}</h1>
       <div className={`${styles.panel} ${styles.languagePanel}`}>
-        <ProfileForm member={snapshot.me} locale={locale} languageHint={languageHint ?? (filter || null)} busy={community.busy} onSave={async (command) => { const result = await saveProfile(command); if (result.ok) setScreen("lobby"); return result; }} onCancel={snapshot.me ? () => setScreen("lobby") : undefined} />
+        <ProfileForm peopleEnabled={peopleEnabled} member={snapshot.me} locale={locale} languageHint={languageHint ?? (filter || null)} busy={community.busy} onSave={async (command) => { const result = await saveProfile(command); if (result.ok) setScreen("lobby"); return result; }} onCancel={snapshot.me ? () => setScreen("lobby") : undefined} />
       </div>
     </section>}
 
     {snapshot?.me && screen === "lobby" && <section className={`${styles.screen} ${styles.screenScroll}`} data-cafe-step="lobby" aria-labelledby="cafe-lobby-title">
       <div className={styles.lobbyHeader}>
         <div>
-          <p className={styles.eyebrow}>{practiceLanguage ? cafeLanguageLabel(practiceLanguage, locale) : t("Toutes les langues", "All languages", "Todos los idiomas")}</p>
+          {(!peopleEnabled || peopleTab === "rooms") && <p className={styles.eyebrow}>{practiceLanguage ? cafeLanguageLabel(practiceLanguage, locale) : t("Toutes les langues", "All languages", "Todos los idiomas")}</p>}
           <h1 id="cafe-lobby-title" className={styles.screenTitle}>{t("Au Café", "Inside the Café", "En el Café")}</h1>
           <p className={styles.onlineCount}>{onlinePeople.length === 1 ? t("1 personne en ligne", "1 person online", "1 persona en línea") : t(`${onlinePeople.length} personnes en ligne`, `${onlinePeople.length} people online`, `${onlinePeople.length} personas en línea`)}</p>
         </div>
         <div className={styles.row}>
-          <button className={styles.button} type="button" onClick={() => setScreen("language")}>{t("Langues", "Languages", "Idiomas")}</button>
-          <button className={styles.button} type="button" onClick={() => setSettings(true)}>{t("Mon profil", "My profile", "Mi perfil")} · {snapshot.me.displayName}</button>
+          {!peopleEnabled && <button className={styles.button} type="button" onClick={() => setScreen("language")}>{t("Langues", "Languages", "Idiomas")}</button>}
+          <button className={styles.button} type="button" onClick={() => setSettings(true)}>{t("Mon profil", "My profile", "Mi perfil")}{!peopleEnabled && <> · {snapshot.me.displayName}</>}</button>
         </div>
       </div>
+      {peopleEnabled && <CafePeopleNav tab={peopleTab} onChange={setPeopleTab} incoming={snapshot.friends?.filter(friend => friend.status === "pending" && friend.direction === "incoming").length ?? 0} locale={locale} />}
+      {peopleEnabled && peopleTab !== "rooms" && <CafePeople snapshot={snapshot} tab={peopleTab} locale={locale} execute={async command => {
+        if (command.action === "room.join") setPeopleTab("messages");
+        return execute(command);
+      }} disabled={!community.canWrite} onBlock={member => void blockMember(member)} onReport={beginReport} languageHint={languageHint} />}
+      {(!peopleEnabled || peopleTab === "rooms") && <>
       <div className={styles.modeTabs} role="group" aria-label={t("Mode", "Mode", "Modo")}>
         <button type="button" className={styles.tab} aria-pressed={practiceMode === "group"} onClick={() => setPracticeMode("group")}>{t("En groupe", "In a group", "En grupo")}</button>
         <button type="button" className={styles.tab} aria-pressed={practiceMode === "pair"} onClick={() => setPracticeMode("pair")}>{t("À deux", "One to one", "De dos")}</button>
@@ -394,6 +401,7 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
           {onlinePeople.length ? onlinePeople.slice(0, 8).map((person) => <div className={styles.memberRow} key={person.id}><Member member={person} locale={locale} online /></div>) : <p className={styles.note}>{t("Personne d’autre pour le moment.", "No one else right now.", "Nadie más por ahora.")}</p>}
         </aside>
       </div>
+      </>}
     </section>}
 
     {snapshot?.me && screen === "chat" && snapshot.room && <>
@@ -414,10 +422,11 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
       }} busy={community.busy} onCreated={() => setCreate(null)} />
     </Modal>}
     {settings && snapshot?.me && <Modal title={t("Mon profil", "My profile", "Mi perfil")} closeLabel={t("Fermer mon profil", "Close my profile", "Cerrar mi perfil")} onClose={() => { setSettings(false); setProfile(false); }}>
-      {profile ? <ProfileForm member={snapshot.me} locale={locale} busy={community.busy} onCancel={() => setProfile(false)} onSave={async (command) => { const result = await saveProfile(command); if (result.ok) setProfile(false); return result; }} /> : <div className={styles.stack}><Member member={snapshot.me} locale={locale} /><button className={styles.button} onClick={() => setProfile(true)}>{t("Modifier", "Edit", "Editar")}</button><h3 className={styles.smallHeading}>{t("Bloqués", "Blocked", "Bloqueados")}</h3>{snapshot.blockedMembers.length ? snapshot.blockedMembers.map((member) => <div key={member.id} className={styles.spread}><span>{member.displayName}</span><button className={styles.button} disabled={community.busy} onClick={() => void execute({ action: "member.unblock", targetId: member.id })}>{t("Débloquer", "Unblock", "Desbloquear")}</button></div>) : <p className={styles.note}>{t("Aucun.", "None.", "Ninguno.")}</p>}</div>}
+      {peopleEnabled && <CafePhotoEditor member={snapshot.me} locale={locale} onSaved={community.refresh} />}
+      {profile ? <ProfileForm peopleEnabled={peopleEnabled} member={snapshot.me} locale={locale} busy={community.busy} onCancel={() => setProfile(false)} onSave={async (command) => { const result = await saveProfile(command); if (result.ok) setProfile(false); return result; }} /> : <div className={styles.stack}><Member member={snapshot.me} locale={locale} /><button className={styles.button} onClick={() => setProfile(true)}>{t("Modifier", "Edit", "Editar")}</button><h3 className={styles.smallHeading}>{t("Bloqués", "Blocked", "Bloqueados")}</h3>{snapshot.blockedMembers.length ? snapshot.blockedMembers.map((member) => <div key={member.id} className={styles.spread}><span>{member.displayName}</span><button className={styles.button} disabled={community.busy} onClick={() => void execute({ action: "member.unblock", targetId: member.id })}>{t("Débloquer", "Unblock", "Desbloquear")}</button></div>) : <p className={styles.note}>{t("Aucun.", "None.", "Ninguno.")}</p>}</div>}
     </Modal>}
     {report && <Modal title={t("Signaler", "Report", "Denunciar")} closeLabel={t("Fermer", "Close", "Cerrar")} onClose={() => setReport(null)}><ReportForm key={report.target.id} draft={report} locale={locale} execute={execute} onClose={() => setReport(null)} /></Modal>}
-  </CommunityFrame>;
+  </CommunityFrame></CafePhotoProvider>;
 }
 
 

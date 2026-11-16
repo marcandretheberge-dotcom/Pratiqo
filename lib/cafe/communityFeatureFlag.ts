@@ -4,3 +4,8 @@ import { isCafeV1Enabled } from "./featureFlag";
 export function isCafeCommunityEnabled(): boolean {
   return isCafeV1Enabled() && process.env.CAFE_COMMUNITY_ENABLED?.trim().toLowerCase() === "true";
 }
+
+/** Disabled until the people-first migration and its private photo bucket are reviewed. */
+export function isCafePeopleEnabled(): boolean {
+  return isCafeCommunityEnabled() && process.env.CAFE_PEOPLE_ENABLED === "true";
+}

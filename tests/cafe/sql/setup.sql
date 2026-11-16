@@ -7,6 +7,12 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='service_role') THEN CREATE ROLE service_role NOLOGIN; END IF;
 END $$;
 CREATE SCHEMA IF NOT EXISTS auth;
+-- Minimal Storage catalog fixture; never connected to hosted Storage.
+CREATE SCHEMA IF NOT EXISTS storage;
+CREATE TABLE IF NOT EXISTS storage.buckets (
+ id text PRIMARY KEY, name text NOT NULL, public boolean NOT NULL DEFAULT false,
+ file_size_limit bigint, allowed_mime_types text[]
+);
 CREATE TABLE IF NOT EXISTS auth.users (
   id uuid PRIMARY KEY,
   email text,

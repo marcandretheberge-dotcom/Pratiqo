@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-export const base = 'http://localhost:55820';
+export const base = 'http://localhost:55830';
 export const databaseOrigin = 'http://127.0.0.1:55421';
 
 export async function localCafeEnv() {
@@ -22,7 +22,9 @@ export async function localCafeEnv() {
     CAFE_LOCAL_SUPABASE_CONNECT_ORIGIN: databaseOrigin,
     VERCEL_ENV: 'development',
     CAFE_V1_ENABLED: 'true', CAFE_COMMUNITY_ENABLED: 'true',
-    CAFE_ROOM_PROVIDER_ENABLED: 'false', CAFE_COMMUNITY_PREVIEW_ENABLED: 'false',
+    CAFE_ROOM_PROVIDER_ENABLED: 'false', CAFE_COMMUNITY_PREVIEW_ENABLED: 'true',
+    // Opt in only after prepare-people.mjs has checked/applied the local migration.
+    CAFE_PEOPLE_ENABLED: process.env.CAFE_LOCAL_PEOPLE === 'true' ? 'true' : 'false',
   });
   for (const key of ['NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY']) {
     if (!env[key]) throw new Error(`Missing local configuration: ${key}`);

@@ -15,7 +15,8 @@ assert.match(page, /isCafeCommunityEnabled\(\)/);
 assert.match(page, /CafePublicEntrance/);
 assert.match(page, /CafeCommunity/);
 assert.doesNotMatch(page, /CafeFrontDoor/);
-assert.match(page, /videoEnabled=\{isCafeRoomProviderEnabled\(\)\}/);
+assert.match(page, /peopleEnabled=\{isCafePeopleEnabled\(\)\}/);
+assert.match(page, /videoEnabled=\{!isCafePeopleEnabled\(\) && isCafeRoomProviderEnabled\(\)\}/);
 
 assert.match(publicEntrance, /CafeEntranceScreen/);
 assert.match(publicEntrance, /LanguagePicker/);

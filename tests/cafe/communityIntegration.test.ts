@@ -162,7 +162,7 @@ test("real Café migrations and RPCs pass through authenticated API projections 
       ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;`);
     const directory = path.join(process.cwd(), "supabase/migrations");
     const migrations = readdirSync(directory).filter(name => /^\d+_cafe_.*\.sql$/.test(name)).sort();
-    assert.equal(migrations.length, 5, "This integration must exercise the complete Café migration chain");
+    assert.equal(migrations.length, 6, "This integration must exercise the complete Café migration chain");
     for (const migration of migrations) await db.exec(readFileSync(path.join(directory, migration), "utf8"));
 
     assert.deepEqual(await view(randomUUID(), undefined, 401), { ok: false, code: "unauthorized" });

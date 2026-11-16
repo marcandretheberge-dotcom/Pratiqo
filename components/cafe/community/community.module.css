@@ -28,3 +28,26 @@
 .interfaceLangButton,.interfaceLangActive { min-width: 44px; min-height: 36px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; font: inherit; font-size: 12px; font-weight: 650; letter-spacing: .04em; }
 .interfaceLangActive { background: #efe3d2; color: #211914; }
 .publicEntrance .interfaceLang { align-self: flex-end; }
+
+/* The social workspace is deliberately lighter than the cinematic entrance. */
+.peopleTheme{--ink:#183b36;--muted:#52645f;--line:#d3dfd8;--paper:#fff;--canvas:#f3f7f4;--accent:#187565;--warm:#e7f2ec;background:#f3f7f4;color:#183b36;color-scheme:light}
+.peopleTheme .wrap{padding-top:24px}
+.peopleTheme .screenTitle{font-size:28px;letter-spacing:0}
+.peopleTheme .brand,.peopleTheme .heading,.peopleTheme .activeTitle{letter-spacing:0}
+.peopleTheme .primary{background:#187565;color:#fff;border-color:#187565}
+.peopleTheme .primary:hover{background:#125b4e}
+.peopleTheme .button:hover,.peopleTheme .quiet:hover{background:#e7f2ec}
+.peopleTheme .panel,.peopleTheme .roomCard,.peopleTheme .dialog{border-radius:8px}
+.peopleTheme .field input,.peopleTheme .field select,.peopleTheme .field textarea,.peopleTheme .composer textarea,.peopleTheme .search{background:#fff;color:#183b36;border-radius:8px}
+.peopleTheme .modeTabs,.peopleTheme .tabs,.peopleTheme .badge,.peopleTheme .soft{background:#e7f2ec}
+.peopleTheme .tab[aria-pressed=true]{background:#187565;color:white}
+.peopleTheme .bubble{background:#e9eff6;color:#213e58}
+.peopleTheme .ownMessage .bubble{background:#dff0e6;color:#183b36}
+.peopleTheme .notice,.peopleTheme .success{background:#e7f2ec;color:#183b36}
+.peopleTheme .error{background:#fff1ed;color:#922f24;border-color:#d9aaa0}
+.peopleTheme .dialog blockquote{background:#edf3ef}
+.peopleTheme .pickerOption:hover{background:#edf3ef}
+.peopleTheme .pill{background:#e9eff6;color:#213e58;border-color:#bfcfdf}
+.peopleTheme .empty{background:#fff;color:#183b36}
+.peopleTheme .screen[data-cafe-step="lobby"]{gap:10px}
+.peopleTheme .lobbyHeader{align-items:center}

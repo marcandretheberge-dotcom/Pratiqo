@@ -12,7 +12,7 @@ const response = await fetch(`${databaseOrigin}/rest/v1/teachers?select=id&limit
 if (!response.ok) throw new Error(`Local database check failed: HTTP ${response.status}`);
 console.log(`Café local ${mode}: ${base}. Real local Auth/DB, video and external sending disabled.`);
 const child = spawn(process.execPath, [path.join(root, 'node_modules/next/dist/bin/next'), mode,
-  ...(mode === 'start' ? ['--hostname', '127.0.0.1', '--port', '55820'] : [])], {
+  ...(mode === 'start' ? ['--hostname', '127.0.0.1', '--port', new URL(base).port] : [])], {
   cwd: root, env, stdio: 'inherit', windowsHide: true,
 });
 child.on('exit', code => { process.exitCode = code ?? 1; });
