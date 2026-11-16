@@ -103,6 +103,16 @@ async function body(response: Response, status = 200) {
   return await response.json() as Record<string, unknown>;
 }
 
+test("people-first keeps video off even if the provider flag is enabled", async () => {
+  const people = harness({ peopleEnabled: () => true, videoEnabled: () => true });
+  assert.equal((await people.handlers.callJoin(request(undefined, { method: "POST" }), CALL)).status, 404);
+  assert.equal((await people.handlers.callStatus(request(), CALL)).status, 409);
+  assert.equal((await people.handlers.command(request({ action: "call.invite", targetId: PEER, roomId: ROOM, requestId: REQUEST_ID }))).status, 404);
+  assert.equal((await people.handlers.command(request({ action: "call.respond", callId: CALL, accept: true }))).status, 404);
+  assert.equal(people.seen.joins.length, 0);
+  assert.equal(people.seen.rpc.length, 0);
+});
+
 test("disabled community and video endpoints reveal no auth, provider or database behavior", async () => {
   const off = harness({ enabled: () => false });
   assert.deepEqual(await body(await off.handlers.snapshot(request()), 404), { ok: false, code: "not_found" });

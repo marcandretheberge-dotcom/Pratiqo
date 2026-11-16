@@ -119,7 +119,21 @@ export function parseCommunityCommand(raw: unknown, now = Date.now()): CafeCommu
       const nativeLanguages = communityLanguages(body.nativeLanguages);
       const learningLanguages = communityLanguages(body.learningLanguages);
       if (!displayName || !nativeLanguages || !learningLanguages || body.adultAgreement !== true || body.rulesAgreement !== true) return null;
-      return { action: body.action, displayName, nativeLanguages, learningLanguages, adultAgreement: true, rulesAgreement: true };
+      if (body.discoverable !== undefined && typeof body.discoverable !== "boolean") return null;
+      return { action: body.action, displayName, nativeLanguages, learningLanguages, adultAgreement: true, rulesAgreement: true,
+        ...(typeof body.discoverable === "boolean" ? { discoverable: body.discoverable } : {}) };
+    }
+    case "friend.request": {
+      const introduction = communityText(body.introduction, 300, false, true);
+      return targetId && requestId && introduction ? { action: body.action, targetId, requestId, introduction } : null;
+    }
+    case "friend.respond": {
+      const friendshipId = communityUuid(body.friendshipId);
+      return friendshipId && typeof body.accept === "boolean" ? { action: body.action, friendshipId, accept: body.accept } : null;
+    }
+    case "friend.remove": {
+      const friendshipId = communityUuid(body.friendshipId);
+      return friendshipId ? { action: body.action, friendshipId } : null;
     }
     case "presence.heartbeat": {
       const presenceSessionId = communityUuid(body.presenceSessionId);
@@ -159,7 +173,7 @@ export function parseCommunityCommand(raw: unknown, now = Date.now()): CafeCommu
       return targetId ? { action: body.action, targetId } : null;
     case "report.submit": {
       const reason = typeof body.reason === "string" && REPORT_REASONS.has(body.reason as CafeReportReason) ? body.reason as CafeReportReason : null;
-      if (!targetId || !reason || (!roomId && !callId) || (body.roomId != null && !roomId) || (body.callId != null && !callId)
+      if (!targetId || !reason || (body.roomId != null && !roomId) || (body.callId != null && !callId)
         || !Array.isArray(body.messageIds) || body.messageIds.length > 10) return null;
       const messageIds: string[] = [];
       for (const value of body.messageIds) {

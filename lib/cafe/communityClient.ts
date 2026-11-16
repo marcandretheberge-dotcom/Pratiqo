@@ -8,6 +8,8 @@ export type CafeSnapshotResult = CafeCommunitySnapshot | CafeCommunityFailure;
 export interface CafeCommunityTransport {
   snapshot(token: string, roomId: string | null, signal?: AbortSignal): Promise<CafeSnapshotResult>;
   command(token: string, command: CafeCommunityCommand, signal?: AbortSignal, keepalive?: boolean): Promise<CafeCommunityCommandResult>;
+  photo?(token: string, memberId: string, signal?: AbortSignal): Promise<Blob | null>;
+  savePhoto?(token: string, file: File | null): Promise<CafeCommunityCommandResult>;
 }
 
 function record(value: unknown): value is Record<string, unknown> {
@@ -42,6 +44,20 @@ async function requestJson(fetcher: typeof fetch, url: string, init: RequestInit
 /** Tokens stay in Authorization headers; private reads never enter the HTTP cache. */
 export function createCafeCommunityTransport(fetcher: typeof fetch = (...args) => fetch(...args)): CafeCommunityTransport {
   return {
+    async photo(token, memberId, signal) {
+      const response = await fetcher(`/api/cafe/community/photos/${encodeURIComponent(memberId)}`, {
+        headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal,
+      });
+      return response.ok ? response.blob() : null;
+    },
+    async savePhoto(token, file) {
+      const response = await fetcher("/api/cafe/community/photos", {
+        method: file ? "PUT" : "DELETE", headers: { Authorization: `Bearer ${token}`, ...(file ? { "Content-Type": file.type } : {}) },
+        body: file, cache: "no-store", signal: AbortSignal.timeout(20_000),
+      });
+      const body = await json(response);
+      return response.ok && record(body) && body.ok === true ? { ok: true } : failure(body, response.status);
+    },
     async snapshot(token, roomId, signal) {
       const query = roomId ? `?roomId=${encodeURIComponent(roomId)}` : "";
       const { response, body } = await requestJson(fetcher, `/api/cafe/community${query}`, {
@@ -66,6 +82,7 @@ export function createCafeCommunityTransport(fetcher: typeof fetch = (...args) =
         ...(typeof body.roomId === "string" ? { roomId: body.roomId } : {}),
         ...(typeof body.callId === "string" ? { callId: body.callId } : {}),
         ...(typeof body.reportId === "string" ? { reportId: body.reportId } : {}),
+        ...(typeof body.friendshipId === "string" ? { friendshipId: body.friendshipId } : {}),
         ...(body.cleanupPending === true ? { cleanupPending: true } : {}),
       };
     },

@@ -10,7 +10,7 @@ import { cafeText, communityLocale } from "./copy";
 import { useCafeIdentity } from "./useCafeIdentity";
 import styles from "./community.module.css";
 
-export function CafeCommunity({ videoEnabled, heroVideoSrc = null }: { videoEnabled: boolean; heroVideoSrc?: string | null }) {
+export function CafeCommunity({ videoEnabled, heroVideoSrc = null, peopleEnabled = false }: { videoEnabled: boolean; heroVideoSrc?: string | null; peopleEnabled?: boolean }) {
   const { locale: rawLocale } = useLocale();
   const locale = communityLocale(rawLocale);
   const query = useSearchParams();
@@ -31,5 +31,5 @@ export function CafeCommunity({ videoEnabled, heroVideoSrc = null }: { videoEnab
       {authError && <p className={styles.error} role="alert">{t("Impossible de vérifier votre session pour le moment.", "We could not verify your session right now.", "No se pudo comprobar tu sesión por el momento.")}</p>}
     </>}
   </CommunityFrame>;
-  return <CafeCommunityApp key={identity.userId} identity={identity} locale={locale} videoEnabled={videoEnabled} initialRoomId={initialRoomId} languageHint={languageHint} courseReturnHref={courseReturnHref} heroVideoSrc={heroVideoSrc} />;
+  return <CafeCommunityApp key={identity.userId} identity={identity} locale={locale} videoEnabled={videoEnabled} initialRoomId={initialRoomId} languageHint={languageHint} courseReturnHref={courseReturnHref} heroVideoSrc={heroVideoSrc} peopleEnabled={peopleEnabled} />;
 }

@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { AppLoadingFallback } from "@/components/AppLoadingFallback";
 import { CafePublicEntrance } from "@/components/cafe/CafePublicEntrance";
 import { CafeCommunity } from "@/components/cafe/community/CafeCommunity";
-import { isCafeCommunityEnabled } from "@/lib/cafe/communityFeatureFlag";
+import { isCafeCommunityEnabled, isCafePeopleEnabled } from "@/lib/cafe/communityFeatureFlag";
 import { isCafeRoomProviderEnabled } from "@/lib/cafe/roomFeatureFlag";
 import { cafeHeroMedia } from "@/lib/cafe/heroMedia";
 
@@ -20,7 +20,7 @@ export default function CafePage() {
   return (
     <Suspense fallback={<AppLoadingFallback />}>
       {isCafeCommunityEnabled()
-        ? <CafeCommunity videoEnabled={isCafeRoomProviderEnabled()} heroVideoSrc={cafeHeroMedia.videoSrc} />
+        ? <CafeCommunity peopleEnabled={isCafePeopleEnabled()} videoEnabled={!isCafePeopleEnabled() && isCafeRoomProviderEnabled()} heroVideoSrc={cafeHeroMedia.videoSrc} />
         : <CafePublicEntrance heroVideoSrc={cafeHeroMedia.videoSrc} />}
     </Suspense>
   );

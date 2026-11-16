@@ -89,25 +89,25 @@ async function main() {
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated, service_role;`);
   const migrationNames = readdirSync(path.join(root, "supabase/migrations"))
     .filter(name => /^\d+_cafe_.*\.sql$/.test(name)).sort();
-  assert.equal(migrationNames.length, 5, "Update the real migration chain deliberately when adding Café migrations");
+  assert.equal(migrationNames.length, 6, "Update the real migration chain deliberately when adding Café migrations");
   for (const name of migrationNames) {
     await db.exec(readFileSync(path.join(root, "supabase/migrations", name), "utf8"));
   }
-  console.log("PASS applied all five unmodified Café migrations to PostgreSQL");
+  console.log("PASS applied six Café migrations to PostgreSQL");
   await db.exec(readFileSync(path.join(root, "tests/cafe/sql/community.sql"), "utf8").replace(/^\\.*$/gm, ""));
   console.log("PASS native PostgreSQL-compatible community SQL smoke fixture");
 
   await check("every community table is private and every public RPC is service-only", async () => {
     const tables = (await db.query<{ name: string; rls: boolean }>(`SELECT relname AS name,relrowsecurity AS rls FROM pg_class
       WHERE relnamespace='cafe_private'::regnamespace AND relkind='r' AND relname LIKE 'community_%'`)).rows;
-    assert.equal(tables.length, 11);
+    assert.equal(tables.length, 12);
     assert.ok(tables.every(table => table.rls));
     for (const table of tables) for (const role of ["anon", "authenticated", "service_role"]) {
       assert.equal((await db.query<{ allowed: boolean }>("SELECT has_table_privilege($1,$2,'SELECT,INSERT,UPDATE,DELETE') AS allowed", [role, `cafe_private.${table.name}`])).rows[0].allowed, false);
     }
     const functions = (await db.query<{ signature: string }>(`SELECT p.oid::regprocedure::text AS signature FROM pg_proc p
       WHERE pronamespace='public'::regnamespace AND proname LIKE 'cafe_community_%'`)).rows;
-    assert.equal(functions.length, 8);
+    assert.equal(functions.length, 11);
     for (const fn of functions) for (const role of ["anon", "authenticated", "service_role"]) {
       assert.equal((await db.query<{ allowed: boolean }>("SELECT has_function_privilege($1,$2,'EXECUTE') AS allowed", [role, fn.signature])).rows[0].allowed, role === "service_role");
     }

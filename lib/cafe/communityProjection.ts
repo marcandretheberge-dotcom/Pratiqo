@@ -10,6 +10,7 @@ import type {
   CafeMember,
   CafeModerationReport,
   CafePerson,
+  CafeFriend,
   CafeReportReason,
 } from "./communityTypes";
 import { communityLanguages, communityRecord, communityTimestamp, communityUuid } from "./communityValidation";
@@ -41,8 +42,13 @@ export function projectCafeMember(raw: unknown): CafeMember | null {
   const displayName = boundedText(value.displayName, 40);
   const nativeLanguages = communityLanguages(value.nativeLanguages, true);
   const learningLanguages = communityLanguages(value.learningLanguages, true);
+  const avatarVersion = value.avatarVersion == null ? null : communityUuid(value.avatarVersion);
+  if (value.avatarVersion != null && !avatarVersion) return null;
+  if (value.discoverable !== undefined && typeof value.discoverable !== "boolean") return null;
   return id && displayName && nativeLanguages && learningLanguages
-    ? { id, displayName, nativeLanguages, learningLanguages }
+    ? { id, displayName, nativeLanguages, learningLanguages,
+      ...(value.avatarVersion !== undefined ? { avatarVersion } : {}),
+      ...(value.discoverable !== undefined ? { discoverable: value.discoverable as boolean } : {}) }
     : null;
 }
 
@@ -73,7 +79,10 @@ function projectRoom(raw: unknown): CafeCommunityRoom | null {
     || typeof capacity !== "number" || !Number.isInteger(capacity) || capacity < 2 || capacity > 8
     || typeof rsvpCount !== "number" || !Number.isInteger(rsvpCount) || rsvpCount < 0
     || typeof value.myRsvp !== "boolean") return null;
-  return { id, title, languages, creator, mode, state, startsAt, capacity, participants, rsvpCount, myRsvp: value.myRsvp };
+  if (value.kind !== undefined && value.kind !== "direct") return null;
+  if (value.kind === "direct" && (participants.length !== 2 || participants[0].id === participants[1].id)) return null;
+  return { id, title, languages, creator, mode, state, startsAt, capacity, participants, rsvpCount, myRsvp: value.myRsvp,
+    ...(value.kind === "direct" ? { kind: "direct" as const } : {}) };
 }
 
 function projectMessage(raw: unknown): CafeChatMessage | null {
@@ -121,12 +130,22 @@ export function projectCommunitySnapshot(raw: unknown, actorId: string, requeste
   const calls = projectArray(value.calls, 100, projectCall);
   const blockedMembers = projectArray(value.blockedMembers, 500, projectCafeMember);
   const serverTime = communityTimestamp(value.serverTime);
+  const friends = value.friends === undefined ? undefined : projectArray<CafeFriend>(value.friends, 500, raw => {
+    const friend = communityRecord(raw);
+    if (!friend) return null;
+    const id = communityUuid(friend.id), member = projectPerson(friend.member);
+    const updatedAt = communityTimestamp(friend.updatedAt), introduction = boundedText(friend.introduction, 300);
+    if (!id || !member || member.id === actorId || !updatedAt || introduction === null
+      || !["incoming", "outgoing"].includes(String(friend.direction)) || !["pending", "accepted"].includes(String(friend.status))) return null;
+    return { id, member, updatedAt, introduction, direction: friend.direction as CafeFriend["direction"], status: friend.status as CafeFriend["status"] };
+  });
+  if (friends === null || (!me && friends?.length) || rooms?.some(item => item.kind === "direct")) return null;
   if ((value.me !== null && !me) || (me && me.id !== actorId) || !people || !rooms
     || (value.room !== null && !room) || !calls || !blockedMembers || !serverTime) return null;
   if (room && (room.id !== requestedRoomId || !room.participants.some(member => member.id === actorId))) return null;
   if (!me && (people.length || rooms.length || room || calls.length || blockedMembers.length)) return null;
   if (calls.some(call => call.from.id !== actorId && call.to.id !== actorId)) return null;
-  return { ok: true, me, people, rooms, room, calls, blockedMembers, serverTime };
+  return { ok: true, me, people, rooms, room, calls, blockedMembers, serverTime, ...(friends !== undefined ? { friends } : {}) };
 }
 
 export function projectCallJoin(raw: unknown): Extract<CafeCommunityCallJoin, { ok: true }> | null {

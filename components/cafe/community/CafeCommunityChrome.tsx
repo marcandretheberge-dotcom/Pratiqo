@@ -8,12 +8,12 @@ import { CafePraktikosAnimation } from "./CafePraktikosAnimation";
 import { cafeText, type CommunityLocale } from "./copy";
 import styles from "./community.module.css";
 
-export function CommunityFrame({ locale, courseReturnHref, children, compact = false, cinematic = false }: {
-  locale: CommunityLocale; courseReturnHref?: string | null; children: ReactNode; compact?: boolean; cinematic?: boolean;
+export function CommunityFrame({ locale, courseReturnHref, children, compact = false, cinematic = false, people = false }: {
+  locale: CommunityLocale; courseReturnHref?: string | null; children: ReactNode; compact?: boolean; cinematic?: boolean; people?: boolean;
 }) {
   const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
   const back = resolveCafeRoomCourseReturn(courseReturnHref ?? undefined);
-  return <main className={`${styles.page} ${cinematic ? styles.cinematic : ""}`} lang={locale} data-cafe-screen={cinematic ? "cinematic" : "standard"}>
+  return <main className={`${styles.page} ${cinematic ? styles.cinematic : ""} ${people && !cinematic ? styles.peopleTheme : ""}`} lang={locale} data-cafe-screen={cinematic ? "cinematic" : "standard"}>
     <header className={`${styles.topbar} ${cinematic ? styles.topbarCinematic : ""}`}><div className={styles.topbarInner}>
       {/* Full-document entry resets this private room view and tears down its presence lease. */}
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}

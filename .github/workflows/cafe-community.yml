@@ -61,6 +61,8 @@ jobs:
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Database, HTTP integration, UI and private-call behavior
         run: npm run test:cafe-community
+      - name: People-first permissions and interactions
+        run: npm run test:cafe-people
       - name: Native PostgreSQL permissions and separate-connection capacity race
         run: bash tests/cafe/run-community-postgres-tests.sh
       - name: Existing room and course-return regressions

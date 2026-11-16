@@ -62,6 +62,7 @@ export function useCafeCommunity(identity: CafeIdentity, transport: CafeCommunit
       const safe: CafeCommunitySnapshot = {
         ...result,
         people: result.people.filter((person) => !hidden.has(person.id)),
+        ...(result.friends ? { friends: result.friends.filter(friend => !hidden.has(friend.member.id)) } : {}),
         rooms: result.rooms.filter((room) => !hidden.has(room.creator.id)),
         calls: result.calls.filter((call) => !hidden.has(call.from.id) && !hidden.has(call.to.id)),
         room: result.room && !hidden.has(result.room.creator.id) ? {
@@ -199,10 +200,11 @@ export function useCafeCommunity(identity: CafeIdentity, transport: CafeCommunit
     if (previous) {
       // Exit the shared view immediately; the server decides whether the creator keeps the room.
       const shared = previous.room?.participants.some((member) => member.id === target.id);
-      if (shared && previous.room?.creator.id !== identity.userId) roomId.current = null;
+      if (shared && (previous.room?.kind === "direct" || previous.room?.creator.id !== identity.userId)) roomId.current = null;
       snapshot.current = {
         ...previous,
         people: previous.people.filter((member) => member.id !== target.id),
+        ...(previous.friends ? { friends: previous.friends.filter(friend => friend.member.id !== target.id) } : {}),
         rooms: previous.rooms.filter((room) => room.creator.id !== target.id),
         room: shared ? null : previous.room,
         calls: previous.calls.filter((call) => call.from.id !== target.id && call.to.id !== target.id),
