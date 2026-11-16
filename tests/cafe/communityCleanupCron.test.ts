@@ -99,7 +99,7 @@ test("cleanup scheduler is opt-in, supports the existing deployment plan and pre
 });
 
 async function runScheduler(options: { origin?: string; secret?: string; status?: number; error?: Error } = {}) {
-  const workflow = readFileSync(".github/workflows/cafe-community-cleanup.yml", "utf8");
+  const workflow = readFileSync(".github/workflows/cafe-community-cleanup.yml", "utf8").replace(/\r\n/g, "\n");
   const match = /^          node --input-type=module <<'NODE'\n([\s\S]*?)^          NODE$/m.exec(workflow);
   assert.ok(match, "Expected the self-contained Node scheduler script");
   const source = match[1].replace(/^ {10}/gm, "");

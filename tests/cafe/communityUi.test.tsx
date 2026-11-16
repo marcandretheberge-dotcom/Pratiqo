@@ -49,6 +49,13 @@ async function profileChoosesLanguagesOutsideCourses() {
   const view = mount(transport); await enter(view);
   const submit = view.getByRole("button", { name: "Continue" }) as HTMLButtonElement;
   assert.equal(submit.disabled, true);
+  for (const [name, href] of [["Code of conduct (new tab)", "/legal/code-de-conduite"], ["Privacy (new tab)", "/legal/confidentialite"]]) {
+    const link = view.getByRole("link", { name });
+    assert.equal(link.getAttribute("href"), href);
+    assert.equal(link.getAttribute("target"), "_blank", "Reading the rules must preserve the unfinished form");
+    assert.equal(link.getAttribute("rel"), "noopener noreferrer");
+  }
+  assert.equal((view.getByRole("checkbox", { name: "I agree to the Café rules." }) as HTMLInputElement).checked, false);
   fireEvent.change(view.getByLabelText("Your Café name"), { target: { value: "Asha" } });
   fireEvent.click(within(view.getByRole("group", { name: "Native language(s)" })).getByRole("checkbox", { name: "Hindi" }));
   fireEvent.click(within(view.getByRole("group", { name: "Language(s) to practise" })).getByRole("checkbox", { name: "Swahili" }));
