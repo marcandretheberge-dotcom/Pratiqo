@@ -76,6 +76,11 @@ function ProfileForm({ member, languageHint, locale, busy, onSave, onCancel }: {
     </div>
     <label className={styles.check}><input type="checkbox" checked={adult} onChange={(event) => setAdult(event.target.checked)} required />{t("Je confirme avoir 18 ans ou plus.", "I confirm I am 18 or older.", "Confirmo que tengo 18 años o más.")}</label>
     <label className={styles.check}><input type="checkbox" checked={rules} onChange={(event) => setRules(event.target.checked)} required />{t("J’accepte les règles du Café.", "I agree to the Café rules.", "Acepto las reglas del Café.")}</label>
+    <p className={styles.note}>
+      <a href="/legal/code-de-conduite" target="_blank" rel="noopener noreferrer">{t("Code de conduite (nouvel onglet)", "Code of conduct (new tab)", "Código de conducta (nueva pestaña)")}</a>
+      {" · "}
+      <a href="/legal/confidentialite" target="_blank" rel="noopener noreferrer">{t("Confidentialité (nouvel onglet)", "Privacy (new tab)", "Privacidad (nueva pestaña)")}</a>
+    </p>
     {error && <p className={styles.error} role="alert">{error}</p>}
     <div className={styles.row}>
       <button className={styles.primary} type="submit" disabled={busy || !name.trim() || !native.length || !learning.length || !adult || !rules}>{member ? t("Enregistrer", "Save", "Guardar") : t("Continuer", "Continue", "Continuar")}</button>

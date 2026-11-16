@@ -110,6 +110,8 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npx playwright install --with-deps chromium
+      - name: Primary link and button contrast
+        run: node --import tsx tests/cafe/cafeActionContrast.test.ts
       - name: Build community routes with the normal CSP
         run: npm run build -- --debug-build-paths="app/cafe/**/page.tsx,app/api/cafe/community/**/route.ts,app/api/admin/cafe/community/reports/route.ts,app/admin/cafe/community/page.tsx,app/api/cron/cafe-community-cleanup/route.ts,app/api/geo/route.ts"
       - name: Desktop and narrow-mobile interaction and layout

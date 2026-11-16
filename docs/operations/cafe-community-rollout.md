@@ -1,6 +1,6 @@
 # Café community release and verification
 
-The review branch implements the community experience. No hosted environment values, production database, production traffic or live invitation messages were changed while preparing it. The existing PR #462 remains a separate dependency.
+The community implementation and its Daily foundation (#462 and #464) are now on main. Code being merged does not establish that the hosted schema, gates, cleanup worker or real-device video have been activated and verified. See [the 2026-11-16 local readiness report](cafe-release-readiness-20261116.md) for the latest executed checks. No production activation is part of that report.
 
 ## Entry points and first release
 
@@ -44,7 +44,7 @@ Member mutations already attempt immediate provider teardown. The scheduled retr
 
 ## Deployment order
 
-1. Review the stacked PR and its dependency. Resolve any merge conflicts and rerun checks on the exact resulting commit.
+1. Review the release diff against current main, including any changes since the local readiness report. Resolve any merge conflicts and rerun affected checks on the exact resulting commit.
 2. Apply the existing four Café migrations, then `20261113111051_cafe_community_text_first.sql`, to the linked development environment. Confirm intended migration history before applying; this change has not applied any hosted migration automatically.
 3. Verify exposed schemas, RLS and explicit function privileges in that actual environment. `anon` and `authenticated` must not invoke trusted-actor RPCs; service-role must not directly query community tables. Run the Supabase security/performance advisors there. Local fixtures are not a hosted advisor result.
 4. Configure the development cleanup secret and exercise its close-only endpoint with that environment's own credentials. Test a failed provider teardown followed by a successful retry; confirm a newer outbox generation cannot be acknowledged by an older worker. Before production video activation, configure and opt into the scheduler above after it reaches the default branch, then verify actual runs and backlog draining.
@@ -77,6 +77,8 @@ bash tests/cafe/run-community-postgres-tests.sh
 ```
 
 The native PostgreSQL script requires a fresh disposable database and the usual `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD` and `PGDATABASE` connection settings. It creates synthetic users only. The workflow runs PostgreSQL 17, contract/integration/React tests, and a normal-CSP production build for browser interaction tests.
+
+For the existing PR405 local Auth/database stack, use `node tools/cafe-local/app.mjs build`, then `node tools/cafe-local/app.mjs start`, then `npx tsx scripts/cafe-community-two-account-browser.ts`. The guarded runner rejects application env files, checks the Docker stack via the existing adapter, uses fixed loopback origins and fresh synthetic accounts, and deletes only the accounts it created. It does not reuse Cursor's accounts or write access tokens to evidence files. Its browser rejects external origins. This validates real text/community handlers, not Daily or the production OAuth login screen. No tunnel or hosted credentials are needed.
 
 The explicitly labelled preview route is `/cafe/preview/communaute`; its three gates are shown above. `scripts/cafe-community-browser.ts` writes synthetic desktop/mobile evidence under `artifacts/cafe-community/`. Its assertions include denied chat media headers, no Café API/Daily network calls, and no horizontal overflow. It provides no evidence of real account presence or live Daily video.
 
