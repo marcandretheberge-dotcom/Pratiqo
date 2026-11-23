@@ -15,6 +15,7 @@
 
 # Next.js
 /.next/
+/public/practice/it/bologna/
 /out/
 
 # Production
