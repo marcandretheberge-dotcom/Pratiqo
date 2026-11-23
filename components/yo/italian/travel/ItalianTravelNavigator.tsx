@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, LockKeyhole, MapPin, Bike, Footprints, Plane, Backpack, X, Music2, Gamepad2 } from "lucide-react";
+import { ArrowRight, LockKeyhole, MapPin, Bike, Footprints, Plane, Backpack, X, Music2, Gamepad2, Route, ChevronDown } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 import type { ItalianNavigatorContext } from "../guided/GuidedItalianCourse";
 import type { CourseUnit } from "@/lib/yo/italian/course/courseTypes";
@@ -8,17 +8,18 @@ import type { YoLocale } from "@/lib/yo/types";
 import { t } from "@/lib/yo/italian/course/courseAuthoring";
 import { projectItalianWorlds, ITALIAN_WORLDS, canUseItalianFlute } from "@/lib/yo/italian/worlds";
 import { canPlayItalianTrivia } from "@/lib/yo/italian/trivia";
-import { CITY_COORDINATES, GEOGRAPHIC_ROADS, WORLD_BOUNDS, project, parseTravelMemory, scooterEarned, type TravelMemory } from "@/lib/yo/italian/travel/journey";
+import { GEOGRAPHIC_ROADS, WORLD_BOUNDS, project, parseTravelMemory, scooterEarned, type TravelMemory } from "@/lib/yo/italian/travel/journey";
 import outline from "@/lib/yo/italian/travel/italy-outline.json";
 import { MapTraveler } from "../../journey/map/MapTraveler";
-import { roadPath, roadPoint } from "../../journey/map/roadGeometry";
+import { approvedRoad, roadPath, roadPoint } from "../../journey/map/roadGeometry";
 import { FeedbackSettings, useLearningFeedback } from "../../feedback/LearningFeedback";
 import { TravelArrival } from "./TravelArrival";
 import { FlorenceDiscovery } from "./FlorenceDiscovery";
 import { MapScooter } from "./MapScooter";
 import { travelStyles } from "./styles";
 
-export function ItalianTravelNavigator({ journey, progress, active, openCurrentMission, openTrivia, locale, unit, florence, storageKey, openUnit, canReview, triviaAvailable }: ItalianNavigatorContext & {
+export function ItalianTravelNavigator({ journey, progress, active, openCurrentMission, openTrivia, locale, unit, florence, storageKey, openUnit, canReview, triviaAvailable, illustrated = false }: ItalianNavigatorContext & {
+  illustrated?: boolean;
   locale: YoLocale; unit: CourseUnit; florence: CourseUnit; storageKey: string; openUnit: (id: string) => void;
 }) {
   const worlds = projectItalianWorlds(journey), feedback = useLearningFeedback();
@@ -27,6 +28,7 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
   const latest = useRef(memory), [ready, setReady] = useState(false), [stored, setStored] = useState(true);
   const [discovery, setDiscovery] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [atlasOpen, setAtlasOpen] = useState(false);
   const guideBefore = useRef(guide);
   const initialJourney = useRef({ guide, steps: journey.steps, currentUnitId: unit.id, canReview });
   const persist = useCallback(() => {
@@ -55,7 +57,7 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
     return () => cancelAnimationFrame(frame);
   }, [guide, commit]);
   const worldIndex = Math.max(0, ITALIAN_WORLDS.findIndex(w => w.cities.some(c => c.unitId === memory.selected)));
-  const world = worlds[worldIndex], road = GEOGRAPHIC_ROADS[worldIndex], bounds = WORLD_BOUNDS[worldIndex];
+  const world = worlds[worldIndex], road = illustrated ? approvedRoad : GEOGRAPHIC_ROADS[worldIndex], bounds = WORLD_BOUNDS[worldIndex];
   const index = Math.max(0, world.cities.findIndex(c => c.unitId === memory.selected));
   const city = world.citiesWithProgress[index];
   const canVisit = (id: string) => Boolean(journey.steps.find(s => s.unit.id === id)?.unlocked || canReview?.(id));
@@ -78,26 +80,39 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
     <style>{travelStyles}</style>
     <header className="travel-heading"><h1>{t("Mon voyage en Italie", "My Italian journey", "Mi viaje por Italia")[locale]}</h1><div className="travel-heading-tools"><button type="button" className="travel-icon" title={t("Revoir l’arrivée", "Replay arrival", "Repetir la llegada")[locale]} onClick={() => commit({ arrived: false })}><Plane size={21}/></button><button type="button" className="travel-icon" aria-label={t("Voyage et équipement", "Journey and equipment", "Viaje y equipo")[locale]} title={t("Voyage et équipement", "Journey and equipment", "Viaje y equipo")[locale]} onClick={() => setToolsOpen(true)}><Backpack size={21}/></button></div></header>
     {!stored && <p role="status">{t("La reprise est limitée à cette session : le stockage est indisponible.", "Resume is limited to this session: storage is unavailable.", "La reanudación se limita a esta sesión: el almacenamiento no está disponible.")[locale]}</p>}
-    <nav className="travel-chapters" aria-label={t("Régions du voyage", "Journey regions", "Regiones del viaje")[locale]}>
+    {illustrated ? <Dialog.Root open={atlasOpen} onOpenChange={setAtlasOpen}>
+      <Dialog.Trigger asChild><button className="reward-atlas-index" type="button"><Route size={18}/><strong>{t("Carte","Map","Mapa")[locale]} {worldIndex+1}/{worlds.length}</strong><span>{world.title[locale]}</span><small>{worlds.reduce((n,w)=>n+w.cities.length,0)} {t("villes","cities","ciudades")[locale]}</small><ChevronDown size={16}/></button></Dialog.Trigger>
+      <Dialog.Portal><Dialog.Overlay className="travel-overlay"/><Dialog.Content aria-describedby={undefined} className="travel-tool-sheet reward-atlas-sheet">
+        <Dialog.Title>{t("Mon itinéraire en Italie","My Italian itinerary","Mi itinerario por Italia")[locale]}</Dialog.Title>
+        <Dialog.Close aria-label={t("Fermer","Close","Cerrar")[locale]} className="travel-close"><X/></Dialog.Close>
+        <ol>{worlds.map((w,i)=>{const visit=w.citiesWithProgress.find(c=>canVisit(c.unitId)&&!c.mastered)??w.citiesWithProgress.find(c=>canVisit(c.unitId));
+          return <li key={w.id}><span className="reward-atlas-thumb" aria-hidden style={{backgroundImage:`url(/images/yo/italian/worlds/${w.id}.webp)`}}/><div><strong>{i+1}. {w.title[locale]}</strong><p>{w.cities.map(c=>c.name).join(" · ")}</p></div><button type="button" disabled={!visit} aria-label={w.title[locale]} onClick={()=>{if(visit){if(i!==worldIndex)commit({selected:visit.unitId});setAtlasOpen(false);}}}>{visit?<ArrowRight size={18}/>:<LockKeyhole size={16}/>}</button></li>;
+        })}</ol>
+      </Dialog.Content></Dialog.Portal>
+    </Dialog.Root> : <nav className="travel-chapters" aria-label={t("Régions du voyage", "Journey regions", "Regiones del viaje")[locale]}>
       {worlds.map((w, i) => <button type="button" key={w.id} aria-pressed={i === worldIndex} disabled={!w.cities.some(c => canVisit(c.unitId))} onClick={() => { const destination = w.citiesWithProgress.find(c => c.unlocked && !c.mastered) ?? w.citiesWithProgress.find(c => canVisit(c.unitId)); if (destination) commit({ selected: destination.unitId }); }}><span>0{i + 1}</span>{w.title[locale]}{!w.cities.some(c => canVisit(c.unitId)) && <LockKeyhole size={14}/>}</button>)}
-    </nav>
+    </nav>}
     <div className="travel-layout">
       <div className="travel-stage">
-      <div className="travel-map" data-geographic-map={world.id}>
-        <svg viewBox="0 0 480 600" aria-hidden className="travel-geography">
+      <div className="travel-map" data-geographic-map={illustrated ? undefined : world.id} data-illustrated-map={illustrated ? world.id : undefined}
+        style={illustrated ? { backgroundImage: `url(/images/yo/italian/worlds/${world.id}.webp)` } : undefined}>
+        <svg viewBox="0 0 480 600" preserveAspectRatio={illustrated ? "none" : "xMidYMid meet"} aria-hidden className="travel-geography">
+          {!illustrated && <>
           <defs><pattern id="sea-lines" width="40" height="38" patternUnits="userSpaceOnUse"><path d="M4 18 Q10 13 16 18 T28 18" fill="none" stroke="#88b9bc" strokeWidth=".8" opacity=".5"/></pattern><pattern id="land-dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="4" cy="8" r=".9" fill="#88a87d" opacity=".35"/></pattern></defs>
           <rect width="480" height="600" fill="#dceeee"/><rect width="480" height="600" fill="url(#sea-lines)"/>
           {outline.coordinates.map((polygon, i) => <path key={i} d={polygon.map(ring => ring.map((p, j) => (j ? "L" : "M") + project([p[0], p[1]], bounds).join(" ")).join(" ") + "Z").join(" ")} fill="#edf1d7" stroke="#7b9c80" strokeWidth="2"/>)}
           {outline.coordinates.map((polygon, i) => <path key={i} d={polygon.map(ring => ring.map((p, j) => (j ? "L" : "M") + project([p[0], p[1]], bounds).join(" ")).join(" ") + "Z").join(" ")} fill="url(#land-dots)"/>)}
+          </>}
+          {illustrated && <path d={roadPath(road)} fill="none" stroke="#6a4b29" strokeOpacity=".65" strokeWidth="14" strokeLinecap="round"/>}
           <path d={roadPath(road)} fill="none" stroke="#fffdf5" strokeWidth="10" strokeLinecap="round"/>
-          <path data-travel-road d={roadPath(road)} fill="none" stroke="#b38455" strokeWidth="3" strokeDasharray="4 7" strokeLinecap="round"/>
+          <path data-travel-road d={roadPath(road)} fill="none" stroke={illustrated ? "#a87736" : "#b38455"} strokeWidth="3" strokeDasharray="4 7" strokeLinecap="round"/>
           {world.citiesWithProgress.map((c, i) => { const [x, y] = roadPoint(i, road); return <g key={c.unitId}><circle cx={x} cy={y} r={memory.selected === c.unitId ? 12 : 8} fill={canVisit(c.unitId) ? "#25796c" : "#a2aaa2"} stroke="white" strokeWidth="3"/></g>; })}
-          <text x="24" y="565" fill="#46757b" fontSize="12" fontStyle="italic">ITALIA</text><path d="M445 55 L445 25 M438 34 L445 25 L452 34" fill="none" stroke="#4b7069" strokeWidth="2"/><text x="440" y="19" fontSize="11" fill="#4b7069">N</text>
+          {!illustrated && <g><text x="24" y="565" fill="#46757b" fontSize="12" fontStyle="italic">ITALIA</text><path d="M445 55 L445 25 M438 34 L445 25 L452 34" fill="none" stroke="#4b7069" strokeWidth="2"/><text x="440" y="19" fontSize="11" fill="#4b7069">N</text></g>}
         </svg>
-        {world.citiesWithProgress.map((c, i) => { const [x,y] = project(CITY_COORDINATES[c.unitId], bounds); return <button type="button" key={c.unitId} className="travel-city" data-city={c.unitId} data-side={x < 160 || i % 2 ? "right" : "left"} aria-pressed={memory.selected === c.unitId} aria-disabled={!canVisit(c.unitId)} style={{ left: x / 480 * 100 + "%", top: y / 600 * 100 + "%" }}
+        {world.citiesWithProgress.map((c, i) => { const [x,y] = roadPoint(i, road); return <button type="button" key={c.unitId} className="travel-city" data-city={c.unitId} data-side={x < 160 || i % 2 ? "right" : "left"} aria-pressed={memory.selected === c.unitId} aria-disabled={!canVisit(c.unitId)} style={{ left: x / 480 * 100 + "%", top: y / 600 * 100 + "%" }}
           onClick={() => { if (!canVisit(c.unitId) || memory.selected === c.unitId) return; feedback.step(); commit({ selected: c.unitId }); }}><span>{c.name}</span>{!canVisit(c.unitId) ? <LockKeyhole size={13}/> : <span className="travel-city-number">{i + worldIndex * 4 + 1}</span>}</button>; })}
         <MapTraveler key={world.id} index={index} locale={locale} road={road} initialPosition={memory.positions[world.id] ?? index} onPosition={positionChanged} active={active && memory.arrived && !discovery && !toolsOpen} pose={equipped ? "riding" : "walking"} accessory={equipped ? <MapScooter/> : undefined}/>
-        <span className="travel-map-credit">Natural Earth · WGS84</span>
+        {!illustrated && <span className="travel-map-credit">Natural Earth · WGS84</span>}
       </div>
       </div>
       <div className="travel-destination" aria-live="polite">

@@ -1,0 +1,175 @@
+/* Preview-only shell. The real course, map and grading components stay intact. */
+/* Passport artwork is also used on the existing Italian world map. */
+body.yo-reward-review { background: #f4f8f5; }
+body.yo-reward-review > header, body.yo-reward-review > footer { display: none; }
+.rewards-app { --reward-green:#186b50; --reward-ink:#203c34; color:var(--reward-ink); background:#f4f8f5; min-height:100dvh; padding-bottom:100px; letter-spacing:0; }
+.rewards-app button { cursor:pointer; }
+.rewards-app button:focus-visible { outline:3px solid #356ca5; outline-offset:3px; }
+.reward-preview-label { background:#203c34; color:#fff; text-align:center; padding:7px 12px; font-size:10px; font-weight:800; }
+.reward-preview-label span { margin-left:10px; font-weight:500; opacity:.85; }
+.reward-header { max-width:1160px; margin:auto; height:76px; padding:0 28px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #dbe5de; }
+.reward-brand > span { font-size:23px; font-weight:900; color:#226b56; }
+.reward-brand > span > span { color:#c66c3a; }
+.reward-brand small { display:block; font-size:11px; color:#587267; }
+.reward-header-actions { display:flex; gap:16px; align-items:center; }
+.reward-header-actions button,.reward-sidebar-ranking button { display:grid; place-items:center; width:44px; height:44px; border-radius:50%; background:white; border:1px solid #dce4dc; }
+.reward-xp { display:flex; gap:5px; align-items:center; color:#9e5b05; font-size:21px; font-weight:800; }
+.reward-xp svg { color:#d88c14; }
+.reward-xp small { font-size:11px; }
+.reward-layout { display:grid; grid-template-columns:minmax(0,740px) minmax(260px,320px); gap:44px; max-width:1160px; margin:0 auto; padding:0 28px; }
+.reward-main { min-width:0; }
+.reward-eyebrow { font-size:11px; text-transform:uppercase; font-weight:750; color:#557265; margin:0 0 5px; }
+.reward-course [data-guided-italian] { height:auto; min-height:0; display:block; background:transparent; }
+.reward-course .yo-course-header { background:transparent; border:0; }
+.reward-course .yo-course-header-inner { padding:0; min-height:44px; justify-content:flex-end; }
+.reward-course .yo-course-header-inner > a { display:none; }
+.reward-course .yo-course-main { padding:0; max-width:none; }
+.reward-course .italian-travel { height:auto; grid-template-rows:auto auto auto; margin:0; padding:0; background:transparent; }
+.reward-course .travel-heading { margin:0; padding:0; }
+.reward-course .travel-heading h1 { font-size:16px; }
+.reward-course .travel-layout { grid-template-columns:minmax(0,1fr); gap:0; }
+.reward-course .travel-stage { height:480px; }
+.reward-course .travel-map[data-illustrated-map] { width:100%; height:100%; max-height:none; background-size:cover; background-position:center; border-radius:7px; overflow:hidden; }
+@media(min-width:851px) {
+  .reward-layout.tab-journey { grid-template-columns:minmax(0,560px) minmax(260px,320px); max-width:980px; }
+  .tab-journey .reward-course { position:relative; }
+  .reward-course .yo-course-header { position:absolute; right:0; top:0; z-index:21; }
+  .reward-course .travel-heading { min-height:52px; padding-right:205px; }
+  .reward-course .travel-stage { height:clamp(285px,calc(100dvh - 405px),640px); }
+}
+.reward-course .travel-destination { margin-top:12px; }
+.reward-sidebar { padding-top:40px; }
+.reward-section-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.reward-section-heading h2 { font-size:20px; font-weight:800; line-height:1.2; }
+.reward-count { color:#246951; font-weight:800; background:#e1eee4; border-radius:50%; display:grid; place-items:center; width:40px; height:40px; flex:none; }
+.reward-goal { display:grid; grid-template-columns:42px minmax(0,1fr) auto; gap:12px; align-items:center; padding:19px 0; border-bottom:1px solid #dce5dc; }
+.reward-goal-icon { width:42px; height:46px; border-radius:8px; display:grid; place-items:center; background:#e5edf7; color:#416b9c; }
+.reward-goal:nth-of-type(3) .reward-goal-icon { background:#efe9fa; color:#765895; }
+.reward-goal:nth-of-type(4) .reward-goal-icon { background:#faedcd; color:#9c6a19; }
+.reward-goal strong { font-size:13px; line-height:1.4; display:block; margin-bottom:7px; }
+.reward-goal b { font-size:12px; }
+.reward-goal progress { display:block; appearance:none; height:7px; width:100%; border-radius:8px; overflow:hidden; background:#dce6de; }
+.reward-goal progress::-webkit-progress-bar { background:#dce6de; }
+.reward-goal progress::-webkit-progress-value { background:#479767; border-radius:8px; }
+.reward-goal progress::-moz-progress-bar { background:#479767; }
+.reward-goal.is-complete .reward-goal-icon { background:#d6eddd; color:#286640; }
+.reward-note { font-size:12px; line-height:1.7; color:#5d7467; margin:18px 0; }
+.reward-sidebar-ranking { display:flex; align-items:center; gap:14px; padding:24px 0; border-top:1px solid #dce5dc; margin-top:25px; }
+.reward-sidebar-ranking > svg { color:#ae771d; }
+.reward-sidebar-ranking > div { flex:1; }
+.reward-sidebar-ranking strong { font-size:23px; font-weight:800; }
+.reward-sidebar-ranking p { font-size:12px; }
+.reward-tabs { position:fixed; z-index:30; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #d9e4dc; display:flex; align-items:center; justify-content:center; padding:7px 10px max(9px,env(safe-area-inset-bottom)); gap:45px; }
+.reward-tabs button { position:relative; min-width:94px; min-height:54px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:4px; color:#7a887e; font-size:11px; font-weight:650; }
+.reward-tabs button[aria-current] { color:#17684f; background:#eef6ed; border-radius:8px; }
+.reward-tabs small { position:absolute; top:1px; right:18px; width:16px; height:16px; background:#316e53; color:white; border-radius:50%; font-size:10px; }
+.reward-page { padding:35px 0; max-width:600px; margin:0 auto; }
+.reward-page-title { display:flex; align-items:center; gap:12px; padding:0 0 30px; color:#326d56; }
+.reward-page h1 { font-size:30px; font-weight:850; }
+.reward-page .reward-goal { padding:24px 0; }
+.reward-page .reward-goal strong { font-size:16px; }
+.reward-earned { display:flex; gap:18px; align-items:center; padding:26px 0; border-top:1px solid #d8e4db; margin-top:28px; }
+.reward-earned svg { flex:none; color:#a67822; }
+.reward-earned h2 { font-weight:800; margin-bottom:6px; }
+.reward-earned p { font-size:13px; line-height:1.7; }
+.reward-primary { display:flex; justify-content:center; align-items:center; gap:14px; background:#216e53; border-bottom:4px solid #154c39; color:white; border-radius:8px; padding:14px 20px; font-size:15px; font-weight:750; width:100%; min-height:52px; margin-top:16px; }
+.reward-primary:active { transform:translateY(2px); border-bottom-width:2px; }
+.reward-league-heading { text-align:center; margin-bottom:20px; }
+.reward-league-heading > svg { margin:0 auto 14px; color:#b38028; }
+.reward-league-heading > p:last-child { font-size:14px; color:#5c7166; margin-top:6px; }
+.reward-demo-notice { padding:12px 0; border-top:1px solid #d4e2d9; border-bottom:1px solid #d4e2d9; font-size:12px; line-height:1.6; color:#56685c; }
+.reward-ranking { padding:15px 0; list-style:none; }
+.reward-ranking li { display:grid; grid-template-columns:28px 44px minmax(0,1fr) auto; align-items:center; gap:15px; min-height:82px; padding:10px 12px; border-bottom:1px solid #e0e7e0; }
+.reward-ranking li.is-you { background:#e0efe2; border:1px solid #b5d4b9; border-radius:8px; }
+.reward-rank { font-size:17px; font-weight:800; color:#728275; text-align:center; }
+.reward-rank svg { color:#ad7a21; }
+.reward-avatar { display:grid; place-items:center; height:44px; width:44px; color:white; border-radius:50%; font-size:20px; font-weight:750; }
+.reward-ranking strong { font-size:15px; }
+.reward-ranking div > small { display:block; font-size:11px; color:#6d7d71; margin-top:4px; }
+.reward-ranking b { font-size:17px; }
+.reward-ranking b small { font-size:10px; font-weight:600; }
+.reward-settings-overlay { position:fixed; inset:0; z-index:100; background:#132c2590; }
+.reward-settings { position:fixed; z-index:101; top:50%; left:50%; transform:translate(-50%,-50%); width:min(500px,calc(100% - 24px)); max-height:90dvh; overflow:auto; background:white; color:#203c34; border-radius:8px; padding:26px; }
+.reward-settings > h2 { font-size:24px; font-weight:800; margin-bottom:24px; }
+.reward-close { position:absolute; top:12px; right:12px; width:44px; height:44px; display:grid; place-items:center; }
+.reward-rules { border-top:1px solid #dae5dd; margin-top:22px; padding-top:18px; }
+.reward-rules h3 { font-weight:750; margin-bottom:8px; }
+.reward-rules p { font-size:13px; line-height:1.7; margin:8px 0; }
+.reward-mute { display:flex; gap:10px; align-items:center; min-height:44px; margin-top:12px; font-weight:700; font-size:14px; }
+.reward-toast { position:fixed; z-index:80; top:max(15px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); width:max-content; max-width:calc(100% - 24px); background:#fff; border:1px solid #bbd9bd; border-bottom:4px solid #448a58; border-radius:8px; padding:12px 17px; display:flex; gap:12px; align-items:center; color:#205f3e; box-shadow:0 8px 30px #14372b20; pointer-events:none; }
+.reward-toast strong { font-size:23px; font-weight:850; }
+.reward-toast p { font-size:12px; margin-top:3px; }
+.reward-storage { padding:12px 24px; background:#fcf0cb; color:#694e10; font-size:13px; }
+.reward-mission-status { display:flex; justify-content:space-between; gap:12px; padding:8px 22px; border-bottom:1px solid #dce6dc; color:#50735a; font-size:11px; }
+.reward-mission-status span { display:flex; align-items:center; gap:5px; }
+.reward-mission-status span:first-child { color:#94631c; }
+@media(prefers-reduced-motion:no-preference) {
+  .reward-toast { animation:reward-toast-arrive .32s ease-out; }
+  .reward-toast > span:first-child { animation:reward-hop .48s ease-out; }
+  @keyframes reward-toast-arrive { from { opacity:0; translate:0 -10px; } to { opacity:1; translate:0 0; } }
+  @keyframes reward-hop { 0%,100% { transform:translateY(0) rotate(0); } 40% { transform:translateY(-8px) rotate(-5deg); } 70% { transform:translateY(-2px) rotate(4deg); } }
+}
+@media(max-width:850px) {
+  .reward-sidebar { display:none; }
+  .reward-layout { display:block; max-width:640px; padding:0 16px; }
+  .reward-header { padding:0 18px; height:64px; }
+  .reward-course .travel-map { max-height:430px; }
+  .reward-layout.tab-journey { height:calc(100dvh - 165px); min-height:560px; }
+  .tab-journey .reward-main { height:100%; display:flex; flex-direction:column; }
+  .tab-journey .reward-course { flex:1; min-height:0; position:relative; }
+  .reward-course [data-guided-italian], .reward-course .yo-course-main, .reward-course .yo-course-main > div { height:100%; }
+  .reward-course .yo-course-header { position:absolute; right:0; top:0; z-index:21; }
+  .reward-course .italian-travel { height:100%; grid-template-rows:44px 44px minmax(0,1fr); }
+  .reward-course .travel-layout { grid-template-rows:minmax(0,1fr) auto; }
+  .reward-course .travel-stage { height:auto; }
+  .reward-course .travel-heading h1 { display:none; }
+  .reward-course .travel-destination { margin-top:0; }
+  .reward-course .travel-heading h1 { font-size:14px; }
+  .reward-tabs { gap:8px; justify-content:space-around; }
+  .reward-tabs button { min-width:92px; }
+  .reward-page { padding-top:25px; }
+  .reward-preview-label { font-size:8px; }
+  .reward-preview-label span { margin-left:6px; }
+  .reward-ranking li { gap:10px; }
+  body.yo-reward-review .yo-mission-window { top:0; bottom:0; height:100dvh; max-height:100dvh; border-radius:0; padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); }
+}
+.reward-speak h1,.reward-league-heading h1 { font:700 34px/1.15 Georgia,serif; }
+.reward-postcard { border:1px solid #c2ceca; border-bottom:4px solid #abc3bb; background:white; margin:16px 0 24px; border-radius:6px; overflow:hidden; }
+.reward-panorama { background-color:#cfdfd8; background-size:cover; background-position:50% 48%; display:flex; align-items:flex-end; justify-content:space-between; height:148px; padding:10px 16px; }
+.reward-postmark { display:inline-block; align-self:flex-start; padding:5px 12px; background:#fff9e8; border:3px double #855333; color:#65351d; font:bold 12px/1.2 Georgia,serif; text-align:center; text-transform:uppercase; transform:rotate(-6deg); }
+.reward-phrase { border-top:4px solid #edbd53; padding:15px 18px; }
+.reward-phrase .reward-section-heading { font-size:12px; color:#4c635c; margin-bottom:10px; }
+.reward-phrase h2 { font:700 30px/1.18 Georgia,serif; overflow-wrap:anywhere; }
+.reward-phrase p { margin:4px 0 12px; }
+.reward-phrase-actions { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.reward-phrase-actions > button { display:inline-flex; min-height:44px; gap:6px; padding:6px 9px; align-items:center; font-weight:650; font-size:13px; color:#205d54; }
+.reward-speak > h2 { font-size:18px; font-weight:750; }
+.reward-meet a { display:grid; grid-template-columns:44px 1fr 20px; gap:12px; align-items:center; border-bottom:1px solid #cad8d4; min-height:80px; color:#173e3a; }
+.reward-meet a > svg:first-child,.reward-goal-icon { width:40px; height:40px; padding:8px; background:#dcf1e4; color:#19614d; border:1px solid #bad8cb; border-bottom-width:3px; border-radius:8px; }
+.reward-meet a:nth-child(2)>svg:first-child { color:#86402d; background:#f8e1d5; border-color:#e3bcaa; }
+.reward-meet strong,.reward-meet small { display:block; }
+.reward-meet small { font-size:12px; line-height:1.4; color:#4e635c; }
+.reward-meet a:focus-visible { outline:3px solid #3468a1; }
+.reward-league-heading { color:#263e54; background:#e5edf3; border-top:5px solid #395c79; padding:18px 12px; }
+.reward-league-heading > svg { color:#764d0c; box-sizing:content-box; padding:10px; border:4px double #a97626; border-radius:50%; background:#ffdf8a; }
+.reward-ranking li.is-you { border-left:5px solid #216e53; }
+.reward-punches { display:flex; gap:3px; align-items:center; }
+.reward-punches i { width:9px; height:9px; border:1px solid #829b92; border-radius:50%; background:white; }
+.reward-punches [data-filled=true] { background:#158064; border-color:#0d6951; }
+.reward-mission-status { border-bottom-style:dashed; color:#214d47; background:#edf6ee; }
+.reward-toast { background:#153f4c; color:white; border-color:#dae7d9; border-bottom:4px solid #e9b451; }
+.reward-toast strong { color:#ffdd84; }
+.reward-toast[data-tier=lesson] { border-bottom-color:#74d6aa; }
+.reward-toast[data-tier=mastery] { background:#45365d; border-bottom-color:#ffd17d; }
+.reward-toast > svg { color:#ffdd84; }
+body.yo-reward-review [data-guided-game] .yo-answer-option:not(:disabled) { border-bottom-width:3px; }
+body.yo-reward-review [data-guided-game] .yo-answer-option:active:not(:disabled) { translate:0 1px; }
+body.yo-reward-review [data-guided-game] [data-pair-complete=true] { color:#165743; background:#def1e4; border-color:#a1c9b3; opacity:1; }
+@media(prefers-reduced-motion:no-preference) {
+  body.yo-reward-review [data-pair-complete=true] { animation:reward-press .24s ease-out; }
+  @keyframes reward-press { 50% { transform:scale(.97); } }
+}
+@media(max-width:850px) {
+  .reward-tabs { gap:2px; }
+  .reward-tabs button { min-width:0; flex:1; max-width:120px; }
+}

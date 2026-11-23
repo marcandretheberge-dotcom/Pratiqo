@@ -54,6 +54,7 @@
 
 import type { Metadata } from "next";
 import { YoStudentHubContent } from "@/components/yo/YoStudentHubContent";
+import { CafeNavLink } from "@/components/cafe/community/CafeNavLink";
 
 export const dynamic = "force-dynamic";
 
@@ -65,5 +66,5 @@ export const metadata: Metadata = {
 };
 
 export default function StudentYopratiqoHubPage() {
-  return <YoStudentHubContent />;
+  return <YoStudentHubContent cafeLink={<CafeNavLink full preserveCourse />} />;
 }

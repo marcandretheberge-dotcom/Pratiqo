@@ -50,6 +50,7 @@ for (const route of ["app/yo/langues/italien/parcours/page.tsx", "app/yo/langues
   assert.ok(!page.includes("yo.review.") && !page.includes("fixtures"), "No demonstration state in real routes");
 }
 const player = readFileSync("components/yo/italian/guided/GuidedItalianCourse.tsx", "utf8");
+assert.ok(player.includes("travelFlorence ? <ItalianTravelNavigator illustrated"), "The public course uses the illustrated itinerary, not the review app");
 assert.ok(player.includes('storageKey="yo.it.travel.cosmetics.v1"'));
 assert.ok(player.includes("canReview={placedReview}"), "Keep the existing placement access policy");
 assert.ok(player.includes("italianMissionHref(locale, id)"), "Continue uses the real resume route");

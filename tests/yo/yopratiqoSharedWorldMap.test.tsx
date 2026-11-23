@@ -5,7 +5,10 @@ import React from 'react';
 import { introCourses } from '@/lib/yo/shared/course';
 import { freshIntro } from '@/lib/yo/shared/state';
 import { adventureWorld } from '@/lib/yo/adventure';
-import { introMap, journeyMap, mapProgressRevision, parseMapBookmark } from '@/lib/yo/worldMap';
+import { introMap, introStageMap, journeyMap, mapChapters, mapProgressRevision, parseMapBookmark } from '@/lib/yo/worldMap';
+import { courseSteps } from '@/lib/yo/shared/steps';
+import { japaneseJourneyUnits, mandarinJourneyUnits } from '@/lib/yo/foundationJourneyCatalogs';
+import { ITALIAN_WORLDS } from '@/lib/yo/italian/worlds';
 import { buildCourseJourney } from '@/lib/yo/courseJourney';
 import { emptyCourseProgress } from '@/lib/yo/italian/course/courseProgress';
 import { germanCatalog } from '@/lib/yo/german/courseData';
@@ -54,6 +57,32 @@ test('every shared road has reversible samples on the visible cubic, including f
 const c=introCourses[0],state=freshIntro(c);
 state.completed=c.missions[0].practice.map(e=>e.id);
 const model=introMap(c,state,'english');
+test('three or more real maps on each main course; short introductions do not invent cities or access',()=>{
+ assert.deepEqual(ITALIAN_WORLDS.map(w=>w.cities.length),[4,4,4]);
+ for(const units of [germanCatalog.units,portugueseCatalog.units,japaneseJourneyUnits,mandarinJourneyUnits]){
+  const dests=units.map(u=>({...model.destinations[0],id:u.id}));
+  const groups=mapChapters({...model,destinations:dests});
+  assert.deepEqual(groups.map(g=>g.length),[3,3,2]);assert.deepEqual(groups.flat(),dests);
+ }
+ for(const c of introCourses){
+  const state=freshIntro(c), m=introStageMap(c,state,adventureWorld(c.slug)),groups=mapChapters(m),steps=courseSteps(c);
+  assert.deepEqual(groups.map(g=>g.length), c.slug==='espagnol'?[3,3,4,4,2]:[3,3,4]);
+  assert.deepEqual(groups.slice(0,3).map(g=>g[0].id),c.missions.map(m=>m.id));
+  assert.ok(m.destinations.filter(d=>d.entryStep).every(d=>steps.some(s=>s.id===d.entryStep)&&!d.accessible));
+  assert.equal(groups[2].at(-1)?.id,'intro-final');assert.equal(groups[2].at(-1)?.accessible,true);
+  state.step=steps.findIndex(s=>s.kind==='scene');state.resume='lesson';
+  const resumed=introStageMap(c,state,adventureWorld(c.slug));
+  assert.equal(resumed.guideId,steps[state.step].id);assert.ok(resumed.destinations.find(d=>d.id===resumed.guideId)?.accessible);
+  assert.equal(resumed.destinations.find(d=>d.entryStep===c.missions[0].practice[0].id)?.accessible,false);
+ }
+});
+test('regrouped legacy bookmark restores the same destination, not the old page number',()=>{
+ const m=journeyMap(buildCourseJourney(germanCatalog,emptyCourseProgress()),'german','test');
+ m.destinations.forEach(d=>d.accessible=true);
+ const saved={revision:mapProgressRevision(m),destinationId:m.destinations[3].id,chapter:0,position:3};
+ const restored=parseMapBookmark(JSON.stringify(saved),m,true);
+ assert.equal(restored?.destinationId,saved.destinationId);assert.equal(restored?.chapter,1);assert.equal(restored.position,0);
+});
 test('city selection moves only the visual destination; one Continue opens the selected mission',()=>{
  const before=JSON.stringify(state);let opened='';
  const view=render(<WorldJourneyMap model={model} locale="en" onContinue={id=>opened=id}/>);

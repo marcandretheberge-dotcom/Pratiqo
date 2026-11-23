@@ -1,0 +1,14 @@
+.reward-atlas-index { display:flex; align-items:center; gap:8px; padding:4px 10px; min-height:44px; text-align:left; font-size:13px; color:#174f44; }
+.reward-atlas-index span { flex:1; }
+.reward-atlas-index small { font-size:12px; }
+.reward-atlas-sheet ol { padding:0; list-style:none; }
+.reward-atlas-sheet li { display:grid; grid-template-columns:52px minmax(0,1fr) 44px; gap:12px; align-items:center; padding:16px 0; border-top:1px solid #cbdad2; }
+.reward-atlas-thumb { width:52px; height:66px; border-radius:5px; background-position:center; background-size:cover; }
+.reward-atlas-sheet li p { font-size:13px; color:#4e6257; margin:4px 0 0; }
+.reward-atlas-sheet li button { display:grid; place-items:center; min-height:44px; }
+.travel-map[data-illustrated-map] { background-position:center; background-size:cover; overflow:hidden; }
+.italian-travel [data-illustrated-map] .travel-city { transform:translate(-50%,2px); background:none; padding:0; gap:0; }
+.italian-travel [data-illustrated-map] .travel-city > span:first-child { background:#fffcf4; color:#353a30; border:1px solid #856e45; border-radius:5px; padding:5px 9px; font-size:13px; text-shadow:none; box-shadow:0 2px 3px #2633214d; }
+.italian-travel [data-illustrated-map] [aria-pressed=true] > span:first-child { color:white; background:#164e43; border-color:white; }
+.italian-travel [data-illustrated-map] .travel-city > svg { box-sizing:content-box; padding:3px; margin-left:-5px; background:#fffcf4; border-radius:50%; color:#5c5345; }
+.italian-travel [data-illustrated-map] .travel-city-number { display:none; }

@@ -1,6 +1,5 @@
 "use client";
 import { YoLanguageQuickStart } from "./YoLanguageQuickStart";
-import { CafeNavLink } from "@/components/cafe/community/CafeNavLink";
 
 /**
  * YoStudentHubContent
@@ -226,7 +225,7 @@ type ProgressFetchState =
   | { status: "unauthenticated" }
   | { status: "error" };
 
-export function YoStudentHubContent(): React.JSX.Element {
+export function YoStudentHubContent({ cafeLink }: { cafeLink?: React.ReactNode }): React.JSX.Element {
   const { locale } = useLocale();
   const l = safeLocale(locale);
   const copy = COPY[l];
@@ -456,7 +455,7 @@ export function YoStudentHubContent(): React.JSX.Element {
       <YoLanguageQuickStart locale={l} />
       <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#D3D1C7] bg-[#FAFAF6] px-5 py-4" data-testid="yo-student-hub-cafe">
         <div><h2 className="text-base font-semibold text-[#35372F]">Café des langues</h2><p className="mt-1 text-sm text-[#66665E]">{l === "en" ? "Meet other learners. Say hello by text, then decide together if you want to call." : l === "es" ? "Conoce a otros estudiantes. Saluda por texto y decidan juntos si quieren llamarse." : "Rencontrez d’autres personnes qui apprennent. Un bonjour par écrit, puis un appel si vous en avez envie tous les deux."}</p></div>
-        <CafeNavLink full preserveCourse />
+        {cafeLink}
       </section>
 
       {/* Mobile (<lg): button-driven step navigator. The branded

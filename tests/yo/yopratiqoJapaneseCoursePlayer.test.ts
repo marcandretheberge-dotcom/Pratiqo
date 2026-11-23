@@ -238,16 +238,20 @@ for (const locale of ["fr", "en", "es"] as const) {
     seed(resume(emptyJapaneseProgress(), japaneseCourseUnits[2], "writing"));
     const view = render(homeNode(locale));
     const copy = homeLabels[locale];
-    assert.equal(view.getByRole("link", { name: copy.resume }).getAttribute("href"), href(`${JAPANESE_COURSE_PATH}/${japaneseCourseUnits[2].slug}`, locale));
+    const map = view.container.querySelector<HTMLElement>("[data-shared-world-map]");
+    assert.ok(map, "The real course map is ready");
+    const continueLink = () => within(map).getByRole("link", { name: { fr: "Continuer", en: "Continue", es: "Continuar" }[locale] });
+    assert.equal(continueLink().getAttribute("href"), href(`${JAPANESE_COURSE_PATH}/${japaneseCourseUnits[2].slug}`, locale));
     assert.equal(view.getByRole("link", { name: copy.back }).getAttribute("href"), href("/yo/langues", locale));
     assert.equal(view.queryByRole("link", { name: copy.final }), null, "A resumed module is not evidence that all modules passed.");
     assert.equal(view.getByRole("link", { name: copy.intro }).getAttribute("href"), href("/yo/langues/japonais/intro", locale));
-    const unlockedLinks = view.container.querySelectorAll('[data-journey-unit][data-unlocked="true"] a');
-    assert.equal(unlockedLinks.length, 2, "First and legacy-started modules remain available.");
-    for (const link of unlockedLinks) {
-      const url = new URL(link.getAttribute("href")!, window.location.origin);
-      assert.equal(url.searchParams.get("lang"), locale === "fr" ? null : locale);
-      assert.match(url.pathname, /\/parcours\/module-[1-8]$/);
+    const before = saved();
+    const available = Array.from(map.querySelectorAll<HTMLElement>("[data-journey-unit]")).filter(el => !within(el).getByRole<HTMLButtonElement>("button").disabled);
+    assert.deepEqual(available.map(el => el.dataset.journeyUnit), [japaneseCourseUnits[0].slug, japaneseCourseUnits[2].slug]);
+    for (const stop of available) {
+      fireEvent.click(within(stop).getByRole("button"));
+      assert.equal(continueLink().getAttribute("href"), href(`${JAPANESE_COURSE_PATH}/${stop.dataset.journeyUnit}`, locale));
+      assert.deepEqual(saved(), before, "Browsing does not rewrite lesson progress or resume");
     }
     fireEvent.click(view.getByRole("button", { name: copy.resources }));
     assert.equal(view.getByRole("link", { name: copy.notebook }).getAttribute("href"), href(`${JAPANESE_COURSE_PATH}/carnet`, locale));
