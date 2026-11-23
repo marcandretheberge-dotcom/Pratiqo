@@ -23,6 +23,9 @@
     "test:teaching-zones-integration": "node tests/teacherZones/teacherTeachingZonesRouteRuntime.mjs && node tests/teacherZones/teacherTeachingZonesDeployment.mjs && tsx tests/teacherZones/teacherTeachingZonesFallback.test.ts",
     "check:yo-task-scope": "tsx scripts/check_yo_task_scope.ts",
     "test:yo-task-scope": "tsx tests/yo/yoTaskScope.test.ts && tsx tests/yo/yopratiqoDominicanFlashcardsPrintables.test.ts && tsx tests/yo/yopratiqoIntroLessonDeck.test.ts",
+    "predev": "node tools/italy-by-train/build.mjs",
+    "prebuild": "node tools/italy-by-train/build.mjs",
+    "test:yo-scenarios": "node --import tsx --test tests/yo/italyByTrain.test.mjs tests/yo/scenarioRelease.test.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -143,6 +146,7 @@
     "Edge >= 90"
   ],
   "devDependencies": {
+    "esbuild": "0.27.7",
     "@electric-sql/pglite": "0.5.10",
     "@tailwindcss/postcss": "^4",
     "@testing-library/react": "16.3.3",

@@ -17,6 +17,7 @@ import { TravelArrival } from "./TravelArrival";
 import { FlorenceDiscovery } from "./FlorenceDiscovery";
 import { MapScooter } from "./MapScooter";
 import { travelStyles } from "./styles";
+import { scenariosAt } from "@/lib/yo/scenarios/catalog";
 
 export function ItalianTravelNavigator({ journey, progress, active, openCurrentMission, openTrivia, locale, unit, florence, storageKey, openUnit, canReview, triviaAvailable, illustrated = false }: ItalianNavigatorContext & {
   illustrated?: boolean;
@@ -121,6 +122,10 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
         <button data-travel-continue type="button" className="travel-primary" disabled={!canVisit(city.unitId)} onClick={enterMission}>{t("Continuer à", "Continue in", "Continuar en")[locale]} {city.name}<ArrowRight size={19}/></button>
       </div>
     </div>
+    {illustrated && canVisit(city.unitId) && scenariosAt("it", city.unitId).map(s =>
+      <a key={s.id} href={s.entry+"?lang="+locale} className="mx-auto flex min-h-11 w-fit items-center gap-2 rounded px-3 font-semibold text-emerald-900 underline underline-offset-4">
+        <Route size={17} aria-hidden/>{s.label[locale]}
+      </a>)}
     <Dialog.Root open={toolsOpen} onOpenChange={setToolsOpen}><Dialog.Portal><Dialog.Overlay className="travel-overlay"/><Dialog.Content className="travel-tool-sheet">
       <Dialog.Close className="travel-close" aria-label={t("Fermer l’équipement", "Close equipment", "Cerrar equipo")[locale]}><X size={20}/></Dialog.Close>
       <Dialog.Title>{t("Mon carnet de voyage", "My travel notebook", "Mi diario de viaje")[locale]}</Dialog.Title>
