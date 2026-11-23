@@ -39,12 +39,13 @@ function Bridge({ x, y, red = false }: { x: number; y: number; red?: boolean }) 
 }
 
 /** Original stylized scenery, not a geographic or curricular claim. The course supplies every destination. */
-export function WorldScenery({ world, chapter = 0 }: { world: AdventureWorld; chapter?: number }) {
+export function WorldScenery({ world, chapter = 0, regionChapter = chapter }: { world: AdventureWorld; chapter?: number; regionChapter?: number }) {
   const id = useId().replaceAll(":", ""), [sky, hills, ground] = palette[world];
+  const daylight = chapter % 3;
   return <svg viewBox="0 0 480 600" aria-hidden="true" focusable="false" className="yo-shared-scenery" data-scenery={world}>
-    <defs><linearGradient id={id} x2="0" y2="1"><stop stopColor={sky}/><stop offset="1" stopColor="#fffef6"/></linearGradient></defs>
+    <defs><linearGradient id={id} x2="0" y2="1"><stop stopColor={[sky,"#a6d9ed","#d5b8d8"][daylight]}/><stop offset=".52" stopColor={daylight===2?"#ffe4b5":"#fffef6"}/></linearGradient></defs>
     <rect width="480" height="600" fill={`url(#${id})`}/>
-    <circle cx="390" cy="57" r="25" fill="#f4d68b"/>
+    <circle cx={[390,245,69][daylight]} cy={[57,32,80][daylight]} r="25" fill={daylight===2?"#ffcb79":"#f4d68b"}/>
     <g fill="#fff" opacity=".8"><ellipse cx="78" cy="42" rx="38" ry="11"/><ellipse cx="110" cy="45" rx="31" ry="9"/><ellipse cx="300" cy="91" rx="40" ry="8"/></g>
     <path d="M0 153 Q70 73 152 131 Q253 53 338 124 Q412 85 480 140 V600 H0Z" fill={hills}/>
     <path d="M0 206 Q93 122 190 196 Q295 133 480 183 V600 H0Z" fill={ground}/>
@@ -100,7 +101,7 @@ export function WorldScenery({ world, chapter = 0 }: { world: AdventureWorld; ch
       <g transform="translate(80 332)"><rect width="99" height="32" rx="7" fill="#bc584b"/><path d="M9 7 H89 V20 H9Z" fill="#c0e3e1"/><circle cx="18" cy="34" r="6" fill="#546666"/><circle cx="81" cy="34" r="6" fill="#546666"/></g>
       <Tree x={34} y={406}/><Tree x={431} y={315}/><Tree x={231} y={563}/><path d="M420 498 l-7 38 h23Z" fill="#fff7de"/>
     </>}
-    {world === "spanish" && chapter === 0 && <>
+    {world === "spanish" && regionChapter === 0 && <>
       <path d="M0 440 Q119 383 228 452 T480 429 V600 H0Z" fill="#97c5ca"/>
       <path d="M0 425 Q119 368 228 437 T480 414" stroke="#eddbb1" strokeWidth="24" fill="none"/>
       <House x={32} y={240} color="#e6b59b" kind="flat"/><House x={105} y={218} color="#e2c56f" kind="flat" scale={.8}/>
@@ -108,7 +109,7 @@ export function WorldScenery({ world, chapter = 0 }: { world: AdventureWorld; ch
       <g transform="translate(310 383)" fill="#d5b48d"><path d="M-50 0 V-52 H52 V0Z"/>{[-36,-7,22].map(x=><path key={x} d={`M${x} 0 V-27 a10 10 0 0 1 20 0 V0Z`} fill="#799e9a"/>)}</g>
       <Tree x={50} y={365} palm/><Tree x={422} y={329} palm/><Tree x={250} y={573} palm/>
     </>}
-    {world === "spanish" && chapter === 1 && <>
+    {world === "spanish" && regionChapter === 1 && <>
       <path d="M0 166 L70 73 L141 166 L190 105 L246 175" fill="#888f79"/><path d="M57 90 L70 73 L86 94 L70 88Z" fill="#e7e6cd"/>
       <path d="M350 312 Q390 365 361 446 T375 600 H480 V312Z" fill="#82c8c8"/>
       <House x={40} y={240} color="#f4d4a0"/><House x={278} y={234} color="#db8b6b" kind="flat"/>
@@ -116,7 +117,7 @@ export function WorldScenery({ world, chapter = 0 }: { world: AdventureWorld; ch
       <Tree x={427} y={315} palm/><Tree x={363} y={451} palm/><Tree x={44} y={543} palm/>
       <House x={44} y={395} color="#93bdb6" kind="flat"/><House x={226} y={568} color="#efae82" kind="flat" scale={.75}/>
     </>}
-    {world === "spanish" && chapter >= 2 && <>
+    {world === "spanish" && regionChapter >= 2 && <>
       <path d="M0 160 L67 38 L130 142 L184 64 L254 166" fill="#8f9c96"/><path d="M45 78 L67 38 L92 81 L66 67Z M166 92 L184 64 L204 98 L185 90Z" fill="#fff6e5"/>
       <House x={39} y={242} color="#e6b39a"/><House x={293} y={208} color="#ddd9b9"/>
       <path d="M0 411 Q120 348 251 427 T480 412 V600 H0Z" fill="#a5c9c6"/>

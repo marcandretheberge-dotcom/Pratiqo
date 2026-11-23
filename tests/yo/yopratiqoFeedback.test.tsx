@@ -9,12 +9,12 @@ const require = createRequire(`${process.cwd()}/package.json`), { JSDOM } = requ
 const dom = new JSDOM("<html><body></body></html>", { url: "https://example.test", pretendToBeVisual: true });
 const frames = new Map<number, FrameRequestCallback>(); let frame = 0;
 for (const [key, value] of Object.entries({ window: dom.window, document: dom.window.document, navigator: dom.window.navigator, HTMLElement: dom.window.HTMLElement, Element: dom.window.Element, Node: dom.window.Node, NodeFilter: dom.window.NodeFilter, DocumentFragment: dom.window.DocumentFragment, HTMLInputElement: dom.window.HTMLInputElement, CustomEvent: dom.window.CustomEvent, Event: dom.window.Event, MutationObserver: dom.window.MutationObserver, getComputedStyle: dom.window.getComputedStyle, localStorage: dom.window.localStorage, requestAnimationFrame: (fn: FrameRequestCallback) => { frames.set(++frame,fn); return frame; }, cancelAnimationFrame: (id:number) => frames.delete(id), IS_REACT_ACT_ENVIRONMENT: true })) Object.defineProperty(globalThis,key,{value,configurable:true,writable:true});
-let starts=0,stops=0,closes=0; const gains: {value:number}[]=[]; const vibrations: (number|number[])[]=[];
+let starts=0,stops=0,closes=0; const gains: {value:number}[]=[]; const vibrations: (number|number[])[]=[]; const rates: {value:number}[]=[];
 class Context {
  state="running";destination={};
  createGain(){const gain={value:1};gains.push(gain);return{gain,connect(){},disconnect(){}};}
  createBuffer(_channels:number,length:number){return{copyToChannel:(data:Float32Array)=>assert.equal(data.length,length)};}
- createBufferSource(){return {buffer:null,onended:null,connect(){},disconnect(){},start(){starts++;},stop(){stops++;}};}
+ createBufferSource(){const playbackRate={value:0};rates.push(playbackRate);return {buffer:null,onended:null,playbackRate,connect(){},disconnect(){},start(){starts++;},stop(){stops++;}};}
  resume(){return Promise.resolve();}close(){closes++;return Promise.resolve();}
 }
 Object.defineProperty(window,"AudioContext",{value:Context,writable:true});
@@ -96,6 +96,16 @@ test("effect samples and volume persist without altering learning progress",()=>
  fireEvent.change(v.getByRole('slider'),{target:{value:'40'}});assert.equal(localStorage.getItem('yopratiqo.audio.effects-volume.v1'),'0.4');
  click(v.getByRole('button',{name:'Preview the other sounds'}));const vibrationCount=vibrations.length;
  fireEvent.change(v.getByRole('combobox'),{target:{value:'unlock'}});click(v.getByRole('button',{name:'Preview this effect'}));assert.equal(starts,1);assert.equal(vibrations.length,vibrationCount);assert.equal(localStorage.getItem('yo.shared-intro.v1.en'),'unchanged');
+});
+test("reward-preview palette keeps pitch fixed and drops stale cues instead of surprising the learner after speech",async()=>{
+ const p=new FeedbackPlayer(true);try{await p.play("correct");assert.equal(rates.at(-1)?.value,1);await p.play("stamp");assert.equal(rates.at(-1)?.value,1);
+ const release=beginLessonAudio();await p.play("correct");const before=starts;clock+=801;release();assert.equal(starts,before);
+ }finally{p.dispose();}
+});
+test("preview preferences inherit mute, then save separately without touching real settings",()=>{
+ localStorage.setItem(EFFECTS_KEY,"true");const v=render(<LearningFeedbackProvider storageNamespace="test.preview" consistent><EventHarness/></LearningFeedbackProvider>);flush();
+ assert.equal(v.getByRole("switch",{name:"Success sounds"}).getAttribute("aria-checked"),"false");
+ click(v.getByRole("switch",{name:"Success sounds"}));assert.equal(localStorage.getItem("test.preview.effects"),"false");assert.equal(localStorage.getItem(EFFECTS_KEY),"true");
 });
 async function main(){let failures=0;for(const[name,fn]of tests){cleanup();localStorage.clear();frames.clear();localStorage.setItem("yo.practice.auto-next.v1","off");starts=0;stops=0;closes=0;vibrations.length=0;try{await fn();await tick();console.log(`PASS ${name}`);}catch(e){failures++;console.error(`FAIL ${name}`,e);}finally{cleanup();frames.clear();}}console.log(`${tests.length-failures}/${tests.length} feedback checks passed`);if(failures)process.exitCode=1;}
 void main();

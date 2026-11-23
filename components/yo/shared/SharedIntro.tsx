@@ -18,7 +18,7 @@ import { IntroQuestion } from "./IntroQuestion";
 import { IntroWelcome } from "./IntroWelcome";
 import { IntroNotebook } from "./IntroNotebook";
 import { WorldJourneyMap } from "../journey/map/WorldJourneyMap";
-import { introMap } from "@/lib/yo/worldMap";
+import { introStageMap } from "@/lib/yo/worldMap";
 import { adventureWorld } from "@/lib/yo/adventure";
 import { SpanishRegionalPractice } from "../SpanishRegionalPractice";
 import { spanishRegionalPractice } from "@/lib/yo/spanishRegionalPractice";
@@ -62,6 +62,7 @@ function IntroPlayer({course,locale,audio}:Props){
  const step=steps[state.step],mission=course.missions[step.mission],missionSteps=steps.filter(s=>s.mission===step.mission),position=missionSteps.findIndex(s=>s.id===step.id);
  const phrase=(id:string)=>course.phrases.find(p=>p.id===id)!;
  const passed=introPassed(course,state),currentPassed=independentScore(state.answers)>=Math.ceil(course.final.length*.8);
+ const map=state.view==='map'?introStageMap(course,state,adventureWorld(course.slug)):null;
  const smallStatus=!stored?<p role="status" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm">{say('La sauvegarde est indisponible dans ce navigateur.','Saving is unavailable in this browser.','No se puede guardar en este navegador.')}</p>:null;
  const example=(id:string)=>{const p=phrase(id);return <div key={id} className="rounded-2xl bg-emerald-50 p-4"><p lang={course.language} className="text-xl font-semibold leading-relaxed">{p.text}</p>{p.reading&&<p className="mt-1 text-base text-stone-600">{p.reading}</p>}{p.meaning[locale]!==p.text&&<p className="my-2 leading-7">{p.meaning[locale]}</p>}<IntroAudio text={p.text} speechLocale={course.speechLocale} path={audio[p.text]} locale={locale}/></div>;};
  return <div lang={locale} data-shared-course={course.language} className="min-h-screen bg-[#fbf9f3] text-stone-800">
@@ -79,7 +80,14 @@ function IntroPlayer({course,locale,audio}:Props){
    </section>}
    {state.view==='map'&&<div hidden={regionalOpen}>
     <div className="mb-6 flex items-center gap-4"><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="md" compact/><div className="min-w-0"><p className="text-sm font-semibold text-emerald-700">{course.city} · {say('Premières rencontres','First meetings','Primeros encuentros')}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-2xl font-black outline-none">{passed?say('Ton premier tampon est gagné !','You earned your first stamp!','¡Ganaste tu primer sello!'):say('On fait connaissance ?','Shall we get acquainted?','¿Vamos a conocernos?')}</h1></div></div>
-    <WorldJourneyMap model={introMap(course,state,adventureWorld(course.slug))} locale={locale} active={!regionalOpen} onContinue={id=>{
+    {map && <WorldJourneyMap model={map} locale={locale} active={!regionalOpen} onContinue={id=>{
+      const stop=map.destinations.find(d=>d.id===id);
+      if(!stop?.accessible)return;
+      if(stop.entryStep) {
+        if(map.guideId===id && latest.current.resume==='lesson'){resume();return;}
+        const at=steps.findIndex(s=>s.id===stop.entryStep); if(at>=0)move(at);
+        return;
+      }
       if(id==='intro-final'){if(latest.current.resume==='final')resume();else startFinal();return;}
       const region=course.slug==='espagnol'?spanishRegionalPractice.findIndex(item=>item.id===id):-1;
       if(region>=0){stopLessonAudio();setRegionalIndex(region);setRegionalOpen(true);return;}
@@ -88,7 +96,7 @@ function IntroPlayer({course,locale,audio}:Props){
       if(steps[s.step].mission===index&&s.resume==='lesson'){resume();return;}
       const at=steps.findIndex(item=>item.mission===index&&!s.visited.includes(item.id));
       move(at<0?steps.findIndex(item=>item.mission===index):at);
-    }}/>
+    }}/>}
     <Link prefetch={false} href={`/yo/langues/${course.slug}/demarrer/vocabulaire?lang=${locale}`} target="_blank" rel="noopener" className={`${secondary} mt-3 underline`}>{say('Voir / imprimer les mots et verbes','View / print words and verbs','Ver / imprimir palabras y verbos')}</Link>
     <p className="text-sm text-emerald-800">{introPoints(course,state)} {say('points d’apprentissage','learning points','puntos de aprendizaje')}{passed&&<Stamp className="ml-3 inline" aria-label={say('Tampon obtenu','Stamp earned','Sello obtenido')}/>}</p>
     <button type="button" className={`${secondary} mt-3 underline`} onClick={startFinal}>{say('Déjà à l’aise ? Essayer le défi','Already comfortable? Try the challenge','¿Ya dominas esto? Probar el reto')}</button>

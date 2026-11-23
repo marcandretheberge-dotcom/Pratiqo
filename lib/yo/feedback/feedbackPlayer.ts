@@ -1,4 +1,5 @@
 import { lessonAudioIsBusy, subscribeLessonAudio } from "../audio/lessonAudioActivity";
+import { postcardSamples } from "../rewards/postcardSound";
 import { SOUND_SAMPLE_RATE, woodSamples, type FeedbackCue } from "./woodSound";
 
 const PITCH_SPREAD: Record<FeedbackCue, number> = {
@@ -29,7 +30,7 @@ export class FeedbackPlayer {
   private unsubscribe: () => void;
   private buffers = new Map<FeedbackCue, AudioBuffer>();
   private events = ["yo-audio-stop", "yo-italian-audio-stop", "yo-japanese-audio-stop", "yo-mandarin-audio-stop", "yo-speech-cancel", "yo-arrival-playback-start", "pagehide"];
-  constructor() {
+  constructor(private consistent = false) {
     this.unsubscribe = subscribeLessonAudio(() => {
       if (lessonAudioIsBusy()) this.stopVoice(); else this.flush();
     });
@@ -71,7 +72,7 @@ export class FeedbackPlayer {
       const Ctor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctor) return;
       this.context ??= new Ctor();
-      this.pending = { kind, expires: Date.now() + 15000, epoch };
+      this.pending = { kind, expires: Date.now() + (this.consistent ? 800 : 15000), epoch };
       if (this.context.state === "suspended") await this.context.resume();
       if (this.disposed || epoch !== this.epoch) return;
       this.flush();
@@ -90,7 +91,7 @@ export class FeedbackPlayer {
     try {
       let buffer = this.buffers.get(cue.kind);
       if (!buffer) {
-        const data = woodSamples(cue.kind);
+        const data = this.consistent ? postcardSamples(cue.kind) : woodSamples(cue.kind);
         buffer = context.createBuffer(1, data.length, SOUND_SAMPLE_RATE);
         buffer.copyToChannel(data, 0); this.buffers.set(cue.kind, buffer);
       }
@@ -101,7 +102,7 @@ export class FeedbackPlayer {
       this.gain.disconnect(); this.gain.connect(context.destination);
       voice.buffer = buffer;
       // Keep milestone identity stable; repeated low-stakes taps vary slightly to avoid fatigue.
-      if (voice.playbackRate) voice.playbackRate.value = variedPlaybackRate(cue.kind);
+      if (voice.playbackRate) voice.playbackRate.value = this.consistent ? 1 : variedPlaybackRate(cue.kind);
       voice.connect(this.gain); this.voice = voice;
       voice.onended = () => { voice.disconnect(); if (this.voice === voice) this.voice = undefined; };
       voice.start();

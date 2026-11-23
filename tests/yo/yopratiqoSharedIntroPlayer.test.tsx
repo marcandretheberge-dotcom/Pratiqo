@@ -76,7 +76,7 @@ for(const c of introCourses){
  assert.equal(v.container.querySelector('[data-selected-destination]')?.getAttribute('data-selected-destination'),'intro-final');
  click(v.getByRole('button',{name:'Continue'}));assert.ok(v.getByRole('heading',{name:'Final challenge · 2/6'}));
  click(v.getByRole('button',{name:'Leave and save my place'}));
- click(v.container.querySelectorAll<HTMLElement>('.yo-shared-destinations button')[2]);
+ click(v.container.querySelector<HTMLElement>(`[data-journey-unit="${c.missions[2].id}"] button`)!);
  click(v.getByRole('button',{name:'Continue'}));assert.equal(v.queryByRole('heading',{name:'Final challenge · 2/6'}),null);
  click(v.getByRole('button',{name:'Leave and save my place'}));
  const before=localStorage.getItem(introKey(c.language));cleanup();v=mount(c);click(v.getByRole('button',{name:'Continue'}));
