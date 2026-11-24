@@ -1,5 +1,38 @@
 "use client";
 
+/**
+ * FindTeacherSearch — segmented search island used by the public
+ * `/trouver-un-prof` marketing page.
+ *
+ * Mirrors the segmented architecture of `LandingDiscoverySearch`
+ * (subject / place / format) but stays self-contained so the
+ * marketing page does not need to load the entire teacher index just
+ * to render the hero. The local state is intentionally minimal —
+ * three independent slots — so the historical "selecting a city
+ * silently overwrites the subject" bug cannot regress.
+ *
+ * Submit behaviour:
+ *   - Pushes the user to the canonical search route `/student/search`
+ *     with `q=<subject>` (the contract that surface already reads).
+ *   - Echoes the place + format selections as additional query
+ *     params (`place=<city>` / `format=<online|in_person|hybrid|all>`)
+ *     so the URL captures full intent for analytics / sharing without
+ *     forcing a search-engine internals change.
+ *
+ * Reuses, never reimplements:
+ *   - `LandingLocationSearch` for the place autocomplete (Canadian
+ *     places dataset). Its `disableCitySuggestions`-equivalent
+ *     contract is enforced by routing all subject text through the
+ *     plain `<input>` for "Quoi", which has no autocomplete at all.
+ *   - i18n via `useLocale`. Every label and placeholder reads from
+ *     the new `findTeacher*` translation keys; the component is
+ *     fully FR/EN/ES-ready.
+ *
+ * Out-of-scope guarantees (no code in this file may reference
+ * them): Stripe, Supabase RLS, payments, migrations, search engine
+ * internals, booking, Membre Pro, legal pages, YoPratiqo audio.
+ */
+
 import { useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
@@ -8,16 +41,17 @@ import type { City } from "@/lib/cities";
 import { LandingLocationSearch } from "@/components/marketing/LandingLocationSearch";
 import { cn } from "@/lib/utils";
 
-import type { publicSearchFilters, PublicSearchFormat } from "@/lib/search/publicTeacherSearch";
+/** Keep the `format` param identical to the values `/student/search` already understands. */
+type FindTeacherFormat = "all" | "online" | "in_person" | "hybrid";
 
-export function FindTeacherSearch({ initial, className }: { initial: ReturnType<typeof publicSearchFilters>; className?: string }) {
+export function FindTeacherSearch({ className }: { className?: string }) {
   const router = useRouter();
   const { t } = useLocale();
   const formatId = useId();
 
-  const [subject, setSubject] = useState(initial.q);
-  const [place, setPlace] = useState(initial.place);
-  const [format, setFormat] = useState<PublicSearchFormat>(initial.format);
+  const [subject, setSubject] = useState("");
+  const [place, setPlace] = useState("");
+  const [format, setFormat] = useState<FindTeacherFormat>("all");
 
   const formatOptions = useMemo(
     () =>
@@ -25,7 +59,6 @@ export function FindTeacherSearch({ initial, className }: { initial: ReturnType<
         { value: "all" as const, label: t("findTeacherSearchFormatAny") },
         { value: "online" as const, label: t("teachingFormatOnline") },
         { value: "in_person" as const, label: t("teachingFormatInPerson") },
-        { value: "at_home" as const, label: t("teachingFormatHome") },
         { value: "hybrid" as const, label: t("teachingFormatHybrid") },
       ],
     [t],
@@ -48,7 +81,7 @@ export function FindTeacherSearch({ initial, className }: { initial: ReturnType<
     if (trimmedPlace) params.set("place", trimmedPlace);
     if (format !== "all") params.set("format", format);
     const qs = params.toString();
-    router.push(qs ? `/trouver-un-prof?${qs}#resultats` : "/trouver-un-prof#resultats");
+    router.push(qs ? `/student/search?${qs}` : "/student/search");
   };
 
   return (
@@ -107,7 +140,7 @@ export function FindTeacherSearch({ initial, className }: { initial: ReturnType<
           <select
             id={`${formatId}-format`}
             value={format}
-            onChange={(e) => setFormat(e.target.value as PublicSearchFormat)}
+            onChange={(e) => setFormat(e.target.value as FindTeacherFormat)}
             className="h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-base font-medium text-[#2C2C2A] shadow-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 sm:text-lg"
           >
             {formatOptions.map((opt) => (

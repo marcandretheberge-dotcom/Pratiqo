@@ -21,7 +21,6 @@ import { useAuth } from "../components/AuthProvider";
 import type { BookingInitialLessonKind } from "../components/BookingModal";
 import type { TeacherBookContext } from "../components/TeacherProfile";
 import type { MapBounds } from "../components/SearchMapView";
-import { guestBookingLogin } from "@/lib/bookings/guestBookingIntent";
 import { LandingDiscoverySearch } from "../components/marketing/LandingDiscoverySearch";
 import { LandingTeacherListingCard } from "../components/marketing/LandingTeacherListingCard";
 import { LandingResourcesSection } from "../components/marketing/LandingResourcesSection";
@@ -640,7 +639,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
                         {filtered.length > 4 ? (
                           <div className="mt-8 text-center">
                             <Link
-                              href={`/trouver-un-prof?${new URLSearchParams({ q: searchQuery, place: locationSearch, format: adv.formatExtra || formatFilter }).toString()}#resultats`}
+                              href="/login?next=/student/search"
                               prefetch={false}
                               className="inline-flex h-11 items-center rounded-2xl bg-teal-700 px-6 text-sm font-semibold text-white hover:brightness-105"
                             >
@@ -677,7 +676,7 @@ export function LandingPageClient({ children }: { children: ReactNode }) {
           onClose={() => setSelectedTeacherProfile(null)}
           onBook={(kind, context) => {
             if (!user) {
-              router.push(guestBookingLogin(selectedTeacherProfile.id, kind, context?.selectedOfferId));
+              router.push(`/login?next=${encodeURIComponent("/student/search")}`);
               return;
             }
             setBookingInitialKind(kind);

@@ -375,10 +375,10 @@ test("FindTeacherSearch reuses LandingLocationSearch for the place field (no cit
   );
 });
 
-test("FindTeacherSearch submits to public search with the existing q= contract", () => {
+test("FindTeacherSearch submits to /student/search with the existing q= contract", () => {
   assert.ok(
-    /\/trouver-un-prof/.test(searchSrc),
-    "FindTeacherSearch must navigate to the public /trouver-un-prof route",
+    /\/student\/search/.test(searchSrc),
+    "FindTeacherSearch must navigate to the existing /student/search route",
   );
   assert.ok(
     /params\.set\("q",\s*trimmedSubject\)/.test(searchSrc),
@@ -393,10 +393,12 @@ test("page renders the Trouver un prof primary CTA linking into the search funne
     /t\(locale,\s*"findTeacherPrimaryCta"\)/.test(pageSrc),
     'page must render the t(locale, "findTeacherPrimaryCta") label',
   );
-  // The hero takes guests directly to the matching public profiles.
+  // The primary CTA above the fold must point at the existing teacher
+  // search funnel. /student/search handles its own auth fallback, so a
+  // direct link is the canonical entry point.
   assert.ok(
-    /href="#resultats"/.test(pageSrc),
-    "page must include a primary CTA linking to the public results",
+    /href="\/student\/search"/.test(pageSrc),
+    "page must include a primary CTA href=/student/search",
   );
 });
 
@@ -413,7 +415,7 @@ test("page renders the Devenir professeur secondary CTA linking to /devenir-ense
 
 test("page renders the FindTeacherSearch and FindTeacherTrustStrip components in order", () => {
   assert.ok(
-    /<FindTeacherSearch\b[^>]*initial=\{filters\}/.test(pageSrc),
+    /<FindTeacherSearch\s*\/>/.test(pageSrc),
     "page must render <FindTeacherSearch />",
   );
   assert.ok(

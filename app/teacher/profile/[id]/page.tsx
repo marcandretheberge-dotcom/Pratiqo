@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { cache } from "react";
-import { bookingChoiceSuffix, readBookingChoice } from "@/lib/bookings/guestBookingIntent";
 import { notFound, redirect } from "next/navigation";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
@@ -239,27 +238,21 @@ export async function generateMetadata({
 }
 
 export default async function TeacherProfilePage({
-  params, searchParams,
+  params,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ book?: string; offer?: string }>;
 }) {
   const { id: routeId } = await params;
-  const query = await searchParams;
-  const choice = new URLSearchParams();
-  if (typeof query.book === "string") choice.set("book", query.book);
-  if (typeof query.offer === "string") choice.set("offer", query.offer);
-  const suffix = bookingChoiceSuffix(readBookingChoice(choice));
   const initialTeacher = await getTeacherForProfilePage(routeId);
   if (!initialTeacher) notFound();
 
   const seoRow = await fetchTeacherPublicSeoRowById(initialTeacher.id);
   if (seoRow && isTeacherPublicProfileIndexable(seoRow) && seoRow.public_profile_slug?.trim()) {
-    redirect(`/professeurs/${encodeURIComponent(seoRow.public_profile_slug.trim())}${suffix}`);
+    redirect(`/professeurs/${encodeURIComponent(seoRow.public_profile_slug.trim())}`);
   }
 
   if (routeId !== initialTeacher.id) {
-    redirect(`/teacher/profile/${encodeURIComponent(initialTeacher.id)}${suffix}`);
+    redirect(`/teacher/profile/${encodeURIComponent(initialTeacher.id)}`);
   }
 
   const locality =

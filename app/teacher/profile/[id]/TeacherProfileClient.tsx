@@ -13,10 +13,6 @@ import {
 } from "@/lib/supabase/queries";
 import { TeacherProfile, type TeacherBookContext } from "@/components/TeacherProfile";
 import { BookingModal, type BookingInitialLessonKind } from "@/components/BookingModal";
-import { clearGuestBooking, guestBookingLogin, readBookingChoice } from "@/lib/bookings/guestBookingIntent";
-import { fetchPublishedTeacherOffers } from "@/lib/offers/publicOffers";
-import { isBookingOfferSelectionEnabled, resolveBookingOfferSelection } from "@/lib/offers/bookingOfferSelection";
-import { useLocale } from "@/lib/locale-context";
 import { useRouter } from "next/navigation";
 import { hasConfirmedBooking } from "@/lib/maps";
 import { useAuth } from "@/components/AuthProvider";
@@ -64,8 +60,6 @@ export default function TeacherProfileClient({
 }) {
   const router = useRouter();
   const { user } = useAuth();
-  const { t } = useLocale();
-  const [offerUnavailable, setOfferUnavailable] = useState(false);
   const serverTeacherRef = useRef(initialTeacher);
   const [teacher, setTeacher] = useState<Teacher | null>(initialTeacher);
   const [embeddedPlan, setEmbeddedPlan] = useState<{ plan: string | null; loading: boolean }>({
@@ -158,31 +152,6 @@ export default function TeacherProfileClient({
     };
   }, [id]);
 
-  useEffect(() => {
-    if (!user?.id || teacher?.id !== id) return;
-    const url = new URL(window.location.href);
-    const choice = readBookingChoice(url.searchParams);
-    if (!choice) return;
-    let active = true;
-    void (async () => {
-      const offers = isBookingOfferSelectionEnabled() ? await fetchPublishedTeacherOffers(id) : [];
-      if (!active) return;
-      const available = resolveBookingOfferSelection(offers, id, choice.offerId);
-      if (choice.offerId && !available.selectedOffer) {
-        setOfferUnavailable(true);
-      } else {
-        setBookingInitialKind(choice.kind);
-        setBookingContext({ selectedOfferId: available.selectedOfferId, publicOffers: offers });
-        setBooking(true);
-      }
-      clearGuestBooking();
-      url.searchParams.delete("book");
-      url.searchParams.delete("offer");
-      window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
-    })();
-    return () => { active = false; };
-  }, [id, teacher?.id, user?.id]);
-
   const requestGeo = useCallback(() => {
     if (!("geolocation" in navigator)) {
       setGeoDeniedOrUnavailable(true);
@@ -229,7 +198,6 @@ export default function TeacherProfileClient({
 
   return (
     <>
-      {offerUnavailable && !booking && <p role="status" className="p-4 text-center">{t("bookingOfferNoLongerAvailable")}</p>}
       {!booking && !geo ? (
         <div className="fixed bottom-6 left-1/2 z-[220] -translate-x-1/2 px-4">
           <button
@@ -253,11 +221,6 @@ export default function TeacherProfileClient({
           initialLocale={initialLocale}
           onClose={() => router.push("/teacher/profile")}
           onBook={(kind, context) => {
-            if (!user?.id) {
-              router.push(guestBookingLogin(displayTeacher.id, kind, context?.selectedOfferId));
-              return;
-            }
-            setOfferUnavailable(false);
             setBookingInitialKind(kind);
             setBookingContext(context);
             setBooking(true);
