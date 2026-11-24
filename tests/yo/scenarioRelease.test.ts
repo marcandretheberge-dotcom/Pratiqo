@@ -5,12 +5,16 @@ import { runInNewContext } from "node:vm";
 import { scenariosAt } from "../../lib/yo/scenarios/catalog";
 import { GET } from "../../app/practice/it/bologna/[clip]/route";
 
-test("only Bologna has the approved optional outing, with three interface labels", () => {
+test("approved optional scenarios are attached only to their own course destination", () => {
   const [trip] = scenariosAt("it", "u01");
   assert.equal(trip.entry, "/practice/it/bologna/index.html");
   assert.deepEqual(Object.keys(trip.label).sort(), ["en","es","fr"]);
   assert.deepEqual(scenariosAt("it","u02"), []);
   assert.deepEqual(scenariosAt("ja","u01"), []);
+  const [hotel] = scenariosAt("es","do.module-2");
+  assert.equal(hotel.entry, "/practice/es/hotel/index.html");
+  assert.deepEqual(Object.keys(hotel.label).sort(), ["en","es","fr"]);
+  assert.deepEqual(scenariosAt("es","do.module-1"), []);
 });
 
 test("the two published recordings are public reads; cookies are not relayed",async () => {

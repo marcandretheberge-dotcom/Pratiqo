@@ -31,6 +31,7 @@ import {
 
 import { dominicanRepublicHotelAirport } from "@/lib/yo/dominicanRepublicHotelAirport";
 import { arrivalListeningScenes } from "@/lib/yo/dominicanArrivalListening";
+import { scenariosAt } from "@/lib/yo/scenarios/catalog";
 import { lstr, t } from "@/lib/yo/localize";
 import type { YoLocale } from "@/lib/yo/types";
 import {
@@ -462,6 +463,12 @@ function DialogueSection({
         {t(arrivalListeningScenes[sectionId].title, locale)}
       </h2>
       <YoArrivalListeningLesson sceneId={sectionId} locale={locale} />
+      {sectionId === "hotel" && scenariosAt("es", "do.module-2").map(scenario => (
+        <a key={scenario.id} href={`${scenario.entry}?lang=${locale}`}
+          className="mt-3 inline-flex min-h-11 items-center gap-2 font-semibold text-[#0F6E56] underline">
+          <Compass size={18} aria-hidden />{scenario.label[locale]}
+        </a>
+      ))}
     </section>
   );
 }
