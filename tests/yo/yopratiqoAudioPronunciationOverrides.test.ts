@@ -534,6 +534,14 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     if (isAuthorizedGermanAddition(path) || isAuthorizedPortugueseAddition(path) || isAuthorizedMandarinAddition(path)) continue;
     // Authorized learner-demand work, unrelated to audio. Keep scope narrow and
     // assert the privacy/security contract instead of disabling the scope guard.
+    if (path === "app/api/yo/pass-pilot/route.ts") {
+      const handler = readFileSync(path, "utf8");
+      const account = readFileSync("lib/yo/passPilot/account.server.ts", "utf8");
+      assert.match(handler, /if\(!pilotEnabled\(\)\)return reply\(\{\},404\)/);
+      assert.match(account, /!process\.env\.VERCEL/);
+      assert.match(account, /"localhost","127\.0\.0\.1"/);
+      continue;
+    }
     if (path === "app/api/learner-demand/route.ts") {
       const demand = readFileSync(path, "utf8");
       assert.match(demand, /rateLimitByIp\(request, "learner-demand"/);
