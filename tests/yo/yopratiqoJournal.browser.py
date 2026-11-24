@@ -100,7 +100,7 @@ def record_opening(browser):
     page.wait_for_timeout(1600)
     video = page.video
     context.close()
-    video.path().replace(out / "Yoppo-premiers-choix.webm")
+    Path(video.path()).replace(out / "Yoppo-premiers-choix.webm")
 
 
 with sync_playwright() as playwright:
