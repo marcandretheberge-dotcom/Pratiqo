@@ -1,8 +1,6 @@
 """Regression for the opening that previously showed one static Yoppo portrait."""
 import os
 import re
-import subprocess
-import time
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
@@ -88,13 +86,11 @@ def record_opening(browser):
     context = browser.new_context(viewport=size, is_mobile=True, has_touch=True, locale="fr-CA",
                                   record_video_dir=str(out / "capture"), record_video_size=size)
     page = context.new_page()
-    opened = time.monotonic()
     page.goto(base + "/yo/langues/italien/parcours?lang=fr", wait_until="domcontentloaded")
     zero = page.get_by_role("button", name="Je pars de zéro", exact=True)
     expect(zero).to_be_visible()
     page.locator("[data-journal-figure] img").evaluate("image => image.decode()")
     dismiss_notices(page)
-    start = time.monotonic() - opened
     page.wait_for_timeout(1600)
     zero.tap()
     page.wait_for_timeout(1700)
@@ -104,11 +100,7 @@ def record_opening(browser):
     page.wait_for_timeout(1600)
     video = page.video
     context.close()
-    source = video.path()
-    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", str(start), "-i", str(source),
-                    "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
-                    str(out / "Yoppo-premiers-choix.mp4")], check=True)
-    source.unlink()
+    video.path().replace(out / "Yoppo-premiers-choix.webm")
 
 
 with sync_playwright() as playwright:
