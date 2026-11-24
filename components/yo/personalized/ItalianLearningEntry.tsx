@@ -1,4 +1,5 @@
 "use client";
+import { YoppoWelcomeLoading } from "../onboarding/YoppoJournal";
 import { useEffect, useState, type ComponentProps } from "react";
 import { GuidedItalianCourse } from "../italian/guided/GuidedItalianCourse";
 import { ItalianOnboarding, type PlacementCheck } from "./ItalianOnboarding";
@@ -18,7 +19,7 @@ function ItalianLearningEntryBody({checks,placementAudio,entryHome=false,...cour
   if(entryHome&&p){const progress=parseCourseProgress(localStorage.getItem(GUIDED_PROGRESS_KEY),course.catalog);const id=progress.resume?.unitId??p.startUnitId;if(id!==course.unit.id){window.location.replace(italianCourseHref(course.locale,id));return;}}
  }catch{setSaved(false);}setProfile(p);setReady(true);});return()=>cancelAnimationFrame(f);},[course.catalog,course.unit.id,course.locale,entryHome]);
  function complete(p:LearningProfile){try{localStorage.setItem(profileKey("it"),JSON.stringify(p));setSaved(true);}catch{setSaved(false);}setProfile(p);setEditing(false);if(p.startUnitId!==course.unit.id){window.location.assign(italianCourseHref(course.locale,p.startUnitId));}}
- if(!ready)return <main className="p-8" lang={course.locale}><p role="status">{t("Yoppo prépare ton parcours…","Yoppo is preparing your journey…","Yoppo prepara tu recorrido…")[course.locale]}</p></main>;
+ if(!ready)return <YoppoWelcomeLoading locale={course.locale}/>;
  if(!profile||editing)return <ItalianOnboarding locale={course.locale} catalog={course.catalog} checks={checks} audioPaths={placementAudio} initial={profile} onComplete={complete} onCancel={profile?()=>setEditing(false):undefined}/>;
  return <>{!saved?<p role="status" className="bg-amber-50 p-3 text-sm text-amber-900">{t("Tes préférences restent dans cette session seulement.","Your preferences last for this session only.","Tus preferencias duran solo esta sesión.")[course.locale]}</p>:null}<GuidedItalianCourse key={course.unit.id} {...course} profile={profile} onConfigure={()=>setEditing(true)} progressKey={GUIDED_PROGRESS_KEY}/></>;
 }
