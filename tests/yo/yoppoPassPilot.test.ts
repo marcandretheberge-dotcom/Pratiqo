@@ -50,3 +50,81 @@ test("rail listening, recovery and transfer progress with interest but no change
   run.step=4;assert.equal(railBeat(run),null);
  }
 });
+
+import {passCities, type PassCity} from "../../lib/yo/passPilot/cities";
+import {situationBeat} from "../../lib/yo/passPilot/situations";
+import {recordCheckpoint, startSituation, answerSituation, currentRun} from "../../lib/yo/passPilot/progression";
+import type {Wallet} from "../../lib/yo/passPilot/wallet";
+
+function recordEarnedRound(wallet: Wallet, city: PassCity) {
+  const unit = units.find(item => item.id === city.unit)!;
+  const evidence = buildItalianTrivia(unit).map(question => ({answer: question.correctOptionId, assisted: false}));
+  assert.equal(passedRound(city.round, evidence), true);
+  recordCheckpoint(wallet, city.round);
+}
+
+test("each real city has four decisions, a listening cue and repeatable practice", () => {
+  assert.deepEqual(passCities.map(city => city.unit), units.slice(1).map(unit => unit.id));
+  const w = freshWallet();
+  order(w, "italy", "course", now);
+  fulfill(w, "course", now);
+  for (const city of passCities) recordEarnedRound(w, city);
+  assert.throws(() => startSituation(w, passCities[0], "travel", now), /checkpoint/);
+  recordCheckpoint(w, "bologna");
+  for (const city of passCities) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      startSituation(w, city, "travel", now);
+      const run = currentRun(w, city)!;
+      assert.equal(run.attempt, attempt);
+      for (let step = 0; step < 4; step++) {
+        const beat = situationBeat(city, run)!;
+        assert.equal(new Set(beat.options).size, 3);
+        assert.ok(beat.options[beat.answer]);
+        if (step === 2) assert.ok(beat.transcript);
+        assert.equal(answerSituation(w, city, now, step, attempt, (beat.answer + 1) % 3), beat.hint);
+        assert.equal(run.step, step);
+        answerSituation(w, city, now, step, attempt, beat.answer);
+        answerSituation(w, city, now, step, attempt, beat.answer);
+        assert.equal(run.step, step + 1);
+      }
+      assert.equal(situationBeat(city, run), null);
+    }
+    assert.equal(w.completed.filter(id => id === city.stage).length, 1);
+    if (city.round !== "parma") {
+      const state = {step: 3, attempt: 0, mistakes: 0, interest: "travel"} as const;
+      assert.notEqual(situationBeat(city, state)?.prompt, situationBeat(city, {...state,attempt:1})?.prompt);
+    }
+  }
+  assert.equal(balance(w), 5);
+});
+
+test("a new learner reaches the sixth city offer after five independent redemptions", () => {
+  const w = freshWallet();
+  const first = passCities[0];
+  assert.equal(cheapest(w, passCities.length, now).amount, 1798);
+  recordCheckpoint(w, "bologna");
+  for (const city of passCities.slice(0, 5)) {
+    recordEarnedRound(w, city);
+    redeem(w, city.stage, now);
+    startSituation(w, city, "art", now);
+  }
+  // The original Parma run survives a round-trip through stored wallet JSON.
+  assert.deepEqual(currentRun(JSON.parse(JSON.stringify(w)), first), w.run);
+  assert.equal(balance(w), 0);
+  assert.equal(cheapest(w, 1, now).amount, 349);
+  const next = passCities[5];
+  assert.throws(() => startSituation(w, next, "travel", now), /checkpoint/);
+  recordEarnedRound(w, next);
+  assert.throws(() => redeem(w, next.stage, now), /empty/);
+  order(w, "explorer", "first-pack", now);
+  assert.throws(() => redeem(w, next.stage, now), /empty/);
+  fulfill(w, "first-pack", now);
+  redeem(w, next.stage, now);
+  redeem(w, next.stage, now);
+  assert.equal(balance(w), 2);
+  startSituation(w, next, "travel", now);
+  assert.equal(currentRun(w, next)?.step, 0);
+  reverse(w, "first-pack");
+  assert.throws(() => startSituation(w, next, "travel", now), /checkpoint/);
+  assert.equal(currentRun(w, first)?.interest, "art");
+});

@@ -5,7 +5,8 @@ import Stripe from "stripe";
 import {isolate} from "./local.cjs";
 import {personalizedItalianUnits as units} from "../../lib/yo/personalized/courseData";
 import {buildItalianTrivia} from "../../lib/yo/italian/trivia";
-import {freshWallet,redeem,win} from "../../lib/yo/passPilot/wallet";
+import {freshWallet} from "../../lib/yo/passPilot/wallet";
+import {passCities} from "../../lib/yo/passPilot/cities";
 import {railBeat} from "../../lib/yo/passPilot/rail";
 async function main(){
  const env=isolate(),db=createClient(env.NEXT_PUBLIC_SUPABASE_URL,env.SUPABASE_SERVICE_ROLE_KEY),stripe=new Stripe(env.YO_PASS_TEST_KEY);
@@ -38,12 +39,15 @@ async function main(){
  const pack=raw.data!.wallet.orders.find((o:{sku:string})=>o.sku==="explorer");
  const refund=await stripe.refunds.create({payment_intent:pack.intent},{idempotencyKey:"yo-pass-test-refund:"+pack.id});assert.equal(refund.status,"succeeded");
  const reversed=await send(first.auth,"refresh",{id:pack.id});assert.equal(reversed.upgrade,1999);assert.equal(reversed.balance,1);assert.equal(reversed.access,false);
- // Two extra Italy destinations here are explicit fixtures, not extra gates offered to customers.
+ // Apply all three purchased units through the account API and real city checkpoints.
  const upgrader=await fixture(true);await prove(upgrader.auth);const packId=randomUUID();
  await send(upgrader.auth,"order",{sku:"explorer",id:packId});await send(upgrader.auth,"confirm",{id:packId});await send(upgrader.auth,"redeem");
- const seed=await db.from("yo_pass_pilot_accounts").select("wallet,revision").eq("user_id",upgrader.uid).single();assert.ifError(seed.error);
- for(const extra of ["it:fixture-b","it:fixture-c"]){win(seed.data!.wallet,extra);redeem(seed.data!.wallet,extra,Date.now());}
- const updated=await db.from("yo_pass_pilot_accounts").update({wallet:seed.data!.wallet,revision:seed.data!.revision+1}).eq("user_id",upgrader.uid).eq("revision",seed.data!.revision).select("revision");assert.equal(updated.data?.length,1);
+ for (const city of passCities.slice(1, 3)) {
+   const unit = units.find(item => item.id === city.unit)!;
+   const answers = buildItalianTrivia(unit).map(question => ({answer: question.correctOptionId, assisted: false}));
+   await send(upgrader.auth, "evidence", {city: city.unit, round: city.round, answers});
+   await send(upgrader.auth, "redeem", {city: city.unit});
+ }
  const upgrade=randomUUID();assert.equal((await send(upgrader.auth,"order",{sku:"italy",id:upgrade})).waiting.amount,1100);await send(upgrader.auth,"confirm",{id:upgrade});
  const receipts=(await db.from("yo_pass_pilot_accounts").select("wallet").eq("user_id",upgrader.uid).single()).data!.wallet.orders;
  const receipt=await stripe.paymentIntents.retrieve(receipts.find((o:{id:string})=>o.id===upgrade).intent);

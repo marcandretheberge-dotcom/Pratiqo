@@ -14,6 +14,8 @@ import { useLearningFeedback } from "../../feedback/LearningFeedback";
 import { LearningAudio } from "../../personalized/LearningAudio";
 import {pilotPath,showPassPilot,storeRound} from "@/lib/yo/passPilot/proof.client";
 
+import {cityForUnit} from "@/lib/yo/passPilot/cities";
+
 type Answer = { correct: boolean; assisted: boolean; answer:string };
 type Phase = "intro" | "playing" | "result";
 const surface = "rounded-2xl border-2 border-stone-200 bg-white px-4 py-3 text-left text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50";
@@ -23,6 +25,7 @@ const surface = "rounded-2xl border-2 border-stone-200 bg-white px-4 py-3 text-l
 export function ItalianTriviaCheckpoint({ unit, locale, progress }: {
   unit: CourseUnit; locale: YoLocale; progress: CourseProgress;
 }) {
+  const passCity = cityForUnit(unit.id);
   const enabled = canPlayItalianTrivia(unit, progress);
   const questions = useMemo(() => buildItalianTrivia(unit), [unit]);
   const feedback = useLearningFeedback();
@@ -124,12 +127,12 @@ export function ItalianTriviaCheckpoint({ unit, locale, progress }: {
         feedback.emit(`trivia:medal:${unit.id}:${progress.resetAt}:${run}`, "stamp");
       }
     }
-    if(showPassPilot&&unit.id==="u02"&&won)storeRound("parma",answers);
+    if (showPassPilot && passCity && won) storeRound(passCity.round, answers);
     setPhase("result");
   }
 
   return <section className="min-w-0 rounded-3xl border-2 border-[#d7c79a] bg-[#fff8e5] p-4 sm:p-5" data-yoppo-trivia={unit.id} data-trivia-eligible={enabled}>
-    {showPassPilot&&unit.id==="u02"&&phase==="result"&&won&&<a className={surface+" block"} href={pilotPath}>{locale==="fr"?"Continuer mon voyage":locale==="es"?"Continuar mi viaje":"Continue my journey"}</a>}
+    {showPassPilot&&passCity&&phase==="result"&&won&&<a className={surface+" block"} href={pilotPath + "?city=" + passCity.unit}>{locale==="fr"?"Continuer mon voyage":locale==="es"?"Continuar mi viaje":"Continue my journey"}</a>}
     <div className="flex items-start gap-3">
       <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-amber-200 text-amber-950">
         {earnedEarlier ? <Trophy size={24} aria-hidden /> : enabled ? <Gamepad2 size={24} aria-hidden /> : <LockKeyhole size={22} aria-hidden />}

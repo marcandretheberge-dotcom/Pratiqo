@@ -5,7 +5,7 @@ export const stage = "it:u02:rail";
 export type Unit = {id:string; value:number; used?:{stage:string; at:number}; settled?:string};
 export type Order = {id:string; sku:Sku; amount:number; creditIds:string[]; at:number; status:"waiting"|"paid"|"refunded"|"cancelled"; paidAt?:number; intent?:string; priceId?:string};
 import type {RailRun} from "./rail";
-export type Wallet = {units:Unit[]; orders:Order[]; wins:string[]; completed:string[]; plays:string[]; run?:RailRun};
+export type Wallet = {units:Unit[]; orders:Order[]; wins:string[]; completed:string[]; plays:string[]; run?:RailRun; cityRuns?:Record<string,RailRun>};
 export const freshWallet = ():Wallet=>({units:Array.from({length:5},(_,i)=>({id:"welcome:"+i,value:0})),orders:[],wins:[],completed:[],plays:[]});
 export const untilYear=(at:number,delta:number)=>{
   const d=new Date(at),m=d.getUTCMonth();d.setUTCFullYear(d.getUTCFullYear()+delta);
