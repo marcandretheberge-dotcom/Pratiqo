@@ -7,6 +7,7 @@
 .yo-film-caption p { margin: 0 0 2px; color: #c1d9ce; font-size: .79rem; }
 .yo-film-caption h2 { margin: 0; color: #fffaf0; font-size: clamp(1.15rem, 4.6vw, 1.6rem); font-weight: 680; line-height: 1.2; outline: none; }
 .yo-film-caption h2 span[aria-hidden] { color: #a7c3b5; }
+.yo-film-controls { display: flex; flex-shrink: 0; gap: 6px; }
 .yo-film-control, .yo-film-continue { min-width: 44px; min-height: 44px; display: grid; flex-shrink: 0; place-items: center; border: 1px solid #89a59a; border-radius: 100px; color: white; }
 .yo-film-continue { padding: 0 12px; }
 .yo-film button:focus-visible { outline: 3px solid #ffd38d; outline-offset: -3px; }

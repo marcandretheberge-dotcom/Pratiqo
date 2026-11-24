@@ -1,7 +1,7 @@
 """Play the actual shipped films and travel through the real course entry points."""
 import os
 from pathlib import Path
-from playwright.sync_api import TimeoutError as PlaywrightTimeout, expect, sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 base = os.environ.get("YO_JOURNAL_URL", "http://127.0.0.1:3246").rstrip("/")
 photos = Path(os.environ.get("YO_JOURNAL_QA_DIR", "/tmp/yoppo-travel"))
@@ -36,15 +36,6 @@ def film(page, mode):
     return node
 
 
-def playing(page, node):
-    moving = "document.querySelector('[data-travel-film] video')?.currentTime > 0.18"
-    try:
-        page.wait_for_function(moving, timeout=2400)
-    except PlaywrightTimeout:
-        node.get_by_role("button", name="Lire le film").click()
-        page.wait_for_function(moving, timeout=12000)
-
-
 def verify(browser, engine):
     context = browser.new_context(viewport={"width": 393, "height": 690}, device_scale_factor=2, is_mobile=True,
                                   has_touch=True, locale="fr-CA", reduced_motion="no-preference")
@@ -55,7 +46,11 @@ def verify(browser, engine):
         departure = film(page, "flight")
         expect(departure.get_by_role("heading")).to_have_text("Bologna")
         assert location(page) is None
-        playing(page, departure)
+        page.wait_for_function("document.querySelector('[data-travel-film] video')?.currentTime > 0.18", timeout=15000)
+        assert departure.locator("video").evaluate("v=>v.muted")
+        departure.get_by_role("button", name="Activer le son du film").click()
+        assert departure.locator("video").evaluate("v=>!v.muted")
+        departure.get_by_role("button", name="Couper le son du film").click()
         page.screenshot(path=str(photos / (engine + "-embarquement.png")))
         departure.get_by_role("button", name="Mettre en pause").click()
         assert departure.locator("video").evaluate("v=>v.paused && v.playsInline && v.videoWidth===768")
@@ -116,6 +111,11 @@ def verify(browser, engine):
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         print(f"PASS {engine}: flight playback, pause, finish, reduced motion, city commitment, international transfer, same country, media failure", flush=True)
     except Exception:
+        print("Media state:", page.locator("[data-travel-film] video").evaluate_all(
+            """nodes => nodes.map(v => ({source: v.currentSrc, time: v.currentTime, duration: v.duration,
+              paused: v.paused, muted: v.muted, autoplay: v.autoplay, ready: v.readyState, network: v.networkState,
+              error: v.error && [v.error.code, v.error.message], visibility: document.visibilityState,
+              width: v.videoWidth, decoded: v.getVideoPlaybackQuality?.().totalVideoFrames}))"""), flush=True)
         page.screenshot(path=str(photos / (engine + "-travel-failure.png")))
         print(page.locator("body").inner_text()[:1150], flush=True)
         raise
