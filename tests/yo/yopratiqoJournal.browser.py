@@ -70,7 +70,7 @@ def check_journal(browser, engine, path, goal, zero, travel, width, height, redu
         page.screenshot(path=str(out / f"{engine}-{path.split('/')[3]}-{width}-writing.png"))
         page.get_by_role("button", name=travel, exact=True).click()
         expect(page.locator(".yj-receipt")).to_have_text(travel)
-        page.locator("label").filter(has=page.get_by_role("radio").first).click()
+        page.locator("label").filter(has=page.get_by_role("radio", name=re.compile(r"^30 min\b"))).click()
         assert "30" in page.locator(".yj-receipt").inner_text()
         page.get_by_role("button", name="Retour", exact=True).click()
         expect(page.locator(".yj-receipt")).to_have_count(0)
@@ -100,7 +100,7 @@ def record_opening(browser):
     page.wait_for_timeout(1700)
     page.get_by_role("button", name="Voyager", exact=True).tap()
     page.wait_for_timeout(1600)
-    page.locator("label").filter(has=page.get_by_role("radio").first).click()
+    page.locator("label").filter(has=page.get_by_role("radio", name=re.compile(r"^30 min\b"))).click()
     page.wait_for_timeout(1600)
     video = page.video
     context.close()
