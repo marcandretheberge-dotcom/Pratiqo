@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import {SharedPassBalance} from "../italian/pass/SharedPassBalance";
+import {showPassPilot} from "@/lib/yo/passPilot/proof.client";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { BookOpen, Settings, Stamp, X } from "lucide-react";
@@ -78,6 +80,7 @@ function IntroPlayer({course,locale,audio}:Props){
     <SpanishRegionalPractice locale={locale} selectedIndex={regionalIndex} onIndexChange={setRegionalIndex}/>
     {spanishRegionalPractice[regionalIndex].id==='es-region-caribbean-bus'&&<Link prefetch={false} href={`/yo/langues/espagnol/pays/republique-dominicaine?lang=${locale}`} className={`${secondary} mt-4 underline`}>{say('Découvrir le parcours dominicain existant','Explore the existing Dominican course','Explorar el curso dominicano existente')}</Link>}
    </section>}
+   {state.view==='map'&&showPassPilot&&<SharedPassBalance locale={locale}/>}
    {state.view==='map'&&<div hidden={regionalOpen}>
     <div className="mb-6 flex items-center gap-4"><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="md" compact/><div className="min-w-0"><p className="text-sm font-semibold text-emerald-700">{course.city} · {say('Premières rencontres','First meetings','Primeros encuentros')}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-2xl font-black outline-none">{passed?say('Ton premier tampon est gagné !','You earned your first stamp!','¡Ganaste tu primer sello!'):say('On fait connaissance ?','Shall we get acquainted?','¿Vamos a conocernos?')}</h1></div></div>
     {map && <WorldJourneyMap model={map} locale={locale} active={!regionalOpen} onContinue={id=>{

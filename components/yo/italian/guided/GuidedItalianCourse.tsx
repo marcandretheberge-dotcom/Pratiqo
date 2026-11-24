@@ -40,6 +40,8 @@ import { VisualVocabulary } from "../../personalized/VisualVocabulary";
 import { LearningAudio } from "../../personalized/LearningAudio";
 import { guidedCopy, primary, secondary } from "./copy";
 import { LanguageExplanation } from "../../learning/LanguageExplanation";
+import {pilotPath,showPassPilot,storeRound} from "@/lib/yo/passPilot/proof.client";
+import {tokenPool} from "@/lib/yo/italian/course/guidedItalian";
 
 const EMPTY_VISUALS: Record<string, VisualWord[]> = {};
 export type ItalianNavigatorContext = { journey: LearningJourney; progress: CourseProgress; active: boolean; openCurrentMission: () => void; openTrivia: () => void; canReview?: (id: string) => boolean; triviaAvailable?: boolean };
@@ -156,7 +158,9 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   function nextQuestion() {
     const s = current.current;
     if (!s.game.complete || s.answers.length !== s.quizIndex || s.submitted) return;
-    stop(); const answers = [...s.answers, { correct: s.game.feedback === true, assisted: s.game.assisted }];
+    const item=unit.quiz.questions[s.quizIndex];
+    const response=showPassPilot&&unit.id==="u01"?(item.kind==="type"?s.game.tiles.map(i=>tokenPool(item)[i]).join(" "):s.game.selected??""):undefined;
+    stop(); const answers = [...s.answers, { correct: s.game.feedback === true, assisted: s.game.assisted, ...(response!==undefined?{response}:{}) }];
     if (answers.length === unit.quiz.questions.length) {
       const correct = answers.filter(a => a.correct).length, assisted = answers.some(a => a.assisted);
       // A restored result must not re-submit or duplicate points. Canonical best results remain monotonic.
@@ -164,6 +168,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
       if (!previous || previous.last.completedAt < s.runStartedAt) recordAssessment(unit.quiz.id, correct, answers.length, assisted);
       commit({ ...s, view: "result", resumeView: null, answers, submitted: true, game: emptyGame() });
       if (!assisted && correct / answers.length * 100 >= unit.quiz.passPercent) {
+        if(showPassPilot&&unit.id==="u01")storeRound("bologna",answers.map(a=>({answer:"response" in a&&typeof a.response==="string"?a.response:"",assisted:a.assisted})));
         pendingUnlock.current = !passed && Boolean(nextUnit);
         feedback.emit(`stamp:${unit.id}:${s.runStartedAt}`, "stamp");
       }
@@ -232,6 +237,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
       <button type="button" className={secondary} onClick={() => { stopLessonAudio(); setOverlay("tools"); }} aria-label={c.help}><MoreHorizontal size={21} aria-hidden /></button></div>
     </div></header>
     <main className="yo-course-main">
+      {showPassPilot&&(ui.view==="map"||ui.view==="result")&&<Link className={secondary} href={pilotPath}>{say("Mon itinéraire et mes Pass","My itinerary and passes","Mi itinerario y mis pases")}</Link>}
       {(!learning.storageAvailable || !storageAvailable) ? <p role="status" className="mb-5 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{c.unsaved}</p> : null}
       {Navigator ? <Navigator journey={journey} progress={progress} active={ui.view === "map" && overlay === null && !checkpointOpen} openCurrentMission={playFromMap}
         openTrivia={() => { finishTour(); stopLessonAudio(); setCheckpointOpen(true); }}/> : travelFlorence ? <ItalianTravelNavigator illustrated
