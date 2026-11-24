@@ -9,9 +9,10 @@ function provider(){
   return new Stripe(key,{maxNetworkRetries:1});
 }
 export async function getPrice(sku:Sku){
-  const result=await provider().prices.list({lookup_keys:[offerVersion+"_"+sku],active:true,limit:1});
+  const result=await provider().prices.list({lookup_keys:[offerVersion+"_"+sku],active:true,limit:1,expand:["data.product"]});
   const p=result.data[0];
   if(!p||p.livemode||p.type!=="one_time"||p.currency!=="cad"||p.unit_amount!==prices[sku]||p.metadata.pilot!==offerVersion)throw Error("test_price_missing");
+  if(typeof p.product==="string"||p.product.deleted||p.product.livemode||!p.product.active||p.product.name!=="YoPratiqo TEST · "+sku)throw Error("test_price_missing");
   return p;
 }
 export async function prepare(uid:string,sku:Sku,nonce:string){

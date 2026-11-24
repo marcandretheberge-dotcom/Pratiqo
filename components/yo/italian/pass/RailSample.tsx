@@ -10,7 +10,7 @@ export function RailSample(){
   return <main lang="fr" className="mx-auto max-w-lg space-y-4 bg-white pb-8 text-stone-900">
     <div className="relative h-52"><Image fill priority className="object-cover" src="/images/yo/italian/culture/bologna-porticoes.webp" alt="Portiques de Bologne"/><Image width={115} height={130} className="absolute bottom-0 right-4 h-32 w-auto" src="/companion/travel/companion-travel-map.png" alt="Yoppo"/></div>
     <section className="space-y-4 px-5"><p className="font-bold text-emerald-800">Italie · Bologna Centrale</p><h1 className="text-3xl font-bold">Ton train a changé de voie.</h1><p>Ton billet indique la voie 5. Écoute l’annonce : où dois-tu aller ?</p>
-    <audio controls preload="none" src="/yo/pass-rail/platform.mp3"/><details><summary>Lire l’annonce</summary><span lang="it">Il treno parte dal binario tre.</span></details>
+    <audio controls preload="none" src="/practice/it/bologna/platform.mp3"/><details><summary>Lire l’annonce</summary><span lang="it">Il treno parte dal binario tre.</span></details>
     <div className="grid grid-cols-3 gap-2">{["2","3","5"].map(n=><button key={n} aria-pressed={answer===n} onClick={()=>set(n)} className="min-h-12 rounded-lg border border-emerald-900 bg-white font-bold text-emerald-950 aria-pressed:bg-emerald-900 aria-pressed:text-white">Voie {n}</button>)}</div>
     {answer&&<p aria-live="polite">{answer==="3"?"Oui ! « Dal binario tre » : ton train part de la voie 3.":"Écoute le nombre après « binario ». L’annonce est plus récente que le billet."}</p>}
     <p className="border-t pt-4"><Ticket className="mr-1 inline" size={18}/> Bologne : premier module, halte et défi gratuits.</p>
