@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
-import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
+import { JournalChoice, useYoppoJournal, YoppoWelcomeGuide } from "../onboarding/YoppoJournal";
 import type { YoLocale } from "@/lib/yo/types";
 import type { CourseCatalog, CourseQuestion } from "@/lib/yo/italian/course/courseTypes";
 import { t } from "@/lib/yo/italian/course/courseAuthoring";
@@ -24,6 +24,7 @@ type Props = {
 
 export function ItalianOnboarding({ locale, catalog, checks, audioPaths, initial, onComplete, onCancel }: Props) {
   const say = (fr: string, en: string, es: string) => t(fr, en, es)[locale];
+  const journal = useYoppoJournal();
   const [screen, setScreen] = useState<Screen>("experience");
   const [experience, setExperience] = useState<LearningProfile["experience"]>(initial?.experience ?? "new");
   const [goal, setGoal] = useState<LearningProfile["goal"]>(initial?.goal ?? "thorough");
@@ -72,6 +73,7 @@ export function ItalianOnboarding({ locale, catalog, checks, audioPaths, initial
   function nextAnswer() {
     const s = last.current;
     if (!s.game.complete || s.answers.length >= checks.length) return;
+    journal.write(`${say("Question", "Question", "Pregunta")} ${s.answers.length + 1}`);
     const next = [...s.answers, { unitId: checks[s.answers.length].unitId, correct: s.game.feedback === true, assisted: s.game.assisted }];
     last.current = { answers: next, game: emptyGame() }; setAnswers(next); setGame(emptyGame());
     const weak = next.length % 3 === 0 && next.slice(-3).filter(a => a.correct && !a.assisted).length < 2;
@@ -86,28 +88,28 @@ export function ItalianOnboarding({ locale, catalog, checks, audioPaths, initial
       startUnitId: selected.id, placement: mode, reviewUnitIds: reviews, updatedAt: Date.now() });
   }
   function skip() {
+    journal.clear();
     if (!validPace) { setMinutes(0); setCustom(false); }
     setMode("manual"); showResult(true);
   }
-  const optionStyle = "min-h-14 w-full rounded-2xl border-2 border-stone-200 bg-white px-4 py-3 text-left font-semibold hover:border-emerald-600 focus-visible:outline-2 focus-visible:outline-offset-4";
   const backScreen: Record<Exclude<Screen, "experience" | "check">, Screen> = { goal: "experience", time: "goal", choice: "time", result: experience === "new" ? "time" : "choice" };
 
   return <ItalianAudioProvider paths={audioPaths}>
-    <main lang={locale} data-yoppo-onboarding data-onboarding-step={screen} className="min-h-screen bg-[#fbf9f3] px-4 pt-6 pb-[calc(5rem+env(safe-area-inset-bottom))] text-stone-800 sm:pt-8">
-      <div className="mx-auto max-w-xl">
-        <div ref={guide} data-yoppo-guide className="mb-6 flex scroll-mt-5 items-center gap-3">
-          <CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="md" compact className="shrink-0" />
-          <div className="min-w-0 flex-1 rounded-3xl rounded-bl-md border border-emerald-100 bg-white p-4">
-            <p className="text-xs font-bold tracking-wide text-emerald-800">Yoppo · Italiano</p>
-            <h1 ref={heading} tabIndex={-1} className="mt-1 text-xl font-bold leading-snug outline-none">{titles[screen]}</h1>
-          </div>
+    <main lang={locale} data-yoppo-onboarding data-onboarding-step={screen} className="yj-welcome">
+      <div className="yj-page">
+        <div ref={guide} data-yoppo-guide className="scroll-mt-3">
+          <YoppoWelcomeGuide title={titles[screen]} language="Italiano" locale={locale} step={screen} entry={journal.entry} headingRef={heading}/>
         </div>
 
-        {screen === "experience" && <div className="grid gap-3">{experienceOptions.map((v, i) =>
-          <button key={v} type="button" className={optionStyle} onClick={() => { setExperience(v); go("goal"); }}>{experienceLabels[i]}</button>
+        {screen === "experience" && <div className="yj-options">{experienceOptions.map((v, i) =>
+          <JournalChoice key={v} kind={v} label={experienceLabels[i]} onPick={() => {
+            journal.write(experienceLabels[i]); setExperience(v); go("goal");
+          }}/>
         )}</div>}
-        {screen === "goal" && <div className="grid gap-3">{goalOptions.map((v, i) =>
-          <button key={v} type="button" className={optionStyle} onClick={() => { setGoal(v); go("time"); }}>{goalLabels[i]}</button>
+        {screen === "goal" && <div className="yj-options">{goalOptions.map((v, i) =>
+          <JournalChoice key={v} kind={v} label={goalLabels[i]} onPick={() => {
+            journal.write(goalLabels[i]); setGoal(v); go("time");
+          }}/>
         )}</div>}
 
         {screen === "time" && <>
@@ -118,7 +120,7 @@ export function ItalianOnboarding({ locale, catalog, checks, audioPaths, initial
               const checked = minutes === n && !custom;
               return <label key={n} data-pace-choice={n} className={`cursor-pointer ${n === 0 ? "col-span-2" : ""}`}>
                 <input type="radio" name="weekly-pace" value={n} checked={checked} aria-label={paceLabel(n)} className="peer sr-only"
-                  onChange={() => { setMinutes(n); setCustom(false); }} />
+                  onChange={() => { setMinutes(n); setCustom(false); journal.write(paceLabel(n)); }} />
                 <span data-pace-selected={checked} className={`flex min-h-16 items-center justify-between gap-2 rounded-2xl border-2 px-4 py-3 font-bold peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-emerald-800 ${checked ? "border-emerald-700 bg-emerald-50 text-emerald-950" : "border-stone-200 bg-white text-stone-800"}`}>
                   <span>{n === 0 ? paceLabel(0) : <>{n < 60 ? `${n} min` : `${n / 60} h`}<span className="mt-0.5 block text-xs font-normal">{say("par semaine", "per week", "por semana")}</span></>}</span>
                   <span aria-hidden className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 ${checked ? "border-emerald-700 bg-emerald-700 text-white" : "border-stone-300"}`}>{checked && <Check size={16} strokeWidth={3} />}</span>
@@ -139,6 +141,7 @@ export function ItalianOnboarding({ locale, catalog, checks, audioPaths, initial
           </div>}
           <button type="button" className={`${primary} mt-5 w-full`} disabled={!validPace} onClick={() => {
             if (!validPace) return;
+            if (custom && resolvedMinutes !== null) journal.write(paceLabel(resolvedMinutes));
             setMinutes(resolvedMinutes);
             if (experience === "new") { setStart(initial?.startUnitId ?? "u01"); setMode(initial?.placement ?? "beginner"); showResult(); }
             else go("choice");
@@ -147,8 +150,8 @@ export function ItalianOnboarding({ locale, catalog, checks, audioPaths, initial
 
         {screen === "choice" && <>
           <p className="mb-5 text-base leading-7">{say("Quelques questions, et je te propose une mission adaptée à tes bases.", "A few questions will help me suggest a mission that fits what you know.", "Unas preguntas me ayudarán a proponerte una misión adecuada.")}</p>
-          <button type="button" className={`${primary} w-full`} onClick={() => { setAnswers([]); setGame(emptyGame()); go("check"); }}>{say("Trouver mon point de départ", "Find my starting point", "Encontrar mi punto de partida")}</button>
-          <button type="button" className={`${secondary} mt-3 w-full`} onClick={() => { setMode("manual"); showResult(true); }}>{say("Choisir moi-même", "Choose for myself", "Elegir por mi cuenta")}</button>
+          <button type="button" className={`${primary} w-full`} onClick={() => { journal.clear(); setAnswers([]); setGame(emptyGame()); go("check"); }}>{say("Trouver mon point de départ", "Find my starting point", "Encontrar mi punto de partida")}</button>
+          <button type="button" className={`${secondary} mt-3 w-full`} onClick={() => { journal.clear(); setMode("manual"); showResult(true); }}>{say("Choisir moi-même", "Choose for myself", "Elegir por mi cuenta")}</button>
         </>}
         {screen === "check" && <section className="rounded-3xl border border-stone-200 bg-white p-5">
           <p className="mb-4 text-xs font-semibold">{say("Question", "Question", "Pregunta")} {answers.length + 1} · {say("9 au maximum", "at most 9", "9 como máximo")}</p>
@@ -172,7 +175,7 @@ export function ItalianOnboarding({ locale, catalog, checks, audioPaths, initial
 
         <footer className="mt-5 border-t border-stone-200 pt-3">
           <div className="flex flex-wrap items-center justify-between gap-1">
-            {screen !== "experience" && screen !== "check" && <button type="button" className={secondary} onClick={() => go(backScreen[screen])}>{say("Retour", "Back", "Volver")}</button>}
+            {screen !== "experience" && screen !== "check" && <button type="button" className={secondary} onClick={() => { journal.clear(); go(backScreen[screen]); }}>{say("Retour", "Back", "Volver")}</button>}
             {onCancel ? <button type="button" className={secondary} onClick={() => { stopLessonAudio(); onCancel(); }}>{say("Garder mon parcours actuel", "Keep my current journey", "Conservar mi recorrido actual")}</button> : screen !== "result" && screen !== "check" && <button type="button" className={secondary} onClick={skip}>{say("Passer", "Skip", "Omitir")}</button>}
           </div>
           <FeedbackSettings locale={locale} compact />

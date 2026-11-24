@@ -30,12 +30,26 @@ On a Vercel Preview or local development build, open
 profile will go straight to Today; new learners complete placement first.
 The public hub and normal production landing flow are unchanged.
 
-Today shows one Continue action and links to the first actually due local
-exercise. The fixed target is five distinct exercises. A signed-out or
-unconfigured preview shows device-only progress and no fabricated streak.
-The authenticated read uses the same committed practice ledger without
-counting XP rows or creating day/streak tables. One missed day per account
-calendar week can be bridged without adding to the displayed streak.
-The account timezone sets the calendar; before release test changes to that
-preference, plus authenticated persistence and isolation against Supabase
-on a disposable app environment. No timer, historical import, or payments.
+Today keeps one primary Continue action and deep-links to the next due
+exercise on this device. The signed-in card reads distinct course exercises
+and XP from the existing transaction ledger; the learner can set or remove
+an optional exercise target. It does not collect active minutes.
+
+The Italian preview offers a practical phrase challenge from the journey and
+one existing trivia question per daily rotation. A correct answer is checked
+on the server before granting 30 XP (mission) or 20 XP (trivia). Each mission
+can unlock one of 12 city souvenirs. Attempt replay cannot duplicate a reward;
+the receipt, XP and souvenir are committed together. There is no attendance
+streak or penalty for missing a day. These XP have no cash or pass value.
+
+For a disposable Supabase preview, apply the SRS migration first and then
+`20261124200500_yo_daily_loop.sql`. Allow the daily endpoints using
+`YO_DAILY_SERVER_ENABLED=true` **only** in the isolated environment, alongside
+the two SRS flags described above. The learner calendar uses the profile zone
+(or America/Toronto) and pins the zone at the first saved goal or reward;
+subsequent travel or device clock changes cannot reopen an earlier day.
+
+Run `npm run test:yo-daily-loop` and `npm run test:yo-srs`. Before any production
+activation, verify an actual Supabase login, both devices on the same account,
+a second isolated account, an expired challenge, and a retried submission.
+Server-side rehydration of the course resume and review queue remains separate.

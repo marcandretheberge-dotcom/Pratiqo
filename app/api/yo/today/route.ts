@@ -1,33 +1,24 @@
-import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { DAILY_EXERCISE_TARGET, dailyStreak } from "@/lib/yo/daily/today";
-import { authenticateSrsRequest } from "@/lib/yo/srs/srsRouteAuth";
+import { artifacts, dailyChallenge } from "@/lib/yo/daily/challenges";
+import type { DailyKind, DailySummary } from "@/lib/yo/daily/contract";
+import { dailyAccount, dailyResponse, readDaily } from "@/lib/yo/daily/server";
 
 export const runtime = "nodejs";
-const noStore = { headers: { "Cache-Control": "private, no-store" } };
 
 export async function GET(req: Request) {
-  const auth = await authenticateSrsRequest(req);
-  if (!auth.ok) return NextResponse.json({ error: auth.error }, { ...noStore, status: auth.status });
-  const admin = getSupabaseAdmin();
-  const { data: profile, error: profileError } = await admin.from("profiles")
-    .select("timezone").eq("id", auth.user.id).maybeSingle();
-  if (profileError) return NextResponse.json({ error: "Progress unavailable" }, { ...noStore, status: 503 });
-  const { data: raw, error } = await admin.rpc("yo_daily_read", {
-    p_user_id: auth.user.id,
-    p_timezone: profile?.timezone ?? "America/Toronto",
-  });
-  const data: unknown = raw;
-  if (error || !data || typeof data !== "object" ||
-      !("today" in data) || typeof data.today !== "string" ||
-      !("exercises" in data) || typeof data.exercises !== "number" ||
-      !("activeDays" in data) || !Array.isArray(data.activeDays) ||
-      !data.activeDays.every(day => typeof day === "string")) {
-    return NextResponse.json({ error: "Progress unavailable" }, { ...noStore, status: 503 });
-  }
-  return NextResponse.json({
-    exercises: data.exercises,
-    target: DAILY_EXERCISE_TARGET,
-    streak: dailyStreak(data.activeDays, data.today),
-  }, noStore);
+  const session = await dailyAccount(req);
+  if (!session.ok) return session.response;
+  const data = await readDaily(session);
+  if (!data) return dailyResponse({ error: "Daily activity unavailable" }, 503);
+  const getToday = (kind: DailyKind) => {
+    const { challenge, explanation } = dailyChallenge(data.today, kind);
+    const completed = data.completed[kind] === challenge.id;
+    return { ...challenge, completed, ...(completed ? { explanation } : {}) };
+  };
+  const summary: DailySummary = {
+    today: data.today, exercises: data.exercises, xpToday: data.xpToday, goal: data.goal,
+    earned: artifacts.filter(artifact => data.earned.includes(artifact.id)),
+    catalogueSize: artifacts.length,
+    daily: { mission: getToday("mission"), trivia: getToday("trivia") },
+  };
+  return dailyResponse(summary);
 }

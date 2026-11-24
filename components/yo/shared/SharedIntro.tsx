@@ -1,4 +1,5 @@
 "use client";
+import { YoppoWelcomeLoading } from "../onboarding/YoppoJournal";
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -57,7 +58,7 @@ function IntroPlayer({course,locale,audio}:Props){
  }
  function resume(){const s=latest.current;if(s.resume){save({...s,view:s.resume});focus();feedback.step();}else move(steps.findIndex(x=>x.mission===(s.profile?.entry??0)));}
  function notebook(){if(state.view==='final')return;stopLessonAudio();if(state.view==='lesson'&&steps[state.step].kind==='exercise'&&!state.draft.checked)save({...latest.current,draft:{...latest.current.draft,assisted:true}});setPanel('notebook');}
- if(!ready)return <main className="p-8"><p role="status">{say('Yoppo prépare ton parcours…','Yoppo is preparing your journey…','Yoppo prepara tu recorrido…')}</p></main>;
+ if(!ready)return <YoppoWelcomeLoading locale={locale}/>;
  if(!state.profile||editing)return <IntroWelcome course={course} locale={locale} audio={audio} initial={state.profile} onComplete={profileDone} onCancel={state.profile?()=>setEditing(false):undefined}/>;
  const step=steps[state.step],mission=course.missions[step.mission],missionSteps=steps.filter(s=>s.mission===step.mission),position=missionSteps.findIndex(s=>s.id===step.id);
  const phrase=(id:string)=>course.phrases.find(p=>p.id===id)!;

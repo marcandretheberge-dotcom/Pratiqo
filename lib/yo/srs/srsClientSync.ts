@@ -8,18 +8,23 @@
  */
 
 import { getSupabaseClient } from "@/lib/supabase";
+import type { DailyAnswer, DailySummary } from "@/lib/yo/daily/contract";
 
-async function accessToken(): Promise<string | null> {
+async function learningSession() {
   if (process.env.NEXT_PUBLIC_YO_SRS_SERVER_ENABLED !== "true") return null;
   try {
     const supabase = getSupabaseClient();
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    return session?.access_token ?? null;
+    return session?.access_token && session.user?.id ? { token: session.access_token, owner: session.user.id } : null;
   } catch {
     return null;
   }
+}
+
+async function accessToken() {
+  return (await learningSession())?.token ?? null;
 }
 
 /** Fire-and-forget: record one answered activity on the server. */
@@ -89,17 +94,37 @@ export async function importLocalSrsProgress(
 }
 
 
-export async function fetchItalianToday(signal: AbortSignal) {
+export function onItalianTodayAccountChange(refresh: () => void) {
+  if (process.env.NEXT_PUBLIC_YO_SRS_SERVER_ENABLED !== "true") return () => {};
   try {
-    const token = await accessToken();
-    if (!token || signal.aborted) return null;
-    const response = await fetch("/api/yo/today", {
-      headers: { Authorization: `Bearer ${token}` },
+    const { data: { subscription } } = getSupabaseClient().auth.onAuthStateChange(() => refresh());
+    return () => subscription.unsubscribe();
+  } catch { return () => {}; }
+}
+
+async function dailyRequest<T>(url: string, signal: AbortSignal, body?: unknown, method = "GET", expectedOwner?: string) {
+  try {
+    const session = await learningSession();
+    if (!session || signal.aborted || (expectedOwner && session.owner !== expectedOwner)) return { value: null, status: 0 };
+    const response = await fetch(url, {
+      method, headers: { Authorization: `Bearer ${session.token}`,
+        ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
+      body: body === undefined ? undefined : JSON.stringify(body),
       cache: "no-store", signal,
     });
-    if (!response.ok) return null;
-    const result = await response.json() as { exercises: number; streak: number };
-    return Number.isSafeInteger(result.exercises) && result.exercises >= 0 &&
-      Number.isSafeInteger(result.streak) && result.streak >= 0 ? result : null;
-  } catch { return null; }
+    return { value: response.ok ? await response.json() as T : null, status: response.status, owner: session.owner };
+  } catch { return { value: null, status: 0 }; }
+}
+
+export async function fetchItalianToday(signal: AbortSignal) {
+  const result = await dailyRequest<DailySummary>("/api/yo/today", signal);
+  return result.value && result.owner ? { summary: result.value, owner: result.owner } : null;
+}
+
+export function answerItalianDaily(body: { day: string; kind: "mission" | "trivia"; itemId: string; choice: number }, signal: AbortSignal, owner: string) {
+  return dailyRequest<DailyAnswer>("/api/yo/daily/complete", signal, body, "POST", owner);
+}
+
+export function saveItalianDailyGoal(goal: number | null, signal: AbortSignal, owner: string) {
+  return dailyRequest<{ goal: number | null }>("/api/yo/daily/goal", signal, { goal }, "PUT", owner);
 }
