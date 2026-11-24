@@ -10,6 +10,13 @@ on:
       - 'components/yo/shared/SharedIntro.tsx'
       - 'public/companion/travel/journal/**'
       - 'tests/yo/yopratiqoJournal.browser.py'
+      - 'tests/yo/yopratiqoTravelFilms.browser.py'
+      - 'tests/yo/yopratiqoTravelFilmRoutes.test.ts'
+      - 'components/yo/travel/**'
+      - 'lib/yo/travelCinema.ts'
+      - 'components/yo/italian/travel/ItalianTravelNavigator.tsx'
+      - 'public/companion/travel/films/**'
+      - 'app/yo/langues/espagnol/pays/republique-dominicaine/intro/page.tsx'
       - 'scripts/prepare_yo_shared_review.ts'
       - '.github/workflows/yo-onboarding-journal.yml'
   workflow_dispatch:
@@ -51,7 +58,9 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" || true' EXIT
           curl --retry 30 --retry-connrefused --retry-delay 1 -fsS -o /dev/null http://127.0.0.1:3246/companion/travel/journal/yoppo-journal.webp
+          node --import tsx tests/yo/yopratiqoTravelFilmRoutes.test.ts
           python tests/yo/yopratiqoJournal.browser.py
+          python tests/yo/yopratiqoTravelFilms.browser.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
