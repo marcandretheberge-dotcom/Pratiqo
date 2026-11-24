@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowRight, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import type { YoLocale } from "@/lib/yo/types";
@@ -34,7 +34,10 @@ export function TravelFilm({ leg, locale, onArrival }: { leg: TravelLeg; locale:
     onArrival();
   };
 
-  useEffect(() => { if (player) player.volume = volume; }, [player, volume]);
+  const attachPlayer = useCallback((element: HTMLVideoElement | null) => {
+    if (element) element.volume = volume;
+    setPlayer(element);
+  }, [volume]);
   useEffect(() => {
     if (!player) return;
     // The dialog's portal mounts after its owner. Start only once the video is attached.
@@ -57,7 +60,7 @@ export function TravelFilm({ leg, locale, onArrival }: { leg: TravelLeg; locale:
       <Dialog.Content className="yo-film" data-travel-film={leg.mode} aria-describedby={undefined}
         onOpenAutoFocus={event => { event.preventDefault(); title.current?.focus(); }}>
         <div className="yo-film-screen">
-          <video ref={setPlayer} src={film.src} poster={film.poster} autoPlay={!reduce} muted={muted} playsInline preload={reduce ? "none" : "auto"}
+          <video ref={attachPlayer} src={film.src} poster={film.poster} autoPlay={!reduce} muted={muted} playsInline preload={reduce ? "none" : "auto"}
             aria-label={copy[leg.mode] + " · " + leg.to.city}
             onPlay={() => { stopLessonAudio(); window.dispatchEvent(new Event("yo-arrival-playback-start")); }}
             onPlaying={() => setPlaying(true)} onPause={() => setPlaying(false)}
@@ -71,7 +74,7 @@ export function TravelFilm({ leg, locale, onArrival }: { leg: TravelLeg; locale:
           {failed ? <button type="button" className="yo-film-continue" onClick={finish}>{copy.next}</button>
             : <div className="yo-film-controls">
                 {canUseSound && <button type="button" className="yo-film-control" aria-label={muted ? copy.sound : copy.mute}
-                  onClick={() => { if (player) player.muted = !muted; setAudible(muted); }}>
+                  onClick={() => setAudible(muted)}>
                   {muted ? <VolumeX size={18} aria-hidden/> : <Volume2 size={18} aria-hidden/>}
                 </button>}
                 <button type="button" className="yo-film-control" aria-label={playing ? copy.pause : copy.play}
