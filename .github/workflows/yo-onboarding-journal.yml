@@ -10,6 +10,7 @@ on:
       - 'components/yo/shared/SharedIntro.tsx'
       - 'public/companion/travel/journal/**'
       - 'tests/yo/yopratiqoJournal.browser.py'
+      - 'scripts/prepare_yo_shared_review.ts'
       - '.github/workflows/yo-onboarding-journal.yml'
   workflow_dispatch:
 
@@ -45,7 +46,8 @@ jobs:
         run: |
           set -eu
           mkdir -p "$YO_JOURNAL_QA_DIR"
-          ./node_modules/.bin/next dev --webpack --hostname 127.0.0.1 --port 3246 > "$YO_JOURNAL_QA_DIR/server.log" 2>&1 &
+          node --import tsx scripts/prepare_yo_shared_review.ts
+          ./node_modules/.bin/next dev .qa-guided --webpack --hostname 127.0.0.1 --port 3246 > "$YO_JOURNAL_QA_DIR/server.log" 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" || true' EXIT
           curl --retry 30 --retry-connrefused --retry-delay 1 -fsS -o /dev/null http://127.0.0.1:3246/companion/travel/journal/yoppo-journal.webp
