@@ -127,7 +127,7 @@
     "dotenv": "^17.4.2",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
-    "next": "16.2.9",
+    "next": "16.4.6",
     "playwright": "^1.57.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -135,10 +135,11 @@
     "react-markdown": "^10.1.0",
     "recharts": "^3.8.1",
     "remark-gfm": "^4.0.1",
-    "resend": "^6.12.2",
+    "resend": "^6.12.3",
+    "sharp": "^0.35.5",
     "stripe": "^22.0.2",
     "tailwind-merge": "^3.5.0",
-    "zod": "^4.3.6"
+    "zod": "^4.6.6"
   },
   "browserslist": [
     "Chrome >= 90",
@@ -147,7 +148,7 @@
     "Edge >= 90"
   ],
   "devDependencies": {
-    "esbuild": "0.27.7",
+    "esbuild": "0.28.2",
     "@electric-sql/pglite": "0.5.10",
     "@tailwindcss/postcss": "^4",
     "@testing-library/react": "16.3.3",
@@ -157,9 +158,8 @@
     "@types/react-dom": "^19",
     "@types/ws": "8.18.2",
     "eslint": "^9",
-    "eslint-config-next": "16.2.9",
+    "eslint-config-next": "16.4.6",
     "jsdom": "26.1.0",
-    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5",
