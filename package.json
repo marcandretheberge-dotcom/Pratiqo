@@ -111,7 +111,8 @@
     "generate:yo-japanese-foundations-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module japanese-foundations",
     "verify:yo-japanese-foundations-audio": "node --import tsx scripts/generate-yopratiqo-audio.ts --module japanese-foundations --verify-only",
     "test:yo-japanese-recorded-audio": "node --import tsx tests/yo/yopratiqoJapaneseFoundationAudioManifest.test.ts && node --import tsx tests/yo/yopratiqoJapaneseRecordedAudio.test.ts && node --import tsx tests/yo/yopratiqoAudioGenerator.test.ts",
-    "test:yo-italian-pilot": "node --import tsx tests/yo/yopratiqoItalianPilotContent.test.ts && node --import tsx tests/yo/yopratiqoItalianMidpoint.test.ts && node --import tsx tests/yo/yopratiqoItalianMidpointPlayer.test.tsx && node --import tsx tests/yo/yopratiqoCourseMission.test.tsx && node --import tsx tests/yo/yopratiqoItalianVictory.test.tsx"
+    "test:yo-italian-pilot": "node --import tsx tests/yo/yopratiqoItalianPilotContent.test.ts && node --import tsx tests/yo/yopratiqoItalianMidpoint.test.ts && node --import tsx tests/yo/yopratiqoItalianMidpointPlayer.test.tsx && node --import tsx tests/yo/yopratiqoCourseMission.test.tsx && node --import tsx tests/yo/yopratiqoItalianVictory.test.tsx",
+    "test:yo-srs": "node --import tsx tests/yo/yopratiqoSrsEngine.test.ts && node --import tsx tests/yo/yopratiqoSrsPersistence.test.ts && node --import tsx tests/yo/yopratiqoSrsDatabase.test.ts"
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.84.0",
