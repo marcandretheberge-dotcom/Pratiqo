@@ -66,6 +66,11 @@
 .yj-welcome footer { margin-top: 13px; }
 .yj-loading { padding-top: clamp(40px, 7svh, 60px); }
 .yj-loading p { margin: 15px 2px; font-size: .94rem; color: #435f4f; }
+@media (max-width: 599px) {
+  /* Frame the face and open journal together on a phone. */
+  .yj-character { transform: scale(1.32); transform-origin: 50% 0; }
+  .yj-scene::after { display: none; }
+}
 @media (min-width: 600px) {
   .yj-scene { height: clamp(185px, 27svh, 245px); }
   .yj-options { gap: 8px; }
@@ -78,6 +83,7 @@
   .yj-option { min-height: 44px; }
 }
 @media (prefers-reduced-motion: no-preference) {
+  .yj-character[data-gesture="listen"] .yj-first-line { stroke-dasharray: 1; animation: yj-ink .95s linear both; }
   .yj-face { animation: yj-listen 5.8s ease-in-out infinite; }
   .yj-gaze { animation: yj-look 5.8s ease-in-out infinite; }
   .yj-character[data-gesture="write"] .yj-gaze-cue { animation: yj-read-page 1.25s ease-in-out both; }
@@ -104,7 +110,10 @@
   82% { transform: translateY(-1%) rotate(-1deg); }
 }
 @keyframes yj-pencil-idle {
-  0%, 26%, 100% { transform: rotate(2deg); }
+  0%, 100% { transform: translateY(-2%) rotate(7deg); }
+  8% { transform: translate(-2%, 1%) rotate(1deg); }
+  16% { transform: translate(2%, -.5%) rotate(-3deg); }
+  26% { transform: translate(4%, .5%) rotate(2deg); }
   39% { transform: rotate(-5deg); }
   47%, 59% { transform: translate(2%, 1%) rotate(-2deg); }
   52%, 65% { transform: translate(-2%, 0) rotate(4deg); }

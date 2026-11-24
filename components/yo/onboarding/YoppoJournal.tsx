@@ -62,6 +62,7 @@ function JournalFigure({ entry, finished = false }: { entry: Entry; finished?: b
       </div></div></div>
       <svg className="yj-ink" viewBox="0 0 400 484" fill="none" strokeLinecap="round" focusable="false">
         <path d="M109 293q10-1 18-3m-15 11 17-3" stroke="#ba9b64" strokeWidth="1.2" />
+        <path className="yj-first-line" d="M148 314q2-4 3-1t5-2 6-1l4-1" pathLength="1" stroke="#587d68" strokeWidth="1.8"/>
         <path className="yj-ink-stroke" d="M148 307l4-4 1 6 5-7 1 5 5-5 2 3 6-4 3 1 5-3" pathLength="1" stroke="#286c64" strokeWidth="2.2"/>
       </svg>
       <div className="yj-arm-position"><div className="yj-arm-attention"><span className="yj-writing-paw"/></div></div>
