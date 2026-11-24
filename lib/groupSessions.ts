@@ -20,6 +20,10 @@ export type GroupSessionRow = {
   created_at?: string;
 };
 
+export type GroupSessionListing = Omit<GroupSessionRow, "online_link" | "location">;
+export type GroupSessionJoinDetails = Pick<GroupSessionRow, "id" | "online_link" | "location">;
+export const GROUP_LISTING_COLUMNS = "id, teacher_id, title, description, discipline, max_participants, min_participants, current_participants, price_per_person, date, time, duration_minutes, teaching_mode, is_recurring, recurrence, status, created_at";
+
 export type GroupRegistrationRow = {
   id: string;
   session_id: string;
@@ -40,7 +44,7 @@ export function spotsRemaining(session: Pick<GroupSessionRow, "max_participants"
   return Math.max(0, Number(session.max_participants) - Number(session.current_participants));
 }
 
-export function isSessionBookable(session: GroupSessionRow): boolean {
+export function isSessionBookable(session: Pick<GroupSessionRow, "status" | "max_participants" | "current_participants">): boolean {
   return session.status === "open" && spotsRemaining(session) > 0;
 }
 

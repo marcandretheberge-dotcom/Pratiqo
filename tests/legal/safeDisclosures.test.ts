@@ -1684,6 +1684,14 @@ test("safe-disclosure branch did not touch restricted systems", () => {
       assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY|CREATE POLICY|^\s*GRANT\b|(?:UPDATE|DELETE FROM|INSERT INTO) public\./im);
       continue;
     }
+    if (file === "supabase/migrations/20261124132614_group_session_listing_access.sql") {
+      const migration = read(file);
+      assert.match(migration, /revoke all on public\.group_registrations, public\.group_sessions from public, anon, authenticated/i);
+      assert.match(migration, /create view public\.group_sessions_public with \(security_invoker = true/i);
+      assert.match(migration, /r\.student_id = \(select auth\.uid\(\)\)/i);
+      assert.doesNotMatch(migration, /disable row level security|\b(?:booking_payments|bookings|refunds)\b|grant (?:all|execute) on (?:function )?group_session_access\.[^;]+ to (?:anon|public)\b/i);
+      continue;
+    }
     if (file === "supabase/migrations/131_learner_funnel_measurement.sql") {
       const migration = read(file);
       assert.match(migration, /ALTER TABLE public\.learner_funnel_facts ENABLE ROW LEVEL SECURITY/);

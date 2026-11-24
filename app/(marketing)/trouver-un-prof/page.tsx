@@ -7,6 +7,8 @@ import { BreadcrumbSchema } from "@/components/seo/BreadcrumbSchema";
 import { LandingHeader } from "@/components/marketing/LandingHeader";
 import { LandingFooter } from "@/components/marketing/LandingFooter";
 import { LandingSkipLink } from "@/components/marketing/LandingSkipLink";
+import { publicSearchFilters } from "@/lib/search/publicTeacherSearch";
+import { PublicTeacherResults } from "@/components/marketing/PublicTeacherResults";
 import { FindTeacherSearch } from "@/components/marketing/FindTeacherSearch";
 import { FindTeacherTrustStrip } from "@/components/marketing/FindTeacherTrustStrip";
 import { SITE_URL } from "@/lib/seo/site";
@@ -122,7 +124,8 @@ const CITIES = [
   { label: "Gatineau", slug: "gatineau" },
 ];
 
-export default async function TrouverUnProfPage() {
+export default async function TrouverUnProfPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const filters = publicSearchFilters(await searchParams);
   // Server-rendered hero copy ensures the H1 and CTA labels ship in
   // the initial HTML, regardless of whether JS hydrates. Mirrors the
   // homepage's `LandingHeroStatic` strategy — see `app/page.tsx`.
@@ -169,7 +172,7 @@ export default async function TrouverUnProfPage() {
                 </p>
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <Link
-                    href="/student/search"
+                    href="#resultats"
                     className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-teal-700 px-6 text-sm font-semibold text-white shadow-[0_14px_40px_rgba(15,110,86,0.18)] transition-colors hover:bg-[#0B5F4A] sm:text-base"
                   >
                     {t(locale, "findTeacherPrimaryCta")}
@@ -269,7 +272,7 @@ export default async function TrouverUnProfPage() {
           {/* ── SEARCH MODULE (overlapping hero) ─────────────────────────── */}
           <section className="relative -mt-2 px-4 sm:px-6 lg:-mt-6 lg:px-8">
             <div className="mx-auto max-w-[1200px]">
-              <FindTeacherSearch />
+              <FindTeacherSearch key={JSON.stringify(filters)} initial={filters} />
             </div>
           </section>
 
@@ -278,6 +281,11 @@ export default async function TrouverUnProfPage() {
             <div className="mx-auto max-w-[1200px]">
               <FindTeacherTrustStrip />
             </div>
+          </section>
+
+          <section id="resultats" aria-labelledby="public-results-heading" className="mx-auto w-full max-w-[1200px] scroll-mt-6 px-4 py-8 sm:px-6">
+            <h2 id="public-results-heading" className="mb-5 text-2xl font-bold">{t(locale, "publicTeacherResults")}</h2>
+            <PublicTeacherResults filters={filters} locale={locale} />
           </section>
 
           {/* ── DISCIPLINES (SEO chips) ────────────────────────────────── */}
