@@ -18,13 +18,14 @@ permissions:
 
 jobs:
   journal:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       NEXT_TELEMETRY_DISABLED: '1'
       NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
       NEXT_PUBLIC_SUPABASE_ANON_KEY: local-ui-test
       YO_JOURNAL_QA_DIR: /tmp/yoppo-journal-qa
+      YO_JOURNAL_VIDEO: '1'
     steps:
       - uses: actions/checkout@v4
         with:

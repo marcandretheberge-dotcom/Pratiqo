@@ -1,12 +1,23 @@
 """Regression for the opening that previously showed one static Yoppo portrait."""
 import os
 import re
+import subprocess
+import time
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 
 base = os.environ.get("YO_JOURNAL_URL", "http://127.0.0.1:3246").rstrip("/")
 out = Path(os.environ.get("YO_JOURNAL_QA_DIR", "/tmp/yoppo-journal-qa"))
 out.mkdir(parents=True, exist_ok=True)
+
+
+def dismiss_notices(page):
+    banner = page.get_by_test_id("cookie-consent-banner")
+    if banner.is_visible():
+        banner.get_by_role("button", name=re.compile("Nécessaires|Necessary only|Solo necesarias", re.I)).click()
+    later = page.get_by_role("button", name=re.compile("^(Pas maintenant|Not now|Ahora no)$"))
+    if later.count() and later.first.is_visible():
+        later.first.click()
 
 
 def sample(page, selector):
@@ -16,6 +27,7 @@ def sample(page, selector):
 def check_journal(browser, engine, path, goal, zero, travel, width, height, reduced=False):
     context = browser.new_context(
         viewport={"width": width, "height": height}, locale="fr-CA",
+        is_mobile=width < 600, has_touch=width < 600, device_scale_factor=2 if width < 600 else 1,
         reduced_motion="reduce" if reduced else "no-preference",
     )
     page = context.new_page()
@@ -23,12 +35,7 @@ def check_journal(browser, engine, path, goal, zero, travel, width, height, redu
         page.goto(base + path, wait_until="domcontentloaded", timeout=90000)
         first = page.get_by_role("button", name=zero, exact=True)
         expect(first).to_be_visible(timeout=30000)
-        banner = page.get_by_test_id("cookie-consent-banner")
-        if banner.is_visible():
-            banner.get_by_role("button", name=re.compile("Nécessaires|Necessary only|Solo necesarias", re.I)).click()
-        later = page.get_by_role("button", name=re.compile("^(Pas maintenant|Not now|Ahora no)$"))
-        if later.count() and later.first.is_visible():
-            later.first.click()
+        dismiss_notices(page)
         figure = page.locator("[data-journal-figure]")
         atlas = figure.locator("img")
         atlas.evaluate("image => image.decode()")
@@ -72,6 +79,34 @@ def check_journal(browser, engine, path, goal, zero, travel, width, height, redu
         context.close()
 
 
+def record_opening(browser):
+    size = {"width": 390, "height": 690}
+    context = browser.new_context(viewport=size, is_mobile=True, has_touch=True, locale="fr-CA",
+                                  record_video_dir=str(out / "capture"), record_video_size=size)
+    page = context.new_page()
+    opened = time.monotonic()
+    page.goto(base + "/yo/langues/italien/parcours?lang=fr", wait_until="domcontentloaded")
+    zero = page.get_by_role("button", name="Je pars de zéro", exact=True)
+    expect(zero).to_be_visible()
+    page.locator("[data-journal-figure] img").evaluate("image => image.decode()")
+    dismiss_notices(page)
+    start = time.monotonic() - opened
+    page.wait_for_timeout(1600)
+    zero.tap()
+    page.wait_for_timeout(1700)
+    page.get_by_role("button", name="Voyager", exact=True).tap()
+    page.wait_for_timeout(1600)
+    page.get_by_role("radio").first.check()
+    page.wait_for_timeout(1600)
+    video = page.video
+    context.close()
+    source = video.path()
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-ss", str(start), "-i", str(source),
+                    "-an", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+                    str(out / "Yoppo-premiers-choix.mp4")], check=True)
+    source.unlink()
+
+
 with sync_playwright() as playwright:
     for engine in os.environ.get("YO_JOURNAL_BROWSERS", "chromium,webkit").split(","):
         executable = os.environ.get("YO_CHROMIUM") if engine == "chromium" else None
@@ -82,6 +117,8 @@ with sync_playwright() as playwright:
             for width, height in [(393, 690), (320, 568), (1024, 768)]:
                 check_journal(browser, engine, italian, question, "Je pars de zéro", "Voyager", width, height, reduced=width == 320)
             check_journal(browser, engine, "/yo/langues/japonais/demarrer?lang=fr", question, "Je pars de zéro", "Voyager", 390, 750)
+            if engine == "chromium" and os.environ.get("YO_JOURNAL_VIDEO"):
+                record_opening(browser)
             print(f"PASS {engine}: opening, writing, pause, reduced motion, back, Italian and shared entry", flush=True)
         finally:
             browser.close()
