@@ -8,7 +8,7 @@ import {
   hasActivePendingTeacherIntentClient,
   resolvePendingTeacherOnboardingPath,
 } from "@/lib/auth/preAuthOnboardingIntent";
-import { pendingGuestBookingPath } from "@/lib/bookings/guestBookingIntent";
+import { clearGuestBooking, pendingGuestBookingPath } from "@/lib/bookings/guestBookingIntent";
 import { hasStudentOnboardingConsent } from "@/lib/auth/studentOnboardingConsent";
 import { useRouter } from "next/navigation";
 import { AppStudentDashboardSkeleton } from "@/components/loading/AppSkeletons";
@@ -27,7 +27,10 @@ export default function DashboardPage() {
     if (role === "teacher") return;
     if (role === "student") {
       const pending = pendingGuestBookingPath();
-      if (pending && profile?.companion_chosen && hasStudentOnboardingConsent(profile)) router.replace(pending);
+      if (pending && profile?.companion_chosen && hasStudentOnboardingConsent(profile)) {
+        clearGuestBooking();
+        router.replace(pending);
+      }
       return;
     }
     if (pendingTeacherIntent) {
