@@ -1,9 +1,6 @@
 import { arrivalListeningScenes } from "../dominicanArrivalListening";
-import { nextMidnight } from "./nextDay";
-
-export type Locale = "fr" | "en" | "es";
-export const tr = (fr: string, en: string, es: string) => ({fr,en,es});
-type Text = ReturnType<typeof tr>;
+import {progressFor,tr,type Mode,type Beat,type Practice} from "./practice";
+export {tr,modes,fresh,type Locale,type Mode,type State} from "./practice";
 const scene = arrivalListeningScenes.hotel;
 export const lines = [...scene.lines, ...scene.practiceLines];
 export function line(id:string) {
@@ -11,14 +8,6 @@ export function line(id:string) {
   if(!found) throw Error("Unknown hotel dialogue line: "+id);
   return found;
 }
-export const modes = ["guided","tomorrow"] as const;
-export type Mode = typeof modes[number];
-type Beat = {
-  task:Text; hint:Text;
-  prompt: {clip:string} | {text:string};
-  choices: readonly [string,string,string];
-  answer:string;
-};
 const said=(id:string)=>line("hotel-"+id).target;
 const passport=tr("On te demande un document : tends-le et réponds poliment.","You were asked for a document. Hand it over with a polite reply.","Te piden un documento. Entrégalo con una respuesta cortés.");
 const repeat=tr("Si deux informations ne concordent pas, demande de répéter avant de partir.","If two details disagree, ask the receptionist to repeat before leaving.","Si dos datos no coinciden, pide que te lo repitan antes de irte.");
@@ -49,22 +38,5 @@ export const visits:Record<Mode,{guest:string; city:string; beats:Beat[]}> = {
   ]}
 };
 export const key="yo.review.es.do.hotel.check-in.v1";
-export type State={version:1;guided:number;tomorrow:number;due:number|null;corrected:boolean};
-export const fresh=():State=>({version:1,guided:0,tomorrow:0,due:null,corrected:false});
-const total=(mode:Mode)=>visits[mode].beats.length;
-export function restore(raw:string|null):State{
-  try{
-    const s=JSON.parse(raw??"null");
-    if(s?.version!==1||typeof s.corrected!=="boolean"||!modes.every(m=>Number.isInteger(s[m])&&s[m]>=0&&s[m]<=total(m)))return fresh();
-    if(s.guided===total("guided") ? !Number.isSafeInteger(s.due)||s.due<=0 : s.due!==null||s.tomorrow!==0||s.corrected)return fresh();
-    return {version:1,guided:s.guided,tomorrow:s.tomorrow,due:s.due,corrected:s.corrected};
-  }catch{return fresh();}
-}
-export function ready(s:State,now:number){return s.guided===total("guided")&&s.due!==null&&now>=s.due;}
-export function submit(s:State,mode:Mode,choice:string,now:number):State{
-  const beat=visits[mode].beats[s[mode]];
-  if(!beat || (mode==="tomorrow"&&!ready(s,now)) || !beat.choices.includes(choice))return s;
-  if(choice!==beat.answer)return mode==="tomorrow"?{...s,corrected:true}:s;
-  const n=s[mode]+1;
-  return {...s,[mode]:n,due:mode==="guided"&&n===total(mode)?nextMidnight(now):s.due};
-}
+export const {restore,ready,submit}=progressFor(visits);
+export const hotel:Practice={key,targetLang:"es",badge:"RD",title:tr("À la réception","At the front desk","En recepción"),slip:tr("Réservation fictive","Practice reservation","Reservación ficticia"),finish:tr("Ta clé est prête !","Here’s your key!","¡Aquí está tu llave!"),outcome:tr("Tu as donné le nom de la réservation, fait répéter un numéro et trouvé ta chambre.","You checked in under the right name, asked for repetition and found your room.","Diste el nombre de la reservación, pediste que repitieran el número y encontraste tu habitación."),visits,lines};

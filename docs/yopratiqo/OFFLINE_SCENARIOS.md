@@ -29,6 +29,22 @@ not turn translation of the Bologna screen into seven imitations of Italy.
 | Brazilian Portuguese | Order a coffee; change the order at a different counter. | portuguese/courseScenarios |
 | Mandarin | Choose an item on a menu; ask for water with a different order. | mandarin/course, menuExercise |
 
+The Dominican hotel scenario is linked from the hotel dialogue in Module 2
+at /practice/es/hotel/index.html. The six additional field missions share its
+player and local-day progress rules. Their language-specific cards and tasks
+are in lib/yo/scenarios/fieldMissions.ts; each course has its own browser key.
+Compare them at /practice/field/index.html or enter from the language picker.
+The review index is not an SEO landing page. Publication is a separate decision.
+
+The six packs use 18 course recordings. German, Brazilian Portuguese and
+Mandarin build from the existing local files. Nine short FR/EN/JA recordings
+are copies of previously published course assets; their source paths and hashes
+are in tools/field-missions/recordings/sources.json. Builds need neither a
+provider key nor a network connection to prepare these packs. The maintainer
+copy script is never run by the app. Run npm run build:yo-scenarios followed
+by node --import tsx tools/field-missions/verify.mjs to exercise all six
+offline, or npm run test:yo-scenarios for the progress and asset contracts.
+
 Only reviewed, playable entries go in lib/yo/scenarios/catalog.ts. For each new
 entry, review the actual recordings and the language, test hints vs independent
 recall, and test offline resume on a phone. A second setting at the same level

@@ -1,0 +1,56 @@
+[
+  {
+    "mission": "fr-work",
+    "id": "line-0",
+    "storagePath": "yo/fr/fr-quebec-workplace-survival-1/arriver-saluer/quebec-french/sentence/je-commence-aujourd-hui.mp3",
+    "sha256": "32fefc4a3ef4dad16356a2da237e8fe3915cd8e2f419c9ad0ae6526636ff0d90"
+  },
+  {
+    "mission": "fr-work",
+    "id": "line-1",
+    "storagePath": "yo/fr/fr-quebec-workplace-survival-1/arriver-saluer/quebec-french/sentence/tu-peux-me-tutoyer.mp3",
+    "sha256": "ab5ac325fc52d75272a4797852a80cdbf269c95bed962c66cd7d078354f330e9"
+  },
+  {
+    "mission": "fr-work",
+    "id": "line-2",
+    "storagePath": "yo/fr/fr-quebec-workplace-survival-1/arriver-saluer/quebec-french/sentence/je-cherche-la-salle-de-reunion.mp3",
+    "sha256": "c5094bf56929dbd558daafdd35325bdd77c140e1307bc457cce8b6d102b66379"
+  },
+  {
+    "mission": "en-counter",
+    "id": "line-0",
+    "storagePath": "yo/en/english-intro/intro/canadian-english/phrase/how-much-is-it.mp3",
+    "sha256": "6f58025da74f82360b2e0751bedb85fb159597512886399caf75770875114071"
+  },
+  {
+    "mission": "en-counter",
+    "id": "line-1",
+    "storagePath": "yo/en/english-intro/intro/canadian-english/phrase/can-i-pay-by-card.mp3",
+    "sha256": "20a59f77ecb6f7d6a4a658e44719899f8d7a7c6d314fa5d5e1cc8c42ff9f9d02"
+  },
+  {
+    "mission": "en-counter",
+    "id": "line-2",
+    "storagePath": "yo/en/english-intro/intro/canadian-english/sentence/sorry-can-you-repeat-that.mp3",
+    "sha256": "0339f387818ce98175f6247a5362929a94763276c582b216b128b4f37387ef0d"
+  },
+  {
+    "mission": "ja-workshop",
+    "id": "line-0",
+    "storagePath": "yo/ja/japanese-intro/intro/japanese-standard/phrase/hajimemashite.mp3",
+    "sha256": "6090b830ac1c68930afbf39a0d54f0f4f2ec76cde5ad9fd5a4bf5016f7fb5d8a"
+  },
+  {
+    "mission": "ja-workshop",
+    "id": "line-1",
+    "storagePath": "yo/ja/japanese-intro/intro/japanese-standard/phrase/yoroshiku-onegai-shimasu.mp3",
+    "sha256": "757c831c4f1c7552b44ff906835951c001c7bf67d58d09dd27d600f540343003"
+  },
+  {
+    "mission": "ja-workshop",
+    "id": "line-2",
+    "storagePath": "yo/ja/japanese-intro/intro/japanese-standard/phrase/mata-ashita.mp3",
+    "sha256": "45052bf9f53cc8ecf8f752a3a67e27be0c4cf2899a1fe464f66868067e193278"
+  }
+]

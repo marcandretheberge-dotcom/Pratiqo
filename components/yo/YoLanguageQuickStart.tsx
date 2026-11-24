@@ -4,6 +4,7 @@ import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { YoLanguageBadge } from "@/components/yo/YoLanguageBadge";
 import { buildYoLocaleHref, lstr, t } from "@/lib/yo/localize";
 import { getYoPublicLanguages } from "@/lib/yo/publicCatalog";
+import { fieldMissions } from "@/lib/yo/scenarios/fieldMissions";
 import type { YoLocale } from "@/lib/yo/types";
 
 /** Direct learning links stay primary; the program is an optional discovery link. */
@@ -20,6 +21,7 @@ export function YoLanguageQuickStart({ locale }: { locale: YoLocale }) {
     <ul className="grid min-w-0 gap-3 md:grid-cols-2" aria-label={t(lstr("Choisis ta langue", "Pick your language", "Elige tu idioma"), locale)}>
       {languages.map(item => {
         const presentationLocale = item.presentationLocales.includes(locale) ? locale : "fr";
+        const practice = fieldMissions.find(mission => mission.targetLang === item.inLanguage);
         return <li key={item.slug} className="min-w-0 rounded-lg border border-emerald-100 bg-white text-emerald-950 shadow-sm">
           <Link href={buildYoLocaleHref(item.path, locale)} className="group flex min-h-24 min-w-0 items-center gap-3 rounded-lg p-4 transition hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
             <YoLanguageBadge language={item.badge} ariaLabel={t(item.name, locale)} />
@@ -31,6 +33,8 @@ export function YoLanguageQuickStart({ locale }: { locale: YoLocale }) {
             {presentationLocale !== locale ? " (FR)" : ""}
             <span className="sr-only"> : {t(item.name, locale)}</span>
           </Link>
+          {practice && <a className="mx-4 mb-2 inline-flex min-h-11 items-center text-sm font-semibold text-emerald-800 underline underline-offset-4"
+            href={`/practice/field/${practice.id}/index.html?lang=${locale}`}>{practice.title[locale]}</a>}
         </li>;
       })}
     </ul>

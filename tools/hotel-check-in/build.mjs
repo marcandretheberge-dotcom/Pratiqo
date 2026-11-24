@@ -8,7 +8,7 @@ const require=createRequire(import.meta.url);
 const {lines}=require("../../lib/yo/scenarios/checkIn.ts");
 const src=fileURLToPath(new URL(".",import.meta.url)),root=path.resolve(src,"../.."),out=path.join(root,process.argv.includes("--release")?"public/practice/es/hotel":".qa-guided/hotel/pack");
 await fs.mkdir(out,{recursive:true});
-await build({entryPoints:[path.join(src,"Hotel.tsx")],outfile:path.join(out,"app.js"),bundle:true,minify:true,jsx:"automatic",target:"safari16",external:["./inter.woff2"],define:{"process.env.NODE_ENV":'"production"'}});
+await build({entryPoints:[path.join(src,"entry.tsx")],outfile:path.join(out,"app.js"),bundle:true,minify:true,jsx:"automatic",target:"safari16",external:["./inter.woff2"],define:{"process.env.NODE_ENV":'"production"'}});
 const assets={"desk.webp":"images/yo/voyage/do/conversation-hotel-checkin.webp","icon.png":"icon-192.png","yoppo.png":"companion/travel/companion-travel-teacher-ready.png","happy.png":"companion/travel/companion-travel-celebrating.png","inter.woff2":"fonts/inter.woff2"};
 for(const l of lines)assets[l.id+".mp3"]=l.audioSrc.slice(1);
 for(const [name,source] of Object.entries(assets))await fs.copyFile(path.join(root,"public",source),path.join(out,name));
