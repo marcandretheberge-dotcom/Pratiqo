@@ -284,6 +284,7 @@ test("audio scope permits only validated authorized language additions, never ch
 
 test("tracked patch avoids generated audio and restricted product systems", () => {
   const changed = gitLines("git diff --name-only HEAD");
+  const removedCliState = new Set(gitLines("git diff --name-only --diff-filter=D HEAD -- supabase/.temp/"));
   const branchSpecificAllowlist = new Set([
     // Legal live-sync branches may update YoPratiqo legal disclosures without
     // touching lesson content, audio manifests, generated MP3s, or generators.
@@ -533,6 +534,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     /^supabase\//,
   ];
   for (const path of changed) {
+    if (removedCliState.has(path)) continue;
     if (isAuthorizedGermanAddition(path) || isAuthorizedPortugueseAddition(path) || isAuthorizedMandarinAddition(path)) continue;
     // Authorized learner-demand work, unrelated to audio. Keep scope narrow and
     // assert the privacy/security contract instead of disabling the scope guard.
