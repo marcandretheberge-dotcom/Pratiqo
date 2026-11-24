@@ -34,7 +34,7 @@ try {
            ($2,'teacher','Cancelled','music',40,'2026-12-01','11:00','cancelled','Private venue','private-room')`, [session,cancelled]);
   await db.query(`insert into public.group_registrations(session_id,student_id,stripe_payment_intent_id,price_paid)
     values ($1,$3,'test-payment',40),($2,$3,'another-payment',40)`, [session,cancelled,learner]);
-  await db.exec(await migration("20261124132614_group_session_listing_access.sql"));
+  await db.exec(await migration("20261124155218_group_session_listing_access.sql"));
   for (const role of ["anon", "authenticated"]) {
     const { rows: [rights] } = await db.query(`select
       has_column_privilege($1,'public.group_sessions','online_link','select') as link,

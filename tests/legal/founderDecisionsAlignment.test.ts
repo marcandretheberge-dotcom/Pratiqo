@@ -762,7 +762,7 @@ test("branch did not touch restricted systems", () => {
     if (allowedTeacherPlannedPackageDashboardFiles.has(file)) continue;
     if (allowedPlannedPackageDashboardPolishFiles.has(file)) continue;
     if (allowedTeacherDiscoveryFirstMigrationFiles.has(file)) continue;
-    if (file === "supabase/migrations/20261124132614_group_session_listing_access.sql") {
+    if (file === "supabase/migrations/20261124155218_group_session_listing_access.sql") {
       const migration = read(file);
       assert.match(migration, /revoke all on public\.group_registrations, public\.group_sessions from public, anon, authenticated/i);
       assert.match(migration, /create view public\.group_sessions_public with \(security_invoker = true/i);

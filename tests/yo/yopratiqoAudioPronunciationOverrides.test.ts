@@ -449,7 +449,7 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/teacher/setup-status/route.ts",
     "app/api/teachers/[id]/slots/route.ts",
     // Group meeting access is exercised against PostgreSQL by groupSessionAccess.test.mjs.
-    "supabase/migrations/20261124132614_group_session_listing_access.sql",
+    "supabase/migrations/20261124155218_group_session_listing_access.sql",
     "supabase/migrations/108_teacher_weekly_availability_intervals.sql",
     "supabase/migrations/109_harden_teacher_weekly_availability_intervals_rls.sql",
     // PR 17B — calendar date exceptions (flagged OFF by default).
