@@ -16,7 +16,7 @@ export default async function Page({searchParams}:{searchParams:Promise<{city?:s
       if (city.round === "parma") return <RailSample/>;
       if (city.round === "napoli") {
         const sample = situationBeat(city, {step: 2, attempt: 0, mistakes: 0, interest: "travel"});
-        return <RailSample key={city.unit} city={city.city} title={city.title} sample={sample}/>;
+        return <RailSample key={city.unit} city={city} sample={sample}/>;
       }
     }
     notFound();

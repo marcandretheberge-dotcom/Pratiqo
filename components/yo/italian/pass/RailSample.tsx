@@ -4,18 +4,20 @@ import Image from "next/image";
 import Link from "next/link";
 import {ArrowRight,Ticket} from "lucide-react";
 
+import {ItalianCityArtwork} from "@/components/yo/italian/guided/ItalianCityArtwork";
+import type {PassCity} from "@/lib/yo/passPilot/cities";
 import {LearningAudio} from "@/components/yo/personalized/LearningAudio";
 import type {SituationBeat} from "@/lib/yo/passPilot/situations";
 import {pilotPath} from "@/lib/yo/passPilot/proof.client";
 
 // Public PR sample. No Auth, account, checkout, trackers or simulated balance.
-export function RailSample({city, title, sample}:{city?:string; title?:string; sample?:SituationBeat | null}){
+export function RailSample({city, sample}:{city?:PassCity; sample?:SituationBeat | null}){
   const [answer,set]=useState<string|null>(null);
   return <main lang="fr" className="mx-auto max-w-lg space-y-4 bg-white pb-8 text-stone-900">
-    <div className="relative h-52"><Image fill priority className="object-cover" src="/images/yo/italian/culture/bologna-porticoes.webp" alt="Portiques de Bologne"/><Image width={115} height={130} className="absolute bottom-0 right-4 h-32 w-auto" src="/companion/travel/companion-travel-map.png" alt="Yoppo"/></div>
-    <section className="space-y-4 px-5"><p className="font-bold text-emerald-800">Italie · {sample ? city : "Bologna Centrale"}</p>{sample ? <>
-    <h1 className="text-3xl font-bold">{title}</h1><p>{sample.prompt}</p>
-    <LearningAudio text={sample.transcript!} locale="fr" label="Écouter en italien" /><details><summary>Lire la phrase</summary><span lang="it">{sample.transcript}</span></details>
+    <div className="relative h-52">{city ? <ItalianCityArtwork unitId={city.unit} locale="fr" className="h-full w-full"/> : <Image fill priority className="object-cover" src="/images/yo/italian/culture/bologna-porticoes.webp" alt="Portiques de Bologne"/>}<Image width={115} height={130} className="absolute bottom-0 right-4 h-32 w-auto" src="/companion/travel/companion-travel-map.png" alt="Yoppo"/></div>
+    <section className="space-y-4 px-5"><p className="font-bold text-emerald-800">Italie · {sample ? city?.city : "Bologna Centrale"}</p>{sample ? <>
+    <h1 className="text-3xl font-bold">{city?.title}</h1><p>{sample.prompt}</p>
+    <LearningAudio text={sample.transcript!} locale="fr" label="le montant en italien" /><details><summary>Lire la phrase</summary><span lang="it">{sample.transcript}</span></details>
     <div className="grid gap-2">{sample.options.map((option,i)=><button key={option} className="min-h-12 rounded-lg border border-emerald-900 p-2 text-left aria-pressed:bg-emerald-900 aria-pressed:text-white" aria-pressed={answer===String(i)} onClick={()=>set(String(i))}>{option}</button>)}</div>
     {answer !== null && <p aria-live="polite">{Number(answer) === sample.answer ? "Oui, exactement !" : sample.hint}</p>}
     </> : <><h1 className="text-3xl font-bold">Ton train a changé de voie.</h1><p>Ton billet indique la voie 5. Écoute l’annonce : où dois-tu aller ?</p>

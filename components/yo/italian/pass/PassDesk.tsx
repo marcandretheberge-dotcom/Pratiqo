@@ -2,6 +2,7 @@
 import {useEffect,useEffectEvent,useState,type FormEvent} from "react";
 import Image from "next/image";
 import {Ticket,MapPin,Headphones,ArrowRight} from "lucide-react";
+import {ItalianCityArtwork} from "@/components/yo/italian/guided/ItalianCityArtwork";
 import {LearningAudio} from "@/components/yo/personalized/LearningAudio";
 import {passCities, type PassCity} from "@/lib/yo/passPilot/cities";
 import {pilotPath,submitRounds} from "@/lib/yo/passPilot/proof.client";
@@ -37,7 +38,7 @@ export function PassDesk({city}:{city:PassCity}){
  function signIn(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);void act({action:"login",email:f.get("email"),password:f.get("password")});}
  const buy=(sku:Sku)=>act({action:"order",sku,id:crypto.randomUUID()});
  return <main lang="fr" className="mx-auto max-w-xl bg-white pb-10 text-stone-900">
-  <div className="relative h-44 overflow-hidden bg-emerald-950"><Image priority fill src="/images/yo/italian/culture/bologna-porticoes.webp" alt="Les portiques de Bologne" className="object-cover"/><Image src="/companion/travel/companion-travel-map.png" alt="Yoppo" width={92} height={110} className="absolute bottom-1 right-4 h-28 w-auto"/></div>
+  <div className="relative h-44 overflow-hidden bg-emerald-950">{city.round === "parma" ? <Image priority fill src="/images/yo/italian/culture/bologna-porticoes.webp" alt="Les portiques de Bologne" className="object-cover"/> : <ItalianCityArtwork unitId={city.unit} locale="fr" className="h-full w-full"/>}<Image src="/companion/travel/companion-travel-map.png" alt="Yoppo" width={92} height={110} className="absolute bottom-1 right-4 h-28 w-auto"/></div>
   <div className="space-y-4 px-5 pt-5"><p className="flex items-center gap-2 text-sm font-bold text-emerald-800"><MapPin size={19}/> Italie · {city.city}</p>
   <h1 className="text-3xl font-bold">{city.title}</h1><p>{city.goal}</p>
   <label className="block text-sm font-semibold">Étape du voyage
@@ -54,7 +55,7 @@ export function PassDesk({city}:{city:PassCity}){
   :s.access&&s.eligible&&s.beat&&s.run?<section className="space-y-3"><p>Mission · {s.run.step+1}/4</p><h2 className="text-lg font-semibold">{s.beat.prompt}</h2>
    {(s.beat.audio || s.beat.transcript) && <div className="space-y-2">
      {s.beat.audio ? <><p><Headphones size={16} className="inline"/> Écouter en italien</p><audio key={s.beat.audio} controls preload="none" src={"/practice/it/bologna/"+s.beat.audio+".mp3"}/></> :
-       <LearningAudio text={s.beat.transcript!} label="Écouter en italien" locale="fr" />}
+       <LearningAudio text={s.beat.transcript!} label="la phrase en italien" locale="fr" />}
      {s.beat.transcript && <details><summary>Lire la phrase</summary><p lang="it">{s.beat.transcript}</p></details>}
    </div>}
    {s.beat.options.map((v,i)=><button key={v} disabled={busy} className={alt} onClick={()=>act({action:"answer",choice:i,step:s.run!.step,attempt:s.run!.attempt})}>{v}</button>)}<p role="status">{s.feedback}</p></section>
