@@ -6,35 +6,36 @@ import { useRouter } from "next/navigation";
 import { Loader2, MapPin, UsersRound } from "lucide-react";
 import { getSupabaseClient } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { isSessionBookable, spotsRemaining, type GroupSessionRow } from "@/lib/groupSessions";
+import { isSessionBookable, spotsRemaining, type GroupSessionListing, type GroupSessionJoinDetails } from "@/lib/groupSessions";
 import { isEnabled } from "@/lib/features";
 import { useAuth } from "@/components/AuthProvider";
 import { GroupSessionMap } from "@/components/GroupSessionMap";
-import { hasConfirmedGroupRegistration } from "@/lib/maps";
 
-type Row = GroupSessionRow & { teachers?: { name: string; image_url: string; bio: string } | null };
+type Row = GroupSessionListing & { teachers?: { name: string; image_url: string; bio: string } | null };
 
 export default function GroupSessionDetailClient({ sessionId: id }: { sessionId: string }) {
   const router = useRouter();
   const { user } = useAuth();
   const [session, setSession] = useState<Row | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
-  const [related, setRelated] = useState<GroupSessionRow[]>([]);
+  const [related, setRelated] = useState<GroupSessionListing[]>([]);
   const [paying, setPaying] = useState(false);
-  const [groupRegistered, setGroupRegistered] = useState(false);
+  const [privateData, setPrivateData] = useState<(GroupSessionJoinDetails & { userId: string }) | null>(null);
+  const details = privateData?.id === id && privateData.userId === user?.id ? privateData : null;
+  const groupRegistered = details !== null;
 
   useEffect(() => {
-    if (!user?.id) {
-      setGroupRegistered(false);
-      return;
+    let active = true;
+    if (user?.id) {
+      const userId = user.id;
+      void getSupabaseClient().rpc("group_session_join_details", { session_ids: [id] }).then(({ data }) => {
+        const row = (data as GroupSessionJoinDetails[] | null)?.[0];
+        if (active) setPrivateData(row ? { ...row, userId } : null);
+      });
+    } else {
+      setPrivateData(null);
     }
-    let cancelled = false;
-    void hasConfirmedGroupRegistration(user.id, id).then((ok) => {
-      if (!cancelled) setGroupRegistered(ok);
-    });
-    return () => {
-      cancelled = true;
-    };
+    return () => { active = false; };
   }, [user?.id, id]);
 
   useEffect(() => {
@@ -42,8 +43,8 @@ export default function GroupSessionDetailClient({ sessionId: id }: { sessionId:
     const load = async () => {
       setLoadingSession(true);
       const { data, error } = await supabase
-        .from("group_sessions")
-        .select("*, teachers(name, image_url, bio)")
+        .from("group_sessions_public")
+        .select("*")
         .eq("id", id)
         .maybeSingle();
       if (error || !data) {
@@ -54,14 +55,14 @@ export default function GroupSessionDetailClient({ sessionId: id }: { sessionId:
       }
       setSession(data as Row);
       const { data: more } = await supabase
-        .from("group_sessions")
+        .from("group_sessions_public")
         .select("*")
         .eq("teacher_id", (data as Row).teacher_id)
         .eq("is_recurring", true)
         .neq("id", id)
         .in("status", ["open", "full"])
         .limit(5);
-      setRelated((more as GroupSessionRow[]) ?? []);
+      setRelated((more as GroupSessionListing[]) ?? []);
       setLoadingSession(false);
     };
     void load();
@@ -121,7 +122,7 @@ export default function GroupSessionDetailClient({ sessionId: id }: { sessionId:
   const bookable = isSessionBookable(session);
   const ratio = max ? rem / max : 0;
   const barColor = ratio > 0.5 ? "bg-teal-600" : ratio < 0.25 ? "bg-amber-500" : "bg-amber-400";
-  const showOnlineLink = session.teaching_mode === "online" && groupRegistered && Boolean(session.online_link?.trim());
+  const showOnlineLink = session.teaching_mode === "online" && groupRegistered && Boolean(details?.online_link?.trim());
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
@@ -188,7 +189,7 @@ export default function GroupSessionDetailClient({ sessionId: id }: { sessionId:
         {session.teaching_mode === "online" ? (
           <p className="text-sm text-[var(--p-text)] break-words">
             {showOnlineLink ? (
-              session.online_link
+              details?.online_link
             ) : (
               <span className="text-[var(--p-text-muted)]">Lien communiqué après inscription confirmée.</span>
             )}
@@ -196,22 +197,22 @@ export default function GroupSessionDetailClient({ sessionId: id }: { sessionId:
         ) : groupRegistered ? (
           <p className="text-sm text-[var(--p-text)] flex items-start gap-2">
             <MapPin className="text-teal-700 shrink-0 mt-0.5" size={18} />
-            {session.location || "Adresse communiquée après inscription."}
+            {details?.location || "Adresse communiquée après inscription."}
           </p>
         ) : (
           <p className="text-sm text-[var(--p-text-muted)]">
-            Le lieu exact est communiqué après inscription confirmée. La carte ci-dessous indique une zone approximative.
+            Le lieu exact est communiqué après inscription confirmée.
           </p>
         )}
       </section>
 
-      <GroupSessionMap
+      {groupRegistered && <GroupSessionMap
         className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-6"
         sessionId={id}
         teachingMode={session.teaching_mode}
-        location={session.location}
+        location={details?.location}
         isRegistered={groupRegistered}
-      />
+      />}
 
       <section className="rounded-2xl border border-[var(--p-border-light)] bg-[var(--p-surface)] p-6">
         <h2 className="text-sm font-bold uppercase tracking-widest text-[var(--p-text-subtle)] mb-3">Places</h2>

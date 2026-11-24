@@ -11,6 +11,8 @@ import { cn } from "../../../../lib/utils";
 import { isEnabled } from "../../../../lib/features";
 import {
   GROUP_SESSION_STATUS_LABELS,
+  GROUP_LISTING_COLUMNS,
+  type GroupSessionJoinDetails,
   planAllowsGroupSessions,
   spotsRemaining,
   type GroupSessionRow,
@@ -54,10 +56,19 @@ export default function TeacherGroupSessionsPage() {
     }
     const { data } = await supabase
       .from("group_sessions")
-      .select("*")
+      .select(GROUP_LISTING_COLUMNS)
       .eq("teacher_id", tid)
       .order("date", { ascending: true });
-    setSessions((data as GroupSessionRow[]) ?? []);
+    const listings = data ?? [];
+    const { data: details, error } = listings.length
+      ? await supabase.rpc("group_session_join_details", { session_ids: listings.map(row => row.id) })
+      : { data: [], error: null };
+    // A partial response must never allow an edit to erase private instructions.
+    const byId = new Map(((details ?? []) as GroupSessionJoinDetails[]).map(row => [row.id, row]));
+    setSessions(error ? [] : listings.flatMap(row => {
+      const own = byId.get(row.id);
+      return own ? [{ ...row, ...own }] : [];
+    }));
     setLoading(false);
   }, [user?.id]);
 

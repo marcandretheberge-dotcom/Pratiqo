@@ -26,8 +26,8 @@ const getGroupSessionMeta = cache(async (id: string): Promise<GroupSessionMetaRo
   try {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
-      .from("group_sessions")
-      .select("id, title, description, discipline, date, time, duration_minutes, teaching_mode, status, teachers(name, image_url)")
+      .from("group_sessions_public")
+      .select("id, title, description, discipline, date, time, duration_minutes, teaching_mode, status, teachers")
       .eq("id", id)
       .maybeSingle();
     if (error || !data) return null;
