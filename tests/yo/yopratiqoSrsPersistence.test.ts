@@ -7,7 +7,7 @@ import {
   recordCourseActivity,
   serializeCourseProgress,
 } from "@/lib/yo/italian/course/courseProgress";
-import { italianCourseCatalog } from "@/lib/yo/italian/course/courseData";
+import { personalizedItalianCatalog as italianCourseCatalog } from "@/lib/yo/personalized/courseData";
 import { recordAttempt } from "@/lib/yo/srs/engine";
 import { italianCatalogAdapter } from "@/lib/yo/srs/adapters/italian";
 import {

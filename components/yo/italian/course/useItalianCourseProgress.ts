@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { announceAdventureEvaluation } from "@/lib/yo/adventure";
 import type { CourseCatalog } from "@/lib/yo/italian/course/courseTypes";
 import { emptyCourseProgress, ITALIAN_COURSE_PROGRESS_KEY, markCourseProduction, mergeCourseProgress, parseCourseProgress, recordCourseActivity, recordCourseAssessment, resetCourseProgress, serializeCourseProgress, setCourseResume, type CourseProgress } from "@/lib/yo/italian/course/courseProgress";
-import { importLocalSrsProgress, syncSrsActivityRecord } from "@/lib/yo/srs/srsClientSync";
+import { GUIDED_PROGRESS_KEY } from "@/lib/yo/personalized/profile";
+import { syncSrsActivityRecord } from "@/lib/yo/srs/srsClientSync";
 
 export function useItalianCourseProgress(catalog: CourseCatalog, storageKey = ITALIAN_COURSE_PROGRESS_KEY) {
   const [progress, setProgress] = useState(emptyCourseProgress);
@@ -12,7 +13,6 @@ export function useItalianCourseProgress(catalog: CourseCatalog, storageKey = IT
   const [storageAvailable, setStorageAvailable] = useState(true);
   const latest = useRef(progress);
   const previousKey = useRef(storageKey);
-  const importAttempted = useRef(false);
 
   const apply = useCallback((next: CourseProgress) => {
     if (serializeCourseProgress(next) === serializeCourseProgress(latest.current)) return;
@@ -33,22 +33,6 @@ export function useItalianCourseProgress(catalog: CourseCatalog, storageKey = IT
     try { apply(mergeCourseProgress(memory, parseCourseProgress(window.localStorage.getItem(storageKey), catalog))); }
     catch { apply(memory); setStorageAvailable(false); }
     setReady(true);
-
-    // One-time, fire-and-forget: offer the existing local progress to the
-    // server import (spec §2.4). The server enforces one-time-ness and
-    // validation; signed-out learners stay local-only. Never blocks.
-    if (!importAttempted.current) {
-      importAttempted.current = true;
-      try {
-        const raw = window.localStorage.getItem(storageKey);
-        if (raw) {
-          const parsed = parseCourseProgress(raw, catalog);
-          if (Object.keys(parsed.activities).length > 0) {
-            void importLocalSrsProgress(JSON.stringify({ version: parsed.version, resetAt: parsed.resetAt, updatedAt: parsed.updatedAt, activities: parsed.activities }));
-          }
-        }
-      } catch { /* storage unavailable: local-only, as before */ }
-    }
 
     const sync = (event: StorageEvent) => {
       if (event.key !== storageKey || event.newValue === null) return;
@@ -82,10 +66,9 @@ export function useItalianCourseProgress(catalog: CourseCatalog, storageKey = IT
 
   const recordActivity = useCallback((id: string, correct: boolean, assisted: boolean) => {
     update(base => recordCourseActivity(base, catalog, id, correct, assisted), true);
-    // Write-through to the server SRS state when signed in (spec §1.5);
-    // fire-and-forget — localStorage remains the offline cache.
-    void syncSrsActivityRecord(id, correct, assisted);
-  }, [catalog, update]);
+    // Only the canonical learner course feeds the ledger, not demo or legacy views.
+    if (storageKey === GUIDED_PROGRESS_KEY) void syncSrsActivityRecord(id, correct, assisted);
+  }, [catalog, storageKey, update]);
   const recordAssessment = useCallback((id: string, correct: number, total: number, assisted: boolean) => update(base => recordCourseAssessment(base, catalog, id, correct, total, assisted), true), [catalog, update]);
   const markProduction = useCallback((id: string, done: boolean) => update(base => markCourseProduction(base, catalog, id, done)), [catalog, update]);
   const setResume = useCallback((unitId: string, lessonId: string, activityId?: string) => update(base => setCourseResume(base, catalog, unitId, lessonId, activityId)), [catalog, update]);

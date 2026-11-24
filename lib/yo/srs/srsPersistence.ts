@@ -18,7 +18,7 @@ import {
   parseCourseProgress,
   type CourseProgress,
 } from "@/lib/yo/italian/course/courseProgress";
-import { italianCourseCatalog } from "@/lib/yo/italian/course/courseData";
+import { personalizedItalianCatalog } from "@/lib/yo/personalized/courseData";
 import {
   italianCatalogItemIds,
   ITALIAN_LANGUAGE,
@@ -110,6 +110,8 @@ export type ParseSrsRecordResult =
   | { ok: true; value: ParsedSrsRecordPayload }
   | { ok: false; reason: string };
 
+const activeItemIds = italianCatalogItemIds(personalizedItalianCatalog);
+
 const RECORD_KEYS = new Set(["attemptId", "itemId", "language", "correct", "assisted", "at"]);
 
 /**
@@ -141,7 +143,7 @@ export function parseSrsRecordPayload(body: unknown): ParseSrsRecordResult {
   if (language !== ITALIAN_LANGUAGE) {
     return { ok: false, reason: `unsupported language: ${String(language)}` };
   }
-  if (!italianCatalogItemIds(italianCourseCatalog).has(filtered.itemId)) {
+  if (!activeItemIds.has(filtered.itemId)) {
     return { ok: false, reason: `unknown itemId: ${filtered.itemId}` };
   }
   if (typeof filtered.correct !== "boolean" || typeof filtered.assisted !== "boolean") {
@@ -218,7 +220,7 @@ export function parseSrsImportPayload(
     return { ok: false, reason: "progress is required" };
   }
 
-  const parsed: CourseProgress = parseCourseProgress(raw, italianCourseCatalog, now);
+  const parsed: CourseProgress = parseCourseProgress(raw, personalizedItalianCatalog, now);
   const records: Record<string, SrsActivityRecord> = { ...parsed.activities };
   const imported = Object.keys(records).length;
   return {

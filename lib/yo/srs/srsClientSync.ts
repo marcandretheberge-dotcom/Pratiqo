@@ -32,15 +32,23 @@ export async function syncSrsActivityRecord(
     const token = await accessToken();
     if (!token) return false;
     const attemptId = crypto.randomUUID();
-    const res = await fetch("/api/yo/srs/record", {
+    const request = {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ attemptId, itemId, language: "it", correct, assisted }),
-    });
-    return res.ok;
+    };
+    for (let retry = 0; retry < 2; retry++) {
+      try {
+        const res = await fetch("/api/yo/srs/record", request);
+        if (res.status !== 503 || retry === 1) return res.ok;
+      } catch {
+        if (retry === 1) return false;
+      }
+    }
+    return false;
   } catch {
     return false;
   }
@@ -78,4 +86,20 @@ export async function importLocalSrsProgress(
   } catch {
     return null;
   }
+}
+
+
+export async function fetchItalianToday(signal: AbortSignal) {
+  try {
+    const token = await accessToken();
+    if (!token || signal.aborted) return null;
+    const response = await fetch("/api/yo/today", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store", signal,
+    });
+    if (!response.ok) return null;
+    const result = await response.json() as { exercises: number; streak: number };
+    return Number.isSafeInteger(result.exercises) && result.exercises >= 0 &&
+      Number.isSafeInteger(result.streak) && result.streak >= 0 ? result : null;
+  } catch { return null; }
 }
