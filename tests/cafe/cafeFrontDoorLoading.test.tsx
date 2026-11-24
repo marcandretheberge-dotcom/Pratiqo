@@ -28,6 +28,7 @@ const originalFetch = globalThis.fetch;
 function FrontDoor({ step = "groups" }: { step?: string }) {
   const [params, setParams] = React.useState(() => new URLSearchParams(step ? { step } : {}));
   const router = React.useMemo<AppRouterInstance>(() => ({
+    bfcacheId: "0",
     back() {}, forward() {}, refresh() {}, prefetch() {},
     push(href) { setParams(new URL(href, "https://cafe.example.test").searchParams); },
     replace(href) { setParams(new URL(href, "https://cafe.example.test").searchParams); },
