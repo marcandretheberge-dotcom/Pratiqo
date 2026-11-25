@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, RotateCcw } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
@@ -9,6 +10,8 @@ import { AdventureProgress } from "../journey/AdventureProgress";
 import { mandarinJourney, canEnterFoundationStep, foundationJourneyCopy } from "@/lib/yo/foundationJourney";
 import { MANDARIN_PATH } from "@/lib/yo/mandarin/progress";
 import { L } from "@/lib/yo/mandarin/types";
+import { isMandarinAssessment, mandarinRouteId, MANDARIN_DEPTH_SOURCES } from "@/lib/yo/mandarin/depthAuthoring";
+import { stopMandarinAudio } from "./MandarinAudio";
 import images from "@/lib/yo/mandarin/imageAssets.json";
 import type { YoLocale } from "@/lib/yo/types";
 import { useMandarinProgress } from "./useMandarinProgress";
@@ -20,17 +23,26 @@ export function MandarinCourseHome({
   units,
   languageSource,
   finalIds,
+  legacyFinalIds = [],
+  reviewIds = [],
 }: {
   locale: YoLocale;
   units: JourneyUnit[];
   finalIds: string[];
+  legacyFinalIds?: string[];
+  reviewIds?: string[];
   languageSource: string;
 }) {
-  const { progress, ready, stored } = useMandarinProgress();
+  const { progress, ready, stored, reset } = useMandarinProgress();
+  const [confirmReset, setConfirmReset] = useState(false);
   const journey = mandarinJourney(units, progress);
-  const finalOpen = canEnterFoundationStep(journey, "bilan", progress.unit === "bilan" ||
-    progress.steps.bilan !== undefined || finalIds.some(id => Boolean(progress.results[id] || progress.drafts[id])));
-  const href = (id?: string) => buildYoLocaleHref(MANDARIN_PATH + (id ? "/" + id : ""), locale);
+  const finalOpen = canEnterFoundationStep(journey, "bilan-fondations", progress.unit === "bilan-fondations" ||
+    progress.steps["bilan-fondations"] !== undefined || finalIds.some(id => Boolean(progress.results[id] || progress.drafts[id])));
+  const legacyJourney = mandarinJourney(units.slice(0, 8), progress);
+  const legacyFinalOpen = canEnterFoundationStep(legacyJourney, "bilan", progress.unit === "bilan" ||
+    progress.steps.bilan !== undefined || legacyFinalIds.some(id => Boolean(progress.results[id] || progress.drafts[id])));
+  const resumeFinal = isMandarinAssessment(progress.unit) && (progress.unit === "bilan" ? legacyFinalOpen : finalOpen);
+  const href = (id?: string) => buildYoLocaleHref(MANDARIN_PATH + (id ? "/" + mandarinRouteId(id) : ""), locale);
   return (
     <main className="min-h-screen bg-[#f6f9f8] px-4 py-6 text-gray-900">
       <div className="mx-auto max-w-6xl">
@@ -69,29 +81,26 @@ export function MandarinCourseHome({
             <h1 className="text-3xl font-bold">
               {
                 L(
-                  "Ta première journée en mandarin",
-                  "Your first day in Mandarin",
-                  "Tu primer día en mandarín",
+                  "Tes premiers échanges en mandarin",
+                  "Your first exchanges in Mandarin",
+                  "Tus primeros intercambios en mandarín",
                 )[locale]
               }
             </h1>
             <p className="mt-2 text-gray-600">
               {
                 L(
-                  "Rencontrer. Choisir. Demander. Avec Yoppo à tes côtés.",
-                  "Meet. Choose. Ask. With Yoppo by your side.",
-                  "Conocer. Elegir. Preguntar. Con Yoppo a tu lado.",
+                  "Douze unités pour rencontrer, choisir, raconter et préparer un projet avec Yoppo.",
+                  "Twelve units to meet, choose, retell and make a plan with Yoppo.",
+                  "Doce unidades para conocer, elegir, contar y preparar un plan con Yoppo.",
                 )[locale]
               }
             </p>
           </div>
         </header>
-        {ready && progress.unit === "bilan" && finalOpen && (
+        {ready && resumeFinal && (
           <Link
-            href={buildYoLocaleHref(
-              `${MANDARIN_PATH}/${progress.unit === "bilan" && finalOpen ? "bilan" : journey.current?.unit.id ?? "u01"}`,
-              locale,
-            )}
+            href={href(progress.unit)}
             className="mb-8 inline-flex min-h-12 items-center gap-3 rounded-lg bg-teal-800 px-5 text-white"
           >
             <RotateCcw size={18} />
@@ -118,17 +127,17 @@ export function MandarinCourseHome({
         <AdventureProgress journey={journey} world="mandarin" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} />
         <LearningJourney journey={journey} ready={ready} locale={locale} href={href} copy={foundationJourneyCopy[locale]} />
         <InterestPracticeCard language="zh" locale={locale} />
-        <EasternDueReview language="zh" locale={locale}/>
+        <EasternDueReview language="zh" locale={locale} itemIds={reviewIds}/>
         <section className="mt-8 border-y border-teal-200 py-6">
           {ready && finalOpen ? <Link
-            href={href("bilan")}
+            href={href("bilan-fondations")}
             className="inline-flex min-h-12 items-center gap-3 text-xl font-bold text-teal-900"
           >
             {
               L(
-                "Mission finale : une journée ensemble",
-                "Final mission: a day together",
-                "Misión final: un día juntos",
+                "Bilan des douze unités : lire et répondre",
+                "Twelve-unit review: read and respond",
+                "Balance de doce unidades: leer y responder",
               )[locale]
             }
             <ArrowRight size={20} />
@@ -142,7 +151,13 @@ export function MandarinCourseHome({
               )[locale]
             }
           </p>
+          {ready && legacyFinalOpen && <Link href={href("bilan")} className="mt-4 inline-flex min-h-11 items-center text-sm text-teal-900 underline">{L("Revenir au bilan initial des huit premières unités", "Return to the original eight-unit review", "Volver al balance inicial de las ocho primeras unidades")[locale]}</Link>}
         </section>
+        <details className="mt-6 text-sm">
+          <summary className="min-h-11 cursor-pointer py-3">{L("Recommencer le parcours sur cet appareil", "Restart the course on this device", "Reiniciar el recorrido en este dispositivo")[locale]}</summary>
+          <p>{L("Cette action efface les réponses, les notes et la position de ce parcours mandarin dans ce navigateur.", "This clears this Mandarin course’s answers, results and position in this browser.", "Esta acción borra las respuestas, resultados y posición de este recorrido de mandarín en este navegador.")[locale]}</p>
+          {confirmReset ? <div className="mt-3 flex flex-wrap gap-3"><button type="button" className="min-h-11 rounded-lg bg-red-800 px-4 text-white" onClick={() => { stopMandarinAudio(); reset(); setConfirmReset(false); }}>{L("Effacer et recommencer le mandarin", "Clear and restart Mandarin", "Borrar y reiniciar mandarín")[locale]}</button><button type="button" className="min-h-11 px-4 underline" onClick={() => setConfirmReset(false)}>{L("Annuler", "Cancel", "Cancelar")[locale]}</button></div> : <button type="button" disabled={!ready} className="mt-3 min-h-11 underline" onClick={() => setConfirmReset(true)}>{L("Réinitialiser ce parcours", "Reset this course", "Reiniciar este recorrido")[locale]}</button>}
+        </details>
         <details className="mt-6 text-sm">
           <summary className="min-h-11 cursor-pointer py-3">
             {
@@ -159,6 +174,7 @@ export function MandarinCourseHome({
                 MIT OpenCourseWare · Chinese I
               </a>
             </li>
+            {Object.entries(MANDARIN_DEPTH_SOURCES).map(([id, source]) => <li key={id}><a className="underline" href={source}>{new URL(source).hostname} · {id}</a></li>)}
             {Object.values(images).map((photo) => (
               <li key={photo.src}>
                 <a className="underline" href={photo.source}>

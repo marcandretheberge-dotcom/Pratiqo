@@ -13,6 +13,10 @@ import {
   pictureListening,
   toneExercise,
 } from "./activities";
+import { mandarinUnit09, mandarinUnit10 } from "./depth09to10";
+import { mandarinUnit11, mandarinUnit12 } from "./depth11to12";
+import { mandarinExtendedFinal } from "./depthFinal";
+export { mandarinExtendedFinal } from "./depthFinal";
 
 export const MANDARIN_LANGUAGE_SOURCE =
   "https://ocw.mit.edu/courses/21g-101-chinese-i-regular-fall-2014/";
@@ -1869,7 +1873,7 @@ function exercises(seed: Seed, earlier?: Seed): Exercise[] {
   }
   return rows;
 }
-export const mandarinUnits: Unit[] = seeds.map((seed, index) => ({
+export const mandarinLegacyUnits: Unit[] = seeds.map((seed, index) => ({
   ...seed,
   id: `u${String(seed.number).padStart(2, "0")}`,
   exercises: exercises(seed, seeds[index - 1]),
@@ -1877,7 +1881,7 @@ export const mandarinUnits: Unit[] = seeds.map((seed, index) => ({
 }));
 
 export const mandarinFinal: Unit = {
-  ...mandarinUnits[7],
+  ...mandarinLegacyUnits[7],
   id: "bilan",
   number: 9,
   title: L(
@@ -1892,8 +1896,10 @@ export const mandarinFinal: Unit = {
   ),
   exercises: finalMission,
 };
+export const mandarinUnits: Unit[] = [...mandarinLegacyUnits, mandarinUnit09, mandarinUnit10, mandarinUnit11, mandarinUnit12];
 export function getMandarinUnit(id: string) {
-  return id === "bilan"
-    ? mandarinFinal
+  return id === "bilan" || id === "bilan-fondations"
+    ? mandarinExtendedFinal
+    : id === "bilan-initial" ? mandarinFinal
     : mandarinUnits.find((unit) => unit.id === id);
 }

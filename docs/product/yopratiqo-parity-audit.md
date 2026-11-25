@@ -106,7 +106,7 @@ recording batch is still in progress. All six triggered workflows and both Verce
 builds passed, and all 255 public MP3s were checked against their exact hashes,
 audio MIME and immutable cache headers after the production deployment.
 
-## Fourth overnight lot: German and Brazilian Portuguese prepared
+## Fourth overnight lot: German and Brazilian Portuguese deployed
 
 | Target | Complete authored sequence in this branch | Preserved evidence and remaining audio work |
 | --- | --- | --- |
@@ -116,10 +116,33 @@ audio MIME and immutable cache headers after the production deployment.
 Both additions have twelve new three-turn dialogues, explicit language notes,
 contextual readings, typed recall and source-backed cultural content. Counts do
 not establish equal study time or certified proficiency. Independent content and
-integration reviews and local regressions have passed; the new real-control
-Chromium/WebKit depth gate and production release are still pending. Japanese
-and Mandarin expansions are in a separate reviewed worktree, not counted here
-as deployed.
+integration reviews and local regressions passed. PR #483 then passed all five
+triggered GitHub workflows and both Vercel checks. Chromium and macOS WebKit each
+completed all twelve checkpoints and the new final per language through real
+controls, including 24 actual MP3 completions. Its production deployment passed
+27 public checks. Japanese and Mandarin's separate fifth lot below is not yet
+counted as deployed.
+
+## Fifth overnight lot: Japanese and Mandarin prepared
+
+| Target | Authored expansion in this branch | Preserved evidence and limits |
+| --- | --- | --- |
+| Japanese | Twelve modules; four new modules add 32 vocabulary entries, 26 dialogue lines, twelve grammar explanations, 32 written activities, twelve roleplay turns and four ungraded productions. The practice catalog contains 132 items. | The original eight modules and eight-question final are byte-identical. A distinct 24-question final combines twelve reading and twelve recall questions. Original final bookmarks resolve to `/bilan-initial`; `/bilan` requires all twelve modules. New recording coverage remains separate work. |
+| Mandarin | Twelve modules; four new modules add forty vocabulary entries, 24 dialogue lines, twelve grammar explanations, four readings and 56 exercises. The practice catalog contains 160 items. | The original eight modules and eight-question final are byte-identical. The distinct new final has twelve reading and twelve written recall questions. Reset-aware tab merging preserves independent changes and attempts; new helped attempts remain assisted after reload. Previously independent grades are not reinterpreted. |
+
+Each new final checks content from all twelve modules, using a separate assessment
+identity. Neither historical completion nor cosmetic rewards supply new grades.
+The public review route now returns one actual Japanese or Mandarin practice item
+only when requested, preserves the original reading/roleplay context, and excludes
+both finals. The dated journal remains separate from course grades and bookmarks.
+
+The real mobile gate is prepared for both targets at 393px and 320px in Chromium
+and macOS WebKit. It explicitly seeds only historical eight-module learner records
+and the original final bookmark, then checks two new recall answers through the
+rendered controls, including one helped answer. It checks locked routes, resume,
+reload, old-result preservation and zero automatic speech/audio requests. This is
+not a full twelve-module UI-completion or listening-quality test. The new lot is
+not counted as deployed until its exact-head CI and production checks succeed.
 
 ## Shared surfaces: what exists and what does not
 

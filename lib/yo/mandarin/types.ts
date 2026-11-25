@@ -33,6 +33,8 @@ interface ExerciseBase {
   explanation: Localized;
   model: Phrase;
   scene?: string;
+  /** A written source to interpret; its translation/pinyin can be displayed as help. */
+  stimulus?: Phrase;
 }
 export type Exercise = ExerciseBase &
   (
@@ -60,6 +62,7 @@ export interface Unit {
   pronunciation: Localized;
   culture: { title: Localized; text: Localized; source: string };
   character: string;
+  reading?: Phrase;
   exercises: Exercise[];
   canDos: Localized[];
 }
@@ -71,6 +74,8 @@ export interface Attempt {
   assisted: boolean;
   heard: boolean;
   hint: boolean;
+  /** Only an explicit restart advances this generation and can clear displayed help. */
+  generation?: number;
 }
 export interface Result {
   passed: boolean;
@@ -88,4 +93,18 @@ export interface Progress {
   trivia: number;
   pinyin: boolean;
   translation: boolean;
+  resetAt?: number;
+  resetBy?: string;
+  sync?: ProgressSync;
+}
+
+export type ProgressStamp = [number, string];
+export interface AttemptCounter {
+  base: number;
+  actors: Record<string, number>;
+}
+export interface ProgressSync {
+  clock: number;
+  marks: Record<string, ProgressStamp>;
+  attempts: Record<string, AttemptCounter>;
 }

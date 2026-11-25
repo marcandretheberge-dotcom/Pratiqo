@@ -14,7 +14,7 @@ export function mandarinJourney(units: JourneyUnit[], progress: MandarinProgress
 }
 
 export function canEnterFoundationStep(journey: ReturnType<typeof checkedJourney>, id: string, finalStarted: boolean) {
-  if (id === "bilan") return finalStarted || (journey.steps.length > 0 && journey.steps.every(step => step.passed));
+  if (id === "bilan" || id === "bilan-fondations") return finalStarted || (journey.steps.length > 0 && journey.steps.every(step => step.passed));
   return journey.steps.some(step => step.unit.id === id && step.unlocked);
 }
 

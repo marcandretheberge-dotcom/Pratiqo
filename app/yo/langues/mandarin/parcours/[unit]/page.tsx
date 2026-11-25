@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getYoLocale } from "@/lib/yo/localize";
 import { getMandarinUnit } from "@/lib/yo/mandarin/course";
 import { MandarinCoursePlayer } from "@/components/yo/mandarin/MandarinCoursePlayer";
-import { mandarinJourneyUnits, mandarinFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
+import { mandarinJourneyUnits, mandarinFinalIds, mandarinLegacyFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
 export const dynamic = "force-dynamic";
 type Props = {
   params: Promise<{ unit: string }>;
@@ -24,12 +24,13 @@ export async function generateMetadata({
 export default async function Page({ params, searchParams }: Props) {
   const unit = getMandarinUnit((await params).unit);
   if (!unit) notFound();
+  const legacyFinal = unit.id === "bilan";
   return (
     <MandarinCoursePlayer
       key={unit.id}
       unit={unit}
-      journeyUnits={mandarinJourneyUnits}
-      finalIds={mandarinFinalIds}
+      journeyUnits={legacyFinal ? mandarinJourneyUnits.slice(0, 8) : mandarinJourneyUnits}
+      finalIds={legacyFinal ? mandarinLegacyFinalIds : mandarinFinalIds}
       locale={getYoLocale((await searchParams).lang)}
     />
   );

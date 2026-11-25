@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { japaneseCourseUnits, japaneseFinalAssessment } from "../../lib/yo/japaneseCourse";
+import { japaneseLegacyCourseUnits, japaneseFinalAssessment } from "../../lib/yo/japaneseCourse";
 import type { JapaneseActivity, JapaneseChoiceActivity, JapanesePhrase } from "../../lib/yo/japaneseCourseTypes";
 import { japaneseKana } from "../../lib/yo/japaneseKana";
 import { japaneseKanjiCards } from "../../lib/yo/japaneseKanji";
@@ -16,7 +16,9 @@ import {
 } from "../../lib/yo/audio/japaneseFoundationAudio";
 
 type SpokenReference = Pick<JapanesePhrase, "ja" | "kana">;
-const allActivities = [...japaneseCourseUnits.flatMap((unit) => unit.activities), ...japaneseFinalAssessment];
+// This fixed registry covers the original eight modules and their original final.
+// Adding written extension content does not establish that its audio was published.
+const allActivities = [...japaneseLegacyCourseUnits.flatMap((unit) => unit.activities), ...japaneseFinalAssessment];
 const readingKey = (value: string) => value.trim().replace(/。+$/u, "");
 
 function activityPhrases(activity: JapaneseActivity): SpokenReference[] {
@@ -53,8 +55,8 @@ test("the registry contains unique, immutable-version paths in the existing Japa
   }
 });
 
-test("every dialogue, vocabulary card, grammar model and writing model resolves to its intended recording", () => {
-  for (const unit of japaneseCourseUnits) {
+test("every original dialogue, vocabulary card, grammar model and writing model resolves to its intended recording", () => {
+  for (const unit of japaneseLegacyCourseUnits) {
     for (const phrase of [...unit.dialogue, ...unit.vocabulary, ...unit.grammar.map((point) => point.example), unit.writing.model]) covered(phrase);
   }
 });
@@ -70,7 +72,7 @@ test("every listening stimulus in all eight modules and the final assessment has
 
 test("Yoppo examples, roleplay partner lines and all checked phrase models are covered", () => {
   for (const activity of allActivities) activityPhrases(activity).forEach(covered);
-  for (const unit of japaneseCourseUnits) unit.roleplay.turns.forEach((turn) => covered(turn.line));
+  for (const unit of japaneseLegacyCourseUnits) unit.roleplay.turns.forEach((turn) => covered(turn.line));
 });
 
 test("all forty kanji use contextual word readings rather than guessing an isolated kanji reading", () => {
@@ -100,7 +102,7 @@ test("the 92 basic kana share 45 pronunciation recordings without losing kana co
 
 test("repeated content and equivalent spellings reuse one file instead of generating duplicate clips", () => {
   const groups = new Map<string, Set<string>>();
-  const phrases: SpokenReference[] = japaneseCourseUnits.flatMap((unit) => [
+  const phrases: SpokenReference[] = japaneseLegacyCourseUnits.flatMap((unit) => [
     ...unit.dialogue, ...unit.vocabulary, ...unit.grammar.map((point) => point.example),
     ...unit.roleplay.turns.map((turn) => turn.line), unit.writing.model,
   ]);

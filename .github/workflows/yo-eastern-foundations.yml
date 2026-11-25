@@ -1,0 +1,99 @@
+name: Yo Japanese and Mandarin foundations
+on:
+  pull_request:
+    paths:
+      - 'app/globals.css'
+      - 'app/yo/langues/japonais/**'
+      - 'app/yo/langues/mandarin/**'
+      - 'app/yo/langues/layout.tsx'
+      - 'app/api/yo/review/**'
+      - 'components/yo/japanese/**'
+      - 'components/yo/mandarin/**'
+      - 'components/yo/journey/**'
+      - 'components/yo/review/**'
+      - 'components/yo/speech/**'
+      - 'components/yo/travel/**'
+      - 'lib/yo/japanese*'
+      - 'lib/yo/mandarin/**'
+      - 'lib/yo/foundationJourney*'
+      - 'lib/yo/learningJourney.ts'
+      - 'lib/yo/review/**'
+      - 'lib/yo/audio/**'
+      - 'tests/yo/*Japanese*'
+      - 'tests/yo/*Mandarin*'
+      - 'tests/yo/*Eastern*'
+      - 'scripts/prepare_yo_eastern_review.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/yo-eastern-foundations.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  data-and-progress:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Preserve historical evidence and verify the new written course contracts
+        run: |
+          npm run test:yo-japanese-foundations
+          npm run test:yo-mandarin
+          node --import tsx --test tests/yo/yopratiqoJapaneseDepth.test.ts tests/yo/yopratiqoMandarinDepth.test.ts tests/yo/yopratiqoMandarinDepthProgress.test.ts tests/yo/yopratiqoEasternReviewRoute.test.ts
+          node --import tsx tests/yo/yopratiqoJapaneseDepthUi.test.tsx
+          node --import tsx tests/yo/yopratiqoMandarinDepthPlayer.test.tsx
+  mobile-browser:
+    name: Eastern mobile course (${{ matrix.browser }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-24.04, browser: chromium}
+          - {os: macos-15, browser: webkit}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: local-ui-test
+      YO_QA_DIR: /tmp/yo-eastern-qa
+      YO_EASTERN_BROWSERS: ${{ matrix.browser }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps "$YO_EASTERN_BROWSERS"
+      - name: Exercise real routes at 393 and 320 pixels with explicit historical learner fixtures
+        run: |
+          set -eu
+          mkdir -p "$YO_QA_DIR"
+          node --import tsx scripts/prepare_yo_eastern_review.ts
+          ./node_modules/.bin/next build .qa-eastern --webpack > "$YO_QA_DIR/build.log" 2>&1
+          ./node_modules/.bin/next start .qa-eastern --hostname 127.0.0.1 --port 3247 > "$YO_QA_DIR/server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          curl --retry 30 --retry-connrefused --retry-delay 1 -fsS -o /dev/null http://127.0.0.1:3247/companion/travel/films/departure.webp
+          python tests/yo/yopratiqoEasternDepth.browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eastern-mobile-evidence-${{ matrix.browser }}
+          path: /tmp/yo-eastern-qa
+          retention-days: 7

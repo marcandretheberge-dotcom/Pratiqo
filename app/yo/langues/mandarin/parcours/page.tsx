@@ -5,7 +5,7 @@ import { L } from "@/lib/yo/mandarin/types";
 import {
   MANDARIN_LANGUAGE_SOURCE,
 } from "@/lib/yo/mandarin/course";
-import { mandarinJourneyUnits, mandarinFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
+import { mandarinJourneyUnits, mandarinFinalIds, mandarinLegacyFinalIds, mandarinCourseReviewIds } from "@/lib/yo/foundationJourneyCatalogs";
 
 export const dynamic = "force-dynamic";
 type Props = { searchParams: Promise<{ lang?: string | string[] }> };
@@ -28,6 +28,8 @@ export default async function Page({ searchParams }: Props) {
       locale={getYoLocale((await searchParams).lang)}
       units={mandarinJourneyUnits}
       finalIds={mandarinFinalIds}
+      legacyFinalIds={mandarinLegacyFinalIds}
+      reviewIds={mandarinCourseReviewIds}
       languageSource={MANDARIN_LANGUAGE_SOURCE}
     />
   );

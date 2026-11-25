@@ -44,6 +44,8 @@ export interface JapaneseBuildActivity extends JapaneseActivityBase {
 
 export interface JapaneseReadingActivity extends JapaneseActivityBase {
   kind: "reading";
+  /** A bounded written response to an intention, with no visible answer stimulus. */
+  responseMode?: "recall";
   stimulus: string;
   answer: string;
   accepted: string[];

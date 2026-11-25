@@ -13,7 +13,8 @@ import {
 import {
   evaluate,
   checkAnswer,
-  initialAttempt,
+  restartMandarinAttempt,
+  visibleMandarinHelp,
 } from "@/lib/yo/mandarin/progress";
 import { MandarinAudio } from "./MandarinAudio";
 import images from "@/lib/yo/mandarin/imageAssets.json";
@@ -62,25 +63,33 @@ export function MandarinExercise({
   previous,
   locale,
   pinyin,
+  translation = false,
   onChange,
   onResult,
   onAudio,
+  onRestartWithoutHelp,
 }: {
   exercise: Exercise;
   state: Attempt;
   previous?: Result;
   locale: YoLocale;
   pinyin: boolean;
+  translation?: boolean;
   onChange: (state: Attempt) => void;
-  onResult: (result: Result) => void;
+  onResult: (result: Result) => void | boolean;
   onAudio?: (playing: boolean) => void;
+  onRestartWithoutHelp?: () => void;
 }) {
   const feedback = useRef<HTMLDivElement>(null);
   const submitted = useRef(false);
   const composing = useRef(false);
+  const revealedHelp = visibleMandarinHelp(exercise, pinyin, translation);
   useEffect(() => {
     if (!state.checked) submitted.current = false;
   }, [state.checked]);
+  useEffect(() => {
+    if (revealedHelp && !state.checked && !state.assisted) onChange({ ...state, assisted: true });
+  }, [revealedHelp, state, onChange]);
   const patch = (change: Partial<Attempt>) => onChange({ ...state, ...change });
   const list = Array.isArray(state.answer) ? state.answer : [];
   const pairs =
@@ -108,11 +117,12 @@ export function MandarinExercise({
   function check() {
     if (submitted.current || state.checked || !ready || composing.current)
       return;
-    const next = evaluate(exercise, state, previous);
+    const assisted = state.assisted || revealedHelp;
+    const next = evaluate(exercise, { ...state, assisted }, previous);
     if (!next) return;
     submitted.current = true;
-    onResult(next);
-    patch({ checked: true, correct: checkAnswer(exercise, state.answer) });
+    if (onResult(next) === false) { submitted.current = false; return; }
+    patch({ checked: true, correct: checkAnswer(exercise, state.answer), assisted });
     requestAnimationFrame(() => feedback.current?.focus());
   }
   return (
@@ -120,6 +130,13 @@ export function MandarinExercise({
       <h2 className="text-xl font-semibold leading-relaxed">
         {exercise.prompt[locale]}
       </h2>
+      {exercise.stimulus && (
+        <article className="space-y-3 rounded-lg border border-teal-200 bg-white p-4" aria-label={L("Message à lire", "Message to read", "Mensaje para leer")[locale]}>
+          <p className="text-sm font-semibold text-teal-900">{L("Message à lire", "Message to read", "Mensaje para leer")[locale]}</p>
+          <PhraseView phrase={exercise.stimulus} locale={locale} pinyin={pinyin} translation={translation} />
+        </article>
+      )}
+      {!state.checked && (revealedHelp || state.assisted) && <p className="text-sm text-amber-900">{L("Une aide a été affichée pour cet essai. Après la vérification, tu pourras recommencer sans aide.", "Help has been displayed for this attempt. After checking, you can start again without help.", "Se mostró ayuda en este intento. Después de verificar, podrás empezar sin ayuda.")[locale]}</p>}
       {exercise.scene && (
         <Image
           src={images[exercise.scene as keyof typeof images].src}
@@ -359,7 +376,7 @@ export function MandarinExercise({
                   "Todavía no. Compara y reintenta.",
                 )[locale]}
           </strong>
-          <p>{exercise.explanation[locale]}</p>
+          <p>{!state.correct && "choices" in exercise ? exercise.choices.find(choice => choice.id === chosen)?.feedback[locale] ?? exercise.explanation[locale] : exercise.explanation[locale]}</p>
           <PhraseView
             phrase={exercise.model}
             locale={locale}
@@ -382,12 +399,15 @@ export function MandarinExercise({
             type="button"
             onClick={() => {
               submitted.current = false;
-              onChange({ ...initialAttempt(exercise), assisted: true });
+              onChange(restartMandarinAttempt(exercise, state));
             }}
           >
             <RotateCcw size={16} />
             {L("Réessayer", "Try again", "Reintentar")[locale]}
           </button>
+          {onRestartWithoutHelp && <button type="button" className={`${control} inline-flex items-center gap-2`} onClick={() => { submitted.current = false; onRestartWithoutHelp(); }}>
+            <RotateCcw size={16} />{L("Recommencer sans aide", "Start again without help", "Empezar sin ayuda")[locale]}
+          </button>}
         </div>
       )}
     </section>

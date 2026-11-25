@@ -22,7 +22,8 @@ import {
   type Progress,
   type Unit,
 } from "@/lib/yo/mandarin/types";
-import { checkAnswer, initialAttempt, MANDARIN_PATH } from "@/lib/yo/mandarin/progress";
+import { checkAnswer, evaluate, initialAttempt, MANDARIN_PATH, restartMandarinAttempt, visibleMandarinHelp } from "@/lib/yo/mandarin/progress";
+import { isMandarinAssessment, mandarinRouteId } from "@/lib/yo/mandarin/depthAuthoring";
 import images from "@/lib/yo/mandarin/imageAssets.json";
 import { sceneDescriptions } from "@/lib/yo/mandarin/visuals";
 import { YoppoLearningCompanion } from "../companion/YoppoLearningCompanion";
@@ -44,7 +45,7 @@ import { courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
 import { recordReviewAttempt } from "@/lib/yo/review/store";
 
 export function mandarinStages(unit: Unit) {
-  return unit.id === "bilan"
+  return isMandarinAssessment(unit.id)
     ? [...unit.exercises.map((exercise) => exercise.id), "summary"]
     : [
         "scene",
@@ -52,6 +53,7 @@ export function mandarinStages(unit: Unit) {
         "words",
         "grammar",
         "character",
+        ...(unit.reading ? ["reading"] : []),
         ...unit.exercises.map((exercise) => exercise.id),
         "culture",
         "summary",
@@ -96,16 +98,18 @@ export function MandarinCoursePlayer({
   const update = (change: (value: Progress) => Progress) =>
     persist((value) => ({ ...change(value), unit: unit.id }));
   const journey = mandarinJourney(journeyUnits, progress);
-  const finalStarted = progress.unit === "bilan" || progress.steps.bilan !== undefined ||
+  const assessmentId = unit.id === "bilan" ? "bilan" : "bilan-fondations";
+  const finalStarted = progress.unit === assessmentId || progress.steps[assessmentId] !== undefined ||
     finalIds.some(id => Boolean(progress.results[id] || progress.drafts[id]));
   const allowed = canEnterFoundationStep(journey, unit.id, finalStarted);
-  const finalOpen = canEnterFoundationStep(journey, "bilan", finalStarted);
+  const finalOpen = canEnterFoundationStep(journey, assessmentId, finalStarted);
   const { scene, present, finish: finishMission } = useMissionCinema("zh:foundations", { active: ready && allowed });
   useEffect(() => {
     if (!ready || !allowed) return;
     present({ id: `${unit.id}:start`, kind: "mission-start", title: unit.title[locale], detail: unit.setting[locale] });
   }, [ready, allowed, unit, locale, present]);
-  const href = (id?: string) => buildYoLocaleHref(MANDARIN_PATH + (id ? "/" + id : ""), locale);
+  const href = (id?: string) => buildYoLocaleHref(MANDARIN_PATH + (id ? "/" + mandarinRouteId(id) : ""), locale);
+  const advanceHref = (id?: string) => href(id === "bilan" ? "bilan-fondations" : id);
   const stages = mandarinStages(unit);
   const step = Math.min(progress.steps[unit.id] ?? 0, stages.length - 1);
   const stage = stages[step];
@@ -124,6 +128,7 @@ export function MandarinCoursePlayer({
     words: L("Carnet de mots", "Word notebook", "Cuaderno de palabras")[locale],
     grammar: L("Les petites clés", "Small keys", "Pequeñas claves")[locale],
     character: L("Traits chinois", "Chinese strokes", "Trazos chinos")[locale],
+    reading: L("Lire la situation", "Read the situation", "Leer la situación")[locale],
     culture: L("Découverte", "Discovery", "Descubrimiento")[locale],
     summary: L("Bilan", "Review", "Balance")[locale],
   };
@@ -208,7 +213,7 @@ export function MandarinCoursePlayer({
             {(["fr", "en", "es"] as const).map((lang) => (
               <Link
                 key={lang}
-                href={buildYoLocaleHref(`${MANDARIN_PATH}/${unit.id}`, lang)}
+                href={buildYoLocaleHref(`${MANDARIN_PATH}/${mandarinRouteId(unit.id)}`, lang)}
                 lang={lang}
                 aria-current={lang === locale ? "page" : undefined}
                 className="min-h-11 p-3 text-xs underline"
@@ -261,7 +266,6 @@ export function MandarinCoursePlayer({
                 type="checkbox"
                 checked={progress.pinyin}
                 onChange={(event) => {
-                  assist();
                   update((value) => ({
                     ...value,
                     pinyin: event.target.checked,
@@ -275,7 +279,6 @@ export function MandarinCoursePlayer({
                 type="checkbox"
                 checked={progress.translation}
                 onChange={(event) => {
-                  assist();
                   update((value) => ({
                     ...value,
                     translation: event.target.checked,
@@ -406,6 +409,11 @@ export function MandarinCoursePlayer({
           {stage === "character" && (
             <MandarinCharacter character={unit.character} locale={locale} />
           )}
+          {stage === "reading" && unit.reading && <section className="space-y-4 rounded-lg border border-teal-200 bg-white p-5">
+            <h2 className="text-xl font-semibold">{L("Un récit à comprendre", "A story to understand", "Un relato para comprender")[locale]}</h2>
+            <PhraseView phrase={unit.reading} locale={locale} pinyin={progress.pinyin} translation={progress.translation} />
+            <p className="text-sm text-gray-600">{L("Repère qui fait quoi, quand et où. Les questions suivantes présentent le texte à nouveau ; le pinyin ou sa traduction y compteront comme aide s’ils sont affichés.", "Notice who does what, when and where. The following questions show the text again; displayed pinyin or its translation will count as help there.", "Identifica quién hace qué, cuándo y dónde. Las preguntas vuelven a mostrar el texto; allí el pinyin o su traducción cuentan como ayuda si se muestran.")[locale]}</p>
+          </section>}
           {currentExercise && state && (
             <MandarinExercise
               key={stage}
@@ -414,20 +422,37 @@ export function MandarinCoursePlayer({
               previous={progress.results[stage]}
               locale={locale}
               pinyin={progress.pinyin}
+              translation={progress.translation}
+              onRestartWithoutHelp={() => {
+                stopMandarinAudio();
+                update(value => ({ ...value, pinyin: false, translation: false,
+                  drafts: { ...value.drafts, [stage]: restartMandarinAttempt(currentExercise, value.drafts[stage] ?? state, true) } }));
+              }}
               onChange={(draft) =>
                 update((value) => ({
                   ...value,
                   drafts: { ...value.drafts, [stage]: draft },
                 }))
               }
-              onResult={(result) => {
-                update((value) => ({
-                  ...value,
-                  results: { ...value.results, [stage]: result },
-                }));
+              onResult={() => {
+                let recorded = false;
+                let assisted = state.assisted || visibleMandarinHelp(currentExercise, progress.pinyin, progress.translation);
+                const accepted = update((value) => {
+                  const current = value.drafts[stage];
+                  if (current?.checked || (current?.generation ?? 0) !== (state.generation ?? 0)) return value;
+                  assisted ||= current?.assisted ?? false;
+                  const attempt = { ...state, assisted };
+                  const result = evaluate(currentExercise, attempt, value.results[stage]);
+                  if (!result) return value;
+                  recorded = true;
+                  return { ...value,
+                    drafts: { ...value.drafts, [stage]: { ...attempt, checked: true, correct: checkAnswer(currentExercise, attempt.answer) } },
+                    results: { ...value.results, [stage]: result },
+                  };
+                });
                 // Default-visible pinyin is also help, even when no toggle was clicked.
-                const pinyinHelp = progress.pinyin && (currentExercise.kind === "match" || ("choices" in currentExercise && currentExercise.choices.some(choice => choice.phrase)));
-                if (unit.id !== "bilan") recordReviewAttempt({ language: "zh", itemId: `course:${unit.id}:practice:${currentExercise.id}`, correct: checkAnswer(currentExercise, state.answer), assisted: state.assisted || pinyinHelp });
+                if (accepted && recorded && !isMandarinAssessment(unit.id)) recordReviewAttempt({ language: "zh", itemId: `course:${unit.id}:practice:${currentExercise.id}`, correct: checkAnswer(currentExercise, state.answer), assisted });
+                return accepted && recorded;
               }}
             />
           )}
@@ -523,7 +548,7 @@ export function MandarinCoursePlayer({
                 }
               </h3>
               {unit.canDos.map((goal, index) => {
-                const id = `zh-${unit.id === "bilan" ? "final" : unit.id}-self-${index}`;
+                const id = `zh-${unit.id === "bilan" ? "final" : unit.id === "bilan-fondations" ? "foundations-final" : unit.id}-self-${index}`;
                 return (
                   <label key={id} className="flex items-center gap-3">
                     <input
@@ -543,10 +568,10 @@ export function MandarinCoursePlayer({
                   </label>
                 );
               })}
-              {unit.id === "bilan" ? <Link href={href()} className="inline-flex min-h-11 items-center gap-2 text-teal-900 underline"><BookOpen size={18} />{L("Voir le parcours", "View the journey", "Ver el recorrido")[locale]}</Link> : <FoundationJourneyAdvance journey={journey} unitId={unit.id} locale={locale} href={href} finalOpen={finalOpen} />}
+              {isMandarinAssessment(unit.id) ? <Link href={href()} className="inline-flex min-h-11 items-center gap-2 text-teal-900 underline"><BookOpen size={18} />{L("Voir le parcours", "View the journey", "Ver el recorrido")[locale]}</Link> : <FoundationJourneyAdvance journey={journey} unitId={unit.id} locale={locale} href={advanceHref} finalOpen={finalOpen} />}
             </section>
           )}
-          {!currentExercise && unit.id !== "bilan" && !scene && <div className="mt-6"><YoSpeechPractice key={unit.id} language="zh" locale={locale} scenarioId={courseSpeechScenario("zh", unit.number)}/></div>}
+          {!currentExercise && !isMandarinAssessment(unit.id) && !scene && <div className="mt-6"><YoSpeechPractice key={unit.id} language="zh" locale={locale} scenarioId={courseSpeechScenario("zh", unit.number)}/></div>}
         </div>
       </div>
       <div className="h-44 shrink-0" aria-hidden />

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mandarinJourneyUnits, mandarinFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
+import { mandarinJourneyUnits, mandarinFinalIds, mandarinLegacyFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import * as React from "react";
@@ -12,7 +12,7 @@ import { MandarinAudio } from "@/components/yo/mandarin/MandarinAudio";
 import { MandarinCharacter } from "@/components/yo/mandarin/MandarinCharacter";
 import { InstallAppPrompt } from "@/components/app/InstallAppPrompt";
 import { PathnameContext } from "next/dist/shared/lib/hooks-client-context.shared-runtime";
-import { mandarinUnits, mandarinFinal } from "@/lib/yo/mandarin/course";
+import { mandarinUnits, mandarinFinal, mandarinExtendedFinal } from "@/lib/yo/mandarin/course";
 import {
   emptyProgress,
   evaluate,
@@ -21,7 +21,6 @@ import {
 } from "@/lib/yo/mandarin/progress";
 import type {
   Attempt,
-  Exercise,
   Progress,
   Result,
 } from "@/lib/yo/mandarin/types";
@@ -233,12 +232,13 @@ test("audio never overlaps, playback is explicit and unavailable source is hones
   const first = audios[0];
   click(view.getByRole("button", { name: "Listen : 谢谢！" }));
   assert.equal(first.paused, true);
-  click(view.getByRole("button", { name: "Listen : missing-recording" }));
-  assert.ok(view.getByText(/Audio unavailable/));
+  assert.equal(view.queryByRole("button", { name: "Listen : missing-recording" }), null);
+  assert.ok(view.getByText("No published recording for this phrase. Practise with the text and pinyin."));
+  assert.equal(audios.length, 2, "unpublished text creates no fake audio request");
 });
 test("all module/final activity controls submit a checked result in three locales", () => {
   for (const locale of ["fr", "en", "es"] as const)
-    for (const exercise of [...mandarinUnits, mandarinFinal].flatMap(
+    for (const exercise of [...mandarinUnits, mandarinFinal, mandarinExtendedFinal].flatMap(
       (unit) => unit.exercises,
     )) {
       let result: Result | null = null;
@@ -323,7 +323,7 @@ test("final mission offers real picture matching and sentence games without awar
   localStorage.setItem(MANDARIN_PROGRESS_KEY, JSON.stringify({ ...emptyProgress(), unit: "bilan" }));
   const view = render(
     React.createElement(MandarinCoursePlayer, {
-      journeyUnits: mandarinJourneyUnits, finalIds: mandarinFinalIds,
+      journeyUnits: mandarinJourneyUnits.slice(0, 8), finalIds: mandarinLegacyFinalIds,
       unit: mandarinFinal,
       locale: "en",
     }),
@@ -388,6 +388,7 @@ test("mobile install prompt stays off Mandarin controls but remains available on
       "/yo/langues/mandarin/parcours",
       "/yo/langues/mandarin/parcours/u01",
       "/yo/langues/mandarin/parcours/bilan",
+      "/yo/langues/mandarin/parcours/bilan-initial",
     ]) {
       const view = render(
         React.createElement(
@@ -443,7 +444,7 @@ test("final completion requires checked exercises, not trivia or self-assessment
   const mountFinal = () =>
     render(
       React.createElement(MandarinCoursePlayer, {
-        journeyUnits: mandarinJourneyUnits, finalIds: mandarinFinalIds,
+        journeyUnits: mandarinJourneyUnits.slice(0, 8), finalIds: mandarinLegacyFinalIds,
         unit: mandarinFinal,
         locale: "fr",
       }),
@@ -493,7 +494,9 @@ async function main() {
     try {
       localStorage.clear();
       audios.splice(0);
-      await run();
+      const pending = run();
+      if (pending) await pending;
+      else await act(async () => { await Promise.resolve(); });
       console.log("PASS " + name);
     } finally {
       cleanup();

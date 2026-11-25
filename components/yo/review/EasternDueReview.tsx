@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { YoLocale } from "@/lib/yo/types";
 import type { JapaneseActivity } from "@/lib/yo/japaneseCourseTypes";
 import type { Exercise } from "@/lib/yo/mandarin/types";
 import { initialAttempt, checkAnswer } from "@/lib/yo/mandarin/progress";
-import { loadEasternReviews, type EasternReviewContent } from "@/lib/yo/review/easternContent";
+import { loadEasternReviewContent, type EasternReviewContent } from "@/lib/yo/review/easternContent";
 import { JapaneseActivityPanel, initialJapaneseActivityState } from "../japanese/JapaneseActivityPanel";
 import { MandarinExercise } from "../mandarin/MandarinExercise";
 import { YoDueReviewPanel, type ReviewExerciseActions } from "./YoDueReviewPanel";
@@ -36,28 +36,30 @@ function MandarinReview({ exercise, locale, actions }: { exercise: Exercise; loc
     }}/>{draft.checked && draft.correct && <ContinueReview locale={locale} actions={actions}/>}</>;
 }
 
-/** Reuses each language's real checker and input controls, without changing course outcomes. */
-export function EasternDueReview({ language, locale }: { language: "ja" | "zh"; locale: YoLocale }) {
-  const queue = useReviewQueue(language);
-  const [content, setContent] = useState<{ language: string; items: Record<string, EasternReviewContent> } | null>(null);
+function DueExercise({ language, locale, id, actions }: {
+  language: "ja" | "zh"; locale: YoLocale; id: string; actions: ReviewExerciseActions;
+}) {
+  const [content, setContent] = useState<EasternReviewContent | null>(null);
   const [failed, setFailed] = useState(false), [retry, setRetry] = useState(0);
-  const needed = queue.total > 0;
+  const say = (fr: string, en: string, es: string) => ({ fr, en, es })[locale];
   useEffect(() => {
-    if (!needed) return;
     let active = true;
-    void loadEasternReviews(language).then(items => { if (active) { setContent({ language, items }); setFailed(false); } })
+    void loadEasternReviewContent(language, id).then(item => { if (active) { setContent(item); setFailed(false); } })
       .catch(() => { if (active) setFailed(true); });
     return () => { active = false; };
-  }, [language, needed, retry]);
-  const items = content?.language === language ? content.items : null;
-  const ids = useMemo(() => Object.keys(items ?? {}), [items]);
-  const courseQueue = useReviewQueue(language, ids);
-  if (!needed) return null;
-  if (failed) return <p role="status" className="my-4 text-sm"><button type="button" className="min-h-11 underline" onClick={() => { setFailed(false); setRetry(value => value + 1); }}>{{ fr: "Recharger les révisions", en: "Reload reviews", es: "Recargar los repasos" }[locale]}</button></p>;
-  if (!items || !courseQueue.total) return null;
-  return <YoDueReviewPanel language={language} locale={locale} itemIds={ids} renderExercise={(id, actions) => {
-    const content = items[id];
-    return content?.language === "ja" ? <JapaneseReview key={id} activity={content.activity} locale={locale} actions={actions}/>
-      : content?.language === "zh" ? <MandarinReview key={id} exercise={content.exercise} locale={locale} actions={actions}/> : null;
-  }}/>;
+  }, [language, id, retry]);
+  if (failed) return <div role="status"><p>{say("Cette révision n’a pas pu être chargée. Ta progression reste enregistrée.", "This review could not load. Your progress is still saved.", "No se pudo cargar este repaso. Tu progreso sigue guardado.")}</p><button type="button" className="mt-3 min-h-11 underline" onClick={() => { setFailed(false); setRetry(value => value + 1); }}>{say("Réessayer", "Try again", "Reintentar")}</button></div>;
+  if (!content) return <p role="status">{say("Chargement de la phrase…", "Loading the phrase…", "Cargando la frase…")}</p>;
+  return content.language === "ja" ? <JapaneseReview activity={content.activity} locale={locale} actions={actions}/>
+    : <MandarinReview exercise={content.exercise} locale={locale} actions={actions}/>;
+}
+
+/** Original language checkers, with a small server-authored ID list and isolated outcomes. */
+export function EasternDueReview({ language, locale, itemIds }: {
+  language: "ja" | "zh"; locale: YoLocale; itemIds: readonly string[];
+}) {
+  const queue = useReviewQueue(language, itemIds);
+  if (!queue.ready || !queue.total) return null;
+  return <YoDueReviewPanel language={language} locale={locale} itemIds={itemIds}
+    renderExercise={(id, actions) => <DueExercise key={`${language}:${id}`} language={language} locale={locale} id={id} actions={actions}/>}/>;
 }

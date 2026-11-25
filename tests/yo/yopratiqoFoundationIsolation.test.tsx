@@ -126,6 +126,9 @@ async function visiblePinyin() {
   const correct = exercise.choices.find(choice => choice.id === exercise.answer);
   assert.ok(correct?.phrase);
   const state = emptyProgress();
+  const historicalId = unit.exercises.find(item => item.id !== exercise.id)!.id;
+  const historicalResult = { passed: true, independent: true, attempts: 2, review: false };
+  state.results[historicalId] = historicalResult;
   assert.equal(state.pinyin, true, "keep the real default rather than enabling help in the test");
   state.steps[unit.id] = mandarinStages(unit).indexOf(exercise.id);
   localStorage.setItem(MANDARIN_PROGRESS_KEY, JSON.stringify(state));
@@ -149,10 +152,11 @@ async function visiblePinyin() {
   assert.equal(receipts[0].assisted, true, "visible pinyin is assistance even without touching its checkbox");
   assert.ok(readReviewState("zh").records[itemId], "the assisted answer enters the real review queue");
   assert.deepEqual(readReviewState("ja").records, {});
-  const oldResult = JSON.parse(localStorage.getItem(MANDARIN_PROGRESS_KEY)!).results[exercise.id];
-  assert.equal(oldResult.attempts, 1);
-  assert.equal(oldResult.independent, true, "the new review journal does not retroactively rewrite the legacy course result");
-  console.log("PASS default-visible Mandarin pinyin records actual checked evidence as assisted without changing legacy grading");
+  const savedResults = JSON.parse(localStorage.getItem(MANDARIN_PROGRESS_KEY)!).results;
+  assert.equal(savedResults[exercise.id].attempts, 1);
+  assert.equal(savedResults[exercise.id].independent, false, "a newly checked answer with visible pinyin is assisted in both course and review");
+  assert.deepEqual(savedResults[historicalId], historicalResult, "existing historical independent evidence is preserved exactly");
+  console.log("PASS default-visible Mandarin pinyin records new outcomes as assisted while preserving historical grades");
 }
 
 async function main() {
