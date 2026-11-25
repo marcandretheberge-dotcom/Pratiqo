@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {randomBytes,randomUUID} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
 import Stripe from "stripe";
-import {isolate} from "./local.cjs";
+import {isolate} from "./local.mjs";
 import {personalizedItalianUnits as units} from "../../lib/yo/personalized/courseData";
 import {buildItalianTrivia} from "../../lib/yo/italian/trivia";
 import {freshWallet} from "../../lib/yo/passPilot/wallet";

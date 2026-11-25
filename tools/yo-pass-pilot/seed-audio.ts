@@ -2,7 +2,7 @@ import {readFileSync} from "node:fs";
 import path from "node:path";
 import {createHash} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
-import {isolate} from "./local.cjs";
+import {isolate} from "./local.mjs";
 import {getItalianCourseAudioItem} from "../../lib/yo/audio/italianCourseAudio";
 import {platformQuestion} from "../../lib/yo/train/mission";
 async function run(){

@@ -1,7 +1,13 @@
 // Local test rig only. Keep fixture passwords, the API key and test receipts out of git and terminal output.
-const fs=require("node:fs"),path=require("node:path"),crypto=require("node:crypto"),{execFileSync,spawn}=require("node:child_process");
-const {createClient}=require("@supabase/supabase-js"),Stripe=require("stripe");
-const root=path.resolve(__dirname,"../.."),dir=path.join(root,".qa-guided","pass-pilot"),file=path.join(dir,"review-accounts.json");
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import {execFileSync,spawn} from "node:child_process";
+import {fileURLToPath} from "node:url";
+import {createClient} from "@supabase/supabase-js";
+import Stripe from "stripe";
+const runnerPath=fileURLToPath(import.meta.url),runnerDir=path.dirname(runnerPath);
+const root=path.resolve(runnerDir,"../.."),dir=path.join(root,".qa-guided","pass-pilot"),file=path.join(dir,"review-accounts.json");
 const envFile=process.env.YO_PASS_TEST_ENV_FILE;
 function isolate(){
   if([".env",".env.local",".env.development.local",".env.production.local"].some(f=>fs.existsSync(path.join(root,f))))throw Error("Refusing ambient app env file");
@@ -15,7 +21,7 @@ function isolate(){
   return {YO_PASS_LOCAL:"1",NEXT_PUBLIC_YO_PASS_PILOT:"italian-test",YO_PASS_TEST_KEY:key,YO_PASS_TEST_WEBHOOK:fs.existsSync(signing)?fs.readFileSync(signing,"utf8"):undefined,YO_PASS_ORIGIN:"http://127.0.0.1:55941",NEXT_TELEMETRY_DISABLED:"1",NEXT_PUBLIC_SUPABASE_URL:"http://127.0.0.1:55421",NEXT_PUBLIC_SUPABASE_ANON_KEY:vars.ANON_KEY,SUPABASE_SERVICE_ROLE_KEY:vars.SERVICE_KEY};
 }
 async function setup(env){
-  fs.mkdirSync(dir,{recursive:true});execFileSync("docker",["exec","-i","supabase_db_pr405-local-sandbox","psql","-X","-U","postgres","-d","postgres","-v","ON_ERROR_STOP=1"],{input:fs.readFileSync(path.join(__dirname,"install-local.sql")),stdio:["pipe","pipe","pipe"]});
+  fs.mkdirSync(dir,{recursive:true});execFileSync("docker",["exec","-i","supabase_db_pr405-local-sandbox","psql","-X","-U","postgres","-d","postgres","-v","ON_ERROR_STOP=1"],{input:fs.readFileSync(path.join(runnerDir,"install-local.sql")),stdio:["pipe","pipe","pipe"]});
   if(!env.YO_PASS_TEST_WEBHOOK)fs.writeFileSync(path.join(dir,"local-notification.key"),crypto.randomBytes(30).toString("hex"),{flag:"wx",mode:0o600});
   const db=createClient(env.NEXT_PUBLIC_SUPABASE_URL,env.SUPABASE_SERVICE_ROLE_KEY,{auth:{persistSession:false}});
   if(!fs.existsSync(file)){
@@ -38,8 +44,8 @@ async function setup(env){
     await stripe.prices.create({currency:"cad",unit_amount:amount,lookup_key:lookup,tax_behavior:"exclusive",product_data:{name:"YoPratiqo TEST · "+sku},metadata:{pilot:"yo_it_20261123"}},{idempotencyKey:lookup});
   }console.log("Local test schema, four synthetic accounts and three distinct CAD test prices verified.");
 }
-module.exports={isolate,root,dir,file};
-if(require.main===module)(async()=>{const env=isolate();
+export {isolate,root,dir,file};
+if(process.argv[1]&&path.resolve(process.argv[1])===runnerPath)(async()=>{const env=isolate();
  if(process.argv[2]==="setup")return setup(env);
  if(process.argv[2]!=="serve")throw Error("Choose setup or serve");
  const clean={};for(const k of ["SystemRoot","WINDIR","PATH","Path","TEMP","TMP","USERPROFILE","APPDATA","LOCALAPPDATA","COMSPEC","PATHEXT","NUMBER_OF_PROCESSORS"])if(process.env[k])clean[k]=process.env[k];

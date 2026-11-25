@@ -2,7 +2,7 @@ import {chromium} from "playwright";
 import {mkdirSync} from "node:fs";
 import {randomBytes,randomUUID} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
-import {isolate} from "./local.cjs";
+import {isolate} from "./local.mjs";
 import path from "node:path";
 import assert from "node:assert/strict";
 import {personalizedItalianUnits} from "../../lib/yo/personalized/courseData";
