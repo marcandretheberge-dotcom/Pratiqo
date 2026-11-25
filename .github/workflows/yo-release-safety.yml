@@ -28,7 +28,10 @@ jobs:
           node --import tsx tests/yo/yopratiqoReleaseChoices.test.tsx 2>&1 | tee /tmp/yo-release-safety/checks.log
           node --import tsx tests/yo/yopratiqoLessonLink.test.tsx
           npx eslint lib/yo/shared/releaseChoices.ts components/yo/shared/IntroWelcome.tsx components/yo/shared/IntroAudio.tsx components/yo/learning/LessonLink.tsx components/yo/italian/guided/GuidedItalianCourse.tsx
-          git diff --exit-code 5d7edc9da2a35507b4da76b0d56f164168360097 HEAD -- lib/yo/italian/course/courseProgress.ts lib/yo/italian/course/guidedItalian.ts lib/yo/shared/state.ts lib/yo/personalized/profile.ts
+          git diff --exit-code 5d7edc9da2a35507b4da76b0d56f164168360097 HEAD -- lib/yo/italian/course/courseProgress.ts lib/yo/italian/course/guidedItalian.ts
+          # Interest metadata intentionally extends both profile parsers; preserve old saved evidence behavior.
+          node --import tsx tests/yo/yopratiqoInterestPractice.test.tsx
+          node --import tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx
           node --import tsx tests/yo/yopratiqoPronunciationSession.test.tsx
           node --import tsx tests/yo/yopratiqoFeedback.test.tsx
           git rev-parse HEAD > /tmp/yo-release-safety/commit.txt

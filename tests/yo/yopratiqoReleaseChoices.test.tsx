@@ -33,7 +33,7 @@ for(const c of introCourses)for(const locale of ['fr','en','es'] as const){
  for(const skipHidden of [false,true])check(`${c.slug}/${locale}: ${skipHidden?'skip never submits invisible minutes':'hide/reopen/back/custom/preset consistency'}`,()=>{
   cleanup();localStorage.clear();frames.clear();const saved:IntroProfile[]=[];
   const v=render(<LearningFeedbackProvider><IntroWelcome course={c} locale={locale} audio={{}} initial={{experience:'new',goal:'travel',minutes:90,entry:0}} onComplete={p=>saved.push(p)}/></LearningFeedbackProvider>);flush();
-  click(v.getByRole('button',{name:zero}));click(v.getByRole('button',{name:travel}));
+  click(v.getByRole('button',{name:zero}));click(v.getByRole('button',{name:travel}));click(v.getByRole('button',{name:next}));
   assert.equal((v.getByRole('spinbutton') as HTMLInputElement).value,'90');
   click(v.getByRole('button',{name:toggle}));assert.equal(v.queryByRole('spinbutton'),null);assert.equal(v.container.querySelectorAll('input[type=radio]:checked').length,0);assert.equal((v.getByRole('button',{name:next}) as HTMLButtonElement).disabled,true);
   if(skipHidden){click(v.getByRole('button',{name:skip}));click(v.getByRole('button',{name:start}));assert.equal(saved[0].minutes,0);}
