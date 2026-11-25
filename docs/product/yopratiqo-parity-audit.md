@@ -80,10 +80,10 @@ enter these adapters.
 The shared DE/PT/EN/ES/FR assessment player preserves first checked outcomes and
 help across reloads. Completed result restoration submits no new score, and
 changing UI language cannot erase help. The new unit cursor also preserves
-help and a checked activity result. Unfinished typed input is not yet restored
-by that cursor. Mandarin's legacy progress merge and shared intro cross-tab
-reset semantics still need their own implementation; this journal does not
-silently solve them.
+help and a checked activity result. PR #485 subsequently added unfinished typed
+input restoration. PR #484 implemented Mandarin's reset-aware progress merge.
+Shared-intro cross-tab reset semantics remain separate work; the review journal
+does not silently solve them.
 
 Reviewed sources and locale-specific original content live under
 `lib/yo/english/`, `lib/yo/spanish/` and `lib/yo/frenchQuebec/`. The remaining
@@ -145,7 +145,7 @@ all six triggered workflows and both Vercel checks, and its production deploymen
 passed 33 public page/API checks. The exact commits and deployment are recorded
 in the release ledger.
 
-## Sixth overnight lot: unfinished typed answers prepared
+## Sixth overnight lot: unfinished typed answers deployed
 
 The five shared DE/PT/EN/ES/Québec French course players now retain partial typed
 answers locally across reloads, with reset/content scoping and two-tab merging.
@@ -154,8 +154,11 @@ a draft emits neither a course attempt nor a review event; help and checked
 outcomes remain attached to their actual attempt. The full rules and 29 focused
 cases are in `yopratiqoTypedDrafts.test.tsx`. Typed answers do not leave the device.
 Yoppo has reserved inline space, following Italian's existing layout, and mobile
-lesson selection is compact. This lot is prepared; real browser CI and production
-delivery are still required before counting it as shipped.
+lesson selection is compact. All four triggered workflows and both Vercel builds
+passed on PR #485's final head. Chromium and macOS WebKit preserved partial unit
+and assessment text without grading on reload, across all six EN/ES/FR mobile
+cases. The existing complete DE/PT assessment/audio gates also passed. Production
+delivery passed all 17 public page/bundle/status checks; details are in the ledger.
 
 ## Shared surfaces: what exists and what does not
 
@@ -192,6 +195,11 @@ disabled flag or unavailable database keeps it unavailable. A merged component
 is not evidence that eight-language speech quality has been tested online.
 Activation and remaining QA are in
 [the speech runbook](yopratiqo-speech-practice.md).
+The later Gateway preview authenticated project OIDC and read credit status, but
+could not cover a $0.20 reservation. It stopped before any WebSocket or inference;
+the one-time preview flag is now disabled. This is a funding prerequisite, while
+the required Realtime acknowledgement and live eight-language quality are still
+unverified. See [the diagnostic](yopratiqo-speech-gateway-preflight.md).
 
 At the baseline, `mission-ready`, `mission-success` and `artifact-reveal` had
 posters but no MP4 source. The cinema work in this release must be validated as

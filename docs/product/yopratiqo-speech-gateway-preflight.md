@@ -1,6 +1,12 @@
 # Diagnostic Gateway vocal avant activation
 
-État au 25 novembre 2026 : diagnostic préparé et testé hors ligne. Aucun résultat de connexion réelle n'est encore acquis. La pratique vocale des utilisateurs conserve son fournisseur, sa configuration et son budget existants.
+État au 25 novembre 2026 : le diagnostic réel de preview a authentifié le jeton OIDC du projet et lu les crédits. Le crédit disponible ne couvre pas une réservation de 0,20 USD. Il s'est donc arrêté avant toute connexion WebSocket et toute inférence. La compatibilité des paramètres Realtime reste **non vérifiée** et la pratique vocale des utilisateurs reste désactivée.
+
+## Résultat observé et désactivation
+
+Une seule exécution a été autorisée pour le commit `c6a4273bd699deeebb6cc951538d17d2221423b9`, sur le déploiement de preview `dpl_GADEL5vYs5oyEo2qmUQn2ozGZek4`. Le rapport a confirmé `eligiblePreview`, `oidcPresent`, `oidcScopeMatches`, `creditsAuthenticated` et `creditsParsed`. Il a retourné `hasReservationCredit: false`, `socketOpened: false`, `noInferenceRequested: true` et `passed: false`. Le build de diagnostic a échoué comme prévu dans ce cas ; ce résultat ne constitue pas une panne du site de production.
+
+La valeur du flag limité à cette branche de preview a ensuite été vidée et cette désactivation a été vérifiée. Aucun budget, crédit, fournisseur de production ou flag d'activation vocale n'a été changé. Aucun achat, recharge ou nouvel essai n'a été effectué. Les accusés de configuration, la qualité des huit langues et la facturation d'un vrai tour vocal restent à vérifier après résolution du crédit disponible. Les booléens de paramètres restés faux signifient « non observé », pas « paramètre refusé par le fournisseur ».
 
 ## Question vérifiée
 
@@ -26,7 +32,7 @@ Toutes les conditions suivantes doivent être réunies :
 | Environnement contenu dans le jeton OIDC | `preview` |
 | Expiration du jeton | Après l'échéance maximale du diagnostic |
 
-Configurer le flag uniquement pour le build de preview choisi, une fois le commit relu. Après cette exécution, retirer le flag ou vider sa valeur pour le désactiver. Un autre commit est automatiquement inéligible ; redéployer le même commit avec le flag encore présent relancerait le diagnostic. Cette commande ne contient aucun mécanisme de nouvelle tentative. Aucun flag, budget ou réglage Vercel n'a été modifié pour préparer ce lot.
+Configurer le flag uniquement pour le build de preview choisi, une fois le commit relu. Après cette exécution, retirer le flag ou vider sa valeur pour le désactiver. Un autre commit est automatiquement inéligible ; redéployer le même commit avec le flag encore présent relancerait le diagnostic. Cette commande ne contient aucun mécanisme de nouvelle tentative. Le flag de l'exécution décrite ci-dessus est désormais vide.
 
 Hors de ces conditions, le script ne lit pas le jeton et ne fait aucun appel réseau. Le script ne charge aucun fichier d'environnement. Le décodage local des claims sert uniquement à vérifier le périmètre attendu ; Gateway réalise l'authentification du jeton. Les claims documentés comprennent le projet, l'équipe et l'environnement. [Référence OIDC](https://vercel.com/docs/oidc/reference)
 
@@ -55,7 +61,7 @@ Le préfixe `YO_SPEECH_GATEWAY_PREFLIGHT` est suivi d'un objet contenant uniquem
 
 ## Coût et confidentialité
 
-Le catalogue public consulté le 25 novembre 2026 indique, pour ce modèle, **4 USD / 24 USD par million de tokens texte entrants / sortants** et **32 USD / 64 USD par million de tokens audio entrants / sortants**. Il ne publie pas de tarif à la durée pour `gpt-realtime-2.1`. Le modèle à facturation temporelle GPT-Live utilise un autre contrat et ne peut pas être substitué ici. Le diagnostic ne demande aucune inférence ; le résultat de sa facturation réelle n'est pas encore observé. [Catalogue JSON](https://ai-gateway.vercel.sh/v1/models) · [Modèle](https://vercel.com/ai-gateway/models/openai/gpt-realtime-2.1) · [Tarification](https://vercel.com/docs/ai-gateway/pricing)
+Le catalogue public consulté le 25 novembre 2026 indique, pour ce modèle, **4 USD / 24 USD par million de tokens texte entrants / sortants** et **32 USD / 64 USD par million de tokens audio entrants / sortants**. Il ne publie pas de tarif à la durée pour `gpt-realtime-2.1`. Le modèle à facturation temporelle GPT-Live utilise un autre contrat et ne peut pas être substitué ici. L'exécution observée n'a ouvert aucun socket et n'a demandé aucune inférence. Aucune facturation d'un vrai tour vocal n'est encore observée. [Catalogue JSON](https://ai-gateway.vercel.sh/v1/models) · [Modèle](https://vercel.com/ai-gateway/models/openai/gpt-realtime-2.1) · [Tarification](https://vercel.com/docs/ai-gateway/pricing)
 
 Le catalogue annonce `no_training: all` et `zdr: none` pour ce modèle. Une future activation ne devra donc pas promettre une rétention nulle de bout en bout. Les contrôles SQL existants du pilote — 50 réservations irréversibles de 0,20 USD, soit 10 USD — restent nécessaires. Le budget Gateway constitue un contrôle supplémentaire : sa limite peut être franchie par une requête déjà en cours. [Confidentialité](https://vercel.com/docs/ai-gateway/security-and-compliance/zdr) · [Budgets Gateway](https://vercel.com/docs/ai-gateway/observability-and-spend/budgets)
 
