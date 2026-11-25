@@ -7,6 +7,10 @@ import { yopratiqoLandingContent } from "@/lib/yo/yopratiqoLandingContent";
 import { buildYoPratiqoMetadata, resolveYoPratiqoPageLocale } from "@/lib/yo/yopratiqoSeo";
 import { getYoPratiqoModuleBySlug } from "@/lib/yo/yopratiqoProductConfig";
 
+import Link from "next/link";
+import { francisationPreviewEnabled } from "@/lib/yo/francisation/preview";
+import { freeCourses, goal, missionTitle, notice, purpose } from "@/lib/yo/francisation/mission";
+
 export const dynamic = "force-dynamic";
 
 // Locale-aware destination for the (noindex) Quebec French / Francisation
@@ -28,7 +32,15 @@ export async function generateMetadata({
   searchParams: Promise<{ lang?: string | string[] }>;
 }): Promise<Metadata> {
   const params = await searchParams;
-  return buildYoPratiqoMetadata("frenchQuebecLanding", params.lang);
+  const metadata = buildYoPratiqoMetadata("frenchQuebecLanding", params.lang);
+  if (!francisationPreviewEnabled()) return metadata;
+  const robots = { index: false, follow: false };
+  if (resolveYoPratiqoPageLocale("frenchQuebecLanding", params.lang) !== "fr") return { ...metadata, robots };
+  const title = "Francisation au Québec en ligne | YoPratiqo";
+  const description = "Pratiquez le français en autonomie avec Yoppo. Une mission gratuite pour vérifier un nom et des coordonnées dans une situation fictive au Québec.";
+  return { ...metadata, title: { absolute: title }, description, robots,
+    openGraph: { ...metadata.openGraph, title, description },
+    twitter: { ...metadata.twitter, title, description } };
 }
 
 export default async function YoFrenchQuebecLandingPage({
@@ -39,6 +51,29 @@ export default async function YoFrenchQuebecLandingPage({
   const params = await searchParams;
   const locale = resolveYoPratiqoPageLocale("frenchQuebecLanding", params.lang);
   const moduleHref = MODULE_HREF_BY_LOCALE[locale];
+
+  if (francisationPreviewEnabled() && locale === "fr") {
+    return <main lang="fr-CA" className="min-h-dvh bg-emerald-50 px-5 py-10 text-emerald-950">
+      <div className="mx-auto max-w-2xl space-y-6">
+        <Link href="/yo" className="underline">Retour à YoPratiqo</Link>
+        <h1 className="text-4xl font-bold">{goal} en ligne</h1>
+        <p>{purpose} Avance à ton rythme dans cette activité de stade débutant.</p>
+        <section className="space-y-4 rounded-2xl bg-white p-6 shadow-sm">
+          <h2 className="text-2xl font-bold">{missionTitle}</h2>
+          <p>Avec Yoppo, suis un échange à l’accueil d’un atelier. Repère une correction, puis essaie avec la fiche d’un nouveau personnage.</p>
+          <Link href="/yo/langues/francais-quebec/demarrer#francisation" className="inline-flex min-h-12 items-center rounded-xl bg-emerald-800 px-5 font-bold text-white">Découvrir la mission gratuite</Link>
+          <p className="text-sm">{notice}</p>
+        </section>
+        <nav aria-label="Autres ressources en français" className="flex flex-col items-start gap-3 underline">
+          <Link href="/yo/langues/francais-quebec/demarrer#objectifs">Choisir un autre objectif de français</Link>
+          <Link href="/yo/langues/francais-quebec/intro?lang=fr">Découvrir l’introduction culturelle</Link>
+          <Link href={moduleHref}>Découvrir le module sur le travail</Link>
+          <Link href="/francisation">Trouver un professeur de francisation</Link>
+          <a href={freeCourses}>Consulter les cours de français gratuits du gouvernement du Québec</a>
+        </nav>
+      </div>
+    </main>;
+  }
 
   return (
     <>
