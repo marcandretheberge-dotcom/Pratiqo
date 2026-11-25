@@ -56,7 +56,7 @@ availability varies by course, base language, platform and subscription.
 | Interests | Local Parma reason only | 48 authored mini-mission variants: dialogue, venue choice, directions, typed noun recall, changed exit route, later error review | Destination-specific cultural variants throughout the full curricula; these mini-missions are not complete replacement courses |
 | Cinema | Travel MP4s and three still-only mission slots | Three actual 5-second motion clips; opening/success/backpack slots use verified local MP4s | Bespoke destination/mission footage and each specific earned artifact; the generic backpack clip does not display an invented reward |
 | Speech | Bounded eight-language server implementation deployed but disabled | Gateway preview authenticated project OIDC and read credits; credit below one $0.20 reservation stopped the diagnostic before any socket or inference. Its one-time flag is now disabled | Existing Gateway funding or native server credential, observed Realtime configuration acknowledgement, live audio QA in all eight languages and measured quotas, then activation |
-| Recordings | 176 gaps in intro/current Italian inventory; 785 existing MP3 files verified | PR #482 deployed 255 exact-text clips. The next reviewed lot adds 1,205 files for EN/ES/FR foundations and 13 Italian corrections, with exact playable-text coverage shown below; its CI and public delivery remain pending | Thirteen excerpts are still withheld in this frozen bundle; DE/PT/JA/ZH full-course coverage is a separate release. Native listening approval remains outstanding. Device voice is a disclosed preview for unresolved phrases |
+| Recordings | 176 gaps in intro/current Italian inventory; 785 existing MP3 files verified | PR #482 deployed 255 exact-text clips. PR #489 deployed another 1,205 files for EN/ES/FR foundations and 13 Italian corrections; all 1,460 public MP3s now match their reviewed hashes | Thirteen excerpts are still withheld in this frozen bundle; DE/PT/JA/ZH full-course coverage is a separate release. Native listening approval remains outstanding. Device voice is a disclosed preview for unresolved phrases |
 | Pass pilot | Local/test-only transaction rehearsal; production purchases off | Preserved; no live sale or price activation in this increment | Hosted account/Checkout/webhook/refund lifecycle, complete stage-depth audit, tax/access-channel verification and real authorized test evidence |
 | Daily loop | Italian preview foundation merged, gated | Public local review improves; gated server daily loop remains gated | Required ownership/import/reset, abuse controls, two-device and offline-delivery evidence before broad activation |
 | Teacher/Café | Existing links/invitation contracts | Existing destinations preserved, no transcript sharing | Consent-approved exact teacher brief, retention/expiry and real booking handoff validation |
@@ -266,7 +266,7 @@ workflows and both Vercel builds passed on `a47b152514b6958a666833997b2525656524
 PR #488 is deployed, and all nine public route/bundle/status checks passed.
 See [the continuity contract](yopratiqo-intro-continuity.md).
 
-## Tenth lot: foundation recordings prepared
+## Tenth lot: foundation recordings deployed
 
 The reviewed repository bundle adds 1,205 MP3 files, retaining all 255 previous
 records and bytes. It contains 1,192 accepted English, Spanish and Québec French
@@ -288,8 +288,31 @@ The existing foundation browser gate retains all actual written-assessment and
 draft-restoration cases, and adds four explicit playback controls per language:
 vocabulary, grammar example, reading and dialogue. Each requires the expected MP3
 and native completion, with no automatic playback or provider/microphone call.
-Exact-commit CI and subsequent public-byte delivery checks are required before
-this lot is reported as deployed.
+PR #489 passed all six triggered workflows and both Vercel builds on exact head
+`c9e6f9cf68421b91217659e26321152c91b4af87`. Chromium and macOS WebKit each
+completed the four real playback controls per foundation language, including native
+`playing` and `ended` events. The onboarding WebKit job initially hit the existing
+eight-second cinema loading fallback; one failed-job rerun on the unchanged head
+passed all eight interest and six cinema cases. The original failure was retained;
+no product guard or assertion was weakened. Production delivery verified all
+1,460 exact MP3 hashes, audio MIME and immutable caching (60,366,970 bytes), the
+three foundation homes and disabled live speech.
+
+## Eleventh lot: Japanese activity continuity prepared
+
+The existing twelve Japanese modules and both finals now preserve unfinished
+answers and checked attempts locally. Assistance remains attached to an attempt,
+even after hiding the hint or reloading. Two tabs merge distinct activities; Check
+rereads storage and rejects a stale rendered answer before grading or writing SRS.
+Explicit retry, content revision and reset each delimit an attempt. Historical
+results and access rules remain compatible. This is not authenticated backup.
+
+Recorded audio availability is shown before a click, and natural media completion
+is distinguished from interruption. No new Japanese recording is claimed by this
+lot. Focused store, renderer and audio regressions passed. The existing Eastern
+Chromium/macOS WebKit gate now exercises two actual pages, unfinished drafts,
+sticky assistance and checked restoration; exact-commit execution remains required
+before release. See [the continuity contract](yopratiqo-japanese-continuity.md).
 
 ## Speech funding observed in the account dashboard
 
@@ -367,5 +390,7 @@ release progresses; a prepared change is not yet a production release.
 - Ninth production deployment: `dpl_HHBKLS7Z1ori8V1fTewNsUpA3Czc`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All nine public checks passed: seven introduction pages, the served synchronization/refresh bundle and disabled speech. The initial five-minute runtime query returned no error/fatal logs.
 - Eighth release: [PR #487](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/487), merged at `a00016602f789d09b060f30119c86b610e2462d8` after all five triggered workflows and both Vercel builds passed. The actual Eastern browser screenshots and geometry checks confirm the mobile layout; shared foundation regressions also passed.
 - Eighth production deployment: `dpl_AtG9CUuxPAUrt7phzxyFjksqPPaF`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All nine public checks passed: five Mandarin pages, two Japanese pages, the served Mandarin layout bundle and disabled speech. No error/fatal logs were returned in the initial five-minute observation window.
+- Tenth release: [PR #489](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/489), merged at `9e9a30a9fab124bcd39a6d4ab96eda747b7ac0e9` after all six triggered workflows and both Vercel builds passed. Both foundation browser engines completed actual recorded playback; the unchanged onboarding WebKit failed-job rerun passed after one documented cinema loading timeout.
+- Tenth production deployment: `dpl_9C2jd2dbyjEAkZb3qX9m5DfvDc5Z`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 1,460 public MP3 hashes, MIME types and immutable cache headers passed (60,366,970 bytes), along with three course homes and disabled speech. The initial five-minute runtime query returned no error/fatal logs.
 - Morning verification: scheduled for November 25 around 08:00 Toronto; it must
   read current GitHub/deployment state and this ledger, not repeat stale claims.

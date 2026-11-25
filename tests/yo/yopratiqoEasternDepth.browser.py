@@ -71,7 +71,7 @@ def exercise_panel(page, course, exercise):
     return page.get_by_role("region", name=exercise["prompt"], exact=True)
 
 
-def select_recall(page, course, exercise):
+def select_recall(page, course, exercise, expected_draft=""):
     select = page.get_by_role("combobox", name="Step", exact=True)
     expect(select).to_be_visible()
     options = select.locator("option").evaluate_all(
@@ -82,9 +82,55 @@ def select_recall(page, course, exercise):
     select.select_option(matches[0]["value"])
     panel = exercise_panel(page, course, exercise)
     expect(panel).to_be_visible()
-    expect(panel.get_by_role("textbox", name=course["inputLabel"], exact=True)).to_have_value("")
+    expect(panel.get_by_role("textbox", name=course["inputLabel"], exact=True)).to_have_value(expected_draft)
     assert panel.get_by_text(exercise["answer"], exact=True).count() == 0, "the model is hidden before recall"
     return panel
+
+
+def review_snapshot(page):
+    return page.evaluate("""() => Object.fromEntries(Object.keys(localStorage).filter(key => key.startsWith('yo.review.v1.'))
+      .sort().map(key => [key,localStorage.getItem(key)]))""")
+
+
+def japanese_unchecked_resume(page, context, course, route, name, errors):
+    """Two real pages share drafts, not seeded grades; help survives before Check."""
+    first, second = course["module9"]["recalls"]
+    drafts = {exercise["id"]: exercise["answer"][:max(1, len(exercise["answer"]) // 2)] for exercise in [first, second]}
+    before = preserve_history(page, course)["results"]
+    reviews = review_snapshot(page)
+    panel = select_recall(page, course, first)
+    panel.get_by_role("textbox", name=course["inputLabel"], exact=True).fill(drafts[first["id"]])
+    other = context.new_page()
+    other.on("pageerror", lambda error: errors.append({"message": str(error), "stack": error.stack}))
+    try:
+        other.goto(route + "/" + course["module9"]["slug"] + "?lang=en")
+        player_ready(other)
+        expect(exercise_panel(other, course, first).get_by_role("textbox", name=course["inputLabel"], exact=True)).to_have_value(drafts[first["id"]])
+        second_panel = select_recall(other, course, second)
+        second_panel.get_by_role("textbox", name=course["inputLabel"], exact=True).fill(drafts[second["id"]])
+        second_panel.get_by_role("button", name=course["hintLabel"], exact=True).click()
+        expect(second_panel.locator("aside")).to_contain_text(second["hint"])
+        other.reload()
+        player_ready(other)
+        second_panel = exercise_panel(other, course, second)
+        expect(second_panel.get_by_role("textbox", name=course["inputLabel"], exact=True)).to_have_value(drafts[second["id"]])
+        expect(second_panel.locator("aside")).to_contain_text(second["hint"])
+        assert preserve_history(other, course)["results"] == before
+        assert review_snapshot(other) == reviews, "an unfinished helped draft must not create a review attempt"
+        capture(other, name + "-draft-tab-b-reloaded", second_panel)
+        # Hiding the panel is not a new attempt. The later real Check must remain aided.
+        second_panel.get_by_role("button", name=course["hintLabel"], exact=True).click()
+        expect(second_panel.locator("aside")).to_have_count(0)
+        page.reload()
+        player_ready(page)
+        expect(exercise_panel(page, course, second).get_by_role("textbox", name=course["inputLabel"], exact=True)).to_have_value(drafts[second["id"]])
+        select_recall(page, course, first, drafts[first["id"]])
+        assert preserve_history(page, course)["results"] == before
+        assert review_snapshot(page) == reviews
+        capture(page, name + "-draft-tab-a-reloaded", exercise_panel(page, course, first))
+    finally:
+        other.close()
+    return drafts
 
 
 def verify(browser, engine, course, width):
@@ -176,9 +222,10 @@ def verify(browser, engine, course, width):
             assert layout["rail"]["bottom"] <= layout["navigation"]["top"] + 1, layout
             assert layout["navigation"]["bottom"] <= layout["viewport"] + 1, layout
         preserve_history(page, course)
+        interrupted_drafts = japanese_unchecked_resume(page, context, course, route, name, errors) if course["language"] == "ja" else {}
         answered = []
         for index, exercise in enumerate(course["module9"]["recalls"]):
-            panel = select_recall(page, course, exercise)
+            panel = select_recall(page, course, exercise, interrupted_drafts.get(exercise["id"], ""))
             capture(page, name + f"-recall-{index + 1}-before", panel)
             assisted = index == 1
             if assisted:
@@ -196,6 +243,7 @@ def verify(browser, engine, course, width):
             expect(panel.get_by_text("Completed with help" if assisted else ("Correct in this exercise" if course["language"] == "ja" else "Correct answer"), exact=True)).to_be_visible()
             capture(page, name + f"-recall-{index + 1}-result", panel)
             answered.append(exercise["id"])
+            reviews_after_check = review_snapshot(page)
             page.reload()
             player_ready(page)
             expect(exercise_panel(page, course, exercise)).to_be_visible(timeout=45000)
@@ -203,6 +251,12 @@ def verify(browser, engine, course, width):
             after_reload = preserve_history(page, course)
             assert after_reload["results"][exercise["id"]] == record, "reload must neither regrade nor inflate attempt count"
             assert set(after_reload["results"]) - set(course["originalIds"]) == set(answered)
+            if course["language"] == "ja":
+                restored_panel = exercise_panel(page, course, exercise)
+                expect(restored_panel.get_by_role("textbox", name=course["inputLabel"], exact=True)).to_be_disabled()
+                expect(restored_panel.get_by_role("button", name="Check", exact=True)).to_have_count(0)
+                expect(restored_panel.get_by_role("button", name="Try again", exact=True)).to_be_visible()
+                assert review_snapshot(page) == reviews_after_check, "checked restoration must not append SRS evidence"
             capture(page, name + f"-recall-{index + 1}-reloaded")
 
         # Two checked answers are insufficient to complete all four new modules.
@@ -216,6 +270,7 @@ def verify(browser, engine, course, width):
                 "historicalResultsSeeded": len(course["originalIds"]), "historicalChecksEarnedThroughUI": 0,
                 "newResultsSeeded": 0, "newRecallChecksThroughUI": 2, "aidedRecallChecksThroughUI": 1,
                 "reloadResubmissions": 0, "legacyResultsPreserved": True, "newFinalRemainsLocked": True,
+                "unfinishedDraftsAcrossTwoTabs": course["language"] == "ja", "helpBeforeCheckRestored": course["language"] == "ja",
                 "microphoneOrAudioAttempts": len(media_attempts), "providerOrAudioRequests": len(forbidden),
                 "fullTwelveUnitCompletionTested": False, "passed": True}
     except Exception:

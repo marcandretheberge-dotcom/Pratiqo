@@ -27,7 +27,7 @@ establish equal difficulty, equivalent study time, CEFR certification or native
 audio quality. A reachable route and a passing unit test are different evidence
 from an exercised production purchase or a delayed independent learning result.
 
-## Current curriculum snapshot after PR #488
+## Current curriculum snapshot after PR #489
 
 The historical table below is retained for audit. The current authored catalogs
 have the following scope; equal unit counts do not imply equal difficulty,
@@ -58,13 +58,14 @@ missions across six themes, not 48 complete courses. The main-course goal/weekly
 pace recommendation and Japanese unfinished-answer continuity remain separate
 work; ordinary authenticated two-device restoration remains unfinished.
 
-### Recording release under review
+### Recording release deployed
 
-The prepared bundle adds 1,205 verified MP3s to the preceding 255, for 1,460 files
-in this repository revision. The release ledger, rather than this file count,
-records whether the new bytes are deployed and checked publicly.
+PR #489 added 1,205 verified MP3s to the preceding 255. All 1,460 files were
+verified publicly after deployment: exact hashes, audio MIME and immutable caching,
+60,366,970 bytes total. Both foundation browser engines also completed actual
+user-started playback. The release ledger records the exact commit and deployment.
 
-| Exact playable-text scope | Before this audio lot | Prepared bundle | Remaining |
+| Exact playable-text scope | Before this audio lot | Deployed bundle | Remaining |
 | --- | ---: | ---: | ---: |
 | English foundations | 1 / 423 | 420 / 423 | 3 |
 | Spanish foundations | 1 / 354 | 347 / 354 | 7 |
@@ -96,7 +97,7 @@ a common proficiency level.
 
 The practical gap remains reliable voice coverage, course-specific pronunciation
 review, useful progression from the learner's goals, delayed unseen transfer,
-authenticated continuity and substantially more authored depth. Polished films,+twelve units and local written finals alone do not close those gaps.
+authenticated continuity and substantially more authored depth. Polished films, twelve units and local written finals alone do not close those gaps.
 
 ## Baseline curriculum matrix
 
