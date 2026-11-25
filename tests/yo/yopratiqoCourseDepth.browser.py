@@ -64,12 +64,17 @@ def answer_assessment(page, assessment, name, capture_result=False):
 def verify(browser, engine, course, width):
     context = browser.new_context(viewport={"width": width, "height": 800}, is_mobile=True,
                                   has_touch=True, device_scale_factor=1, locale="en-CA", reduced_motion="reduce")
-    context.add_init_script("""window.__depthAudioEnded=0; window.__depthMic=0; window.__depthVoice=0;
+    context.add_init_script("""window.__depthAudioEnded=0; window.__depthAudioEvents=[]; window.__depthMic=0; window.__depthVoice=0;
       if(navigator.mediaDevices)Object.defineProperty(navigator.mediaDevices,'getUserMedia',{configurable:true,
         value:()=>{window.__depthMic++;return Promise.reject(new DOMException('Disabled in QA','NotAllowedError'));}});
       if(window.speechSynthesis)Object.defineProperty(window.speechSynthesis,'speak',{configurable:true,value:()=>window.__depthVoice++});
       const play=HTMLMediaElement.prototype.play;
-      HTMLMediaElement.prototype.play=function(){if(this.tagName==='AUDIO')this.addEventListener('ended',()=>window.__depthAudioEnded++,{once:true});return play.call(this);};""")
+      HTMLMediaElement.prototype.play=function(){if(this.tagName==='AUDIO'){
+        this.addEventListener('ended',()=>window.__depthAudioEnded++,{once:true,capture:true});
+        for(const type of ['loadedmetadata','playing','pause','ended','error'])this.addEventListener(type,()=>{
+          window.__depthAudioEvents.push({type,time:this.currentTime,duration:this.duration,ended:this.ended,src:this.currentSrc});
+        },{capture:true});
+      }return play.call(this);};""")
     errors, forbidden, audio = [], [], []
     def observe(request):
         url = urlsplit(request.url)
@@ -131,7 +136,8 @@ def verify(browser, engine, course, width):
     except Exception:
         page.screenshot(path=str(out / (name + "-failure.png")), full_page=False)
         (out / (name + "-failure.html")).write_text(page.content())
-        (out / (name + "-network.json")).write_text(json.dumps({"errors": errors, "forbidden": forbidden, "audio": audio}, indent=2))
+        (out / (name + "-network.json")).write_text(json.dumps({"errors": errors, "forbidden": forbidden, "audio": audio,
+            "mediaEvents": page.evaluate("window.__depthAudioEvents")}, indent=2))
         raise
     finally:
         context.close()

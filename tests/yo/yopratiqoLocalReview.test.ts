@@ -7,8 +7,8 @@ import { introCourses } from "../../lib/yo/shared/course";
 import { introReviewItems, recordIntroReviewAttempt } from "../../lib/yo/review/intro";
 import { courseReviewItems, japaneseReviewItems, mandarinReviewItems } from "../../lib/yo/review/adapters";
 import { personalizedItalianUnits } from "../../lib/yo/personalized/courseData";
-import { germanCourseUnits } from "../../lib/yo/german/courseData";
-import { portugueseCourseUnits } from "../../lib/yo/portuguese/courseData";
+import { germanCourseUnits, germanFinal, germanExtendedFinal } from "../../lib/yo/german/courseData";
+import { portugueseCourseUnits, portugueseFinal, portugueseExtendedFinal } from "../../lib/yo/portuguese/courseData";
 import { japaneseCourseUnits, japaneseFinalAssessment } from "../../lib/yo/japaneseCourse";
 import { mandarinUnits, mandarinFinal } from "../../lib/yo/mandarin/course";
 
@@ -170,15 +170,16 @@ tests.push(["intro adapters retain actual authored content and exclude diagnosti
   }
 }]);
 
-tests.push(["reusable course adapters cover authored practice without pretending to connect old stores", () => {
+tests.push(["reusable course adapters cover every authored practice item and exclude assessments", () => {
   const assessmentIds = new Set([
     ...[...personalizedItalianUnits, ...germanCourseUnits, ...portugueseCourseUnits].flatMap((unit) => unit.quiz.questions.map((question) => question.id)),
     ...japaneseFinalAssessment.map((question) => question.id), ...mandarinFinal.exercises.map((question) => question.id),
+    ...[germanFinal, germanExtendedFinal, portugueseFinal, portugueseExtendedFinal].flatMap(assessment => assessment.questions.map(question => question.id)),
   ]);
   const catalogs = [
     [courseReviewItems("it", personalizedItalianUnits), 228],
-    [courseReviewItems("de", germanCourseUnits), 148],
-    [courseReviewItems("pt-BR", portugueseCourseUnits), 148],
+    [courseReviewItems("de", germanCourseUnits), 232],
+    [courseReviewItems("pt-BR", portugueseCourseUnits), 232],
     [japaneseReviewItems(japaneseCourseUnits), 88],
     [mandarinReviewItems(mandarinUnits), 104],
   ] as const;

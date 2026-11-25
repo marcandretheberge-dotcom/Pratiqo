@@ -117,7 +117,7 @@ function RecordedModuleAudio({ text, locale, onListen, label, autoPlay = false }
       audio.removeEventListener("waiting", onWaiting);
       audio.removeEventListener("stalled", onWaiting);
       audio.removeEventListener("ended", onEnded);
-      audio.removeEventListener("pause", onEnded);
+      audio.removeEventListener("pause", onPause);
       audio.removeEventListener("error", onError);
     } };
     const isCurrent = () => session.current === active;
@@ -132,13 +132,16 @@ function RecordedModuleAudio({ text, locale, onListen, label, autoPlay = false }
     };
     const onWaiting = () => { if (!isCurrent()) return; setState("loading"); armTimeout(); };
     const onEnded = () => { if (isCurrent()) stop(); };
+    // Browsers dispatch pause just before ended at the natural end of a clip.
+    // Keep that resource intact until ended, rather than cancelling its last event.
+    const onPause = () => { if (!audio.ended) onEnded(); };
     const onError = () => fail();
     session.current = active;
     audio.addEventListener("playing", onPlaying);
     audio.addEventListener("waiting", onWaiting);
     audio.addEventListener("stalled", onWaiting);
     audio.addEventListener("ended", onEnded);
-    audio.addEventListener("pause", onEnded);
+    audio.addEventListener("pause", onPause);
     audio.addEventListener("error", onError);
 
     // Study panels stay mounted to preserve drafts. Stop if an ancestor becomes hidden.
