@@ -10,8 +10,7 @@ export function MarketplaceFinalCta({ className }: { className?: string }) {
   return (
     <section className={cn("border-t border-[#E8E6DF] bg-[#FAFCFB]", className)}>
       <div className="mx-auto max-w-[1280px] px-4 py-12 text-center sm:px-6 sm:py-16">
-        <h2 className="text-2xl font-bold tracking-tight text-[#2C2C2A] sm:text-3xl">{t("finalCtaTitle")}</h2>
-        <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-neutral-700">{t("finalCtaSubtitle")}</p>
+        <h2 className="text-2xl font-bold tracking-normal text-[#2C2C2A] sm:text-3xl">{t("landingHomepageNextStep")}</h2>
         <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
           <Link
             href="/login?next=/student/search"

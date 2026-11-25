@@ -67,6 +67,7 @@ export const ANALYTICS_EVENTS = {
   yopratiqoLessonStarted: "yopratiqo_lesson_started",
   yopratiqoLessonCompleted: "yopratiqo_lesson_completed",
   yopratiqoPrintableOpened: "yopratiqo_printable_opened",
+  yopratiqoPassJourney: "yopratiqo_pass_journey",
 
   // Admin (zero PII in properties — see helpers below)
   adminUsersViewed: "admin_users_viewed",
@@ -187,6 +188,10 @@ export type AdminRoleChangeProps = {
 // Every helper goes through `capturePostHogEvent`, which re-sanitizes
 // properties and no-ops when PostHog env is missing.
 
+export type PassTransition="offer_view"|"free_final"|"checkpoint_win"|"pass_redeemed"|"checkout_start"|"purchase_confirmed"|"covered_mission_started"|"covered_mission_completed";
+export function trackPassPilot(transition:PassTransition,offer?:"single"|"explorer"|"italy"){
+  track(ANALYTICS_EVENTS.yopratiqoPassJourney,{transition,course:"it",environment:"test",...(offer?{offer}:{})});
+}
 function track<P extends Record<string, unknown>>(name: AnalyticsEventName, props: P): void {
   capturePostHogEvent(name, props as Record<string, unknown>);
 }

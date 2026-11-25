@@ -1,0 +1,77 @@
+name: Yoppo onboarding motion
+on:
+  pull_request:
+    paths:
+      - 'app/yo/langues/layout.tsx'
+      - 'components/yo/onboarding/**'
+      - 'components/yo/personalized/ItalianOnboarding.tsx'
+      - 'components/yo/personalized/ItalianLearningEntry.tsx'
+      - 'components/yo/shared/IntroWelcome.tsx'
+      - 'components/yo/shared/SharedIntro.tsx'
+      - 'public/companion/travel/journal/**'
+      - 'tests/yo/yopratiqoJournal.browser.py'
+      - 'tests/yo/yopratiqoTravelFilms.browser.py'
+      - 'tests/yo/yopratiqoTravelFilmRoutes.test.ts'
+      - 'components/yo/travel/**'
+      - 'lib/yo/travelCinema.ts'
+      - 'components/yo/italian/travel/ItalianTravelNavigator.tsx'
+      - 'public/companion/travel/films/**'
+      - 'app/yo/langues/espagnol/pays/republique-dominicaine/intro/page.tsx'
+      - 'scripts/prepare_yo_shared_review.ts'
+      - '.github/workflows/yo-onboarding-journal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  journal:
+    name: ${{ matrix.check }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, browser: chromium, check: journal }
+          - { os: macos-15, browser: webkit, check: "Mobile WebKit (macOS)" }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: local-ui-test
+      YO_JOURNAL_QA_DIR: /tmp/yoppo-journal-qa
+      YO_JOURNAL_BROWSERS: ${{ matrix.browser }}
+      YO_JOURNAL_VIDEO: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps "$YO_JOURNAL_BROWSERS"
+      - name: Play the onboarding and travel films on the course routes
+        run: |
+          set -eu
+          mkdir -p "$YO_JOURNAL_QA_DIR"
+          node --import tsx scripts/prepare_yo_shared_review.ts
+          ./node_modules/.bin/next dev .qa-guided --webpack --hostname 127.0.0.1 --port 3246 > "$YO_JOURNAL_QA_DIR/server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          curl --retry 30 --retry-connrefused --retry-delay 1 -fsS -o /dev/null http://127.0.0.1:3246/companion/travel/journal/yoppo-journal.webp
+          node --import tsx tests/yo/yopratiqoTravelFilmRoutes.test.ts
+          python tests/yo/yopratiqoJournal.browser.py
+          python tests/yo/yopratiqoTravelFilms.browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: journal-browser-evidence-${{ matrix.browser }}
+          path: /tmp/yoppo-journal-qa
+          retention-days: 7

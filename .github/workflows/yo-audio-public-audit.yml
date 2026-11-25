@@ -1,0 +1,35 @@
+name: Yo public audio audit
+on:
+  push:
+    branches: [feat/yo-sound-audio-review-20261108]
+    paths: [scripts/audit_yo_audio.ts, .github/workflows/yo-audio-public-audit.yml]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      YO_QA_DIR: /tmp/yo-audio-audit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Public MP3 verification, six concurrent GETs, no upload or TTS
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$YO_QA_DIR"
+          git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
+          node --import tsx scripts/audit_yo_audio.ts --live 2>&1 | tee "$YO_QA_DIR/audit.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-public-audio-audit
+          path: /tmp/yo-audio-audit
+          retention-days: 7

@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
+import { assertItalianLearningSurface, italianLearningFiles } from "../helpers/italianLearningScope";
+import { assertJourneyLearningSurface, journeyLearningFiles } from "../helpers/italianLearningScope";
+import { assertYoPublicSeoSurface, yoPublicSeoFiles } from "../helpers/yoPublicSeoScope";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -726,6 +729,18 @@ test("branch did not touch restricted systems", () => {
 
   const violations: string[] = [];
   for (const file of changed) {
+    if (yoPublicSeoFiles.has(file)) {
+      assertYoPublicSeoSurface(file, read(file));
+      continue;
+    }
+    if (italianLearningFiles.has(file)) {
+      assertItalianLearningSurface(file, read(file));
+      continue;
+    }
+    if (journeyLearningFiles.has(file)) {
+      assertJourneyLearningSurface(file, read(file));
+      continue;
+    }
     if (hasOnlyGuidedStripeReturnChange(file)) continue;
     if (hasOnlyBookingContactChange(file)) continue;
     if (allowedYoDisclosureFiles.has(file)) continue;
@@ -747,6 +762,14 @@ test("branch did not touch restricted systems", () => {
     if (allowedTeacherPlannedPackageDashboardFiles.has(file)) continue;
     if (allowedPlannedPackageDashboardPolishFiles.has(file)) continue;
     if (allowedTeacherDiscoveryFirstMigrationFiles.has(file)) continue;
+    if (file === "supabase/migrations/20261124155218_group_session_listing_access.sql") {
+      const migration = read(file);
+      assert.match(migration, /revoke all on public\.group_registrations, public\.group_sessions from public, anon, authenticated/i);
+      assert.match(migration, /create view public\.group_sessions_public with \(security_invoker = true/i);
+      assert.match(migration, /r\.student_id = \(select auth\.uid\(\)\)/i);
+      assert.doesNotMatch(migration, /disable row level security|\b(?:booking_payments|bookings|refunds)\b|grant (?:all|execute) on (?:function )?group_session_access\.[^;]+ to (?:anon|public)\b/i);
+      continue;
+    }
     // Approved learner P0 migrations: exact files with safety assertions, no wildcard.
     if (file === "supabase/migrations/129_learner_demand_consent.sql") {
       const migration = read(file);

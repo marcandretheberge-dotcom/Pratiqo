@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { hasOnlyBookingContactChange } from "../helpers/contactAddressScope";
+import { hasOnlyReviewedYoNoticeMove, isReviewedYoNoticeMove, reviewedYoNoticeMoves } from "../helpers/yoNoticeMoveScope";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -98,6 +99,17 @@ test("privacy policy exposes V9 retention and provider-location disclosures acro
   }
 });
 
+test("PR 434 notice relocation exception rejects altered code, other bases and other paths", () => {
+  for (const [file, [before]] of Object.entries(reviewedYoNoticeMoves)) {
+    const contents = readFileSync(join(root, file));
+    // Current source need not stay at this historic version; only the exact pair is allowed.
+    assert.equal(isReviewedYoNoticeMove(file, "0".repeat(40), contents), false);
+    assert.equal(isReviewedYoNoticeMove(file, before, Buffer.concat([contents, Buffer.from("\nfetch('/api/stripe/checkout');") ])), false);
+    assert.equal(isReviewedYoNoticeMove(`../${file}`, before, contents), false);
+    assert.equal(isReviewedYoNoticeMove("app/api/stripe/checkout/route.ts", before, contents), false);
+  }
+});
+
 test("live legal sync branch did not touch restricted systems", () => {
   const changed = changedFilesAgainstMain();
   if (!changed) return;
@@ -158,6 +170,7 @@ test("live legal sync branch did not touch restricted systems", () => {
     "lib/seo/teacherPublicProfileData.ts",
     "lib/seo/teacherPublicProfileLabels.ts",
     "lib/seo/teacherSeoPublication.ts",
+    "lib/seo/teacherSeoPublication.ts",
     "lib/yo/lessonDeckVisualContract.ts",
     "supabase/migrations/084_student_onboarding_consents.sql",
     "supabase/migrations/085_harden_student_onboarding_consents_rls.sql",
@@ -176,6 +189,7 @@ test("live legal sync branch did not touch restricted systems", () => {
   const violations: string[] = [];
   for (const file of changed) {
     if (hasOnlyBookingContactChange(file)) continue;
+    if (hasOnlyReviewedYoNoticeMove(file)) continue;
     if (allowedMainMergeBranchFiles.has(file)) continue;
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {

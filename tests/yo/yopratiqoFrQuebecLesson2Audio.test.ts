@@ -692,8 +692,18 @@ test("the audio generation script remains server-only and is not imported by the
   );
   assert.match(
     scriptSrc,
-    /process\.env\.OPENAI_API_KEY/,
-    "the audio generation script must still read OPENAI_API_KEY (server-only secret)",
+    /env:\s*Readonly<Record<string, string \| undefined>>\s*=\s*process\.env/,
+    "the generator must default its injectable server environment to process.env",
+  );
+  assert.match(
+    scriptSrc,
+    /const openAiApiKey = env\.OPENAI_API_KEY\?\.trim\(\) \?\? ""/,
+    "the generator must read the server-only OPENAI_API_KEY from that environment",
+  );
+  assert.doesNotMatch(
+    stripComments(scriptSrc),
+    /NEXT_PUBLIC_OPENAI_API_KEY|NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY/,
+    "server secrets must never fall back to browser-exposed variables",
   );
 });
 

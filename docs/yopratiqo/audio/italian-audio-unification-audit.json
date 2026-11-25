@@ -1,0 +1,181 @@
+{
+  "followUp": {
+    "checkedAtUtc": "2026-11-05T02:38:19.966Z",
+    "scope": "Current intro, Bologna and foundation manifest paths, deduplicated by storage path",
+    "publicReadOnly": { "referencedUnique": 905, "existingVerified": 877, "missingBologna": 26, "newReadingPaths": 2 },
+    "isolatedLocalRepair": { "generated": 28, "uploaded": 28, "verified": 28, "failed": 0, "model": "gpt-4o-mini-tts", "voice": "alloy", "publicWrites": 0 },
+    "browserDecoding": { "method": "Web Audio decodeAudioData of every local MP3", "decoded": 905, "failed": 0, "roundedTotalSeconds": 2662 },
+    "limits": "Local preview only. Human pronunciation review and approved public publication remain required. Historical counts below are not a claim that production has been repaired."
+  },
+  "baseCommit": "d8a6eaa03086b519f46256067cc4fe0f9c93877f",
+  "checkedAtUtc": "2026-11-05T02:08:53.014157+00:00",
+  "method": "Public GET, response status and MIME; bodies discarded. One failure body confirmed Object not found / NoSuchKey. No perceptual or browser-playback review.",
+  "scope": "825 newly generated course recordings plus 48 Bologna recordings. Intro paths and additional reused intro recordings were not included.",
+  "counts": {
+    "courseExpected": 825,
+    "courseHttp200Audio": 825,
+    "bolognaExpected": 48,
+    "bolognaHttp200Audio": 22,
+    "bolognaUnavailable": 26
+  },
+  "missingBologna": [
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/non-ho-capito-6ce8893ccfb6.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Non ho capito."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/un-panino-8c96c40359d2.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Un panino."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/due-euro-09c9cfa42a71.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Due euro."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/tre-euro-e-cinquanta-da1969ff0b46.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Tre euro e cinquanta."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/dov-e-la-piazza-d5ca2179abbb.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Dov’è la piazza?"
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/dov-e-il-mercato-83022a049787.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Dov’è il mercato?"
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/sempre-dritto-9d71551e0551.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Sempre dritto."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/sentence/vorrei-una-bottiglia-d-acqua-5e74e8f25291.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Vorrei una bottiglia d’acqua."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/sentence/un-panino-una-bottiglia-d-acqua-fdd5910fc3dc.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Un panino. Una bottiglia d’acqua."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/sentence/scusi-non-ho-capito-puo-ripetere-per-favore-856abcabc791.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Scusi, non ho capito. Può ripetere, per favore?"
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/vorrei-un-te-per-favore-e2745c54e62b.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Vorrei un tè, per favore."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/sentence/due-caffe-e-una-bottiglia-d-acqua-per-favore-4891dd49a4bb.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Due caffè e una bottiglia d’acqua, per favore."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/vorrei-un-panino-per-favore-8c1b75cc879d.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Vorrei un panino, per favore."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/al-banco-o-al-tavolo-ecf3d121cb3d.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Al banco o al tavolo?"
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/al-banco-per-favore-5e47d54ec934.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Al banco, per favore."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/ecco-il-panino-8e96516a7987.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Ecco il panino!"
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/sentence/sono-tre-euro-e-cinquanta-d41177e973ca.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Sono tre euro e cinquanta."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/scusi-dov-e-il-mercato-b4072a51a8de.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Scusi, dov’è il mercato?"
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/la-piazza-chiediamo-6f04543e4979.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "La piazza? Chiediamo!"
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/scusi-dov-e-la-piazza-c944ec8be3fd.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Scusi, dov’è la piazza?"
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/sempre-dritto-poi-a-destra-1244ffadd103.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Sempre dritto, poi a destra."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/una-bottiglia-d-acqua-per-favore-7fd2d2cee89b.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Una bottiglia d’acqua, per favore."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/vorrei-una-bottiglia-d-acqua-per-favore-00cadd271cb3.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Vorrei una bottiglia d’acqua, per favore."
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/ecco-l-acqua-f2e5fd400626.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Ecco l’acqua!"
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/phrase/puo-ripetere-add083f6d794.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Può ripetere?"
+    },
+    {
+      "path": "yo/it/italian-bologna-a1/v1/italian-standard/dialogue/prego-buona-giornata-efb70108a57e.mp3",
+      "response": "400 application/json; charset=utf-8",
+      "exit": 0,
+      "text": "Prego! Buona giornata!"
+    }
+  ],
+  "remediation": "Generate and publish missing recordings with the existing Italian audio pipeline, then repeat public verification and browser listening checks. No recordings were generated or uploaded in this execution."
+}
+

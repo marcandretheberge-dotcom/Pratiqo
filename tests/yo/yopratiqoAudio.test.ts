@@ -35,6 +35,7 @@
  */
 
 import assert from "node:assert/strict";
+import { parseCli, resolveConfig } from "../../scripts/generate-yopratiqo-audio";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -320,8 +321,13 @@ test("audioUrl helper uses NEXT_PUBLIC_SUPABASE_URL and never the service-role k
 
 // ── 4. Generator script — server-only secrets, idempotent, OpenAI ────
 test("generator script reads OPENAI_API_KEY and SUPABASE_SERVICE_ROLE_KEY (server-only)", () => {
-  assert.match(scriptSrc, /process\.env\.OPENAI_API_KEY/);
-  assert.match(scriptSrc, /process\.env\.SUPABASE_SERVICE_ROLE_KEY/);
+  const config = resolveConfig(parseCli([]), {
+    NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+    OPENAI_API_KEY: "test-openai-key",
+    SUPABASE_SERVICE_ROLE_KEY: "test-storage-key",
+  });
+  assert.equal(config.openAiApiKey, "test-openai-key");
+  assert.equal(config.serviceRoleKey, "test-storage-key");
 });
 
 test("generator script targets the documented OpenAI TTS endpoint", () => {
@@ -331,12 +337,12 @@ test("generator script targets the documented OpenAI TTS endpoint", () => {
 });
 
 test("generator script is idempotent: skip-if-exists and force flag", () => {
-  // The skip path lists the bucket / parent path before generating.
-  // Allow whitespace + newlines between `.from(...)` and `.list(...)`
-  // because Prettier may break the chain across lines.
-  assert.match(scriptSrc, /\.from\(\s*bucket\s*\)[\s\S]{0,40}\.list\(/);
-  // Force flag bypasses the skip.
-  assert.match(scriptSrc, /opts\.force|--force/);
+  // Detailed mocked skip, upload-collision and cache-resume behavior is exercised
+  // in yopratiqoAudioGenerator.test.ts. Keep the production adapter connected.
+  assert.match(scriptSrc, /supabase\.storage\.from\(cfg\.bucket\)/);
+  assert.match(scriptSrc, /bucket\.list\(/);
+  assert.match(scriptSrc, /!opts\.force && await storage!\.exists/);
+  assert.match(scriptSrc, /storage!\.upload\(item\.storagePath, cached\.bytes, opts\.force\)/);
 });
 
 test("generator script supports a dry-run flag", () => {
@@ -344,8 +350,9 @@ test("generator script supports a dry-run flag", () => {
 });
 
 test("generator script exits non-zero on missing required config", () => {
-  assert.match(scriptSrc, /process\.exit\(\s*1\s*\)/);
-  assert.match(scriptSrc, /failFatal/);
+  assert.throws(() => resolveConfig(parseCli([]), {}), /NEXT_PUBLIC_SUPABASE_URL/);
+  assert.match(scriptSrc, /process\.exitCode = 1/);
+  assert.match(scriptSrc, /main\(\)\.catch/);
 });
 
 test("generator script logs skipped, generated, and failed counts", () => {
@@ -458,3 +465,4 @@ run().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+

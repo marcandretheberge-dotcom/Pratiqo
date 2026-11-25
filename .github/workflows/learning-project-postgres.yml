@@ -4,7 +4,7 @@ on:
     paths:
       - 'supabase/migrations/135_student_learning_projects.sql'
       - 'supabase/migrations/136_learning_project_save_and_directory.sql'
-      - 'tests/students/learningProjectQuotaPostgres.cjs'
+      - 'tests/students/learningProjectQuotaPostgres.mjs'
       - 'tests/students/fixtures/learning-project-schema.json'
       - '.github/workflows/learning-project-postgres.yml'
 permissions:
@@ -30,4 +30,4 @@ jobs:
       - name: Restore affected schema and verify concurrent quota
         env:
           TEST_POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
-        run: node tests/students/learningProjectQuotaPostgres.cjs
+        run: node tests/students/learningProjectQuotaPostgres.mjs

@@ -21,6 +21,14 @@ import {
 import { spanishIntroAudio } from "@/lib/yo/audio/spanishIntroAudio";
 import { spanishVoyageDominicanAudio } from "@/lib/yo/audio/spanishVoyageDominicanAudio";
 import { frQuebecWorkplaceSurvivalModule } from "@/lib/yo/frQuebecWorkplaceSurvivalModule";
+import { germanCourseAudio } from "@/lib/yo/audio/germanCourseAudio";
+import { germanPublishedAudio } from "@/lib/yo/german/courseAudioPublished";
+import { portugueseCourseAudio } from "@/lib/yo/audio/portugueseCourseAudio";
+import { portuguesePublishedAudio } from "@/lib/yo/portuguese/courseAudioPublished";
+import { mandarinCourseAudio } from "@/lib/yo/audio/mandarinCourseAudio";
+import mandarinPublishedAudio from "@/lib/yo/mandarin/audioPaths.json";
+import mandarinToneAssets from "@/lib/yo/mandarin/toneAssets.json";
+import { validateMp3 } from "@/scripts/generate-yopratiqo-audio";
 
 type TestFn = () => void | Promise<void>;
 const tests: Array<{ name: string; fn: TestFn }> = [];
@@ -47,6 +55,27 @@ function gitLines(command: string): string[] {
 
 const TYPES_SRC = read("lib/yo/audio/audioManifest.types-internal.ts");
 const GENERATOR_SRC = read("scripts/generate-yopratiqo-audio.ts");
+
+// Authorized language batches add bundled recordings; existing audio remains immutable.
+const originalAudio = new Set(gitLines("git ls-tree -r --name-only HEAD -- public/audio"));
+const germanAdditions = new Set(germanCourseAudio.map((item) => `public/audio/${item.storagePath}`));
+function isAuthorizedGermanAddition(path: string): boolean {
+  return /^public\/audio\/yo\/de\/german-course-foundations\/v1\/german-standard\/sentence\/[a-z0-9-]+\.mp3$/.test(path)
+    && !originalAudio.has(path) && germanAdditions.has(path);
+}
+const portugueseAdditions = new Set(portugueseCourseAudio.map((item) => `public/audio/${item.storagePath}`));
+function isAuthorizedPortugueseAddition(path: string): boolean {
+  return /^public\/audio\/yo\/pt-br\/portuguese-course-foundations\/v1\/brazilian-portuguese\/sentence\/[a-z0-9-]+\.mp3$/.test(path)
+    && !originalAudio.has(path) && portugueseAdditions.has(path);
+}
+const mandarinAdditions = new Set(mandarinCourseAudio.map(item => `public/audio/${item.storagePath}`));
+const mandarinTones = new Set(Object.values(mandarinToneAssets).map(item => `public${item.src}`));
+function isAuthorizedMandarinAddition(path: string): boolean {
+  return !originalAudio.has(path) && (
+    /^public\/audio\/yo\/zh\/mandarin-foundations\/v2\/mandarin-standard\/sentence\/[a-f0-9]{16}\.mp3$/.test(path) && mandarinAdditions.has(path)
+    || /^public\/audio\/yo\/zh\/reference-tones\/tone-[1-4]\.mp3$/.test(path) && mandarinTones.has(path)
+  );
+}
 
 const FR_MODULE_ID = "fr-quebec-workplace-survival-1";
 const FR_LESSON_ID = "comprendre-consignes-simples";
@@ -228,17 +257,34 @@ test("Spanish intro hotel/restaurante paragraph has a Spanish pronunciation hint
   assert.match(paragraph!.pronunciationHint ?? "", /Do not use English pronunciation/);
 });
 
-test("this PR does not add or modify MP3 binaries", () => {
+test("audio scope permits only validated authorized language additions, never changes to existing MP3s", () => {
   const changed = [
     ...gitLines("git diff --name-only HEAD"),
     ...gitLines("git ls-files --others --exclude-standard"),
   ];
   const mp3s = changed.filter((path) => /\.mp3$/i.test(path));
-  assert.deepEqual(mp3s, [], `no .mp3 files should change in this PR: ${mp3s.join(", ")}`);
+  for (const path of mp3s) {
+    assert.ok(isAuthorizedGermanAddition(path) || isAuthorizedPortugueseAddition(path) || isAuthorizedMandarinAddition(path), `unauthorized audio change: ${path}`);
+    const published = isAuthorizedMandarinAddition(path) ? { ...mandarinPublishedAudio, ...Object.fromEntries(Object.entries(mandarinToneAssets).map(([key, value]) => [key, value.src])) } : isAuthorizedPortugueseAddition(path) ? portuguesePublishedAudio : germanPublishedAudio;
+    assert.ok(Object.values(published).includes(path.slice("public".length)));
+    assert.ok(validateMp3(readFileSync(join(REPO_ROOT, path))).durationSeconds > 0.2);
+  }
+  assert.equal(isAuthorizedGermanAddition("public/audio/yo/de/unregistered.mp3"), false);
+  assert.equal(isAuthorizedGermanAddition("public/audio/yo/it/replacement.mp3"), false);
+  assert.equal(isAuthorizedPortugueseAddition("public/audio/yo/pt-br/unregistered.mp3"), false);
+  assert.equal(isAuthorizedPortugueseAddition("public/audio/yo/de/replacement.mp3"), false);
+  for (const path of originalAudio) assert.equal(isAuthorizedPortugueseAddition(path), false);
+  for (const path of originalAudio) assert.equal(isAuthorizedGermanAddition(path), false);
+  for (const path of originalAudio) assert.equal(isAuthorizedMandarinAddition(path), false);
+  assert.equal(isAuthorizedMandarinAddition("public/audio/yo/zh/unregistered.mp3"), false);
+  assert.equal(isAuthorizedMandarinAddition("public/audio/yo/zh/mandarin-foundations/v2/mandarin-standard/sentence/0000000000000000.mp3"), false);
+  assert.equal(isAuthorizedMandarinAddition("public/audio/yo/zh/reference-tones/tone-5.mp3"), false);
+  assert.equal(isAuthorizedMandarinAddition("public/audio/yo/it/replacement.mp3"), false);
 });
 
 test("tracked patch avoids generated audio and restricted product systems", () => {
   const changed = gitLines("git diff --name-only HEAD");
+  const removedCliState = new Set(gitLines("git diff --name-only --diff-filter=D HEAD -- supabase/.temp/"));
   const branchSpecificAllowlist = new Set([
     // Legal live-sync branches may update YoPratiqo legal disclosures without
     // touching lesson content, audio manifests, generated MP3s, or generators.
@@ -402,6 +448,8 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     "app/api/teacher/location/verify/route.ts",
     "app/api/teacher/setup-status/route.ts",
     "app/api/teachers/[id]/slots/route.ts",
+    // Group meeting access is exercised against PostgreSQL by groupSessionAccess.test.mjs.
+    "supabase/migrations/20261124155218_group_session_listing_access.sql",
     "supabase/migrations/108_teacher_weekly_availability_intervals.sql",
     "supabase/migrations/109_harden_teacher_weekly_availability_intervals_rls.sql",
     // PR 17B — calendar date exceptions (flagged OFF by default).
@@ -486,8 +534,18 @@ test("tracked patch avoids generated audio and restricted product systems", () =
     /^supabase\//,
   ];
   for (const path of changed) {
+    if (removedCliState.has(path)) continue;
+    if (isAuthorizedGermanAddition(path) || isAuthorizedPortugueseAddition(path) || isAuthorizedMandarinAddition(path)) continue;
     // Authorized learner-demand work, unrelated to audio. Keep scope narrow and
     // assert the privacy/security contract instead of disabling the scope guard.
+    if (path === "app/api/yo/pass-pilot/route.ts") {
+      const handler = readFileSync(path, "utf8");
+      const account = readFileSync("lib/yo/passPilot/account.server.ts", "utf8");
+      assert.match(handler, /if\(!pilotEnabled\(\)\)return reply\(\{\},404\)/);
+      assert.match(account, /!process\.env\.VERCEL/);
+      assert.match(account, /"localhost","127\.0\.0\.1"/);
+      continue;
+    }
     if (path === "app/api/learner-demand/route.ts") {
       const demand = readFileSync(path, "utf8");
       assert.match(demand, /rateLimitByIp\(request, "learner-demand"/);

@@ -1,0 +1,82 @@
+name: Yo approved visuals review
+on:
+  push:
+    branches: [feat/yo-approved-visuals-20261107]
+permissions:
+  contents: read
+concurrency:
+  group: yo-approved-visuals-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      YO_QA_DIR: /tmp/yo-artwork-review
+      YO_ART_OUTPUT: /tmp/yo-artwork-review
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Types, lint and artwork invariants
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npx eslint components/yo/personalized/VocabularyScene.tsx components/yo/personalized/VisualVocabulary.tsx lib/yo/personalized/approvedVocabulary.ts lib/yo/personalized/types.ts lib/yo/personalized/courseData.ts tests/yo/yopratiqoApprovedArtwork.test.tsx
+          node --import tsx tests/yo/yopratiqoApprovedArtwork.test.tsx
+          git diff --check ade5bb6072572c2f49e79f158d63b825b5fa8266
+      - name: Player, sound, privacy and launch regressions
+        run: |
+          set -euo pipefail
+          node --import tsx tests/yo/yopratiqoFeedback.test.tsx
+          node --import tsx tests/yo/yopratiqoInterfaceNotices.test.tsx
+          node --import tsx tests/yo/yopratiqoGuidedItalian.test.ts
+          node --import tsx tests/yo/yopratiqoGuidedItalianPlayer.test.tsx
+          node --import tsx tests/yo/yopratiqoPersonalizedItalian.test.ts
+          node --import tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx
+          npm run test:yo-continuity
+          npm run test:launch-critical
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Real routes and individual illustrations
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
+        run: |
+          set -euo pipefail
+          node --import tsx scripts/prepare_yo_personalized_review.ts
+          ./node_modules/.bin/next dev .qa-guided --webpack -p 3129 > "$YO_QA_DIR/server.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail http://127.0.0.1:3129/yo/langues/italien/parcours?lang=fr >/dev/null; then break; fi
+            sleep 2
+          done
+          python tests/yo/yopratiqoApprovedArtwork.browser.py 2>&1 | tee "$YO_QA_DIR/artwork.log"
+          python tests/yo/yopratiqoPersonalizedItalian.browser.py 2>&1 | tee "$YO_QA_DIR/course.log"
+      - name: Exact source evidence
+        if: always()
+        run: |
+          mkdir -p "$YO_QA_DIR"
+          git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
+          git ls-files -s public/images/yo/vocabulary components/yo/personalized/VocabularyScene.tsx components/yo/personalized/VisualVocabulary.tsx lib/yo/personalized/approvedVocabulary.ts lib/yo/personalized/courseData.ts lib/yo/personalized/types.ts > "$YO_QA_DIR/source.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-approved-artwork-review
+          path: /tmp/yo-artwork-review
+          retention-days: 7

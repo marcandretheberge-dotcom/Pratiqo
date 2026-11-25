@@ -1,0 +1,2562 @@
+{
+  "method": {
+    "library": "faster-whisper",
+    "version": "1.2.1",
+    "device": "cpu",
+    "compute_type": "int8",
+    "language": "es",
+    "initial_prompt": null,
+    "hotwords": null,
+    "expected_text_supplied_to_recognizer": false,
+    "limitation": "Machine transcription only; no perceptual listening."
+  },
+  "full_take_reports": {
+    "staff_base": {
+      "role": "staff",
+      "source": "staff-original.wav",
+      "source_sha256": "6d2f4fdd7146887f348afed2daa4331050506cac8f4564aad85ee1ed7141c76e",
+      "source_format": "MP3, despite provider URL and local original .wav suffix",
+      "model": "Systran/faster-whisper-base",
+      "implementation": {
+        "faster_whisper": "1.2.1",
+        "ctranslate2": "4.8.4"
+      },
+      "settings": {
+        "device": "cpu",
+        "compute_type": "int8",
+        "cpu_threads": 4,
+        "language": "es",
+        "beam_size": 5,
+        "temperature": 0.0,
+        "condition_on_previous_text": false,
+        "vad_filter": false,
+        "initial_prompt": null,
+        "word_timestamps": true
+      },
+      "prompt_independence": "No expected transcript, initial prompt, hotwords, or provider word timestamps were supplied to ASR. The approved script was compared only after inference.",
+      "decode": "FFmpeg to 16kHz mono float32, supplied as NumPy input to avoid faster-whisper1.2.1/PyAV19 metadata_errors incompatibility; original file unchanged.",
+      "asr_audio_duration_seconds": 23.6930625,
+      "asr_language": "es",
+      "inference_seconds": 1.15,
+      "expected_text": "Los taxis están afuera, a la derecha. Muy bien. Puede salir por esa puerta. Buenas tardes. ¿A nombre de quién? Perfecto. ¿Tiene su pasaporte? Su habitación es la doscientos cuatro.",
+      "recognized_text": "Los táxices están afuera a la derecha. Muy bien, puedes salir por esa puerta. Buenas tardes. A nombre de quién? Perfecto, ¿tienes su pasaporte? Su habitación es lado 104.",
+      "normalization": "Case, accents, and punctuation ignored; recognized digits 204 equated with doscientos cuatro; wi-fi/wi fi equated with wifi.",
+      "normalized_exact_match": false,
+      "token_differences": [
+        {
+          "type": "replace",
+          "expected": [
+            "taxis"
+          ],
+          "recognized": [
+            "taxices"
+          ]
+        },
+        {
+          "type": "replace",
+          "expected": [
+            "puede"
+          ],
+          "recognized": [
+            "puedes"
+          ]
+        },
+        {
+          "type": "replace",
+          "expected": [
+            "tiene"
+          ],
+          "recognized": [
+            "tienes"
+          ]
+        },
+        {
+          "type": "replace",
+          "expected": [
+            "la",
+            "doscientos",
+            "cuatro"
+          ],
+          "recognized": [
+            "lado",
+            "104"
+          ]
+        }
+      ],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.38,
+          "text": " Los táxices están afuera a la derecha.",
+          "tokens": [
+            50364,
+            7632,
+            7737,
+            87,
+            1473,
+            10368,
+            3238,
+            84,
+            1663,
+            257,
+            635,
+            15969,
+            4413,
+            13,
+            50539
+          ],
+          "avg_logprob": -0.3561199586838484,
+          "compression_ratio": 1.174496644295302,
+          "no_speech_prob": 0.07094569504261017,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.44,
+              "word": " Los",
+              "probability": 0.6978647112846375
+            },
+            {
+              "start": 0.44,
+              "end": 0.8,
+              "word": " táxices",
+              "probability": 0.5726236204306284
+            },
+            {
+              "start": 0.8,
+              "end": 1.08,
+              "word": " están",
+              "probability": 0.9807785749435425
+            },
+            {
+              "start": 1.08,
+              "end": 1.48,
+              "word": " afuera",
+              "probability": 0.9563366969426473
+            },
+            {
+              "start": 1.48,
+              "end": 1.84,
+              "word": " a",
+              "probability": 0.7791624665260315
+            },
+            {
+              "start": 1.84,
+              "end": 1.92,
+              "word": " la",
+              "probability": 0.9983736276626587
+            },
+            {
+              "start": 1.92,
+              "end": 2.38,
+              "word": " derecha.",
+              "probability": 0.994032233953476
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 2,
+          "seek": 0,
+          "start": 4.02,
+          "end": 6.68,
+          "text": " Muy bien, puedes salir por esa puerta.",
+          "tokens": [
+            50589,
+            39586,
+            3610,
+            11,
+            19010,
+            31514,
+            1515,
+            11342,
+            48597,
+            13,
+            50764
+          ],
+          "avg_logprob": -0.3561199586838484,
+          "compression_ratio": 1.174496644295302,
+          "no_speech_prob": 0.07094569504261017,
+          "words": [
+            {
+              "start": 4.02,
+              "end": 4.82,
+              "word": " Muy",
+              "probability": 0.9391553401947021
+            },
+            {
+              "start": 4.82,
+              "end": 5.06,
+              "word": " bien,",
+              "probability": 0.9994412064552307
+            },
+            {
+              "start": 5.46,
+              "end": 5.66,
+              "word": " puedes",
+              "probability": 0.779682457447052
+            },
+            {
+              "start": 5.66,
+              "end": 5.98,
+              "word": " salir",
+              "probability": 0.9937154650688171
+            },
+            {
+              "start": 5.98,
+              "end": 6.16,
+              "word": " por",
+              "probability": 0.9981905817985535
+            },
+            {
+              "start": 6.16,
+              "end": 6.36,
+              "word": " esa",
+              "probability": 0.9906063079833984
+            },
+            {
+              "start": 6.36,
+              "end": 6.68,
+              "word": " puerta.",
+              "probability": 0.9866117238998413
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 3,
+          "seek": 0,
+          "start": 8.88,
+          "end": 9.88,
+          "text": " Buenas tardes.",
+          "tokens": [
+            50814,
+            4078,
+            11581,
+            21057,
+            279,
+            13,
+            50914
+          ],
+          "avg_logprob": -0.3561199586838484,
+          "compression_ratio": 1.174496644295302,
+          "no_speech_prob": 0.07094569504261017,
+          "words": [
+            {
+              "start": 8.88,
+              "end": 9.28,
+              "word": " Buenas",
+              "probability": 0.9242420792579651
+            },
+            {
+              "start": 9.28,
+              "end": 9.88,
+              "word": " tardes.",
+              "probability": 0.996499091386795
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 4,
+          "seek": 0,
+          "start": 12.46,
+          "end": 13.58,
+          "text": " A nombre de quién?",
+          "tokens": [
+            50989,
+            316,
+            13000,
+            368,
+            35327,
+            30,
+            51089
+          ],
+          "avg_logprob": -0.3561199586838484,
+          "compression_ratio": 1.174496644295302,
+          "no_speech_prob": 0.07094569504261017,
+          "words": [
+            {
+              "start": 12.46,
+              "end": 12.98,
+              "word": " A",
+              "probability": 0.7691973447799683
+            },
+            {
+              "start": 12.98,
+              "end": 13.16,
+              "word": " nombre",
+              "probability": 0.9898730516433716
+            },
+            {
+              "start": 13.16,
+              "end": 13.34,
+              "word": " de",
+              "probability": 0.9972208738327026
+            },
+            {
+              "start": 13.34,
+              "end": 13.58,
+              "word": " quién?",
+              "probability": 0.7833148241043091
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 5,
+          "seek": 0,
+          "start": 15.42,
+          "end": 17.34,
+          "text": " Perfecto, ¿tienes su pasaporte?",
+          "tokens": [
+            51139,
+            10246,
+            78,
+            11,
+            3841,
+            83,
+            1053,
+            279,
+            459,
+            1736,
+            569,
+            12752,
+            30,
+            51289
+          ],
+          "avg_logprob": -0.3561199586838484,
+          "compression_ratio": 1.174496644295302,
+          "no_speech_prob": 0.07094569504261017,
+          "words": [
+            {
+              "start": 15.42,
+              "end": 16.22,
+              "word": " Perfecto,",
+              "probability": 0.8827078342437744
+            },
+            {
+              "start": 16.6,
+              "end": 16.82,
+              "word": " ¿tienes",
+              "probability": 0.8591963797807693
+            },
+            {
+              "start": 16.82,
+              "end": 16.9,
+              "word": " su",
+              "probability": 0.8900628089904785
+            },
+            {
+              "start": 16.9,
+              "end": 17.34,
+              "word": " pasaporte?",
+              "probability": 0.964899738629659
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 6,
+          "seek": 0,
+          "start": 19.72,
+          "end": 23.22,
+          "text": " Su habitación es lado 104.",
+          "tokens": [
+            51364,
+            2746,
+            7164,
+            3482,
+            785,
+            11631,
+            47757,
+            13,
+            51589
+          ],
+          "avg_logprob": -0.3561199586838484,
+          "compression_ratio": 1.174496644295302,
+          "no_speech_prob": 0.07094569504261017,
+          "words": [
+            {
+              "start": 19.72,
+              "end": 20.36,
+              "word": " Su",
+              "probability": 0.9464768171310425
+            },
+            {
+              "start": 20.36,
+              "end": 21.02,
+              "word": " habitación",
+              "probability": 0.9877020418643951
+            },
+            {
+              "start": 21.02,
+              "end": 21.82,
+              "word": " es",
+              "probability": 0.9909231066703796
+            },
+            {
+              "start": 21.82,
+              "end": 22.36,
+              "word": " lado",
+              "probability": 0.15261432528495789
+            },
+            {
+              "start": 22.36,
+              "end": 23.22,
+              "word": " 104.",
+              "probability": 0.9289854764938354
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "limits": "Machine transcription only. Does not establish pleasantness, regional/Dominican accent, pronunciation quality, or human listening approval. ASR may normalize or misrecognize speech."
+    },
+    "staff_small": {
+      "role": "staff",
+      "source": "staff-original.wav",
+      "source_sha256": "6d2f4fdd7146887f348afed2daa4331050506cac8f4564aad85ee1ed7141c76e",
+      "source_format": "MP3, despite provider URL and local original .wav suffix",
+      "model": "Systran/faster-whisper-small",
+      "implementation": {
+        "faster_whisper": "1.2.1",
+        "ctranslate2": "4.8.4"
+      },
+      "settings": {
+        "device": "cpu",
+        "compute_type": "int8",
+        "cpu_threads": 4,
+        "language": "es",
+        "beam_size": 5,
+        "temperature": 0.0,
+        "condition_on_previous_text": false,
+        "vad_filter": false,
+        "initial_prompt": null,
+        "word_timestamps": true
+      },
+      "prompt_independence": "No expected transcript, initial prompt, hotwords, or provider word timestamps were supplied to ASR. The approved script was compared only after inference.",
+      "decode": "FFmpeg to 16kHz mono float32, supplied as NumPy input to avoid faster-whisper1.2.1/PyAV19 metadata_errors incompatibility; original file unchanged.",
+      "asr_audio_duration_seconds": 23.6930625,
+      "asr_language": "es",
+      "inference_seconds": 2.9,
+      "expected_text": "Los taxis están afuera, a la derecha. Muy bien. Puede salir por esa puerta. Buenas tardes. ¿A nombre de quién? Perfecto. ¿Tiene su pasaporte? Su habitación es la doscientos cuatro.",
+      "recognized_text": "Los taxis están afuera, a la derecha. Muy bien, puede salir por esa puerta. Buenas tardes. ¿A nombre de quién? Perfecto. ¿Tienes su pasaporte? Su habitación es la 204.",
+      "normalization": "Case, accents, and punctuation ignored; recognized digits 204 equated with doscientos cuatro; wi-fi/wi fi equated with wifi.",
+      "normalized_exact_match": false,
+      "token_differences": [
+        {
+          "type": "replace",
+          "expected": [
+            "tiene"
+          ],
+          "recognized": [
+            "tienes"
+          ]
+        }
+      ],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.62,
+          "text": " Los taxis están afuera, a la derecha.",
+          "tokens": [
+            50364,
+            7632,
+            3366,
+            271,
+            10368,
+            3238,
+            84,
+            1663,
+            11,
+            257,
+            635,
+            15969,
+            4413,
+            13,
+            50514
+          ],
+          "avg_logprob": -0.23160080792325916,
+          "compression_ratio": 1.1700680272108843,
+          "no_speech_prob": 0.016982004046440125,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.42,
+              "word": " Los",
+              "probability": 0.8855257034301758
+            },
+            {
+              "start": 0.42,
+              "end": 0.82,
+              "word": " taxis",
+              "probability": 0.8727686405181885
+            },
+            {
+              "start": 0.82,
+              "end": 1.08,
+              "word": " están",
+              "probability": 0.9958218336105347
+            },
+            {
+              "start": 1.08,
+              "end": 1.52,
+              "word": " afuera,",
+              "probability": 0.9900915026664734
+            },
+            {
+              "start": 1.74,
+              "end": 1.84,
+              "word": " a",
+              "probability": 0.9918935894966125
+            },
+            {
+              "start": 1.84,
+              "end": 1.92,
+              "word": " la",
+              "probability": 0.9971948862075806
+            },
+            {
+              "start": 1.92,
+              "end": 2.62,
+              "word": " derecha.",
+              "probability": 0.9972500801086426
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 2,
+          "seek": 0,
+          "start": 3.9800000000000018,
+          "end": 6.66,
+          "text": " Muy bien, puede salir por esa puerta.",
+          "tokens": [
+            50564,
+            39586,
+            3610,
+            11,
+            8919,
+            31514,
+            1515,
+            11342,
+            48597,
+            13,
+            50714
+          ],
+          "avg_logprob": -0.23160080792325916,
+          "compression_ratio": 1.1700680272108843,
+          "no_speech_prob": 0.016982004046440125,
+          "words": [
+            {
+              "start": 3.9800000000000018,
+              "end": 4.8,
+              "word": " Muy",
+              "probability": 0.865574836730957
+            },
+            {
+              "start": 4.8,
+              "end": 5.06,
+              "word": " bien,",
+              "probability": 0.9964148998260498
+            },
+            {
+              "start": 5.36,
+              "end": 5.66,
+              "word": " puede",
+              "probability": 0.781318724155426
+            },
+            {
+              "start": 5.66,
+              "end": 5.94,
+              "word": " salir",
+              "probability": 0.9977401494979858
+            },
+            {
+              "start": 5.94,
+              "end": 6.18,
+              "word": " por",
+              "probability": 0.9985490441322327
+            },
+            {
+              "start": 6.18,
+              "end": 6.34,
+              "word": " esa",
+              "probability": 0.9871671795845032
+            },
+            {
+              "start": 6.34,
+              "end": 6.66,
+              "word": " puerta.",
+              "probability": 0.9926931858062744
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 3,
+          "seek": 0,
+          "start": 8.7,
+          "end": 9.86,
+          "text": " Buenas tardes.",
+          "tokens": [
+            50764,
+            4078,
+            11581,
+            21057,
+            279,
+            13,
+            50864
+          ],
+          "avg_logprob": -0.23160080792325916,
+          "compression_ratio": 1.1700680272108843,
+          "no_speech_prob": 0.016982004046440125,
+          "words": [
+            {
+              "start": 8.7,
+              "end": 9.32,
+              "word": " Buenas",
+              "probability": 0.9048236608505249
+            },
+            {
+              "start": 9.32,
+              "end": 9.86,
+              "word": " tardes.",
+              "probability": 0.9966866075992584
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 4,
+          "seek": 0,
+          "start": 12.3,
+          "end": 13.54,
+          "text": " ¿A nombre de quién?",
+          "tokens": [
+            50964,
+            3841,
+            32,
+            13000,
+            368,
+            35327,
+            30,
+            51064
+          ],
+          "avg_logprob": -0.23160080792325916,
+          "compression_ratio": 1.1700680272108843,
+          "no_speech_prob": 0.016982004046440125,
+          "words": [
+            {
+              "start": 12.3,
+              "end": 12.96,
+              "word": " ¿A",
+              "probability": 0.6921617090702057
+            },
+            {
+              "start": 12.96,
+              "end": 13.16,
+              "word": " nombre",
+              "probability": 0.9741244316101074
+            },
+            {
+              "start": 13.16,
+              "end": 13.34,
+              "word": " de",
+              "probability": 0.9986112117767334
+            },
+            {
+              "start": 13.34,
+              "end": 13.54,
+              "word": " quién?",
+              "probability": 0.9751185178756714
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 5,
+          "seek": 0,
+          "start": 15.440000000000003,
+          "end": 17.34,
+          "text": " Perfecto. ¿Tienes su pasaporte?",
+          "tokens": [
+            51114,
+            10246,
+            78,
+            13,
+            3841,
+            51,
+            1053,
+            279,
+            459,
+            1736,
+            569,
+            12752,
+            30,
+            51264
+          ],
+          "avg_logprob": -0.23160080792325916,
+          "compression_ratio": 1.1700680272108843,
+          "no_speech_prob": 0.016982004046440125,
+          "words": [
+            {
+              "start": 15.440000000000003,
+              "end": 16.26,
+              "word": " Perfecto.",
+              "probability": 0.8959309756755829
+            },
+            {
+              "start": 16.54,
+              "end": 16.84,
+              "word": " ¿Tienes",
+              "probability": 0.8997594863176346
+            },
+            {
+              "start": 16.84,
+              "end": 16.92,
+              "word": " su",
+              "probability": 0.8864372968673706
+            },
+            {
+              "start": 16.92,
+              "end": 17.34,
+              "word": " pasaporte?",
+              "probability": 0.9964273770650228
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 6,
+          "seek": 0,
+          "start": 19.540000000000003,
+          "end": 23.28,
+          "text": " Su habitación es la 204.",
+          "tokens": [
+            51364,
+            2746,
+            7164,
+            3482,
+            785,
+            635,
+            945,
+            19,
+            13,
+            51564
+          ],
+          "avg_logprob": -0.23160080792325916,
+          "compression_ratio": 1.1700680272108843,
+          "no_speech_prob": 0.016982004046440125,
+          "words": [
+            {
+              "start": 19.540000000000003,
+              "end": 20.36,
+              "word": " Su",
+              "probability": 0.9704490303993225
+            },
+            {
+              "start": 20.36,
+              "end": 21.04,
+              "word": " habitación",
+              "probability": 0.9953940808773041
+            },
+            {
+              "start": 21.04,
+              "end": 21.8,
+              "word": " es",
+              "probability": 0.9681527614593506
+            },
+            {
+              "start": 21.8,
+              "end": 22.28,
+              "word": " la",
+              "probability": 0.8207954168319702
+            },
+            {
+              "start": 22.28,
+              "end": 23.28,
+              "word": " 204.",
+              "probability": 0.9330275654792786
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "limits": "Machine transcription only. Does not establish pleasantness, regional/Dominican accent, pronunciation quality, or human listening approval. ASR may normalize or misrecognize speech."
+    },
+    "traveler_base": {
+      "role": "traveler",
+      "source": "traveler-original.wav",
+      "source_sha256": "5f3fc278ef80b55e52d7fd2b029b340943e28c1d3815ff8432a09cca135355c5",
+      "source_format": "MP3, despite provider URL and local original .wav suffix",
+      "model": "Systran/faster-whisper-base",
+      "implementation": {
+        "faster_whisper": "1.2.1",
+        "ctranslate2": "4.8.4"
+      },
+      "settings": {
+        "device": "cpu",
+        "compute_type": "int8",
+        "cpu_threads": 4,
+        "language": "es",
+        "beam_size": 5,
+        "temperature": 0.0,
+        "condition_on_previous_text": false,
+        "vad_filter": false,
+        "initial_prompt": null,
+        "word_timestamps": true
+      },
+      "prompt_independence": "No expected transcript, initial prompt, hotwords, or provider word timestamps were supplied to ASR. The approved script was compared only after inference.",
+      "decode": "FFmpeg to 16kHz mono float32, supplied as NumPy input to avoid faster-whisper1.2.1/PyAV19 metadata_errors incompatibility; original file unchanged.",
+      "asr_audio_duration_seconds": 30.693875,
+      "asr_language": "es",
+      "inference_seconds": 1.67,
+      "expected_text": "Hola, buenos días. ¿Dónde puedo tomar un taxi? Perfecto, gracias. Voy a este hotel. Gracias, muy amable. Buenas tardes. Tengo una reservación. A nombre de Alex Martín. Sí, aquí está. Gracias. ¿Cuál es la contraseña del wifi? ¿Me puede repetir, por favor?",
+      "recognized_text": "Hola, buenos días. ¿Dónde puedo tomar un taxi? Perfecto, gracias. Voy a este hotel. Gracias, muy amable. Buenas tardes. Tengo una reservación. A nombre de Alex Martín. Sí, aquí está. Gracias. ¿Cuál es la contraseña del Wi-Fi? ¿Me puede repetir por favor?",
+      "normalization": "Case, accents, and punctuation ignored; recognized digits 204 equated with doscientos cuatro; wi-fi/wi fi equated with wifi.",
+      "normalized_exact_match": true,
+      "token_differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.22,
+          "text": " Hola, buenos días. ¿Dónde puedo tomar un taxi?",
+          "tokens": [
+            50364,
+            22637,
+            11,
+            49617,
+            19527,
+            13,
+            3841,
+            35,
+            812,
+            16404,
+            21612,
+            22048,
+            517,
+            18984,
+            30,
+            50592
+          ],
+          "avg_logprob": -0.34189139235587346,
+          "compression_ratio": 1.2421052631578948,
+          "no_speech_prob": 0.16760100424289703,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.5,
+              "word": " Hola,",
+              "probability": 0.32954755425453186
+            },
+            {
+              "start": 0.82,
+              "end": 1.14,
+              "word": " buenos",
+              "probability": 0.987414538860321
+            },
+            {
+              "start": 1.14,
+              "end": 1.46,
+              "word": " días.",
+              "probability": 0.9895439147949219
+            },
+            {
+              "start": 2.08,
+              "end": 2.24,
+              "word": " ¿Dónde",
+              "probability": 0.8565755486488342
+            },
+            {
+              "start": 2.24,
+              "end": 2.52,
+              "word": " puedo",
+              "probability": 0.9869515895843506
+            },
+            {
+              "start": 2.52,
+              "end": 2.76,
+              "word": " tomar",
+              "probability": 0.9948593378067017
+            },
+            {
+              "start": 2.76,
+              "end": 2.96,
+              "word": " un",
+              "probability": 0.998347282409668
+            },
+            {
+              "start": 2.96,
+              "end": 3.22,
+              "word": " taxi?",
+              "probability": 0.9599114656448364
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 2,
+          "seek": 0,
+          "start": 5.36,
+          "end": 6.94,
+          "text": " Perfecto, gracias. Voy a este hotel.",
+          "tokens": [
+            50592,
+            10246,
+            78,
+            11,
+            16611,
+            13,
+            25563,
+            257,
+            4065,
+            7622,
+            13,
+            50794
+          ],
+          "avg_logprob": -0.34189139235587346,
+          "compression_ratio": 1.2421052631578948,
+          "no_speech_prob": 0.16760100424289703,
+          "words": [
+            {
+              "start": 5.36,
+              "end": 5.88,
+              "word": " Perfecto,",
+              "probability": 0.8615532219409943
+            },
+            {
+              "start": 5.88,
+              "end": 6.18,
+              "word": " gracias.",
+              "probability": 0.9835535287857056
+            },
+            {
+              "start": 6.34,
+              "end": 6.42,
+              "word": " Voy",
+              "probability": 0.9699636101722717
+            },
+            {
+              "start": 6.42,
+              "end": 6.54,
+              "word": " a",
+              "probability": 0.9953436255455017
+            },
+            {
+              "start": 6.54,
+              "end": 6.7,
+              "word": " este",
+              "probability": 0.9911696910858154
+            },
+            {
+              "start": 6.7,
+              "end": 6.94,
+              "word": " hotel.",
+              "probability": 0.9905186295509338
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 3,
+          "seek": 0,
+          "start": 9.04,
+          "end": 10.12,
+          "text": " Gracias, muy amable.",
+          "tokens": [
+            50794,
+            26909,
+            11,
+            5323,
+            669,
+            712,
+            13,
+            50964
+          ],
+          "avg_logprob": -0.34189139235587346,
+          "compression_ratio": 1.2421052631578948,
+          "no_speech_prob": 0.16760100424289703,
+          "words": [
+            {
+              "start": 9.04,
+              "end": 9.4,
+              "word": " Gracias,",
+              "probability": 0.8023109436035156
+            },
+            {
+              "start": 9.6,
+              "end": 9.68,
+              "word": " muy",
+              "probability": 0.9962378740310669
+            },
+            {
+              "start": 9.68,
+              "end": 10.12,
+              "word": " amable.",
+              "probability": 0.9942182004451752
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 4,
+          "seek": 0,
+          "start": 12.08,
+          "end": 14.84,
+          "text": " Buenas tardes. Tengo una reservación.",
+          "tokens": [
+            50964,
+            4078,
+            11581,
+            21057,
+            279,
+            13,
+            314,
+            30362,
+            2002,
+            16454,
+            3482,
+            13,
+            51214
+          ],
+          "avg_logprob": -0.34189139235587346,
+          "compression_ratio": 1.2421052631578948,
+          "no_speech_prob": 0.16760100424289703,
+          "words": [
+            {
+              "start": 12.08,
+              "end": 12.68,
+              "word": " Buenas",
+              "probability": 0.8156546056270599
+            },
+            {
+              "start": 12.68,
+              "end": 13.18,
+              "word": " tardes.",
+              "probability": 0.9948076009750366
+            },
+            {
+              "start": 13.74,
+              "end": 13.98,
+              "word": " Tengo",
+              "probability": 0.9780662357807159
+            },
+            {
+              "start": 13.98,
+              "end": 14.18,
+              "word": " una",
+              "probability": 0.9986447691917419
+            },
+            {
+              "start": 14.18,
+              "end": 14.84,
+              "word": " reservación.",
+              "probability": 0.9858314394950867
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 5,
+          "seek": 0,
+          "start": 17.06,
+          "end": 18.72,
+          "text": " A nombre de Alex Martín.",
+          "tokens": [
+            51214,
+            316,
+            13000,
+            368,
+            5202,
+            5807,
+            10973,
+            13,
+            51384
+          ],
+          "avg_logprob": -0.34189139235587346,
+          "compression_ratio": 1.2421052631578948,
+          "no_speech_prob": 0.16760100424289703,
+          "words": [
+            {
+              "start": 17.06,
+              "end": 17.4,
+              "word": " A",
+              "probability": 0.46635445952415466
+            },
+            {
+              "start": 17.4,
+              "end": 17.68,
+              "word": " nombre",
+              "probability": 0.9853566288948059
+            },
+            {
+              "start": 17.68,
+              "end": 17.92,
+              "word": " de",
+              "probability": 0.9945527911186218
+            },
+            {
+              "start": 17.92,
+              "end": 18.18,
+              "word": " Alex",
+              "probability": 0.9842481017112732
+            },
+            {
+              "start": 18.18,
+              "end": 18.72,
+              "word": " Martín.",
+              "probability": 0.7536162436008453
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 6,
+          "seek": 0,
+          "start": 20.7,
+          "end": 21.96,
+          "text": " Sí, aquí está.",
+          "tokens": [
+            51384,
+            12375,
+            11,
+            6661,
+            3192,
+            13,
+            51554
+          ],
+          "avg_logprob": -0.34189139235587346,
+          "compression_ratio": 1.2421052631578948,
+          "no_speech_prob": 0.16760100424289703,
+          "words": [
+            {
+              "start": 20.7,
+              "end": 21.0,
+              "word": " Sí,",
+              "probability": 0.8160276412963867
+            },
+            {
+              "start": 21.4,
+              "end": 21.66,
+              "word": " aquí",
+              "probability": 0.9839251041412354
+            },
+            {
+              "start": 21.66,
+              "end": 21.96,
+              "word": " está.",
+              "probability": 0.9601156115531921
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 7,
+          "seek": 0,
+          "start": 23.88,
+          "end": 26.7,
+          "text": " Gracias. ¿Cuál es la contraseña del Wi-Fi?",
+          "tokens": [
+            51554,
+            26909,
+            13,
+            3841,
+            35222,
+            11447,
+            785,
+            635,
+            10273,
+            651,
+            12150,
+            1103,
+            14035,
+            12,
+            13229,
+            30,
+            51784
+          ],
+          "avg_logprob": -0.34189139235587346,
+          "compression_ratio": 1.2421052631578948,
+          "no_speech_prob": 0.16760100424289703,
+          "words": [
+            {
+              "start": 23.88,
+              "end": 24.48,
+              "word": " Gracias.",
+              "probability": 0.9013113975524902
+            },
+            {
+              "start": 25.0,
+              "end": 25.22,
+              "word": " ¿Cuál",
+              "probability": 0.9493228793144226
+            },
+            {
+              "start": 25.22,
+              "end": 25.34,
+              "word": " es",
+              "probability": 0.9988080263137817
+            },
+            {
+              "start": 25.34,
+              "end": 25.44,
+              "word": " la",
+              "probability": 0.9960730075836182
+            },
+            {
+              "start": 25.44,
+              "end": 26.08,
+              "word": " contraseña",
+              "probability": 0.9051299095153809
+            },
+            {
+              "start": 26.08,
+              "end": 26.26,
+              "word": " del",
+              "probability": 0.9839993119239807
+            },
+            {
+              "start": 26.26,
+              "end": 26.44,
+              "word": " Wi",
+              "probability": 0.4732932448387146
+            },
+            {
+              "start": 26.44,
+              "end": 26.7,
+              "word": "-Fi?",
+              "probability": 0.9849080741405487
+            }
+          ],
+          "temperature": 0.0
+        },
+        {
+          "id": 8,
+          "seek": 2670,
+          "start": 28.18,
+          "end": 30.34,
+          "text": " ¿Me puede repetir por favor?",
+          "tokens": [
+            50364,
+            3841,
+            12671,
+            8919,
+            13645,
+            347,
+            1515,
+            2294,
+            30,
+            50548
+          ],
+          "avg_logprob": -0.5273644490675493,
+          "compression_ratio": 0.7837837837837838,
+          "no_speech_prob": 0.11339739710092545,
+          "words": [
+            {
+              "start": 28.18,
+              "end": 28.88,
+              "word": " ¿Me",
+              "probability": 0.5385288745164871
+            },
+            {
+              "start": 28.88,
+              "end": 29.22,
+              "word": " puede",
+              "probability": 0.8731341361999512
+            },
+            {
+              "start": 29.22,
+              "end": 29.76,
+              "word": " repetir",
+              "probability": 0.9861595034599304
+            },
+            {
+              "start": 29.76,
+              "end": 29.98,
+              "word": " por",
+              "probability": 0.5425429940223694
+            },
+            {
+              "start": 29.98,
+              "end": 30.34,
+              "word": " favor?",
+              "probability": 0.9994024038314819
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "limits": "Machine transcription only. Does not establish pleasantness, regional/Dominican accent, pronunciation quality, or human listening approval. ASR may normalize or misrecognize speech."
+    }
+  },
+  "final_clip_summary": {
+    "clip_count": 14,
+    "normalized_exact_match_count": 13,
+    "results": [
+      {
+        "id": "airport-02",
+        "role": "staff",
+        "sha256": "ddf1daacbe74412cc29528df86f9d13a4a6bf51d7563febb9c308a2ee81bd80a",
+        "model": "small",
+        "decoded_duration_seconds": 2.64,
+        "expected": "Los taxis están afuera, a la derecha.",
+        "recognized": "Los taxis están afuera, a la derecha.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Los taxis están afuera, a la derecha.",
+        "matches_full_take_asr": true,
+        "differences": []
+      },
+      {
+        "id": "airport-04",
+        "role": "staff",
+        "sha256": "038ffd46ea52235dbacd2307f84043c6fda6d9f418489ff4abe7c2710e262494",
+        "model": "small",
+        "decoded_duration_seconds": 2.68,
+        "expected": "Muy bien. Puede salir por esa puerta.",
+        "recognized": "Muy bien, puedes salir por esa puerta.",
+        "normalized_exact_match": false,
+        "source_full_take_asr": "Muy bien, puede salir por esa puerta.",
+        "matches_full_take_asr": false,
+        "differences": [
+          {
+            "type": "replace",
+            "expected": [
+              "puede"
+            ],
+            "recognized": [
+              "puedes"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hotel-01",
+        "role": "staff",
+        "sha256": "39c12336f921198fff6c92d450c4caf098dd51214d8f2d176e2c7218e11435da",
+        "model": "small",
+        "decoded_duration_seconds": 1.52,
+        "expected": "Buenas tardes.",
+        "recognized": "Buenas tardes.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Buenas tardes.",
+        "matches_full_take_asr": true,
+        "differences": []
+      },
+      {
+        "id": "hotel-03",
+        "role": "staff",
+        "sha256": "b3effc791018b37cda1b1f1d82f51ee65c6057ea8d1d3a388f08158c7a884229",
+        "model": "small",
+        "decoded_duration_seconds": 1.38,
+        "expected": "¿A nombre de quién?",
+        "recognized": "¿A nombre de quién?",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "¿A nombre de quién?",
+        "matches_full_take_asr": true,
+        "differences": []
+      },
+      {
+        "id": "hotel-05",
+        "role": "staff",
+        "sha256": "4a7616b94e8d382618878e34f0bb6c4889f2d354e2fa96ef68c5210b84e838c6",
+        "model": "small",
+        "decoded_duration_seconds": 2.64,
+        "expected": "Perfecto. ¿Tiene su pasaporte?",
+        "recognized": "Perfecto. ¿Tiene su pasaporte?",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Perfecto. ¿Tienes su pasaporte?",
+        "matches_full_take_asr": false,
+        "differences": []
+      },
+      {
+        "id": "hotel-07",
+        "role": "staff",
+        "sha256": "fcafedbb2f91a39e45df9ffdb5549a3231866d24ee63ac3db3beb315619ae46b",
+        "model": "small",
+        "decoded_duration_seconds": 5.2930625,
+        "expected": "Su habitación es la doscientos cuatro.",
+        "recognized": "Su habitación es la 204.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Su habitación es la 204.",
+        "matches_full_take_asr": true,
+        "differences": []
+      },
+      {
+        "id": "airport-01",
+        "role": "traveler",
+        "sha256": "2b51e085a37cb4d2817035df4d0a127317ef52307f7c13a4d0d755a715aefcee",
+        "model": "base",
+        "decoded_duration_seconds": 3.6,
+        "expected": "Hola, buenos días. ¿Dónde puedo tomar un taxi?",
+        "recognized": "Hola, buenos días, ¿dónde puedo tomar un taxi?",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Hola, buenos días. ¿Dónde puedo tomar un taxi?",
+        "matches_full_take_asr": true,
+        "differences": []
+      },
+      {
+        "id": "airport-03",
+        "role": "traveler",
+        "sha256": "30ab720f3648e45d9f2305c38c37dd2ab5fea92bacf9becf29255f78fa9579a3",
+        "model": "base",
+        "decoded_duration_seconds": 2.2,
+        "expected": "Perfecto, gracias. Voy a este hotel.",
+        "recognized": "Perfecto gracias, voy a este hotel.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Perfecto, gracias. Voy a este hotel.",
+        "matches_full_take_asr": true,
+        "differences": []
+      },
+      {
+        "id": "airport-05",
+        "role": "traveler",
+        "sha256": "709342f8eb848c6dddef1904b426d31445caa1c82dac02e5771afb5bc15791de",
+        "model": "base",
+        "decoded_duration_seconds": 1.68,
+        "expected": "Gracias, muy amable.",
+        "recognized": "Gracias muy amable.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Gracias, muy amable.",
+        "matches_full_take_asr": true,
+        "differences": []
+      },
+      {
+        "id": "hotel-02",
+        "role": "traveler",
+        "sha256": "90542e0cac21132b03385f6e46c278b9eb46bdcc88f5b7baf0f657be74b74401",
+        "model": "base",
+        "decoded_duration_seconds": 3.08,
+        "expected": "Buenas tardes. Tengo una reservación.",
+        "recognized": "Buenas tardes. Tengo una reservación.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Buenas tardes. Tengo una reservación.",
+        "matches_full_take_asr": true,
+        "differences": []
+      },
+      {
+        "id": "hotel-04",
+        "role": "traveler",
+        "sha256": "8ea356da645dc45d6816a1c045131538f1b03ef00f7a8293a825070666e57706",
+        "model": "base",
+        "decoded_duration_seconds": 2.0,
+        "expected": "A nombre de Alex Martín.",
+        "recognized": "A nombre de Alex Martín.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "A nombre de Alex Martín.",
+        "matches_full_take_asr": true,
+        "differences": []
+      },
+      {
+        "id": "hotel-06",
+        "role": "traveler",
+        "sha256": "93beed28d38cf7640e9175397c655de50b307a8f703efab7a5b23b8590413e95",
+        "model": "base",
+        "decoded_duration_seconds": 1.82,
+        "expected": "Sí, aquí está.",
+        "recognized": "Sí, aquí está.",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Sí, aquí está.",
+        "matches_full_take_asr": true,
+        "differences": []
+      },
+      {
+        "id": "hotel-08",
+        "role": "traveler",
+        "sha256": "8115e4ecd67b26a9dce9d5a387c9019ca4889c8ccc30037e87b4facaa6f6a022",
+        "model": "base",
+        "decoded_duration_seconds": 3.32,
+        "expected": "Gracias. ¿Cuál es la contraseña del wifi?",
+        "recognized": "Gracias, ¿cuál es la contraseña del Wi-Fi?",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "Gracias. ¿Cuál es la contraseña del Wi-Fi?",
+        "matches_full_take_asr": true,
+        "differences": []
+      },
+      {
+        "id": "hotel-repeat",
+        "role": "traveler",
+        "sha256": "22788dc2426122c8ebc2b96e98355a9a4f318f76a79da54d9c5f80373d04e3ec",
+        "model": "base",
+        "decoded_duration_seconds": 2.263875,
+        "expected": "¿Me puede repetir, por favor?",
+        "recognized": "¿Me puede repetir por favor?",
+        "normalized_exact_match": true,
+        "source_full_take_asr": "¿Me puede repetir por favor?",
+        "matches_full_take_asr": true,
+        "differences": []
+      }
+    ],
+    "limitations": "Machine-only excerpt check, no perceptual listening. The different decoding context of short clips can change ASR hypotheses."
+  },
+  "clip_reports": {
+    "airport-02": {
+      "id": "airport-02",
+      "role": "staff",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/airport-02.mp3",
+      "sha256": "ddf1daacbe74412cc29528df86f9d13a4a6bf51d7563febb9c308a2ee81bd80a",
+      "model": "small",
+      "decoded_duration_seconds": 2.64,
+      "expected": "Los taxis están afuera, a la derecha.",
+      "recognized": "Los taxis están afuera, a la derecha.",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "Los taxis están afuera, a la derecha.",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.32,
+          "text": " Los taxis están afuera, a la derecha.",
+          "tokens": [
+            50364,
+            7632,
+            3366,
+            271,
+            10368,
+            3238,
+            84,
+            1663,
+            11,
+            257,
+            635,
+            15969,
+            4413,
+            13,
+            50514
+          ],
+          "avg_logprob": -0.25379383005201817,
+          "compression_ratio": 0.8260869565217391,
+          "no_speech_prob": 0.015342824161052704,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.42,
+              "word": " Los",
+              "probability": 0.8719948530197144
+            },
+            {
+              "start": 0.42,
+              "end": 0.84,
+              "word": " taxis",
+              "probability": 0.9097908735275269
+            },
+            {
+              "start": 0.84,
+              "end": 1.06,
+              "word": " están",
+              "probability": 0.9967221617698669
+            },
+            {
+              "start": 1.06,
+              "end": 1.54,
+              "word": " afuera,",
+              "probability": 0.9923411806424459
+            },
+            {
+              "start": 1.78,
+              "end": 1.84,
+              "word": " a",
+              "probability": 0.9908767342567444
+            },
+            {
+              "start": 1.84,
+              "end": 1.92,
+              "word": " la",
+              "probability": 0.9983286261558533
+            },
+            {
+              "start": 1.92,
+              "end": 2.32,
+              "word": " derecha.",
+              "probability": 0.9961281418800354
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "airport-04": {
+      "id": "airport-04",
+      "role": "staff",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/airport-04.mp3",
+      "sha256": "038ffd46ea52235dbacd2307f84043c6fda6d9f418489ff4abe7c2710e262494",
+      "model": "small",
+      "decoded_duration_seconds": 2.68,
+      "expected": "Muy bien. Puede salir por esa puerta.",
+      "recognized": "Muy bien, puedes salir por esa puerta.",
+      "normalized_exact_match": false,
+      "source_full_take_asr": "Muy bien, puede salir por esa puerta.",
+      "matches_full_take_asr": false,
+      "differences": [
+        {
+          "type": "replace",
+          "expected": [
+            "puede"
+          ],
+          "recognized": [
+            "puedes"
+          ]
+        }
+      ],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.16,
+          "text": " Muy bien, puedes salir por esa puerta.",
+          "tokens": [
+            50364,
+            39586,
+            3610,
+            11,
+            19010,
+            31514,
+            1515,
+            11342,
+            48597,
+            13,
+            50494
+          ],
+          "avg_logprob": -0.38366377105315524,
+          "compression_ratio": 0.8636363636363636,
+          "no_speech_prob": 0.016066910699009895,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.42,
+              "word": " Muy",
+              "probability": 0.8295062780380249
+            },
+            {
+              "start": 0.42,
+              "end": 0.68,
+              "word": " bien,",
+              "probability": 0.9843320846557617
+            },
+            {
+              "start": 1.02,
+              "end": 1.3,
+              "word": " puedes",
+              "probability": 0.5037916302680969
+            },
+            {
+              "start": 1.3,
+              "end": 1.58,
+              "word": " salir",
+              "probability": 0.9950207471847534
+            },
+            {
+              "start": 1.58,
+              "end": 1.8,
+              "word": " por",
+              "probability": 0.9978654980659485
+            },
+            {
+              "start": 1.8,
+              "end": 1.94,
+              "word": " esa",
+              "probability": 0.9828042984008789
+            },
+            {
+              "start": 1.94,
+              "end": 2.16,
+              "word": " puerta.",
+              "probability": 0.9942751526832581
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "hotel-01": {
+      "id": "hotel-01",
+      "role": "staff",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/hotel-01.mp3",
+      "sha256": "39c12336f921198fff6c92d450c4caf098dd51214d8f2d176e2c7218e11435da",
+      "model": "small",
+      "decoded_duration_seconds": 1.52,
+      "expected": "Buenas tardes.",
+      "recognized": "Buenas tardes.",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "Buenas tardes.",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 1.18,
+          "text": " Buenas tardes.",
+          "tokens": [
+            50364,
+            4078,
+            11581,
+            21057,
+            279,
+            13,
+            50464
+          ],
+          "avg_logprob": -0.416952732950449,
+          "compression_ratio": 0.6363636363636364,
+          "no_speech_prob": 0.02307509258389473,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.74,
+              "word": " Buenas",
+              "probability": 0.9095530807971954
+            },
+            {
+              "start": 0.74,
+              "end": 1.18,
+              "word": " tardes.",
+              "probability": 0.9923561811447144
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "hotel-03": {
+      "id": "hotel-03",
+      "role": "staff",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/hotel-03.mp3",
+      "sha256": "b3effc791018b37cda1b1f1d82f51ee65c6057ea8d1d3a388f08158c7a884229",
+      "model": "small",
+      "decoded_duration_seconds": 1.38,
+      "expected": "¿A nombre de quién?",
+      "recognized": "¿A nombre de quién?",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "¿A nombre de quién?",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 0.94,
+          "text": " ¿A nombre de quién?",
+          "tokens": [
+            50364,
+            3841,
+            32,
+            13000,
+            368,
+            35327,
+            30,
+            50464
+          ],
+          "avg_logprob": -0.5057244830661349,
+          "compression_ratio": 0.7241379310344828,
+          "no_speech_prob": 0.15648093819618225,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.38,
+              "word": " ¿A",
+              "probability": 0.46812568604946136
+            },
+            {
+              "start": 0.38,
+              "end": 0.58,
+              "word": " nombre",
+              "probability": 0.9183309674263
+            },
+            {
+              "start": 0.58,
+              "end": 0.76,
+              "word": " de",
+              "probability": 0.9973107576370239
+            },
+            {
+              "start": 0.76,
+              "end": 0.94,
+              "word": " quién?",
+              "probability": 0.9629215002059937
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "hotel-05": {
+      "id": "hotel-05",
+      "role": "staff",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/hotel-05.mp3",
+      "sha256": "4a7616b94e8d382618878e34f0bb6c4889f2d354e2fa96ef68c5210b84e838c6",
+      "model": "small",
+      "decoded_duration_seconds": 2.64,
+      "expected": "Perfecto. ¿Tiene su pasaporte?",
+      "recognized": "Perfecto. ¿Tiene su pasaporte?",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "Perfecto. ¿Tienes su pasaporte?",
+      "matches_full_take_asr": false,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.6799999999999997,
+          "end": 2.26,
+          "text": " Perfecto. ¿Tiene su pasaporte?",
+          "tokens": [
+            50364,
+            10246,
+            78,
+            13,
+            3841,
+            51,
+            10174,
+            459,
+            1736,
+            569,
+            12752,
+            30,
+            50564
+          ],
+          "avg_logprob": -0.36886705458164215,
+          "compression_ratio": 0.7948717948717948,
+          "no_speech_prob": 0.051404181867837906,
+          "words": [
+            {
+              "start": 0.6799999999999997,
+              "end": 1.18,
+              "word": " Perfecto.",
+              "probability": 0.7842854559421539
+            },
+            {
+              "start": 1.4,
+              "end": 1.64,
+              "word": " ¿Tiene",
+              "probability": 0.8570731480916342
+            },
+            {
+              "start": 1.64,
+              "end": 1.78,
+              "word": " su",
+              "probability": 0.9695194363594055
+            },
+            {
+              "start": 1.78,
+              "end": 2.26,
+              "word": " pasaporte?",
+              "probability": 0.9947905739148458
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "hotel-07": {
+      "id": "hotel-07",
+      "role": "staff",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/hotel-07.mp3",
+      "sha256": "fcafedbb2f91a39e45df9ffdb5549a3231866d24ee63ac3db3beb315619ae46b",
+      "model": "small",
+      "decoded_duration_seconds": 5.2930625,
+      "expected": "Su habitación es la doscientos cuatro.",
+      "recognized": "Su habitación es la 204.",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "Su habitación es la 204.",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 4.88,
+          "text": " Su habitación es la 204.",
+          "tokens": [
+            50364,
+            2746,
+            7164,
+            3482,
+            785,
+            635,
+            945,
+            19,
+            13,
+            50614
+          ],
+          "avg_logprob": -0.4056533358313821,
+          "compression_ratio": 0.7575757575757576,
+          "no_speech_prob": 0.10994833707809448,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 1.96,
+              "word": " Su",
+              "probability": 0.8827006816864014
+            },
+            {
+              "start": 1.96,
+              "end": 2.66,
+              "word": " habitación",
+              "probability": 0.9916429817676544
+            },
+            {
+              "start": 2.66,
+              "end": 3.38,
+              "word": " es",
+              "probability": 0.9831273555755615
+            },
+            {
+              "start": 3.38,
+              "end": 3.88,
+              "word": " la",
+              "probability": 0.7834758162498474
+            },
+            {
+              "start": 3.88,
+              "end": 4.88,
+              "word": " 204.",
+              "probability": 0.9246110916137695
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "airport-01": {
+      "id": "airport-01",
+      "role": "traveler",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/airport-01.mp3",
+      "sha256": "2b51e085a37cb4d2817035df4d0a127317ef52307f7c13a4d0d755a715aefcee",
+      "model": "base",
+      "decoded_duration_seconds": 3.6,
+      "expected": "Hola, buenos días. ¿Dónde puedo tomar un taxi?",
+      "recognized": "Hola, buenos días, ¿dónde puedo tomar un taxi?",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "Hola, buenos días. ¿Dónde puedo tomar un taxi?",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 3.24,
+          "text": " Hola, buenos días, ¿dónde puedo tomar un taxi?",
+          "tokens": [
+            50364,
+            22637,
+            11,
+            49617,
+            19527,
+            11,
+            3841,
+            67,
+            812,
+            16404,
+            21612,
+            22048,
+            517,
+            18984,
+            30,
+            50540
+          ],
+          "avg_logprob": -0.4176683986888212,
+          "compression_ratio": 0.8596491228070176,
+          "no_speech_prob": 0.018005624413490295,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.56,
+              "word": " Hola,",
+              "probability": 0.6414902210235596
+            },
+            {
+              "start": 0.92,
+              "end": 1.12,
+              "word": " buenos",
+              "probability": 0.9689846038818359
+            },
+            {
+              "start": 1.12,
+              "end": 1.46,
+              "word": " días,",
+              "probability": 0.9835711717605591
+            },
+            {
+              "start": 1.96,
+              "end": 2.24,
+              "word": " ¿dónde",
+              "probability": 0.6834141761064529
+            },
+            {
+              "start": 2.24,
+              "end": 2.5,
+              "word": " puedo",
+              "probability": 0.9792296290397644
+            },
+            {
+              "start": 2.5,
+              "end": 2.76,
+              "word": " tomar",
+              "probability": 0.9891664385795593
+            },
+            {
+              "start": 2.76,
+              "end": 2.94,
+              "word": " un",
+              "probability": 0.996212363243103
+            },
+            {
+              "start": 2.94,
+              "end": 3.24,
+              "word": " taxi?",
+              "probability": 0.9624367356300354
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "airport-03": {
+      "id": "airport-03",
+      "role": "traveler",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/airport-03.mp3",
+      "sha256": "30ab720f3648e45d9f2305c38c37dd2ab5fea92bacf9becf29255f78fa9579a3",
+      "model": "base",
+      "decoded_duration_seconds": 2.2,
+      "expected": "Perfecto, gracias. Voy a este hotel.",
+      "recognized": "Perfecto gracias, voy a este hotel.",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "Perfecto, gracias. Voy a este hotel.",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 1.82,
+          "text": " Perfecto gracias, voy a este hotel.",
+          "tokens": [
+            50364,
+            10246,
+            78,
+            16611,
+            11,
+            7552,
+            257,
+            4065,
+            7622,
+            13,
+            50464
+          ],
+          "avg_logprob": -0.2809879903992017,
+          "compression_ratio": 0.813953488372093,
+          "no_speech_prob": 0.00793526228517294,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.78,
+              "word": " Perfecto",
+              "probability": 0.8264474868774414
+            },
+            {
+              "start": 0.78,
+              "end": 1.08,
+              "word": " gracias,",
+              "probability": 0.6651937961578369
+            },
+            {
+              "start": 1.26,
+              "end": 1.32,
+              "word": " voy",
+              "probability": 0.9808690547943115
+            },
+            {
+              "start": 1.32,
+              "end": 1.44,
+              "word": " a",
+              "probability": 0.9911397099494934
+            },
+            {
+              "start": 1.44,
+              "end": 1.6,
+              "word": " este",
+              "probability": 0.981244683265686
+            },
+            {
+              "start": 1.6,
+              "end": 1.82,
+              "word": " hotel.",
+              "probability": 0.9882297515869141
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "airport-05": {
+      "id": "airport-05",
+      "role": "traveler",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/airport-05.mp3",
+      "sha256": "709342f8eb848c6dddef1904b426d31445caa1c82dac02e5771afb5bc15791de",
+      "model": "base",
+      "decoded_duration_seconds": 1.68,
+      "expected": "Gracias, muy amable.",
+      "recognized": "Gracias muy amable.",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "Gracias, muy amable.",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 1.34,
+          "text": " Gracias muy amable.",
+          "tokens": [
+            50364,
+            26909,
+            5323,
+            669,
+            712,
+            13,
+            50464
+          ],
+          "avg_logprob": -0.4644007533788681,
+          "compression_ratio": 0.7037037037037037,
+          "no_speech_prob": 0.008008386939764023,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.66,
+              "word": " Gracias",
+              "probability": 0.7449116706848145
+            },
+            {
+              "start": 0.66,
+              "end": 0.94,
+              "word": " muy",
+              "probability": 0.5805229544639587
+            },
+            {
+              "start": 0.94,
+              "end": 1.34,
+              "word": " amable.",
+              "probability": 0.9768186211585999
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "hotel-02": {
+      "id": "hotel-02",
+      "role": "traveler",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/hotel-02.mp3",
+      "sha256": "90542e0cac21132b03385f6e46c278b9eb46bdcc88f5b7baf0f657be74b74401",
+      "model": "base",
+      "decoded_duration_seconds": 3.08,
+      "expected": "Buenas tardes. Tengo una reservación.",
+      "recognized": "Buenas tardes. Tengo una reservación.",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "Buenas tardes. Tengo una reservación.",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.72,
+          "text": " Buenas tardes. Tengo una reservación.",
+          "tokens": [
+            50364,
+            4078,
+            11581,
+            21057,
+            279,
+            13,
+            314,
+            30362,
+            2002,
+            16454,
+            3482,
+            13,
+            50504
+          ],
+          "avg_logprob": -0.4578608764069421,
+          "compression_ratio": 0.8260869565217391,
+          "no_speech_prob": 0.04020283371210098,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.62,
+              "word": " Buenas",
+              "probability": 0.7440428882837296
+            },
+            {
+              "start": 0.62,
+              "end": 1.22,
+              "word": " tardes.",
+              "probability": 0.9919948875904083
+            },
+            {
+              "start": 1.52,
+              "end": 1.94,
+              "word": " Tengo",
+              "probability": 0.9755288362503052
+            },
+            {
+              "start": 1.94,
+              "end": 2.12,
+              "word": " una",
+              "probability": 0.998290479183197
+            },
+            {
+              "start": 2.12,
+              "end": 2.72,
+              "word": " reservación.",
+              "probability": 0.9887811839580536
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "hotel-04": {
+      "id": "hotel-04",
+      "role": "traveler",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/hotel-04.mp3",
+      "sha256": "8ea356da645dc45d6816a1c045131538f1b03ef00f7a8293a825070666e57706",
+      "model": "base",
+      "decoded_duration_seconds": 2.0,
+      "expected": "A nombre de Alex Martín.",
+      "recognized": "A nombre de Alex Martín.",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "A nombre de Alex Martín.",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 1.72,
+          "text": " A nombre de Alex Martín.",
+          "tokens": [
+            50364,
+            316,
+            13000,
+            368,
+            5202,
+            5807,
+            10973,
+            13,
+            50464
+          ],
+          "avg_logprob": -0.4505370855331421,
+          "compression_ratio": 0.7575757575757576,
+          "no_speech_prob": 0.11932938545942307,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.4,
+              "word": " A",
+              "probability": 0.3103588819503784
+            },
+            {
+              "start": 0.4,
+              "end": 0.68,
+              "word": " nombre",
+              "probability": 0.7141539454460144
+            },
+            {
+              "start": 0.68,
+              "end": 0.9,
+              "word": " de",
+              "probability": 0.9753534197807312
+            },
+            {
+              "start": 0.9,
+              "end": 1.16,
+              "word": " Alex",
+              "probability": 0.9898584485054016
+            },
+            {
+              "start": 1.16,
+              "end": 1.72,
+              "word": " Martín.",
+              "probability": 0.7244285941123962
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "hotel-06": {
+      "id": "hotel-06",
+      "role": "traveler",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/hotel-06.mp3",
+      "sha256": "93beed28d38cf7640e9175397c655de50b307a8f703efab7a5b23b8590413e95",
+      "model": "base",
+      "decoded_duration_seconds": 1.82,
+      "expected": "Sí, aquí está.",
+      "recognized": "Sí, aquí está.",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "Sí, aquí está.",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 1.44,
+          "text": " Sí, aquí está.",
+          "tokens": [
+            50364,
+            12375,
+            11,
+            6661,
+            3192,
+            13,
+            50464
+          ],
+          "avg_logprob": -0.477863073348999,
+          "compression_ratio": 0.68,
+          "no_speech_prob": 0.03762232884764671,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.52,
+              "word": " Sí,",
+              "probability": 0.3391467332839966
+            },
+            {
+              "start": 0.92,
+              "end": 1.16,
+              "word": " aquí",
+              "probability": 0.918781042098999
+            },
+            {
+              "start": 1.16,
+              "end": 1.44,
+              "word": " está.",
+              "probability": 0.9599106311798096
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "hotel-08": {
+      "id": "hotel-08",
+      "role": "traveler",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/hotel-08.mp3",
+      "sha256": "8115e4ecd67b26a9dce9d5a387c9019ca4889c8ccc30037e87b4facaa6f6a022",
+      "model": "base",
+      "decoded_duration_seconds": 3.32,
+      "expected": "Gracias. ¿Cuál es la contraseña del wifi?",
+      "recognized": "Gracias, ¿cuál es la contraseña del Wi-Fi?",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "Gracias. ¿Cuál es la contraseña del Wi-Fi?",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 2.94,
+          "text": " Gracias, ¿cuál es la contraseña del Wi-Fi?",
+          "tokens": [
+            50364,
+            26909,
+            11,
+            3841,
+            12032,
+            11447,
+            785,
+            635,
+            10273,
+            651,
+            12150,
+            1103,
+            14035,
+            12,
+            13229,
+            30,
+            50514
+          ],
+          "avg_logprob": -0.36073023743099636,
+          "compression_ratio": 0.8490566037735849,
+          "no_speech_prob": 0.005404493771493435,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.72,
+              "word": " Gracias,",
+              "probability": 0.7808842062950134
+            },
+            {
+              "start": 1.28,
+              "end": 1.48,
+              "word": " ¿cuál",
+              "probability": 0.6888333757718405
+            },
+            {
+              "start": 1.48,
+              "end": 1.6,
+              "word": " es",
+              "probability": 0.9925915002822876
+            },
+            {
+              "start": 1.6,
+              "end": 1.72,
+              "word": " la",
+              "probability": 0.9827885031700134
+            },
+            {
+              "start": 1.72,
+              "end": 2.34,
+              "word": " contraseña",
+              "probability": 0.905807634194692
+            },
+            {
+              "start": 2.34,
+              "end": 2.54,
+              "word": " del",
+              "probability": 0.9719681143760681
+            },
+            {
+              "start": 2.54,
+              "end": 2.68,
+              "word": " Wi",
+              "probability": 0.5309346914291382
+            },
+            {
+              "start": 2.68,
+              "end": 2.94,
+              "word": "-Fi?",
+              "probability": 0.9824500977993011
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    },
+    "hotel-repeat": {
+      "id": "hotel-repeat",
+      "role": "traveler",
+      "file": "/workspace/scratch/e43d8d5d682c/arrival-audio-work/clips/hotel-repeat.mp3",
+      "sha256": "22788dc2426122c8ebc2b96e98355a9a4f318f76a79da54d9c5f80373d04e3ec",
+      "model": "base",
+      "decoded_duration_seconds": 2.263875,
+      "expected": "¿Me puede repetir, por favor?",
+      "recognized": "¿Me puede repetir por favor?",
+      "normalized_exact_match": true,
+      "source_full_take_asr": "¿Me puede repetir por favor?",
+      "matches_full_take_asr": true,
+      "differences": [],
+      "segments": [
+        {
+          "id": 1,
+          "seek": 0,
+          "start": 0.0,
+          "end": 1.9,
+          "text": " ¿Me puede repetir por favor?",
+          "tokens": [
+            50364,
+            3841,
+            12671,
+            8919,
+            13645,
+            347,
+            1515,
+            2294,
+            30,
+            50464
+          ],
+          "avg_logprob": -0.34374158490787854,
+          "compression_ratio": 0.7837837837837838,
+          "no_speech_prob": 0.054248832166194916,
+          "words": [
+            {
+              "start": 0.0,
+              "end": 0.46,
+              "word": " ¿Me",
+              "probability": 0.576241061091423
+            },
+            {
+              "start": 0.46,
+              "end": 0.78,
+              "word": " puede",
+              "probability": 0.9364172220230103
+            },
+            {
+              "start": 0.78,
+              "end": 1.4,
+              "word": " repetir",
+              "probability": 0.9865582883358002
+            },
+            {
+              "start": 1.4,
+              "end": 1.54,
+              "word": " por",
+              "probability": 0.4381147623062134
+            },
+            {
+              "start": 1.54,
+              "end": 1.9,
+              "word": " favor?",
+              "probability": 0.9991204142570496
+            }
+          ],
+          "temperature": 0.0
+        }
+      ],
+      "method": "CPU/int8, Spanish, beam5, temperature0, no initial prompt, no hotwords, no provider timestamps; expected text compared only after recognition.",
+      "limitations": "Machine check only. Does not establish human/perceptual approval or determine whether ASR-only differences are synthesis defects."
+    }
+  },
+  "reviews": {
+    "full_takes": "# Independent speech-to-text verification — arrival-v1\n\n## Scope\n\nThe two successful, user-approved HeyGen takes were transcribed locally from their actual audio bytes. No new speech was generated, and no script text, initial prompt, hotwords, or provider timestamps were supplied to the recognition model. The script comparison took place only after inference.\n\nOriginal filenames end in `.wav`, but the files contain MP3 audio. Their SHA-256 values are recorded in the JSON results.\n\n## Method\n\n- Implementation: faster-whisper 1.2.1 / CTranslate2, CPU int8, four threads.\n- Full-take first pass: public `Systran/faster-whisper-base`, Spanish, beam size 5, temperature 0, previous-text conditioning disabled, VAD disabled.\n- Targeted second pass: public `Systran/faster-whisper-small`, staff take only, with the same settings. This pass addressed concrete uncertainties in the base transcript, especially room 204.\n- FFmpeg decoded the originals to 16 kHz mono float32 for model input. The original bytes remain unchanged. This input route avoided an installed faster-whisper 1.2.1 / PyAV 19 decoder API incompatibility.\n- Word times are model estimates and must be cross-checked with actual waveform boundaries before cutting.\n- Official implementation documentation: https://github.com/SYSTRAN/faster-whisper\n\nComparison normalization ignores punctuation, capitalization, and written accents. It equates the numeric token `204` with `doscientos cuatro`, and `Wi-Fi` / `wi fi` with `wifi`. No other lexical differences are normalized away.\n\n## Results\n\n| Take / model | Result |\n| --- | --- |\n| Traveler / base | All eight lines match the approved wording after the stated normalization, including Alex Martín, the wifi question, and the repeat request. |\n| Staff / base | Non-matching words: taxis → “táxices”, puede → “puedes”, tiene → “tienes”, and the room phrase → “lado 104”. These are ASR hypotheses, not confirmed synthesis defects. |\n| Staff / small | Correctly recognizes taxis, singular puede, and room 204. The remaining difference is “¿Tienes su pasaporte?” versus “¿Tiene su pasaporte?”. |\n\nThe final staff small-model transcript is:\n\n> Los taxis están afuera, a la derecha. Muy bien, puede salir por esa puerta. Buenas tardes. ¿A nombre de quién? Perfecto. ¿Tienes su pasaporte? Su habitación es la 204.\n\nThe traveler base-model transcript is:\n\n> Hola, buenos días. ¿Dónde puedo tomar un taxi? Perfecto, gracias. Voy a este hotel. Gracias, muy amable. Buenas tardes. Tengo una reservación. A nombre de Alex Martín. Sí, aquí está. Gracias. ¿Cuál es la contraseña del Wi-Fi? ¿Me puede repetir por favor?\n\n## Residual uncertainty\n\nThe approved sequence `tiene su` already contains an /s/ at the word boundary. ASR assigning that sound to `tienes` does not, by itself, prove that the synthesizer pronounced an extra /s/. Both model sizes produce the same boundary interpretation, so this result is retained as unresolved; it is not marked as an exact staff-script pass.\n\nThe waveform reviewer identified a signal burst at approximately 18.56–19.12 seconds in the staff source. Neither full-take ASR pass recognized a separate word there; both estimate the final “Su” around 19.7 seconds. Recognition output alone cannot classify that burst or justify cutting it away. Conservative boundaries and human listening remain necessary.\n\n## Limits\n\n### Subsequent final-excerpt check\n\nThe later check of all 14 finalized candidate clips is recorded in `final-clips/REVIEW.md`. Thirteen clips match the approved wording after normalization. The clipped hotel-05 question is recognized exactly as “¿Tiene su pasaporte?”, while airport-04 is recognized as “puedes salir” despite the full-take small-model result “puede salir”. The changing hypotheses reinforce the word-boundary uncertainty; no human listening or complete perceptual approval is implied. All expected opening and final words, including the room number 204, are recognized in the candidate clips.\n\nThis is machine transcription evidence only. The two model sizes belong to the same Whisper model family. They are independent of HeyGen's supplied text/timing metadata, not independent linguistic reviewers. ASR can normalize, omit, hallucinate, or misassign spoken words.\n\nNo human or perceptual listening approval was performed. These checks do not establish pleasant delivery, pronunciation quality, regional/Dominican accent, or the safety of every cut. The final excerpts require boundary verification, and the unresolved staff question requires explicit listening review before claiming complete script fidelity.\n\n## Files\n\n- `staff-asr.json`: full base staff transcript, estimated word timestamps, settings, source hash, and differences.\n- `traveler-asr.json`: full base traveler transcript and word timestamps.\n- `small/staff-asr.json`: targeted small-model staff transcript and timestamps.\n- `summary.json` and `small/summary.json`: compact machine results.\n- `../run_asr_verification.py`: reproducible validation script, with no reference transcript supplied to recognition.\n\n",
+    "final_clips": "# Final candidate excerpt ASR — arrival-v1\n\nThe 14 finalized MP3 candidate excerpts in `arrival-audio-work/clips/` were recognized once each, using cached local models. Staff clips used Whisper small; traveler clips used Whisper base. Inference used Spanish, CPU/int8, beam 5, temperature 0, no initial prompt, no hotwords, no expected script, and no provider word timestamps. Expected text was compared only afterward.\n\n**Result: 13 of 14 excerpts exactly match the approved text after the documented punctuation/accent/number/Wi-Fi normalization.**\n\n| Clip | Recognition result |\n| --- | --- |\n| airport-01 | Exact normalized match |\n| airport-02 | Exact normalized match |\n| airport-03 | Exact normalized match |\n| airport-04 | Recognized “Muy bien, puedes salir por esa puerta.”; approved text is “Muy bien. Puede salir por esa puerta.” |\n| airport-05 | Exact normalized match |\n| hotel-01 | Exact normalized match |\n| hotel-02 | Exact normalized match |\n| hotel-03 | Exact normalized match, including initial “¿A” |\n| hotel-04 | Exact normalized match, including initial “A” and Alex Martín |\n| hotel-05 | Exact normalized match: “Perfecto. ¿Tiene su pasaporte?” |\n| hotel-06 | Exact normalized match |\n| hotel-07 | Exact normalized match, including initial “Su” and room 204 |\n| hotel-08 | Exact normalized match |\n| hotel-repeat | Exact normalized match, including initial “¿Me” |\n\nNo lost initial or final word was detected in this pass. This is a recognition-based boundary check, not proof that every phoneme or breath is preserved.\n\n## Context-sensitive word-boundary hypotheses\n\nThe full staff take recognized with Whisper small gave the approved singular “puede salir”, while the final airport-04 excerpt gave “puedes salir”. Conversely, the full-take question gave “tienes su pasaporte”, while the final hotel-05 excerpt gave the approved “tiene su pasaporte”.\n\nBoth differences sit immediately before an s-initial next word. The hypotheses change with recognition context. They therefore do not, by themselves, establish an audible synthesis defect or a truncation caused by cutting. The differences are preserved in the reports; no transcript is silently rewritten to claim an exact match.\n\nThe extra staff-source signal burst at approximately18.56–19.12 seconds was retained inside hotel-07 by the waveform reviewer. ASR recognizes the intended room phrase and no additional word, but cannot classify that earlier burst or establish its perceptual acceptability.\n\n## Limitations\n\nNo human or perceptual listening approval has been performed. ASR does not establish voice pleasantness, pronunciation quality, Dominican/regional accent, or suitability as a pronunciation model. The recordings remain technical candidates for listening review.\n\nThe source masters and excerpts were only read; this verification did not modify them or synthesize new audio.\n\n## Evidence\n\n`summary.json` retains every clip's SHA-256, expected and recognized wording, model, decoded duration, normalized match result, and comparison with full-take ASR. Individual `<clip-id>.json` files additionally contain estimated word timestamps.\n\n`../../run_clip_asr_verification.py` reproduces this pass using the cached models.\n\n"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "sourceBase": "https://jwlbwmxoradmbuvqfkhe.supabase.co/storage/v1/object/public/yopratiqo-audio/yo/fr/fr-quebec-workplace-survival-1/comprendre-consignes-simples/quebec-french/phrase/",
+  "sources": {
+    "tiens": "4e4d6613b171ecc4a3d7c3670ea4f380e7bc70e2f2de7a296a228f0fb31b3992",
+    "tenez": "68406e88f8b20b849b1baa9bdf53075a4d11ac1d2116022d340ad2407580f4ba"
+  },
+  "method": "Existing Tiens. + 250 ms silence + existing Tenez.; no new TTS",
+  "sha256": "47a45862fb14e3d764eb1d3b4a993c36003209fad4bb273eee602569dac70a17",
+  "bytes": 25677,
+  "probe": {
+    "format": {
+      "duration": "2.112000",
+      "size": "25677"
+    }
+  }
+}

@@ -78,10 +78,11 @@ export function DominicanRepublicModule5Quiz({
   const score = useMemo(
     () =>
       questions.reduce(
-        (acc, q) => (picks[q.id] === q.correctOptionId ? acc + 1 : acc),
+        (acc, q) =>
+          revealed[q.id] && picks[q.id] === q.correctOptionId ? acc + 1 : acc,
         0,
       ),
-    [picks, questions],
+    [picks, questions, revealed],
   );
 
   const current = questions[index];
@@ -145,6 +146,7 @@ export function DominicanRepublicModule5Quiz({
               <button
                 key={option.id}
                 type="button"
+                aria-pressed={optionPicked}
                 disabled={isRevealed}
                 onClick={() =>
                   setPicks((prev) => ({ ...prev, [current.id]: option.id }))

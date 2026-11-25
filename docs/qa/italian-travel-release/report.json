@@ -1,0 +1,26 @@
+[
+  {
+    "width": 390,
+    "height": 844,
+    "dimensions": {
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "scrollHeight": 844
+    },
+    "errors": [],
+    "blockedWrites": []
+  },
+  {
+    "width": 1280,
+    "height": 900,
+    "dimensions": {
+      "width": 1280,
+      "height": 900,
+      "scrollWidth": 1280,
+      "scrollHeight": 900
+    },
+    "errors": [],
+    "blockedWrites": []
+  }
+]

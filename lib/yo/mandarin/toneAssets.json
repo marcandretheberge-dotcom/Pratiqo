@@ -1,0 +1,42 @@
+{
+  "1": {
+    "src": "/audio/yo/zh/reference-tones/tone-1.mp3",
+    "source": "https://commons.wikimedia.org/wiki/File:Zh-sh%C5%AB.ogg",
+    "credit": "Wei Gao, Vion Nicolas",
+    "license": "CC BY 2.0 fr",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0/fr/deed.en",
+    "description": "Pronunciation of \"shū\" (书) in Chinese. Male voice. Speaker from Pekin, China.",
+    "verifiedAt": "2026-11-03",
+    "adaptation": "Wikimedia MP3 transcode; recording unchanged."
+  },
+  "2": {
+    "src": "/audio/yo/zh/reference-tones/tone-2.mp3",
+    "source": "https://commons.wikimedia.org/wiki/File:Zh-m%C3%A1.ogg",
+    "credit": "Yue Tan",
+    "license": "CC BY-SA 3.0 us",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/us/deed.en",
+    "description": "Pronunciation of \"má\" (麻) in Chinese. Female voice. Speaker from Liaoning, China.",
+    "verifiedAt": "2026-11-03",
+    "adaptation": "Wikimedia MP3 transcode; recording unchanged."
+  },
+  "3": {
+    "src": "/audio/yo/zh/reference-tones/tone-3.mp3",
+    "source": "https://commons.wikimedia.org/wiki/File:Zh-m%C7%8E.ogg",
+    "credit": "Wei Gao, Vion Nicolas",
+    "license": "CC BY 2.0 fr",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0/fr/deed.en",
+    "description": "Pronunciation of \"mǎ\" (马) in Chinese. Male voice. Speaker from Pekin, China.",
+    "verifiedAt": "2026-11-03",
+    "adaptation": "Wikimedia MP3 transcode; recording unchanged."
+  },
+  "4": {
+    "src": "/audio/yo/zh/reference-tones/tone-4.mp3",
+    "source": "https://commons.wikimedia.org/wiki/File:Zh-m%C3%A0.ogg",
+    "credit": "Yue Tan",
+    "license": "CC BY-SA 3.0 us",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/us/deed.en",
+    "description": "Pronunciation of \"mà\" (骂) in Chinese language. Female voice. Speaker from Liaoning, China.",
+    "verifiedAt": "2026-11-03",
+    "adaptation": "Wikimedia MP3 transcode; recording unchanged."
+  }
+}

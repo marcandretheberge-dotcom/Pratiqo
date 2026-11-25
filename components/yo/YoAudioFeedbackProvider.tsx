@@ -6,13 +6,13 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { EFFECTS_KEY, listenForAdventureInterruptions, playAdventureSound, prepareAdventureSound, stopAdventureSound } from "@/lib/yo/adventureSound";
 import type { YoLocale } from "@/lib/yo/types";
 
 type YoAudioFeedbackKind =
@@ -29,7 +29,7 @@ type YoAudioFeedbackContextValue = {
   playFeedback: (kind: YoAudioFeedbackKind) => Promise<void>;
 };
 
-const STORAGE_KEY = "yopratiqo.audio.muted";
+const STORAGE_KEY = EFFECTS_KEY;
 
 const YoAudioFeedbackContext = createContext<YoAudioFeedbackContextValue>({
   isUnlocked: false,
@@ -41,36 +41,18 @@ const YoAudioFeedbackContext = createContext<YoAudioFeedbackContextValue>({
 
 const LABELS: Record<YoLocale, { soundOn: string; soundOff: string }> = {
   fr: {
-    soundOn: "Audio active",
-    soundOff: "Audio coupe",
+    soundOn: "Effets sonores activés",
+    soundOff: "Effets sonores coupés",
   },
   en: {
-    soundOn: "Audio on",
-    soundOff: "Audio off",
+    soundOn: "Sound effects on",
+    soundOff: "Sound effects off",
   },
   es: {
-    soundOn: "Audio activo",
-    soundOff: "Audio apagado",
+    soundOn: "Efectos de sonido activos",
+    soundOff: "Efectos de sonido desactivados",
   },
 };
-
-const TONES: Record<
-  YoAudioFeedbackKind,
-  { frequency: number; durationMs: number; type: OscillatorType }
-> = {
-  correct: { frequency: 880, durationMs: 110, type: "sine" },
-  incorrect: { frequency: 196, durationMs: 150, type: "triangle" },
-  "step-complete": { frequency: 1046, durationMs: 170, type: "sine" },
-  "intro-complete": { frequency: 1318, durationMs: 240, type: "sine" },
-};
-
-function getAudioContextCtor(): typeof AudioContext | undefined {
-  if (typeof window === "undefined") return undefined;
-  const safariWindow = window as Window & {
-    webkitAudioContext?: typeof AudioContext;
-  };
-  return window.AudioContext ?? safariWindow.webkitAudioContext;
-}
 
 export function useYoAudioFeedback(): YoAudioFeedbackContextValue {
   return useContext(YoAudioFeedbackContext);
@@ -85,41 +67,27 @@ export function YoAudioFeedbackProvider({
   locale,
   children,
 }: YoAudioFeedbackProviderProps) {
-  const audioContextRef = useRef<AudioContext | null>(null);
+
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
 
   useEffect(() => {
     try {
-      setIsMuted(window.localStorage.getItem(STORAGE_KEY) === "true");
+      setIsMuted(window.localStorage.getItem(STORAGE_KEY) !== "false");
     } catch {
       /* localStorage can be unavailable in private contexts */
     }
   }, []);
 
+  useEffect(() => listenForAdventureInterruptions(), []);
   const unlock = useCallback(async () => {
-    if (audioContextRef.current) {
-      if (audioContextRef.current.state === "suspended") {
-        await audioContextRef.current.resume().catch(() => undefined);
-      }
-      setIsUnlocked(true);
-      return;
-    }
-
-    const AudioContextCtor = getAudioContextCtor();
-    if (!AudioContextCtor) return;
-
-    const ctx = new AudioContextCtor();
-    audioContextRef.current = ctx;
-    if (ctx.state === "suspended") {
-      await ctx.resume().catch(() => undefined);
-    }
-    setIsUnlocked(true);
+    setIsUnlocked(await prepareAdventureSound());
   }, []);
 
   const toggleMuted = useCallback(() => {
     setIsMuted((current) => {
       const next = !current;
+      if (next) stopAdventureSound();
       try {
         window.localStorage.setItem(STORAGE_KEY, String(next));
       } catch {
@@ -133,25 +101,8 @@ export function YoAudioFeedbackProvider({
     async (kind: YoAudioFeedbackKind) => {
       if (isMuted) return;
       await unlock();
-      const ctx = audioContextRef.current;
-      if (!ctx) return;
-
-      const tone = TONES[kind];
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const now = ctx.currentTime;
-      const duration = tone.durationMs / 1000;
-
-      oscillator.type = tone.type;
-      oscillator.frequency.setValueAtTime(tone.frequency, now);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.06, now + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-      oscillator.connect(gain);
-      gain.connect(ctx.destination);
-      oscillator.start(now);
-      oscillator.stop(now + duration + 0.02);
+      const mapping = { correct: "correct", incorrect: "retry", "step-complete": "checkpoint", "intro-complete": "unlock" } as const;
+      await playAdventureSound(mapping[kind]);
     },
     [isMuted, unlock],
   );

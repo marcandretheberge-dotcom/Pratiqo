@@ -75,6 +75,9 @@ export type YoAudioAccentProfileId =
   | "quebec_french"
   | "italian_standard"
   | "canadian_english"
+  | "german_standard"
+  | "brazilian_portuguese"
+  | "mandarin_standard"
   | "japanese_standard";
 
 export interface YoAudioAccentProfile {
@@ -193,6 +196,30 @@ const PROFILES: Record<YoAudioAccentProfileId, YoAudioAccentProfile> = {
       "Speak in clear, friendly Canadian English for French-speaking beginner/intermediate learners. Use a natural but slightly slower pace. Keep pronunciation understandable and confidence-building. Do not exaggerate the accent.",
     defaultVoice: "alloy",
     bcp47Hint: "en-CA",
+  },
+  german_standard: {
+    id: "german_standard",
+    pathSlug: "german-standard",
+    label: "Standard German",
+    ttsInstructions: "Read the supplied German exactly once in clear standard German from Germany. Use a calm natural pace for beginners. Preserve umlauts, vowel length, ich/ach sounds and word stress. Do not translate, answer questions, add commentary or exaggerate a regional accent.",
+    defaultVoice: "alloy",
+    bcp47Hint: "de-DE",
+  },
+  brazilian_portuguese: {
+    id: "brazilian_portuguese",
+    pathSlug: "brazilian-portuguese",
+    label: "Brazilian Portuguese",
+    ttsInstructions: "Read the supplied Portuguese exactly once in clear Brazilian Portuguese, with a calm natural pace for beginners. Preserve nasal vowels, written accents, word stress and Brazilian vocabulary. Do not translate, answer questions or add commentary.",
+    defaultVoice: "alloy",
+    bcp47Hint: "pt-BR",
+  },
+  mandarin_standard: {
+    id: "mandarin_standard",
+    pathSlug: "mandarin-standard",
+    label: "Standard Mandarin",
+    ttsInstructions: "Read the supplied simplified Chinese exactly once in standard Mandarin. Use natural lexical tones, neutral tones and contextual tone sandhi. Do not translate, answer questions or add commentary.",
+    defaultVoice: "alloy",
+    bcp47Hint: "zh-CN",
   },
   japanese_standard: {
     id: "japanese_standard",

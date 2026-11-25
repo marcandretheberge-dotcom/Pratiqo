@@ -194,7 +194,7 @@ test("ambassador PR stays away from restricted systems", () => {
     /^app\/api\/stripe\//,
     /^lib\/payments\//,
     /^lib\/config\/membrePro\.ts$/,
-    /^supabase\/migrations\/(?!(088_learner_demand_funnel|089_learner_demand_funnel|089_ambassador_referral_tracking|090_ambassador_referral_tracking|090_ambassador_rewards_v1|091_ambassador_rewards_v1|091_ambassador_rewards_version_hardening|092_ambassador_rewards_version_hardening|092_harden_recent_program_tables_rls|093_harden_recent_program_tables_rls|093_ambassador_net_contribution_economics|094_ambassador_net_contribution_economics|095_ambassador_membership_admin)\.sql$)/,
+    /^supabase\/migrations\/(?!(088_learner_demand_funnel|089_learner_demand_funnel|089_ambassador_referral_tracking|090_ambassador_referral_tracking|090_ambassador_rewards_v1|091_ambassador_rewards_v1|091_ambassador_rewards_version_hardening|092_ambassador_rewards_version_hardening|092_harden_recent_program_tables_rls|093_harden_recent_program_tables_rls|093_ambassador_net_contribution_economics|094_ambassador_net_contribution_economics|095_ambassador_membership_admin|20261031180000_ambassador_user_identity)\.sql$)/,
     /^app\/yo\//,
     /^lib\/yo\//,
     /^public\/.*\.mp3$/i,

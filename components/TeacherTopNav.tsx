@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import PratiqoLogo from "@/components/PratiqoLogo";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { CafeNavLink } from "@/components/cafe/community/CafeNavLink";
 import { useLocale } from "@/lib/locale-context";
 import { useAuth } from "@/components/AuthProvider";
 import { authDisplayName } from "@/lib/authDisplay";
@@ -70,7 +71,7 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
         style={{ borderBottom: "0.5px solid #D3D1C7" }}
         data-testid="teacher-top-header"
       >
-        <div className="flex h-[52px] w-full items-center justify-between gap-3 px-4 sm:px-5 lg:px-6">
+        <div className="flex min-h-[52px] w-full flex-wrap items-center justify-between gap-2 px-4 py-2 sm:px-5 md:py-0 lg:px-6">
           <div className="flex min-w-0 items-center gap-3 md:min-w-0">
             <button
               type="button"
@@ -93,6 +94,7 @@ export function TeacherTopNav({ unreadMessages }: { unreadMessages: number }) {
           </div>
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <CafeNavLink />
             <Link
               href="/messages"
               className={cn(

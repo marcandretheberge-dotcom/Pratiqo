@@ -15,6 +15,9 @@
 
 # Next.js
 /.next/
+/public/practice/it/bologna/
+/public/practice/es/hotel/
+/public/practice/field/
 /out/
 
 # Production
@@ -63,3 +66,32 @@ backups/
 # Editor/Office temporary lock files
 ~$*
 **/~$*
+
+# Resumable local TTS generation cache (MP3s and provenance)
+/.cache/yopratiqo-audio/
+/.cache/german-local-audio/
+/.cache/portuguese-local-audio/
+/.cache/mandarin-local-audio/
+
+# Backend-free local course QA output
+.qa-guided/
+
+.cafe-live-handoff.json
+.cafe-live-browser-report.json
+
+
+# Local Cafe browser QA artifacts
+artifacts/cafe-live-browser/
+artifacts/cafe-pr3b-room/
+artifacts/cafe-room-browser-live/
+artifacts/cafe-community-live/
+artifacts/cafe-people/
+.env.cafe-community-local
+.env.cafe-local
+
+
+.env.cafe-community-runtime
+
+# Local Supabase CLI state and retired prototype archive
+/supabase/.temp/
+/pratiqo.zip

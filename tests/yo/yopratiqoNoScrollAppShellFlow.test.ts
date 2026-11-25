@@ -350,8 +350,9 @@ test("/decouvrir sub-route preserves RepubliqueDominicaineContent with the audit
 
 // ─── 11. Yoppo named on every app-shell surface with companion copy ───
 test("every app-shell surface that exposes companion copy names Yoppo", () => {
+  assert.match(catalogSrc, /<YoLanguageQuickStart locale=\{locale\}/);
   for (const [label, source] of [
-    ["catalog", catalogSrc],
+    ["catalog", read("components/yo/YoLanguageQuickStart.tsx")],
     ["Spanish hub", spanishHubSrc],
   ] as const) {
     assert.match(

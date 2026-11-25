@@ -1,31 +1,23 @@
 /**
  * YoPratiqo Dominican Republic Module 2 quiz/audio UX regression tests.
  *
- * Browser-speech audio contract
- * -----------------------------
- * Module 2 ships **two** flavours of inline audio, both rooted in the
- * browser SpeechSynthesis API. No MP3 is ever loaded, no OpenAI script
- * is ever invoked at request time, and no audio file is bundled.
+ * Module 2 audio contract
+ * -----------------------
+ * Individual phrases, hotel problems, quiz reveals and mini-mission
+ * steps keep browser speech. The flashcard carousel receives the
+ * serializable audioMode="browser-speech" discriminator and creates
+ * its own YoSpeechButton client-side.
  *
- *   1. Direct `<YoSpeechButton text={...} />` mounts inside the
- *      module file itself, used wherever the parent is a Server
- *      Component that renders a single phrase / dialogue line /
- *      problem card / quiz answer / mini-mission step.
+ * Airport and hotel conversations now mount YoArrivalListeningLesson,
+ * which plays reviewed local recordings from its line manifest when
+ * audioReady is enabled. Pending scenes remain readable without a
+ * media request; they do not substitute browser speech. Interactive
+ * cancellation, reveal and pending-state behavior is covered by the
+ * rendered yopratiqoArrivalListeningLesson.test.ts suite.
  *
- *   2. Indirect mounts via `<YoFlashcardPreview audioMode="browser-speech">`,
- *      which is required for the flashcard carousel because it is a
- *      Client Component (it owns the carousel state). React Server
- *      Components forbid passing function props across an RSC
- *      boundary, so the carousel takes a serializable
- *      `audioMode` discriminator and instantiates `<YoSpeechButton />`
- *      itself when the value is `"browser-speech"`. This pattern is
- *      defended end-to-end by `tests/yo/yopratiqoDominicanModulesLoading.test.ts`
- *      and is shared by Modules 3 / 4 / 5.
- *
- * The combined audio surface MUST therefore include both kinds of
- * mounts AND must never read translation / gloss / explanation fields
- * (those would either leak the answer before the learner reveals it or
- * pre-translate the Spanish target — both forbidden).
+ * Neither surface generates recordings at request time or imports an
+ * audio-generation SDK/secret. Spoken content must use Spanish targets,
+ * never translations, glosses or explanations.
  */
 
 import assert from "node:assert/strict";
@@ -42,7 +34,7 @@ function read(relativePath: string): string {
 
 /**
  * Strip JS/TS block comments + line comments + JSX `{/* ... *\/}` blocks
- * so substring scans like "no OpenAI / no .mp3 / no <audio>" measure real
+ * so substring scans for SDK imports and media references measure real
  * code instead of tripping on docstrings that document the absence of
  * those dependencies. Imports / identifiers / JSX still survive.
  */
@@ -62,6 +54,8 @@ function test(name: string, fn: TestFn): void {
 
 const COMPONENT_FILE = "components/yo/DominicanRepublicModule2Content.tsx";
 const FLASHCARD_PREVIEW_FILE = "components/yo/YoFlashcardPreview.tsx";
+const ARRIVAL_LESSON_FILE = "components/yo/YoArrivalListeningLesson.tsx";
+const ARRIVAL_DATA_FILE = "lib/yo/dominicanArrivalListening.ts";
 
 function sliceBetween(src: string, startToken: string, endToken: string): string {
   const start = src.indexOf(startToken);
@@ -112,22 +106,24 @@ test("final mini-mission reveals Spanish phrase audio only after opening details
   assert.ok(missionArea.includes("{step.targetPhrase}"));
 });
 
-test("audio buttons exist for phrases, dialogues, hotel problems, and flashcards", () => {
+test("phrase and flashcard speech remains alongside the recorded arrival lessons", () => {
   const src = read(COMPONENT_FILE);
 
-  // Phrase / dialogue / hotel-problem audio mounts that live in
-  // the module file directly (Server Component parents).
+  // Phrase and hotel-problem speech remains in the parent module.
   assert.ok(src.includes("data-yo-module2-phrase-audio-card"));
   assert.ok(src.includes("<YoSpeechButton text={phrase.target}"));
-  assert.ok(src.includes("<YoSpeechButton text={line.target}"));
   assert.ok(src.includes("data-yo-module2-hotel-problem-audio"));
+
+  const dialogueArea = sliceBetween(src, "function DialogueSection", "function GrammarSection");
+  assert.match(dialogueArea, /<YoArrivalListeningLesson\s+sceneId=\{sectionId\}\s+locale=\{locale\}\s*\/>/);
+  assert.ok(!dialogueArea.includes("<YoSpeechButton"), "arrival recordings must not silently fall back to browser speech");
 
   // Flashcard audio is wired via the serializable
   // `audioMode="browser-speech"` discriminator on
   // `<YoFlashcardPreview />`. We assert the discriminator at the
   // module-file mount point AND that the carousel itself
   // instantiates `<YoSpeechButton />` for that mode (see
-  // YoFlashcardPreview line ~517–524).
+  // YoFlashcardPreview's browser-speech branch).
   assert.ok(
     src.includes('audioMode="browser-speech"'),
     "Module 2 must wire flashcard audio via audioMode=\"browser-speech\"",
@@ -146,14 +142,14 @@ test("audio buttons exist for phrases, dialogues, hotel problems, and flashcards
   );
 });
 
-test("audio implementation stays browser-only and never reads translations", () => {
+test("browser speech uses Spanish targets and arrival playback uses manifest recordings", () => {
   const moduleSrc = read(COMPONENT_FILE);
   const flashcardPreviewSrc = read(FLASHCARD_PREVIEW_FILE);
+  const arrivalSrc = stripJsComments(read(ARRIVAL_LESSON_FILE));
 
-  // The module file currently mounts five direct
-  // `<YoSpeechButton text={...} />` calls (phrase, dialogue line,
+  // The module file keeps four direct speech mounts (phrase,
   // hotel-problem phrase, quiz-reveal answer, mini-mission step).
-  // The sixth audio surface — the flashcard carousel — lives in
+  // The flashcard carousel's speech mount lives in
   // YoFlashcardPreview.tsx via the audioMode="browser-speech"
   // pattern. We validate both files together so the count
   // stays meaningful as the codebase keeps refactoring carousel
@@ -164,16 +160,16 @@ test("audio implementation stays browser-only and never reads translations", () 
   const totalSpeechCalls = moduleSpeechCalls.length + flashcardSpeechCalls.length;
 
   assert.ok(
-    moduleSpeechCalls.length >= 5,
-    `Module 2 must mount at least 5 direct <YoSpeechButton /> calls (got ${moduleSpeechCalls.length})`,
+    moduleSpeechCalls.length >= 4,
+    `Module 2 must retain its 4 direct <YoSpeechButton /> surfaces (got ${moduleSpeechCalls.length})`,
   );
   assert.ok(
     flashcardSpeechCalls.length >= 1,
     `YoFlashcardPreview must mount at least one <YoSpeechButton /> for browser-speech mode (got ${flashcardSpeechCalls.length})`,
   );
   assert.ok(
-    totalSpeechCalls >= 6,
-    `combined Module 2 audio surface must have at least 6 <YoSpeechButton /> mounts (got ${totalSpeechCalls})`,
+    totalSpeechCalls >= 5,
+    `combined phrase and flashcard speech surface must have at least 5 mounts (got ${totalSpeechCalls})`,
   );
 
   // No speech call may read translation / gloss / explanation —
@@ -185,14 +181,7 @@ test("audio implementation stays browser-only and never reads translations", () 
     assert.ok(!call.includes("explanation"), `forbidden field in speech call: ${call}`);
   }
 
-  // Both files must remain MP3-free, raw-`<audio>`-free, and
-  // never reference the OpenAI SDK at request time. We scan
-  // comment-stripped source so docstrings that document the
-  // absence of those dependencies (e.g. "no OpenAI dependency")
-  // do not produce false positives. The audio generation script
-  // remains server-only and is not imported here — see the
-  // launch-critical FR Quebec lesson 2 audio suite for the
-  // corresponding production guard.
+  // The shared parent/carousel still delegate their media controls.
   for (const [label, src] of [
     [COMPONENT_FILE, moduleSrc],
     [FLASHCARD_PREVIEW_FILE, flashcardPreviewSrc],
@@ -200,10 +189,18 @@ test("audio implementation stays browser-only and never reads translations", () 
     const code = stripJsComments(src);
     assert.ok(!code.includes("<audio"), `${label} must not mount a raw <audio> element`);
     assert.ok(!code.includes(".mp3"), `${label} must not reference any .mp3 path`);
+  }
+
+  assert.match(arrivalSrc, /audio\.src\s*=\s*spokenLine\.audioSrc\s*;/);
+  assert.match(arrivalSrc, /if\s*\(!scene\.audioReady\)\s*return\s*;/);
+  assert.ok(arrivalSrc.indexOf("if (!scene.audioReady) return;") < arrivalSrc.indexOf("new window.Audio()"), "pending scenes must return before creating a media element");
+  assert.doesNotMatch(arrivalSrc, /YoSpeechButton|speechSynthesis|SpeechSynthesisUtterance/, "arrival lessons must use their recorded-media path without a speech fallback");
+
+  for (const file of [COMPONENT_FILE, FLASHCARD_PREVIEW_FILE, ARRIVAL_LESSON_FILE, ARRIVAL_DATA_FILE]) {
     assert.doesNotMatch(
-      code,
-      /\bopenai\b|OPENAI_API_KEY|new\s+OpenAI\b/i,
-      `${label} must not import from openai / read OPENAI_API_KEY / instantiate the SDK`,
+      stripJsComments(read(file)),
+      /\b(?:openai|heygen|elevenlabs|picovoice)\b|(?:OPENAI|HEYGEN|ELEVENLABS|PICOVOICE)_(?:API_KEY|ACCESS_KEY)|process\.env|generate-yopratiqo-audio/i,
+      `${file} must not import an audio-generation SDK, access its secrets, or invoke a generation script`,
     );
   }
 });
@@ -231,11 +228,11 @@ test("lesson deck still surfaces every audio affordance", () => {
       /<CorePhrasesSection\s+locale=\{locale\}\s*\/>/,
     ],
     [
-      "airport dialogue (line-by-line YoSpeechButton)",
+      "airport dialogue (recorded arrival lesson)",
       /<DialogueSection[\s\S]*?eyebrowLabel=\{LABEL_DIALOGUE_AIRPORT_EYEBROW\}/,
     ],
     [
-      "hotel dialogue (line-by-line YoSpeechButton)",
+      "hotel dialogue (recorded arrival lesson)",
       /<DialogueSection[\s\S]*?eyebrowLabel=\{LABEL_DIALOGUE_HOTEL_EYEBROW\}/,
     ],
     [

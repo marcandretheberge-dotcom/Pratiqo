@@ -1,0 +1,44 @@
+name: YoPratiqo phase 3 immersive review
+
+on:
+  push:
+    branches: [feat/yoppo-immersive-atlas-boss-20261108]
+  pull_request:
+    paths:
+      - ".github/workflows/yo-phase3-illustrated-review.yml"
+      - "components/yo/italian/guided/ItalianWorldAtlas.tsx"
+      - "components/yo/italian/guided/ItalianCityArrival.tsx"
+      - "components/yo/italian/guided/ItalianCityBossGate.tsx"
+      - "components/yo/italian/guided/ItalianBossBattleHud.tsx"
+      - "components/yo/italian/guided/ItalianWorldNavigator.tsx"
+      - "components/yo/italian/guided/GuidedItalianCourse.tsx"
+      - "tests/yo/yopratiqoItalianImmersivePhase3.test.tsx"
+
+permissions:
+  contents: read
+
+jobs:
+  immersive-review:
+    name: Illustrated atlas, boss gate and regression safety
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Illustrated world atlas and mastery-only boss
+        run: node --import tsx tests/yo/yopratiqoItalianImmersivePhase3.test.tsx
+      - name: Guided Italian regressions
+        run: npm run test:yo-italian-course
+      - name: Targeted lint
+        run: npx eslint components/yo/italian/guided/ItalianWorldAtlas.tsx components/yo/italian/guided/ItalianCityArrival.tsx components/yo/italian/guided/ItalianCityBossGate.tsx components/yo/italian/guided/ItalianBossBattleHud.tsx components/yo/italian/guided/ItalianWorldNavigator.tsx components/yo/italian/guided/GuidedItalianCourse.tsx tests/yo/yopratiqoItalianImmersivePhase3.test.tsx
+      - name: Diff integrity
+        run: git diff --check origin/main...HEAD

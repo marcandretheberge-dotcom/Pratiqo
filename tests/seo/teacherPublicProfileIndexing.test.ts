@@ -219,4 +219,3 @@ test("consent API route is server-side only", () => {
 });
 
 console.log("[seo:teacherPublicProfileIndexing] tests passed");
-

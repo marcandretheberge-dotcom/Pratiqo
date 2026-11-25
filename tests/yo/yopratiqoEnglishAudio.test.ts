@@ -288,15 +288,16 @@ test("Quebec French manifest items count stays at the documented 96 (English is 
   );
 });
 
-test("Italian manifest items count stays at the documented 32 (English is purely additive)", () => {
+test("Italian manifest items count stays at the documented 80 (English is purely additive)", () => {
+  // 32 retained Italian intro recordings + 48 Bologna module recordings.
   const itItems = YOPRATIQO_AUDIO_MANIFEST.filter(
     (i) =>
       i.targetLanguage === "it" && i.accentProfile === "italian_standard",
   );
   assert.equal(
     itItems.length,
-    32,
-    `Italian item total must remain 32; got ${itItems.length}. English additions must not touch Italian data.`,
+    80,
+    `Italian item total must remain 80; got ${itItems.length}. English additions must not touch Italian data.`,
   );
 });
 

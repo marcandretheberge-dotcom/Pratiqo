@@ -64,7 +64,7 @@ Follow-up validation:
 - CJS ESLint is unavailable with the repository's current flat config: rule
   `react-hooks/immutability` references an absent plugin for this extension.
   Reproduced on the unchanged base using `node node_modules/eslint/bin/eslint.js
-  --print-config scripts/check_teaching_zones_deployment.cjs`; no rule disabled or
+  --print-config scripts/check_teaching_zones_deployment.mjs`; no rule disabled or
   configuration modified. Syntax checks (`node --check`) and runtime tests pass.
   This is not a claim of a fully green repository-wide lint/launch suite.
 - Additional legacy `node node_modules/tsx/dist/cli.mjs
@@ -103,7 +103,7 @@ The build blockers and no-commit status below describe the earlier review only;
 the compilation follow-up above supersedes them.
 
 No application handler or discovery algorithm needed replacement. The real PUT
-handler is executed by teacherTeachingZonesRouteRuntime.cjs with only external
+handler is executed by teacherTeachingZonesRouteRuntime.mjs with only external
 auth/DB boundaries mocked. Missing/invalid bearer gives401, missing owned profile
 404, body-supplied teacherId400. Query-supplied teacherId cannot override the
 profile obtained via auth.getUser(token) then teachers.user_id=user.id. The successful
@@ -186,7 +186,7 @@ Do NOT run a global db push or apply original128 by itself. Its historical
 backfill and default function grants are unsafe. Generate the reviewed bundle:
 
 ```powershell
-node scripts/prepare_teaching_zones_install.cjs <new-output-file.sql>
+node scripts/prepare_teaching_zones_install.mjs <new-output-file.sql>
 ```
 
 This tool has no database connection. It checks the exact original128 SHA256,
@@ -240,7 +240,7 @@ Supabase17.6/PostGIS3.3.7 container with backup_atomic_success as baseline):
 
 ```powershell
 $env:ZONES_TEST_CONTAINER='pratiqo-migrations-129-133-20261016'
-node tests/teacherZones/teacherTeachingZonesPostgres.cjs
+node tests/teacherZones/teacherTeachingZonesPostgres.mjs
 ```
 
 The runner refuses network-enabled containers or published ports, supports no

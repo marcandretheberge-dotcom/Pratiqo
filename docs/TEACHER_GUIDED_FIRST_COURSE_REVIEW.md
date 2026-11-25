@@ -129,7 +129,7 @@ canonical launch-city suggestions, with explicit correction available.
 - ESLint on all changed/new TS/TSX: exit 0, 0 errors, 19 warnings.
 - `npm run lint -- --quiet`: FAIL, existing flat-config react-hooks plugin scope for
   `.cjs`. Reproduced with `node node_modules/eslint/bin/eslint.js
-  tests/teacherZones/teacherTeachingZonesRouteRuntime.cjs`. That file, eslint config
+  tests/teacherZones/teacherTeachingZonesRouteRuntime.mjs`. That file, eslint config
   and lockfile are unchanged from HEAD. No rule suppressed.
 - `git diff --check`: PASS.
 
@@ -143,7 +143,7 @@ explicitly; their actual handler tests enforce ownership and invalid-session rej
 
 ## Mobile QA / local preview
 
-`node tests/teachers/guidedSetupMobile.cjs`, with PLAYWRIGHT_MODULE pointing to the
+`node tests/teachers/guidedSetupMobile.mjs`, with PLAYWRIGHT_MODULE pointing to the
 installed runtime and QA_OUTPUT_DIR=../teacher-guided-qa: PASS at 320, 375, 768 and
 1280 px. Real components + production CSS, synthetic auth/DB/API boundaries.
 Bio/duration/interval reload, failed-save/retry, save-before-next, Stripe-return
@@ -178,7 +178,7 @@ tests, browser QA, package test command and this report. No publication eligibil
 identity, consent, payment or ownership rule changed. No migration is needed.
 
 QA no longer invents a `request` result independently of a private fixture.
-`guidedPublicationHarness.cjs` executes the actual visibility GET/PATCH and status
+`guidedPublicationHarness.mjs` executes the actual visibility GET/PATCH and status
 GET with real eligibility and slot calculations, mocking only auth/database and
 the locale lookup. Synthetic IDs/data are isolated per request. The browser uses
 that harness; the interval fixture reproduces the endpoint's coarse projection.
@@ -200,7 +200,7 @@ Neither was performed; no real payment, message or production mutation is permit
 - PASS: `node ../build-teaching-zones-readonly.cjs teacher-guided-first-course`
   (unchanged `npm run build`, read-only guard, 329 pages, TypeScript enabled).
 - PASS: `npx tsx scripts/validate_i18n.ts`, 3544 keys per locale.
-- PASS: `node tests/teachers/guidedSetupMobile.cjs` using the installed Playwright
+- PASS: `node tests/teachers/guidedSetupMobile.mjs` using the installed Playwright
   runtime, actual page components and final production CSS; 320/375/768/1280 px.
   Publication is visible at 320 px. No horizontal overflow or browser exceptions.
   Screenshots outside the repo: `../teacher-guided-publication-qa/`.

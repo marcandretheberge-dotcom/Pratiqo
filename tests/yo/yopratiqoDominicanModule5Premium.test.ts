@@ -42,6 +42,7 @@ function test(name: string, fn: TestFn): void {
 const DATA_FILE = "lib/yo/dominicanRepublicA2Capstone.ts";
 const CONTENT_FILE = "components/yo/DominicanRepublicModule5Content.tsx";
 const INTERACTIVE_FILE = "components/yo/DominicanRepublicModule5Interactive.tsx";
+const SELF_ASSESSMENT_FILE = "components/yo/DominicanRepublicModule5SelfAssessment.tsx";
 const PAGE_FILE =
   "app/yo/langues/espagnol/pays/republique-dominicaine/module-5/page.tsx";
 const FLASHCARD_ADAPTERS = "lib/yo/dominicanRepublicFlashcardAdapters.ts";
@@ -54,6 +55,7 @@ const moduleSources = [
   DATA_FILE,
   CONTENT_FILE,
   INTERACTIVE_FILE,
+  SELF_ASSESSMENT_FILE,
   PAGE_FILE,
   FLASHCARD_ADAPTERS,
 ];
@@ -156,13 +158,18 @@ test("printable workbook is exposed as a registered printable resource", () => {
   assert.ok(src.includes("YoPrintableResourceCard"));
 });
 
-test("self-assessment section is mounted with item-level markers", () => {
+test("self-assessment section mounts the labelled native checklist with item-level markers", () => {
   const src = read(CONTENT_FILE);
+  const checklist = read(SELF_ASSESSMENT_FILE);
   assert.match(
     src,
     /data-yo-module5-self-assessment-count=\{data\.selfAssessment\.length\}/,
   );
-  assert.ok(src.includes("data-yo-module5-self-assessment-item"));
+  assert.match(src, /<DominicanRepublicModule5SelfAssessment\s+items=\{data\.selfAssessment\}/);
+  assert.match(checklist, /^["']use client["']/);
+  assert.ok(checklist.includes("data-yo-module5-self-assessment-item"));
+  assert.match(checklist, /<label\s+htmlFor=\{inputId\}/);
+  assert.match(checklist, /<input\s+id=\{inputId\}\s+type="checkbox"/);
 });
 
 test("series-completion card replaces any fake Module 6 teaser", () => {

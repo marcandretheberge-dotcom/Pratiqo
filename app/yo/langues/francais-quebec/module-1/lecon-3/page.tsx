@@ -6,6 +6,7 @@ import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { YoAdaptiveStepShell } from "@/components/yo/YoAdaptiveStepShell";
 import { YoAppHeader } from "@/components/yo/YoAppHeader";
 import { YoStepNavigator } from "@/components/yo/YoStepNavigator";
+import { YoLessonDraftProvider } from "@/components/yo/YoLessonDraftProvider";
 import {
   YoChoiceCard,
   YoFixedFlashcardDeck,
@@ -197,6 +198,7 @@ function buildSteps(locale: YoLocale) {
     {
       id: "situation",
       label: "Situation",
+      companionHint: "Observe la personne avant de parler : est-elle occupée ? Prépare une seule question courte, puis laisse-lui le temps de répondre.",
       content: (
         <LessonCard eyebrow="Situation" title="Tu as une vraie question… et tu bloques." state="confused">
           <p className="text-base font-semibold leading-relaxed text-[#0F6E56]/80">
@@ -209,6 +211,7 @@ function buildSteps(locale: YoLocale) {
     {
       id: "mission",
       label: "Mission",
+      companionHint: "Ta mission est d’ouvrir un échange au travail. Imagine une information dont tu as vraiment besoin, puis essaie une amorce polie à voix haute.",
       content: (
         <LessonCard eyebrow="Mission" title="Trois gestes à automatiser" state="map">
           <div className="grid gap-2">
@@ -228,6 +231,7 @@ function buildSteps(locale: YoLocale) {
       content: (
         <LessonCard eyebrow="À toi" title="Choisis la meilleure amorce" state="confused">
           <YoChoiceCard
+            draftKey="best-opener"
             prompt="Un superviseur semble occupé. Quelle amorce est la plus naturelle?"
             options={openerChoices}
             correctOptionId="b"
@@ -240,6 +244,7 @@ function buildSteps(locale: YoLocale) {
     {
       id: "opener-explained",
       label: "Pourquoi",
+      companionHint: "Une amorce prépare l’échange sans raconter toute l’histoire. Par exemple, « Aurais-tu deux minutes ? » permet de vérifier si le moment convient.",
       content: (
         <LessonCard eyebrow="Mini-explication" title="Pourquoi ça fonctionne" state="teacher_ready">
           <p className="text-base font-semibold leading-relaxed text-[#0F6E56]/80">
@@ -263,7 +268,7 @@ function buildSteps(locale: YoLocale) {
       label: "Bon ou évite",
       content: (
         <LessonCard eyebrow="Réflexe" title="Bon / à éviter" state="confused">
-          <YoGoodAvoidGame title="Tape le bon réflexe pour chaque phrase." items={goodAvoid} goodLabel="Bon" avoidLabel="À éviter" />
+          <YoGoodAvoidGame draftKey="good-avoid" title="Tape le bon réflexe pour chaque phrase." items={goodAvoid} goodLabel="Bon" avoidLabel="À éviter" />
         </LessonCard>
       ),
     },
@@ -273,6 +278,7 @@ function buildSteps(locale: YoLocale) {
       content: (
         <LessonCard eyebrow="Question courte" title="Tu cherches la salle de pause" state="map">
           <YoChoiceCard
+            draftKey="question-word"
             prompt="Quel mot-question ouvre la phrase?"
             options={questionChoices}
             correctOptionId="ou"
@@ -303,6 +309,7 @@ function buildSteps(locale: YoLocale) {
       content: (
         <LessonCard eyebrow="Oral québécois" title="La structure « C’est… »" state="map">
           <YoChoiceCard
+            draftKey="oral-quebec"
             prompt="Quelle phrase sonne naturelle à l’oral?"
             options={[
               { id: "a", label: "C’est où, la salle de pause?" },
@@ -322,6 +329,7 @@ function buildSteps(locale: YoLocale) {
       content: (
         <LessonCard eyebrow="Scène" title="Quand l’autre dit « Hein? »" state="confused">
           <YoChoiceCard
+            draftKey="hein"
             prompt="Tu demandes vite. La personne répond « Hein? ». Tu fais quoi?"
             options={[
               { id: "a", label: "Je répète plus fort." },
@@ -389,7 +397,7 @@ function buildSteps(locale: YoLocale) {
       label: "Flashcards",
       content: (
         <LessonCard eyebrow="Flashcards fixes" title="Une carte à la fois" state="map">
-          <YoFixedFlashcardDeck cards={flashcards} flipLabel="Retourner" previousLabel="Précédent" nextLabel="Suivant" />
+          <YoFixedFlashcardDeck draftKey="flashcards" cards={flashcards} flipLabel="Retourner" previousLabel="Précédent" nextLabel="Suivant" />
         </LessonCard>
       ),
     },
@@ -399,6 +407,7 @@ function buildSteps(locale: YoLocale) {
       content: (
         <LessonCard eyebrow="Quiz" title="Cinq vérifications courtes" state="teacher_ready">
           <YoOneQuestionQuiz
+            draftKey="quiz"
             questions={quizQuestions}
             correctFeedback="Correct."
             incorrectFeedback="Réessaie avec une phrase plus naturelle."
@@ -424,6 +433,7 @@ function buildSteps(locale: YoLocale) {
     {
       id: "summary",
       label: "Résumé",
+      companionHint: "Rejoue la même situation avec un autre collègue : une amorce, une pause, puis ta question. Change l’information demandée pour ne pas seulement réciter.",
       content: (
         <LessonCard eyebrow="Résumé" title="Ce que tu sais faire maintenant" state="badge_unlocked">
           <div className="grid gap-2">
@@ -500,13 +510,14 @@ export default async function FrenchQuebecLesson3Page({ searchParams }: PageProp
     />
   );
 
-  return (
+  const lesson = (
     <YoAdaptiveStepShell
       surfaceId="fr-qc-lesson3-interactive"
       mobile={{
         header,
         steps,
         locale,
+        companion: true,
         stepsAriaLabel: "Leçon 3 interactive YoPratiqo",
         rootBackHref: moduleHref,
         rootBackLabel: "Module 1",
@@ -525,6 +536,7 @@ export default async function FrenchQuebecLesson3Page({ searchParams }: PageProp
                 locale={locale}
                 ariaLabel="Leçon 3 interactive YoPratiqo"
                 variant="embedded"
+                companion
                 rootBackHref={moduleHref}
                 rootBackLabel="Module 1"
               />
@@ -555,4 +567,5 @@ export default async function FrenchQuebecLesson3Page({ searchParams }: PageProp
       }}
     />
   );
+  return <YoLessonDraftProvider>{lesson}</YoLessonDraftProvider>;
 }

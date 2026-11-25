@@ -1,0 +1,36 @@
+name: Yo audio page-transition review
+on:
+  push:
+    branches: [fix/yo-audio-page-transitions-20261108]
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Review exact changes and baseline safety
+        run: |
+          set -euo pipefail
+          git diff --check b07b3fd05a9acb31e39013804461838e1b14a048 HEAD
+          git diff --exit-code b07b3fd05a9acb31e39013804461838e1b14a048 HEAD -- lib/yo/italian/course/courseProgress.ts lib/yo/italian/course/guidedItalian.ts lib/yo/shared/state.ts lib/yo/personalized/profile.ts
+      - name: Typecheck, lint and page-transition regression
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npx eslint components/yo/shared/IntroAudio.tsx components/yo/italian/ItalianModuleAudio.tsx components/yo/personalized/LearningAudio.tsx
+          node --import tsx tests/yo/yopratiqoPageTransitionAudio.test.tsx
+          node --import tsx tests/yo/yopratiqoPronunciationSession.test.tsx
+          node --import tsx tests/yo/yopratiqoItalianModuleAudio.test.ts
+          node --import tsx tests/yo/yopratiqoSharedIntroPlayer.test.tsx
+          node --import tsx tests/yo/yopratiqoGuidedItalianPlayer.test.tsx
+          node --import tsx tests/yo/yopratiqoTapFlow.test.tsx

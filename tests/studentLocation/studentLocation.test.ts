@@ -221,7 +221,7 @@ test("map does not default to Montréal when saved student coordinates are avail
   // them as the initial centre instead of falling back to Montréal.
   assert.match(
     searchMapViewSrc,
-    /if \(userLatRef\.current && userLngRef\.current\)[\s\S]{0,200}centeredOnUserRef\.current = true/,
+    /if \(userLatRef\.current != null && userLngRef\.current != null\)[\s\S]{0,200}centeredOnUserRef\.current = true/,
   );
 });
 

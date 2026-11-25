@@ -7,6 +7,7 @@ import ts from "typescript";
 import robots from "../../app/robots";
 import * as publicProfile from "../../lib/seo/teacherPublicProfile";
 import { shouldIncludeInSitemap } from "../../lib/seo/sitemap";
+import * as bookingIntent from "../../lib/bookings/guestBookingIntent";
 
 const requireFromRoot = createRequire(path.join(process.cwd(), "package.json"));
 const { resolveRobots } = requireFromRoot("next/dist/build/webpack/loaders/metadata/resolve-route-data") as {
@@ -33,7 +34,7 @@ test("serialized robots permits canonical signals on public legacy details only"
   for (const url of ["/teacher/profile/11111111-1111-4111-8111-111111111111", "/teacher/profile/example?ref=old", "/professeurs/example", "/cours/francais/saint-georges", "/_next/static/example.js"]) {
     assert.equal(mayCrawl(url), true, url);
   }
-  for (const url of ["/teacher", "/teacher/profile", "/teacher/profile-settings", "/teacher/settings", "/teacher/schedule", "/teacher/verification", "/admin", "/student/search", "/api/teachers", "/auth/callback"]) {
+  for (const url of ["/teacher", "/teacher/profile", "/teacher/profile-settings", "/teacher/profiles/example", "/teacher/settings", "/teacher/schedule", "/teacher/verification", "/admin", "/student/search", "/api/teachers", "/api/teacher/profile/search-indexing-consent", "/auth/callback", "/checkout/session"]) {
     assert.equal(mayCrawl(url), false, url);
   }
   assert.equal(shouldIncludeInSitemap("https://www.pratiqo.ca/teacher/profile/11111111-1111-4111-8111-111111111111"), false);
@@ -84,6 +85,7 @@ function loadRoute(fixture: Fixture = {}) {
     },
   };
   const mocks: Record<string, unknown> = {
+    "@/lib/bookings/guestBookingIntent": bookingIntent,
     "@/lib/supabaseAdmin": { getSupabaseAdmin: () => supabase },
     "@/lib/supabase/queries": { TEACHERS_PUBLIC_TABLE: "teachers_public", TEACHERS_LIST_SELECT: "*", TEACHERS_LIST_SELECT_LEGACY_PUBLIC: "*" },
     "@/lib/teacherDisciplines": { fetchTeacherDisciplinesMap: async () => new Map(), mergeTeachersWithDisciplines: (teachers: unknown[]) => teachers },
@@ -111,12 +113,15 @@ function loadRoute(fixture: Fixture = {}) {
   };
   new Function("require", "module", "exports", compiled.outputText)(requireMock, routeModule, routeModule.exports);
   return routeModule.exports as {
-    default: (props: { params: Promise<{ id: string }> }) => Promise<unknown>;
+    default: (props: { params: Promise<{ id: string }>; searchParams: Promise<{ book?: string; offer?: string }> }) => Promise<unknown>;
     generateMetadata: (props: { params: Promise<{ id: string }> }) => Promise<{ robots: unknown; alternates: { canonical: string } }>;
   };
 }
 
-const props = (id = row.id) => ({ params: Promise.resolve({ id }) });
+const props = (id = row.id, searchParams: { book?: string; offer?: string } = {}) => ({
+  params: Promise.resolve({ id }),
+  searchParams: Promise.resolve(searchParams),
+});
 const canonical = `https://www.pratiqo.ca/professeurs/${row.public_profile_slug}`;
 const isRedirectToCanonical = (error: unknown) => (error as { digest?: string }).digest === `NEXT_REDIRECT;replace;/professeurs/${row.public_profile_slug};308;`;
 
@@ -128,6 +133,23 @@ test("eligible teacher ID permanently redirects to the canonical slug", async ()
 
 test("eligible owner ID reaches the canonical slug without an intermediate profile ID", async () => {
   await assert.rejects(() => loadRoute().default(props(row.user_id)), isRedirectToCanonical);
+});
+
+test("permanent canonical redirect preserves a validated guest booking choice", async () => {
+  const offer = "33333333-3333-4333-8333-333333333333";
+  const route = loadRoute();
+  await assert.rejects(
+    () => route.default(props(row.user_id, { book: "standard", offer })),
+    (error: unknown) => (error as { digest?: string }).digest ===
+      `NEXT_REDIRECT;replace;/professeurs/${row.public_profile_slug}?book=standard&offer=${offer};308;`,
+  );
+  assert.equal((await route.generateMetadata(props())).alternates.canonical, canonical);
+});
+
+test("invalid guest booking queries cannot alter the canonical destination", async () => {
+  for (const query of [{ book: "https://example.com" }, { book: "home", offer: "../../admin" }]) {
+    await assert.rejects(() => loadRoute().default(props(row.id, query)), isRedirectToCanonical);
+  }
 });
 
 for (const [name, seo] of [
@@ -152,3 +174,11 @@ for (const [name, fixture] of [["missing teacher", { missing: true }], ["inactiv
     assert.deepEqual((await route.generateMetadata(props())).robots, { index: false, follow: false });
   });
 }
+
+test("non-indexable owner IDs keep their existing temporary redirect and booking choice", async () => {
+  await assert.rejects(
+    () => loadRoute({ seo: { search_indexing_consent: false } }).default(props(row.user_id, { book: "home" })),
+    (error: unknown) => (error as { digest?: string }).digest ===
+      `NEXT_REDIRECT;replace;/teacher/profile/${row.id}?book=home;307;`,
+  );
+});

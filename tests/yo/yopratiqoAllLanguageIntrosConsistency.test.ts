@@ -34,6 +34,8 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { yopratiqoProductConfig } from "@/lib/yo/yopratiqoProductConfig";
+import { getYoPublicLanguages } from "@/lib/yo/publicCatalog";
 
 const REPO_ROOT = process.cwd();
 function read(relativePath: string): string {
@@ -100,7 +102,8 @@ const introCodes = {
   spanishGlobal: stripJsComments(introSrcs.spanishGlobal),
 } as const;
 
-const catalogSrc = read(CATALOG_PATH);
+const catalogPage = read(CATALOG_PATH);
+const catalogSrc = catalogPage + read("components/yo/YoLanguageQuickStart.tsx");
 const catalogCode = stripJsComments(catalogSrc);
 
 const ALL_CONVERTED_KEYS = [
@@ -155,7 +158,7 @@ test("Japanese intro route mounts YoLessonDeck", () => {
 });
 
 // ─── 4. English intro converted (catalog claim is honest) ─────────
-test("English intro route is converted and the catalog claims it honestly", () => {
+test("English legacy intro remains available behind the new catalogue entry", () => {
   assert.ok(
     exists(INTRO_ROUTES.english),
     "English intro page.tsx must exist on disk",
@@ -165,12 +168,10 @@ test("English intro route is converted and the catalog claims it honestly", () =
     /<YoLessonDeck\b/,
     "English intro must mount the shared YoLessonDeck",
   );
-  // Catalog claims it is `available` and points to the deck route.
-  assert.match(
-    catalogSrc,
-    /id:\s*"english"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/anglais\/intro"/,
-    "catalog must keep the English card pointing at the deck route",
-  );
+  assert.match(catalogPage, /<YoLanguageQuickStart locale=\{locale\}/);
+  assert.equal(yopratiqoProductConfig.currentFreeIntroModules.find(language => language.slug === "anglais")?.isAccessibleForFree, true);
+  assert.equal(getYoPublicLanguages().find(course => course.slug === "anglais")?.path, "/yo/langues/anglais/demarrer");
+  assert.match(catalogSrc, /getYoPublicLanguages/);
 });
 
 // ─── 5. No converted intro uses YoBreadcrumb as primary nav ──────

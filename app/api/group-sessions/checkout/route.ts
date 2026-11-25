@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
+import { isTeacherPayoutReadyForCheckout } from "@/lib/payments/connect";
 import { stripe } from "@/lib/stripe";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { GroupSessionRow } from "@/lib/groupSessions";
@@ -106,19 +107,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Montant minimum Stripe non atteint." }, { status: 400 });
     }
 
-    const { data: teacher } = await admin
+    const { data: teacher, error: teacherError } = await admin
       .from("teachers")
-      .select("id, name, stripe_account_id, user_id")
+      .select("stripe_account_id, stripe_connect_onboarding_complete, stripe_connect_charges_enabled, stripe_connect_payouts_enabled, stripe_connect_requirements_due, stripe_connect_disabled_reason")
       .eq("id", gs.teacher_id)
       .maybeSingle();
 
-    const typed = teacher as { id: string; name: string; stripe_account_id?: string | null; user_id?: string | null };
-    const destination = typed?.stripe_account_id?.trim() || null;
-    const applicationFeeAmount = Math.max(0, Math.round(unitAmountCents * GROUP_COMMISSION));
-
-    if (!destination) {
-      console.warn("[group-sessions/checkout] Missing teacher.stripe_account_id; skipping Connect fees.");
+    if (teacherError) throw teacherError;
+    const destination = teacher?.stripe_account_id?.trim();
+    if (!teacher || !destination || !isTeacherPayoutReadyForCheckout(teacher)) {
+      return NextResponse.json({ code: "teacher_payout_not_ready", error: "Ce professeur ne peut pas encore recevoir de paiements." }, { status: 409 });
     }
+    const applicationFeeAmount = Math.max(0, Math.round(unitAmountCents * GROUP_COMMISSION));
 
     const baseUrl = checkoutPublicBase();
     const successUrl = encodeURI(`${baseUrl}/group-sessions/${groupSessionId}/success?session_id={CHECKOUT_SESSION_ID}`);
@@ -157,12 +157,8 @@ export async function POST(req: Request) {
           teacher_id: gs.teacher_id,
           price_paid_dollars: String(dollars),
         },
-        ...(destination
-          ? {
-              application_fee_amount: applicationFeeAmount,
-              transfer_data: { destination },
-            }
-          : {}),
+        application_fee_amount: applicationFeeAmount,
+        transfer_data: { destination },
       },
     });
 

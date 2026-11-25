@@ -5,17 +5,17 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "../../../../components/AuthProvider";
 import { getSupabaseClient } from "../../../../lib/supabase";
-import type { GroupSessionRow } from "../../../../lib/groupSessions";
+import { GROUP_LISTING_COLUMNS, type GroupSessionListing } from "../../../../lib/groupSessions";
 
 type RegRow = {
   id: string;
   status: string;
   session_id: string;
   /** PostgREST may return object or array for `group_sessions(*)` depending on relationship inference. */
-  group_sessions: GroupSessionRow | GroupSessionRow[] | null;
+  group_sessions: GroupSessionListing | GroupSessionListing[] | null;
 };
 
-function sessionFromReg(r: RegRow): GroupSessionRow | null {
+function sessionFromReg(r: RegRow): GroupSessionListing | null {
   const g = r.group_sessions;
   if (!g) return null;
   return Array.isArray(g) ? (g[0] ?? null) : g;
@@ -35,7 +35,7 @@ export default function StudentGroupSessionsPage() {
     const load = async () => {
       const { data, error } = await supabase
         .from("group_registrations")
-        .select("id, status, session_id, group_sessions(*)")
+        .select(`id, status, session_id, group_sessions(${GROUP_LISTING_COLUMNS})`)
         .eq("student_id", user.id)
         .order("created_at", { ascending: false });
       if (error) {

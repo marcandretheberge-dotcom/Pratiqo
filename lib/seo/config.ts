@@ -1,3 +1,5 @@
+import { yoPublicCatalog } from "../yo/publicCatalog";
+
 export const SITE_URL = "https://www.pratiqo.ca" as const;
 export const SITE_HOSTNAME = "www.pratiqo.ca" as const;
 export const SITE_NAME = "Pratiqo" as const;
@@ -96,11 +98,7 @@ export const PUBLIC_INDEXABLE_EXACT_PATHS = [
   "/uy",
   "/yo",
   "/yo/langues",
-  "/yo/langues/anglais",
-  "/yo/langues/espagnol",
-  "/yo/langues/francais-quebec",
-  "/yo/langues/italien",
-  "/yo/langues/japonais",
+  ...yoPublicCatalog.map(course => course.landingRoute),
   "/blog",
   "/ressources",
   "/legal/accessibilite",

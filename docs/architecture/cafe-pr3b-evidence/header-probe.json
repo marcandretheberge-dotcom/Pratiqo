@@ -1,0 +1,25 @@
+{
+  "kind": "header_probe_simulated_http",
+  "notDailyApiValidation": true,
+  "notBrowserJoinValidation": true,
+  "base": "http://127.0.0.1:3466",
+  "room": {
+    "path": "/cafe/preview/salle",
+    "status": 200,
+    "permissionsPolicy": "camera=(self \"https://pratiqo.daily.co\"), microphone=(self \"https://pratiqo.daily.co\"), display-capture=(), geolocation=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=()",
+    "cspHasDaily": true,
+    "displayCaptureDenied": true
+  },
+  "site": {
+    "path": "/",
+    "status": 200,
+    "permissionsPolicy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=()",
+    "cspHasDaily": true,
+    "displayCaptureDenied": false
+  },
+  "assertions": {
+    "roomDelegatesOrSelfCamera": true,
+    "siteDeniesCamera": true,
+    "screenShareOffOnRoom": true
+  }
+}

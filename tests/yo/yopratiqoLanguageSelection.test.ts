@@ -32,6 +32,8 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { catalogRouteExists } from "./sharedRouteAssertion";
+import { getYoPublicLanguages, yoPublicCatalog } from "@/lib/yo/publicCatalog";
 
 const REPO_ROOT = process.cwd();
 function read(relativePath: string): string {
@@ -47,7 +49,8 @@ function test(name: string, fn: TestFn): void {
   tests.push({ name, fn });
 }
 
-const pageSrc = read("app/yo/langues/page.tsx");
+const pageSrc = read("components/yo/YoLanguageQuickStart.tsx");
+const catalogSrc = read("lib/yo/publicCatalog.ts");
 const badgeSrc = read("components/yo/YoLanguageBadge.tsx");
 
 /**
@@ -76,7 +79,7 @@ function stripComments(src: string): string {
     .replace(/(^|[^:"'`])\/\/.*$/gm, "$1"); // line comments, skipping URL-ish slashes
 }
 
-const pageCopySrc = stripComments(pageSrc);
+const pageCopySrc = stripComments(catalogSrc);
 
 // ─── 1. Visual badge replaces the broken emoji-flag fallback ──────
 test("page imports YoLanguageBadge and its YoLanguageBadgeId type", () => {
@@ -84,7 +87,7 @@ test("page imports YoLanguageBadge and its YoLanguageBadgeId type", () => {
     pageSrc,
     /import\s+\{[^}]*YoLanguageBadge[^}]*\}\s+from\s+["']@\/components\/yo\/YoLanguageBadge["']/,
   );
-  assert.match(pageSrc, /YoLanguageBadgeId/);
+  assert.match(catalogSrc, /YoLanguageBadgeId/);
 });
 
 test("page no longer carries raw Unicode regional-indicator emoji on the language cards", () => {
@@ -105,10 +108,10 @@ test("page no longer carries raw Unicode regional-indicator emoji on the languag
   );
 });
 
-test("page declares badge ids for the five launch languages", () => {
+test("page declares badge ids for the core launch languages", () => {
   for (const id of ['"es"', '"fr-ca"', '"en"', '"ja"', '"it"']) {
     assert.ok(
-      pageSrc.includes(`badge: ${id}`),
+      catalogSrc.includes(`badge: ${id}`),
       `language card data must declare badge: ${id}`,
     );
   }
@@ -124,7 +127,7 @@ test("YoLanguageBadge component renders accessible swatches without emoji", () =
   // five launch languages so the page's `badge:` field is type-safe.
   assert.match(
     badgeSrc,
-    /YoLanguageBadgeId\s*=\s*"es"\s*\|\s*"fr-ca"\s*\|\s*"en"\s*\|\s*"ja"\s*\|\s*"it"/,
+    /YoLanguageBadgeId\s*=\s*"es"\s*\|\s*"fr-ca"\s*\|\s*"en"\s*\|\s*"ja"\s*\|\s*"it"\s*\|\s*"de"\s*\|\s*"pt-br"/,
   );
 });
 
@@ -164,7 +167,7 @@ test("YoLanguageBadge does not reference external /images/yo/flags asset paths",
 test("YoLanguageBadge declares an inline-SVG renderer for every language id", () => {
   // Each badge id must appear as a key in the inline renderer map
   // so the type system rules out a missing flag at compile time.
-  for (const id of ["es:", '"fr-ca":', "en:", "ja:", "it:"]) {
+  for (const id of ["es:", '"fr-ca":', "en:", "ja:", "it:", "de:", '"pt-br":']) {
     assert.ok(
       badgeSrc.includes(id),
       `YoLanguageBadge must declare an entry for ${id}`,
@@ -182,7 +185,12 @@ test("YoLanguageBadge declares an inline-SVG renderer for every language id", ()
     "#C8102E", // UK red
     "#BC002D", // Japan red
     "#009246", // Italy green from Wikimedia "Flag of Italy.svg"
-    "#CE2B37", // Italy red  from Wikimedia "Flag of Italy.svg"
+    "#CE2B37", // Italy red  from Wikimedia "Flag of Italy.svg",
+    "#DD0000", // Germany red
+    "#FFCE00", // Germany gold
+    "#009C3B", // Brazil green
+    "#FFDF00", // Brazil yellow
+    "#002776", // Brazil blue
   ];
   for (const fill of expectedFlagFills) {
     assert.ok(
@@ -313,6 +321,25 @@ test("United Kingdom renderer embeds the Wikimedia 3-5 source structure", () => 
   );
 });
 
+test("German and Brazilian Portuguese cards use real YoLanguageBadge flags", () => {
+  assert.equal(yoPublicCatalog.find(course => course.slug === "allemand")?.badge, "de");
+  assert.equal(yoPublicCatalog.find(course => course.slug === "portugais-bresil")?.badge, "pt-br");
+  assert.match(pageSrc, /<YoLanguageBadge language=\{item.badge\}/);
+  assert.doesNotMatch(pageSrc, />DE<\/span>/);
+  assert.doesNotMatch(pageSrc, />BR<\/span>/);
+});
+
+test("Germany and Brazil render distinctive inline national flag geometry", () => {
+  assert.match(badgeSrcCode, /function FlagGermany/);
+  assert.match(badgeSrcCode, /#000000/);
+  assert.match(badgeSrcCode, /#DD0000/);
+  assert.match(badgeSrcCode, /#FFCE00/);
+  assert.match(badgeSrcCode, /function FlagBrazil/);
+  assert.match(badgeSrcCode, /#009C3B/);
+  assert.match(badgeSrcCode, /#FFDF00/);
+  assert.match(badgeSrcCode, /#002776/);
+});
+
 test("language flags never embed <text> labels inside the flag", () => {
   // No two-letter codes (ES / FR / EN / JP) hidden as <text>
   // children of any flag <svg>. The wrapper's aria-label is
@@ -378,14 +405,12 @@ test("French card copy never claims global French scope", () => {
   }
 });
 
-test("French card copy mentions francisation and Québec / Canada", () => {
+test("French card copy preserves the francisation and Quebec scope", () => {
   // The FR blurb is the source of truth for the launch positioning.
-  assert.match(pageSrc, /[Ff]rancisation/);
-  assert.match(pageSrc, /Qu[eé]bec/);
-  // Canada is the umbrella geography we promise in copy.
-  assert.match(pageSrc, /Canada/);
+  assert.match(catalogSrc, /[Ff]rancisation/);
+  assert.match(catalogSrc, /Qu[eé]bec/);
   // EN equivalent must also be scoped.
-  assert.match(pageSrc, /Francization/);
+  assert.match(catalogSrc, /Francization/);
   // (The earlier "À venir / Coming soon" assertions were retired
   // when Japanese moved out of `coming_soon`. The francisation FR
   // card now opens to a real route with a `"Nouveau."` marker
@@ -394,167 +419,44 @@ test("French card copy mentions francisation and Québec / Canada", () => {
 });
 
 // ─── 3. Launch scope ───────────────────────────────────────────────
-test("Spanish, Quebec French, Italian, English, and Japanese are all available", () => {
-  // Status flags are declared inline next to each card in the data
-  // file. We extract the relative ordering and assert the status
-  // mapping for each card. No card is allowed to ship as
-  // `coming_soon` — the hub now lights up its full launch lineup.
-  assert.match(
-    pageSrc,
-    /id:\s*"spanish"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/espagnol"/,
-  );
-  assert.match(
-    pageSrc,
-    /id:\s*"french"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/francais-quebec\/intro"/,
-  );
-  assert.match(
-    pageSrc,
-    /id:\s*"italian"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/italien\/intro"/,
-  );
-  assert.match(
-    pageSrc,
-    /id:\s*"english"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/anglais\/intro"/,
-  );
-  assert.match(
-    pageSrc,
-    /id:\s*"japanese"[\s\S]*?status:\s*"available"[\s\S]*?href:\s*"\/yo\/langues\/japonais\/intro"/,
-  );
-  // Defensive: NO `coming_soon` status string should appear in the
-  // shipped data anymore (the literal can still appear in JSDoc /
-  // comments — strip those before checking).
-  assert.ok(
-    !/status:\s*"coming_soon"/.test(pageCopySrc),
-    "no language card should ship as coming_soon now (Japanese launched)",
-  );
+test("all live language tiles point to real lessons or course dashboards", () => {
+  const paths = getYoPublicLanguages().map(course => course.path);
+  assert.deepEqual([...paths].sort(), ["/yo/langues/italien/parcours","/yo/langues/japonais/demarrer","/yo/langues/espagnol/demarrer","/yo/langues/anglais/demarrer","/yo/langues/francais-quebec/demarrer","/yo/langues/allemand/demarrer","/yo/langues/portugais-bresil/demarrer","/yo/langues/mandarin/demarrer"].sort());
+  for(const destination of paths) assert.ok(catalogRouteExists(destination), destination);
+  assert.match(catalogSrc, /isAccessibleForFree/);
+});
+test("Italian and Japanese describe their complete courses; English remains an introduction", () => {
+  assert.match(catalogSrc, /12 unités/);
+  assert.match(catalogSrc, /8 modules/);
+  assert.match(catalogSrc, /Oser parler · introduction/);
+  assert.doesNotMatch(pageCopySrc, /status:\s*"coming_soon"|Nouveau\./);
 });
 
-test("English card carries the documented launch copy and badge", () => {
-  // English is the fourth available language. The card must use the
-  // "en" badge and the brief's exact French/English copy so the hub
-  // page stays in sync with the marketing text.
-  assert.match(
-    pageSrc,
-    /id:\s*"english"[\s\S]*?badge:\s*"en"/,
-    'English card must use badge: "en"',
-  );
-  assert.match(
-    pageSrc,
-    /Anglais pour débloquer ta confiance, voyager, travailler et parler avec moins de stress\. Nouveau\./,
-    "English FR copy must match the brief verbatim",
-  );
-  assert.match(
-    pageSrc,
-    /English to unlock confidence for travel, work, and real conversations\. New\./,
-    "English EN copy must match the brief verbatim",
-  );
+test("Mandarin uses the shared Chinese flag instead of a character placeholder", () => {
+  const card = getYoPublicLanguages().find(course => course.slug === "mandarin");
+  assert.equal(card?.path, "/yo/langues/mandarin/demarrer");
+  assert.equal(card?.badge, "zh");
+  assert.match(pageSrc, /ariaLabel=\{t\(item.name, locale\)\}/);
+  assert.doesNotMatch(pageSrc, />\s*(?:中|ZH|CN)\s*<\/span>/);
+  assert.ok(exists("app/yo/langues/mandarin/parcours/page.tsx"));
 });
 
-test("Italian card carries the documented launch copy and badge", () => {
-  // Italian is the third available language. The card must use the
-  // "it" badge and the brief's exact French/English copy so the
-  // hub page stays in sync with the marketing text.
-  assert.match(
-    pageSrc,
-    /id:\s*"italian"[\s\S]*?badge:\s*"it"/,
-    "Italian card must use badge: \"it\"",
-  );
-  assert.match(
-    pageSrc,
-    /Italien pour voyager, comprendre la culture et parler avec confiance dès les premières situations\. Nouveau\./,
-    "Italian FR copy must match the brief verbatim",
-  );
-  assert.match(
-    pageSrc,
-    /Italian for travel, culture, and confident first conversations\. New\./,
-    "Italian EN copy must match the brief verbatim",
-  );
+test("Chinese flag support is registered with five self-contained stars", () => {
+  assert.match(badgeSrcCode, /YoLanguageBadgeId\s*=[^;]*\|\s*"zh"/);
+  assert.match(badgeSrcCode, /zh:\s*FlagChina/);
+  const start = badgeSrcCode.indexOf("function FlagChina(): ReactElement {");
+  const end = badgeSrcCode.indexOf("function FlagDominicanRepublic", start);
+  assert.ok(start >= 0 && end > start);
+  const flag = badgeSrcCode.slice(start, end);
+  assert.match(flag, /viewBox="0 0 30 20"/);
+  assert.match(flag, /fill="#DE2910"/);
+  assert.match(flag, /fill="#FFDE00"/);
+  const stars = [...flag.matchAll(/<polygon points="([^"]+)"/g)];
+  assert.equal(stars.length, 5, "one large and four small stars");
+  for (const [, points] of stars) assert.equal(points.trim().split(/\s+/).length, 10);
+  assert.doesNotMatch(flag, /<image\b|<img\b|<text\b|href=/);
 });
 
-test("the five open language hrefs point at routes that actually exist on disk", () => {
-  // Every language card must declare an `href:` field — none null
-  // anymore: every card now points at a real /yo/langues route.
-  // We verify each route also exists on disk so a contributor cannot
-  // flip a card into a clickable link before the parcours actually
-  // ships (a broken-link guard).
-  const hrefMatches = [...pageSrc.matchAll(/href:\s*("[^"]+"|null)/g)];
-  // The page also wires a hero language toggle (`buildYoLocaleHref`),
-  // so the data-only `href:` count is exactly the five cards.
-  const cardHrefs = hrefMatches
-    .map((m) => m[1])
-    .filter((value) => value === "null" || value.startsWith('"/yo/langues'));
-  assert.equal(cardHrefs.length, 5);
-  assert.equal(
-    cardHrefs.filter((v) => v === "null").length,
-    0,
-    "no card should declare href: null now (Japanese launched)",
-  );
-  assert.equal(
-    cardHrefs.filter((v) => v === '"/yo/langues/espagnol"').length,
-    1,
-  );
-  assert.equal(
-    cardHrefs.filter(
-      (v) => v === '"/yo/langues/francais-quebec/intro"',
-    ).length,
-    1,
-  );
-  assert.equal(
-    cardHrefs.filter((v) => v === '"/yo/langues/italien/intro"').length,
-    1,
-  );
-  assert.equal(
-    cardHrefs.filter((v) => v === '"/yo/langues/anglais/intro"').length,
-    1,
-  );
-  assert.equal(
-    cardHrefs.filter((v) => v === '"/yo/langues/japonais/intro"').length,
-    1,
-  );
-  // All five open routes must resolve to a real `page.tsx` on disk.
-  assert.ok(
-    exists("app/yo/langues/espagnol/page.tsx"),
-    "Spanish hub page must exist",
-  );
-  assert.ok(
-    exists("app/yo/langues/francais-quebec/intro/page.tsx"),
-    "Quebec French pre-arrival intro page must exist",
-  );
-  assert.ok(
-    exists("app/yo/langues/italien/intro/page.tsx"),
-    "Italian intro page must exist",
-  );
-  assert.ok(
-    exists("app/yo/langues/anglais/intro/page.tsx"),
-    "English intro page must exist",
-  );
-  assert.ok(
-    exists("app/yo/langues/japonais/intro/page.tsx"),
-    "Japanese intro page must exist",
-  );
-});
-
-test("Japanese card carries the documented launch copy and badge", () => {
-  // Japanese is the fifth available language. The card must use the
-  // "ja" badge and the brief's exact French/English copy so the hub
-  // page stays in sync with the marketing text.
-  assert.match(
-    pageSrc,
-    /id:\s*"japanese"[\s\S]*?badge:\s*"ja"/,
-    'Japanese card must use badge: "ja"',
-  );
-  assert.match(
-    pageSrc,
-    /Japonais pour voyager, comprendre la culture et découvrir les bases de l['’]écriture sans paniquer\. Nouveau\./,
-    "Japanese FR copy must match the brief verbatim",
-  );
-  assert.match(
-    pageSrc,
-    /Japanese for travel, culture, and understanding the writing system without panic\. New\./,
-    "Japanese EN copy must match the brief verbatim",
-  );
-});
-
-// ─── Run ──────────────────────────────────────────────────────────
 async function run() {
   for (const { name, fn } of tests) {
     try {

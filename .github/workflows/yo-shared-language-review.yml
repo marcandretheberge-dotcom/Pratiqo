@@ -1,0 +1,93 @@
+name: Yo shared language review
+on:
+  push:
+    branches: [feat/yo-shared-language-start-20261107]
+permissions:
+  contents: read
+concurrency:
+  group: yo-shared-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      YO_QA_DIR: /tmp/yo-shared-review
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Types and targeted lint
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npx eslint components/yo/shared lib/yo/shared 'app/yo/langues/[language]/demarrer'
+          git diff --check f8779b7e14415aa4850f1dc5ab2990f24398522b
+      - name: Language and complete player checks
+        run: |
+          set -euo pipefail
+          mkdir -p "$YO_QA_DIR/tests"
+          for test in yopratiqoLocalizedCharacters.test.ts yopratiqoSharedIntro.test.ts yopratiqoSharedIntroPlayer.test.tsx yopratiqoReadableLanguage.test.tsx yopratiqoEasyOnboarding.test.tsx yopratiqoLanguageCatalogAppShell.test.ts yopratiqoAllLanguageIntrosConsistency.test.ts yopratiqoSeoCatalog.test.ts; do
+            if node --import tsx "tests/yo/$test" > "$YO_QA_DIR/tests/$test.log" 2>&1; then
+              echo "PASS $test"
+              tail -n 3 "$YO_QA_DIR/tests/$test.log"
+            else
+              echo "FAIL $test"
+              tail -n 100 "$YO_QA_DIR/tests/$test.log"
+              exit 1
+            fi
+          done
+          for suite in test:yo-journey test:yo-continuity test:launch-critical; do
+            if npm run "$suite" > "$YO_QA_DIR/tests/${suite//:/-}.log" 2>&1; then
+              echo "PASS $suite"
+              tail -n 5 "$YO_QA_DIR/tests/${suite//:/-}.log"
+            else
+              echo "FAIL $suite"
+              tail -n 100 "$YO_QA_DIR/tests/${suite//:/-}.log"
+              exit 1
+            fi
+          done
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit
+      - name: All seven real introductory routes
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
+        run: |
+          set -euo pipefail
+          mkdir -p "$YO_QA_DIR"
+          node --import tsx scripts/prepare_yo_shared_review.ts
+          ./node_modules/.bin/next dev .qa-guided --webpack -p 3129 > "$YO_QA_DIR/server.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail 'http://127.0.0.1:3129/yo/langues/espagnol/demarrer?lang=en' >/dev/null; then break; fi
+            sleep 2
+          done
+          python tests/yo/yopratiqoSharedIntro.browser.py 2>&1 | tee "$YO_QA_DIR/browser.log"
+      - name: Source evidence
+        if: always()
+        run: |
+          mkdir -p "$YO_QA_DIR"
+          git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
+          git ls-files -s lib/yo/shared components/yo/shared 'app/yo/langues/[language]' lib/yo/publicCatalog.ts > "$YO_QA_DIR/source.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-shared-language-review
+          path: /tmp/yo-shared-review
+          retention-days: 7

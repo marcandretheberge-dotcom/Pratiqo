@@ -1,0 +1,63 @@
+name: Yo interface notices review
+on:
+  push:
+    branches: [fix/yo-interface-notices-20261107]
+permissions:
+  contents: read
+concurrency:
+  group: yo-notices-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: TypeScript and targeted lint
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npx eslint components/yo/personalized/ItalianOnboarding.tsx components/yo/personalized/LearningAudio.tsx lib/legal/yopratiqoPrivacyAddendum.ts 'app/(app)/legal/confidentialite/page.tsx' tests/yo/yopratiqoInterfaceNotices.test.tsx
+          git diff --check 334d05946a9aed060f3e42d0c73b9625deb53b23
+      - name: Notice, audio and feedback regressions
+        run: |
+          set -euo pipefail
+          node --import tsx tests/yo/yopratiqoInterfaceNotices.test.tsx
+          node --import tsx tests/yo/yopratiqoItalianModuleAudio.test.ts
+          node --import tsx tests/yo/yopratiqoFeedback.test.tsx
+          node --import tsx tests/yo/yopratiqoGuidedItalian.test.ts
+          node --import tsx tests/yo/yopratiqoGuidedItalianPlayer.test.tsx
+          node --import tsx tests/yo/yopratiqoPersonalizedItalian.test.ts
+          node --import tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx
+      - name: Shared course and launch regressions
+        run: |
+          set -euo pipefail
+          npm run test:yo-german
+          npm run test:yo-portuguese
+          npm run test:yo-continuity
+          npm run test:launch-critical
+      - name: Save exact reviewed changes
+        if: always()
+        run: |
+          mkdir -p /tmp/yo-notices-review
+          git rev-parse HEAD > /tmp/yo-notices-review/commit.txt
+          git diff 334d05946a9aed060f3e42d0c73b9625deb53b23 -- components lib/legal 'app/(app)/legal/confidentialite/page.tsx' > /tmp/yo-notices-review/reviewed.patch
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-interface-notices-review
+          path: /tmp/yo-notices-review
+          retention-days: 7

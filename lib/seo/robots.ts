@@ -28,9 +28,8 @@ export function getRobotsTxtRules() {
   return [
     {
       userAgent: "*",
-      // Crawlers must reach legacy public profile details to observe their
-      // canonical redirect (or noindex when no indexable profile exists).
-      // The trailing slash keeps the old listing and private /teacher routes blocked.
+      // Crawlers need public legacy details to read their canonical redirect or
+      // noindex. The trailing slash keeps the listing and private teacher routes blocked.
       allow: ["/", "/teacher/profile/"],
       disallow: [...ROBOTS_DISALLOW_PATHS],
     },
@@ -40,4 +39,3 @@ export function getRobotsTxtRules() {
 export function getRobotsSitemapUrl(): string {
   return `${SITE_URL}/sitemap.xml`;
 }
-

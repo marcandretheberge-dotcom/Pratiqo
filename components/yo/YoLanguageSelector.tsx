@@ -110,7 +110,12 @@ export function YoLanguageSelector({
 }: YoLanguageSelectorProps): React.JSX.Element {
   const fallbackPath = usePathname();
   const basePath = pathname ?? fallbackPath ?? "/yo/langues";
-  const available = availableLocales ?? YO_LANGUAGE_SELECTOR_LOCALES;
+  // This legacy introduction defaults to English and only has FR/EN copy.
+  const isQuebecIntro = basePath === "/yo/langues/francais-quebec/intro";
+  const available = availableLocales ?? (isQuebecIntro ? ["fr", "en"] : YO_LANGUAGE_SELECTOR_LOCALES);
+  const localeHref = (target: YoLocale) => isQuebecIntro && target === "fr"
+    ? `${basePath}?lang=fr`
+    : buildYoLocaleHref(basePath, target);
   const groupAria = GROUP_ARIA_LABEL[locale] ?? GROUP_ARIA_LABEL.fr;
 
   if (variant === "desktop-dropdown") {
@@ -148,7 +153,7 @@ export function YoLanguageSelector({
             (target) => {
               const copy = COPY[target];
               const isAvailable = available.includes(target);
-              const href = buildYoLocaleHref(basePath, target);
+              const href = localeHref(target);
               if (!isAvailable) {
                 return (
                   <span
@@ -204,7 +209,7 @@ export function YoLanguageSelector({
         const copy = COPY[target];
         const isActive = target === locale;
         const isAvailable = available.includes(target);
-        const href = buildYoLocaleHref(basePath, target);
+        const href = localeHref(target);
 
         if (isActive) {
           return (

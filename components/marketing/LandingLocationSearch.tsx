@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import type { TranslationKey } from "@/lib/translations";
 
 type Props = {
+  inputId?: string;
   value: string;
   onChange: (v: string) => void;
   geo: { lat: number; lng: number } | null;
@@ -66,10 +67,11 @@ export function LandingLocationSearch({
   shellClassName,
   inputClassName,
   onIntentChange,
+  inputId: suppliedInputId,
 }: Props) {
   const { t } = useLocale();
   const uid = useId();
-  const inputId = `${uid}-loc-input`;
+  const inputId = suppliedInputId ?? `${uid}-loc-input`;
   const listId = `${uid}-loc-list`;
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);

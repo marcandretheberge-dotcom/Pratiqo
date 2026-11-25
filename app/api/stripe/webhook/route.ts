@@ -694,8 +694,8 @@ export async function POST(req: Request) {
           webhookEventId: event.id,
           webhookEventType: event.type,
         });
-      } else if (md?.checkout_kind === "group_session" && piId) {
-        await confirmGroupSessionCheckout(md, piId);
+      } else if (md?.checkout_kind === "group_session") {
+        if (piId && sess.payment_status === "paid") await confirmGroupSessionCheckout(md, piId);
       } else {
         const bookingId = sess.metadata?.booking_id;
         if (bookingId && piId) {

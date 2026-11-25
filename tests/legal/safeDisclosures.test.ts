@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import { hasOnlyGuidedStripeReturnChange } from "../helpers/guidedStripeReturnScope";
+import { assertItalianLearningSurface, italianLearningFiles } from "../helpers/italianLearningScope";
+import { assertJourneyLearningSurface, journeyLearningFiles } from "../helpers/italianLearningScope";
+import { assertYoPublicSeoSurface, yoPublicSeoFiles } from "../helpers/yoPublicSeoScope";
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -1521,6 +1524,58 @@ test("accessibility legal page exists with cautious wording and support contact"
   assert.match(footerLinks, /\/legal\/accessibilite/);
 });
 
+test("reviewed Italian learning surfaces cannot add privileged behavior", () => {
+  for (const file of italianLearningFiles) assertItalianLearningSurface(file, read(file));
+  const file = "components/yo/italian/course/ItalianStudyJourney.tsx";
+  for (const source of [
+    'import Stripe from "stripe";',
+    'import { charge } from "@/lib/payments/charge";',
+    'import { useAuth } from "../../../AuthProvider";',
+    'fetch("/api/checkout");',
+    '"use server";',
+    'const module = import("@/lib/supabaseAdmin");',
+  ]) assert.throws(() => assertItalianLearningSurface(file, source));
+  for (const path of ["app/api/stripe/checkout/route.ts", "lib/payments/charge.ts", "supabase/migrations/example.sql", "components/yo/Unknown.tsx"]) {
+    assert.throws(() => assertItalianLearningSurface(path, ""));
+  }
+});
+
+test("reviewed journey surfaces cannot add privileged behavior", () => {
+  for (const file of journeyLearningFiles) assertJourneyLearningSurface(file, read(file));
+  const file = "lib/yo/foundationJourney.ts";
+  for (const source of [
+    'import Stripe from "stripe";',
+    'import { charge } from "@/lib/payments/charge";',
+    'import { useAuth } from "../../components/AuthProvider";',
+    'fetch("/api/checkout");',
+    '"use server";',
+    'const module = import("@/lib/supabaseAdmin");',
+  ]) assert.throws(() => assertJourneyLearningSurface(file, source));
+  for (const path of ["app/api/stripe/checkout/route.ts", "lib/payments/charge.ts", "supabase/migrations/example.sql", "components/yo/Unknown.tsx"]) {
+    assert.throws(() => assertJourneyLearningSurface(path, ""));
+  }
+});
+
+test("reviewed public SEO surfaces cannot add privileged behavior", () => {
+  for (const file of yoPublicSeoFiles) assertYoPublicSeoSurface(file, read(file));
+  const file = "components/yo/YoCourseOverview.tsx";
+  for (const source of [
+    'import Stripe from "stripe";',
+    'import { useAuth } from "@/components/AuthProvider";',
+    'import { client } from "@/lib/supabaseAdmin";',
+    'import { checkout } from "@/lib/yo/checkout";',
+    'export { charge } from "@/lib/payments/charge";',
+    'fetch("/api/checkout");',
+    '"use server";',
+    'const secret = process.env.STRIPE_SECRET_KEY;',
+    'const module = import("@/lib/supabaseAdmin");',
+    'require("@/lib/supabaseAdmin");',
+  ]) assert.throws(() => assertYoPublicSeoSurface(file, source));
+  for (const path of ["app/api/yo/route.ts", "lib/yo/yopratiqoProductConfig.ts", "lib/yo/mandarin/course.ts", "supabase/migrations/example.sql"]) {
+    assert.throws(() => assertYoPublicSeoSurface(path, ""));
+  }
+});
+
 test("safe-disclosure branch did not touch restricted systems", () => {
   const changed = changedFilesForBranch();
   if (!changed) return;
@@ -1546,6 +1601,18 @@ test("safe-disclosure branch did not touch restricted systems", () => {
 
   const violations: string[] = [];
   for (const file of changed) {
+    if (yoPublicSeoFiles.has(file)) {
+      assertYoPublicSeoSurface(file, read(file));
+      continue;
+    }
+    if (italianLearningFiles.has(file)) {
+      assertItalianLearningSurface(file, read(file));
+      continue;
+    }
+    if (journeyLearningFiles.has(file)) {
+      assertJourneyLearningSurface(file, read(file));
+      continue;
+    }
     if (hasOnlyGuidedStripeReturnChange(file)) continue;
     if (allowedYoDisclosureFiles.has(file)) continue;
     if (allowedPricingDisplayFiles.has(file)) continue;
@@ -1615,6 +1682,14 @@ test("safe-disclosure branch did not touch restricted systems", () => {
       assert.match(migration, /EXCLUDE USING gist/);
       assert.match(migration, /ADD CONSTRAINT active_booking_valid_interval/);
       assert.doesNotMatch(migration, /DISABLE ROW LEVEL SECURITY|CREATE POLICY|^\s*GRANT\b|(?:UPDATE|DELETE FROM|INSERT INTO) public\./im);
+      continue;
+    }
+    if (file === "supabase/migrations/20261124155218_group_session_listing_access.sql") {
+      const migration = read(file);
+      assert.match(migration, /revoke all on public\.group_registrations, public\.group_sessions from public, anon, authenticated/i);
+      assert.match(migration, /create view public\.group_sessions_public with \(security_invoker = true/i);
+      assert.match(migration, /r\.student_id = \(select auth\.uid\(\)\)/i);
+      assert.doesNotMatch(migration, /disable row level security|\b(?:booking_payments|bookings|refunds)\b|grant (?:all|execute) on (?:function )?group_session_access\.[^;]+ to (?:anon|public)\b/i);
       continue;
     }
     if (file === "supabase/migrations/131_learner_funnel_measurement.sql") {

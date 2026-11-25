@@ -34,6 +34,8 @@ type Section = {
 // ─── Props ───────────────────────────────────────────────────────────────────
 
 interface SmartSearchInputProps {
+  inputId?: string;
+  onSubmit?: () => void;
   value: string;
   onChange: (value: string) => void;
   teachers: Teacher[];
@@ -106,12 +108,14 @@ export function SmartSearchInput({
   shellClassName,
   inputClassName,
   disableCitySuggestions,
+  inputId: suppliedInputId,
+  onSubmit,
 }: SmartSearchInputProps) {
   const citySuggestionsEnabled = !disableCitySuggestions && Boolean(onSelectCity);
   const { t, locale } = useLocale();
   const ph = t(inputPlaceholderKey);
   const uid = useId();
-  const inputId = `${uid}-search-input`;
+  const inputId = suppliedInputId ?? `${uid}-search-input`;
   const listboxId = `${uid}-search-listbox`;
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef     = useRef<HTMLInputElement>(null);
@@ -252,6 +256,7 @@ export function SmartSearchInput({
         select(flatItems[activeIndex]!);
       } else {
         setOpen(false);
+        onSubmit?.();
       }
     } else if (e.key === "Escape") {
       setOpen(false);

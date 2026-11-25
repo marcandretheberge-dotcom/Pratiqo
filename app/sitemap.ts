@@ -10,11 +10,7 @@ import { buildTeacherPublicProfileCanonicalUrl } from "../lib/seo/teacherPublicP
 import { fetchIndexableTeacherSitemapRows } from "../lib/seo/teacherPublicProfileData";
 import { getPublishedResourceArticles } from "../lib/seo/resourceArticles";
 import { YO_SPANISH_SEO_PATHS } from "../lib/seo/yopratiqoSpanishSeoPages";
-import {
-  isYoHubIndexable,
-  isYoLandingPageIndexable,
-  yopratiqoProductConfig,
-} from "../lib/yo/yopratiqoProductConfig";
+import { getYoPratiqoLanguageAlternates, isYoPratiqoRouteIndexable, yopratiqoSeoEntries, type YoPratiqoSeoRouteId } from "../lib/yo/yopratiqoSeo";
 import { isGroupSessionsMarketplaceIndexable } from "../lib/groupSessionsLaunch";
 
 const BASE_URL = SITE_URL;
@@ -242,28 +238,28 @@ const YO_SPANISH_SEO_ROUTES: MetadataRoute.Sitemap = YO_SPANISH_SEO_PATHS.map((p
 //
 // Controlled SEO exposure for the YoPratiqo discovery layer:
 //   - the language hub at /yo/langues
-//   - the five language landing pages at /yo/langues/{language}
+//   - published language landing pages from the shared discovery catalog
 //
 // Intro lesson pages (/yo/langues/{language}/intro) are deliberately
 // EXCLUDED from the sitemap and remain noindex per
 // `yopratiqoProductConfig.introPageIndexingEnabled`. Each URL is gated
 // by the product config helpers so a future flag flip removes it from
 // the sitemap automatically (no second source of truth).
-const YO_LANGUAGE_HUB_ROUTES: MetadataRoute.Sitemap = isYoHubIndexable()
-  ? [
-      {
-        url: `${BASE_URL}/yo/langues`,
-        changeFrequency: "weekly" as const,
-        priority: 0.85,
-      },
-    ]
-  : [];
-
-const YO_LANGUAGE_LANDING_ROUTES: MetadataRoute.Sitemap = yopratiqoProductConfig
-  .currentFreeIntroModules
-  .filter((moduleConfig) => isYoLandingPageIndexable(moduleConfig.slug))
-  .map((moduleConfig) => ({
-    url: `${BASE_URL}${moduleConfig.landingRoute}`,
+const yoPublicEntries = (Object.keys(yopratiqoSeoEntries) as YoPratiqoSeoRouteId[])
+  .filter(isYoPratiqoRouteIndexable);
+const YO_LANGUAGE_HUB_ROUTES: MetadataRoute.Sitemap = yoPublicEntries
+  .filter(id => yopratiqoSeoEntries[id].pageType === "hub")
+  .map(id => ({
+    url: `${BASE_URL}${yopratiqoSeoEntries[id].route}`,
+    alternates: { languages: getYoPratiqoLanguageAlternates(id) },
+    changeFrequency: "weekly" as const,
+    priority: 0.85,
+  }));
+const YO_LANGUAGE_LANDING_ROUTES: MetadataRoute.Sitemap = yoPublicEntries
+  .filter(id => yopratiqoSeoEntries[id].pageType === "landing")
+  .map(id => ({
+    url: `${BASE_URL}${yopratiqoSeoEntries[id].route}`,
+    alternates: { languages: getYoPratiqoLanguageAlternates(id) },
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));

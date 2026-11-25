@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 import { YoLanguageLandingPage } from "@/components/yo/YoLanguageLandingPage";
-import { getYoLocale } from "@/lib/yo/localize";
+import { lstr } from "@/lib/yo/localize";
 import { yopratiqoLandingContent } from "@/lib/yo/yopratiqoLandingContent";
-import { buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
+import { buildYoPratiqoMetadata, resolveYoPratiqoPageLocale } from "@/lib/yo/yopratiqoSeo";
 import { getYoPratiqoModuleBySlug } from "@/lib/yo/yopratiqoProductConfig";
 
 export const dynamic = "force-dynamic";
@@ -23,13 +23,17 @@ export default async function YoJapaneseLandingPage({
   searchParams: Promise<{ lang?: string | string[] }>;
 }) {
   const params = await searchParams;
-  const locale = getYoLocale(params.lang);
+  const locale = resolveYoPratiqoPageLocale("japaneseLanding", params.lang);
 
   return (
     <YoLanguageLandingPage
       locale={locale}
       moduleConfig={getYoPratiqoModuleBySlug("japonais")}
       content={yopratiqoLandingContent.japonais}
+      languageLabelOverride={lstr("Japonais", "Japanese", "Japonés")}
+      entryHref="/yo/langues/japonais/parcours"
+      entryCta={lstr("Commencer le parcours japonais", "Start the Japanese course", "Empezar el curso de japonés")}
+      entryBadge={lstr("8 modules · Fondations", "8 modules · Foundations", "8 módulos · Fundamentos")}
     />
   );
 }

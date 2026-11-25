@@ -1,0 +1,76 @@
+name: Yo dialog contrast regression
+on:
+  push:
+    branches: [fix/yo-dialog-contrast-20261107]
+permissions:
+  contents: read
+concurrency:
+  group: yo-dialog-contrast-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      YO_QA_DIR: /tmp/yo-dialog-contrast
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Types and unchanged learning regressions
+        run: |
+          set -euo pipefail
+          mkdir -p "$YO_QA_DIR"
+          npx tsc --noEmit
+          node --import tsx tests/yo/yopratiqoPersonalizedItalian.test.ts
+          node --import tsx tests/yo/yopratiqoPersonalizedItalianPlayer.test.tsx > "$YO_QA_DIR/player.log" 2>&1
+          git diff --check 030ef52a021a5ba53ff5998451d7cbd7c2d1bbff
+          git diff --exit-code 030ef52a021a5ba53ff5998451d7cbd7c2d1bbff HEAD -- components lib public package.json package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Browser tooling
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Reproduce on original CSS, then check fixed actual dialogs
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
+        run: |
+          set -euo pipefail
+          node --import tsx scripts/prepare_yo_personalized_review.ts
+          git show 030ef52a021a5ba53ff5998451d7cbd7c2d1bbff:app/globals.css > .qa-guided/app/baseline.css
+          printf "@import './baseline.css';\n@source '../../components';\n@source '../../lib';\n" > .qa-guided/app/globals.css
+          ./node_modules/.bin/next dev .qa-guided --webpack -p 3134 > "$YO_QA_DIR/server.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --silent --fail 'http://127.0.0.1:3134/yo/langues/italien/parcours/u09?lang=fr' >/dev/null; then break; fi
+            sleep 2
+          done
+          YO_EXPECT_BUG=1 YO_QA_DIR=/tmp/yo-dialog-contrast/before python tests/yo/yopratiqoDialogContrast.browser.py 2>&1 | tee "$YO_QA_DIR/before.log"
+          printf "@import '../../app/globals.css';\n@source '../../components';\n@source '../../lib';\n" > .qa-guided/app/globals.css
+          sleep 2
+          YO_QA_DIR=/tmp/yo-dialog-contrast/after python tests/yo/yopratiqoDialogContrast.browser.py 2>&1 | tee "$YO_QA_DIR/after.log"
+      - name: Source identity
+        if: always()
+        run: |
+          mkdir -p "$YO_QA_DIR"
+          git rev-parse HEAD > "$YO_QA_DIR/commit.txt"
+          git hash-object app/globals.css > "$YO_QA_DIR/css-blob.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yo-dialog-contrast
+          path: /tmp/yo-dialog-contrast
+          retention-days: 7

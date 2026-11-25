@@ -5,6 +5,7 @@ import path from "path";
 import { LegalLayout } from "../../../../components/LegalLayout";
 import { LegalMarkdownBody } from "../../../../components/LegalMarkdownBody";
 import { normalizeLocale } from "../../../../lib/i18n/types";
+import { yopratiqoPrivacyAddendum } from "@/lib/legal/yopratiqoPrivacyAddendum";
 
 export const metadata: Metadata = {
   title: "Politique de confidentialité | Privacy Policy | Pratiqo",
@@ -109,15 +110,20 @@ export default async function ConfidentialitePage() {
     const fallback = path.join(process.cwd(), "content", "legal", "confidentialite.fr.md");
     mdContent = fs.readFileSync(fallback, "utf8");
   }
+  const addendum = yopratiqoPrivacyAddendum[lang];
+  const toc = [...TOC[lang], { id: addendum.id, label: addendum.label }];
 
   return (
     <LegalLayout
       title={TITLES[lang]}
-      lastUpdated="mai 2026"
-      toc={TOC[lang]}
+      lastUpdated={addendum.lastUpdated}
+      toc={toc}
       currentPath="/legal/confidentialite"
     >
-      <LegalMarkdownBody content={mdContent} />
+      <LegalMarkdownBody
+        content={`${mdContent}\n\n---\n\n${addendum.content}`}
+        headingIds={toc.map((item) => item.id)}
+      />
     </LegalLayout>
   );
 }

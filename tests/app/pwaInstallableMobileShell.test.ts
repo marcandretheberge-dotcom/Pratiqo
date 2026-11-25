@@ -79,7 +79,7 @@ assert.match(prompt, /isSensitivePath/);
 assert.match(prompt, /env\(safe-area-inset-bottom/);
 assert.match(prompt, /return null/);
 assert.match(prompt, /href="\/app"/);
-for (const sensitive of ["/api", "/booking", "/checkout", "/login", "/student", "/teacher", "/yo/checkout"]) {
+for (const sensitive of ["/api", "/booking", "/checkout", "/login", "/student", "/teacher", "/yo/checkout", "/yo/langues/allemand/parcours"]) {
   assert.match(prompt, new RegExp(`"${sensitive.replace("/", "\\/")}"`), `install prompt must hide on ${sensitive}`);
 }
 ok("install prompt is mobile-only, dismissible, SSR-safe, and hidden on sensitive routes");
