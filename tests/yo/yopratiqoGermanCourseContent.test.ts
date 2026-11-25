@@ -5,6 +5,7 @@ import {
   germanCourseUnits,
   germanCatalog,
   germanFinal,
+  germanExtendedFinal,
   germanCultureFinal,
 } from "@/lib/yo/german/courseData";
 import { germanCultureStops } from "@/lib/yo/german/courseCulture";
@@ -36,6 +37,7 @@ const practice = lessons.flatMap((l) => l.activities);
 const assessments = [
   ...germanCourseUnits.map((u) => u.quiz),
   germanFinal,
+  germanExtendedFinal,
   germanCultureFinal,
 ];
 const ids = (values: string[]) =>
@@ -45,10 +47,10 @@ const text = (value: { fr: string; en: string; es: string }) => {
     assert.ok(value[locale]?.trim());
 };
 
-test("eight original units contain 24 lessons, varied practice and separate cumulative finals", () => {
-  assert.equal(germanCourseUnits.length, 8);
-  assert.equal(lessons.length, 24);
-  assert.equal(practice.length, 148);
+test("twelve units contain 36 lessons, varied practice and separate cumulative finals", () => {
+  assert.equal(germanCourseUnits.length, 12);
+  assert.equal(lessons.length, 36);
+  assert.equal(practice.length, 232);
   ids([
     ...practice.map((a) => a.id),
     ...assessments.flatMap((a) => a.questions.map((q) => q.id)),
@@ -64,7 +66,7 @@ test("eight original units contain 24 lessons, varied practice and separate cumu
     text(lesson.grammar.body);
     text(lesson.pronunciation.body);
     text(lesson.reading.meaning);
-    assert.equal(lesson.vocabulary.length, 4);
+    assert.equal(lesson.vocabulary.length, germanCourseUnits.slice(0, 8).some(unit => unit.lessons.includes(lesson)) ? 4 : 7);
     for (const word of lesson.vocabulary) {
       assert.ok(word.it);
       text(word.meaning);
@@ -82,6 +84,7 @@ test("eight original units contain 24 lessons, varied practice and separate cumu
     );
   }
   assert.equal(germanFinal.questions.length, 16);
+  assert.equal(germanExtendedFinal.questions.length, 24);
   assert.equal(germanCultureFinal.questions.length, 8);
 });
 

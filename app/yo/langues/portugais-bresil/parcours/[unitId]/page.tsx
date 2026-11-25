@@ -5,7 +5,9 @@ import { GermanCourseFinal } from "@/components/yo/german/GermanCourseFinal";
 import {
   portugueseCatalog,
   portugueseFinal,
+  portugueseExtendedFinal,
   portugueseCultureFinal,
+  portugueseSources,
   getPortugueseUnit,
 } from "@/lib/yo/portuguese/courseData";
 import { portugueseAudioPaths } from "@/lib/yo/portuguese/courseAudio.server";
@@ -26,10 +28,12 @@ export async function generateMetadata({
     locale = getYoLocale((await searchParams).lang);
   const item =
     unitId === "final"
-      ? portugueseFinal
-      : unitId === "culture"
-        ? portugueseCultureFinal
-        : getPortugueseUnit(unitId);
+      ? portugueseExtendedFinal
+      : unitId === "bilan-initial"
+        ? portugueseFinal
+        : unitId === "culture"
+          ? portugueseCultureFinal
+          : getPortugueseUnit(unitId);
   if (!item) notFound();
   return {
     title: `${item.title[locale]} · Português do Brasil | YoPratiqo`,
@@ -45,10 +49,12 @@ export default async function PortugueseUnitPage({
     locale = getYoLocale(query.lang);
   const assessment =
     unitId === "final"
-      ? portugueseFinal
-      : unitId === "culture"
-        ? portugueseCultureFinal
-        : null;
+      ? portugueseExtendedFinal
+      : unitId === "bilan-initial"
+        ? portugueseFinal
+        : unitId === "culture"
+          ? portugueseCultureFinal
+          : null;
   if (assessment)
     return (
       <GermanCourseFinal
@@ -68,6 +74,7 @@ export default async function PortugueseUnitPage({
       catalog={portugueseCatalog}
       locale={locale}
       audioPaths={portugueseAudioPaths(unit)}
+      sources={portugueseSources}
       initialLessonId={query.lesson}
       initialActivityId={query.activity}
     />

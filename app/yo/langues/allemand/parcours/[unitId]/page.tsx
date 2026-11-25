@@ -5,7 +5,9 @@ import { GermanCourseFinal } from "@/components/yo/german/GermanCourseFinal";
 import {
   germanCatalog,
   germanFinal,
+  germanExtendedFinal,
   germanCultureFinal,
+  germanSources,
   getGermanUnit,
 } from "@/lib/yo/german/courseData";
 import { germanAudioPaths } from "@/lib/yo/german/courseAudio.server";
@@ -26,7 +28,9 @@ export async function generateMetadata({
     locale = getYoLocale((await searchParams).lang);
   const item =
     unitId === "final"
-      ? germanFinal
+      ? germanExtendedFinal
+      : unitId === "bilan-initial"
+        ? germanFinal
       : unitId === "culture"
         ? germanCultureFinal
         : getGermanUnit(unitId);
@@ -42,7 +46,9 @@ export default async function GermanUnitPage({ params, searchParams }: Props) {
     locale = getYoLocale(query.lang);
   const assessment =
     unitId === "final"
-      ? germanFinal
+      ? germanExtendedFinal
+      : unitId === "bilan-initial"
+        ? germanFinal
       : unitId === "culture"
         ? germanCultureFinal
         : null;
@@ -65,6 +71,7 @@ export default async function GermanUnitPage({ params, searchParams }: Props) {
       catalog={germanCatalog}
       locale={locale}
       audioPaths={germanAudioPaths(unit)}
+      sources={germanSources}
       initialLessonId={query.lesson}
       initialActivityId={query.activity}
     />

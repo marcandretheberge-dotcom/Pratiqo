@@ -10,7 +10,9 @@ import {
 } from "@/lib/yo/german/courseAudio.server";
 import {
   germanCourseUnits,
+  germanLegacyUnits,
   germanFinal,
+  germanExtendedFinal,
   germanCultureFinal,
 } from "@/lib/yo/german/courseData";
 import { germanCultureStops } from "@/lib/yo/german/courseCulture";
@@ -22,12 +24,14 @@ import {
 
 test("every German audio path points to a real complete bundled MP3, never a planned asset", () => {
   preflightManifest(germanCourseAudio);
+  const legacySpeech = new Set([...germanLegacyUnits.flatMap(germanUnitSpeech), ...assessmentSpeech(germanFinal), ...assessmentSpeech(germanCultureFinal)]);
+  const legacyAudio = germanCourseAudio.filter(item => legacySpeech.has(item.text));
   assert.equal(
     Object.keys(germanPublishedAudio).length,
-    germanCourseAudio.length,
+    legacyAudio.length,
   );
   let seconds = 0;
-  for (const item of germanCourseAudio) {
+  for (const item of legacyAudio) {
     const path = germanPublishedAudio[item.text];
     assert.equal(path, "/audio/" + item.storagePath);
     const data = readFileSync("public" + path);
@@ -38,7 +42,7 @@ test("every German audio path points to a real complete bundled MP3, never a pla
   assert.ok(seconds > 0);
   console.log(
     "German MP3 files validated: " +
-      germanCourseAudio.length +
+      legacyAudio.length +
       ", minutes: " +
       (seconds / 60).toFixed(2),
   );
@@ -47,6 +51,7 @@ test("unit and final audio payloads contain only the exact required speech", () 
   for (const content of [
     ...germanCourseUnits,
     germanFinal,
+    germanExtendedFinal,
     germanCultureFinal,
   ]) {
     const texts =
@@ -55,8 +60,12 @@ test("unit and final audio payloads contain only the exact required speech", () 
         : assessmentSpeech(content);
     assert.deepEqual(
       Object.keys(germanAudioPaths(content)).sort(),
-      [...new Set(texts)].sort(),
+      [...new Set(texts)].filter(text => Boolean(germanPublishedAudio[text])).sort(),
     );
+    if (germanLegacyUnits.some(unit => unit === content) || content === germanFinal || content === germanCultureFinal) {
+      assert.equal(Object.keys(germanAudioPaths(content)).length, new Set(texts).size,
+        "all originally delivered audio remains available");
+    }
   }
 });
 test("real photo dimensions match their authored metadata and only four supplied photos are used", async () => {

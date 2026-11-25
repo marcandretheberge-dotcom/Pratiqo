@@ -14,10 +14,15 @@ on:
       - 'lib/yo/english/**'
       - 'lib/yo/spanish/**'
       - 'lib/yo/frenchQuebec/**'
+      - 'lib/yo/german/**'
+      - 'lib/yo/portuguese/**'
       - 'lib/yo/review/**'
       - 'lib/yo/shared/continuation.ts'
       - 'tests/yo/*Foundations*'
       - 'tests/yo/*FoundationIsolation*'
+      - 'tests/yo/*GermanDepth*'
+      - 'tests/yo/*PortugueseDepth*'
+      - 'tests/yo/*CourseDepth*'
       - 'tests/yo/*CourseReview*'
       - 'tests/yo/*AssessmentDraft*'
       - 'scripts/prepare_yo_shared_review.ts'
@@ -42,6 +47,10 @@ jobs:
           node --import tsx tests/yo/yopratiqoEnglishFoundations.test.ts
           node --import tsx tests/yo/yopratiqoSpanishFoundations.test.ts
           node --import tsx tests/yo/yopratiqoFrenchQuebecFoundations.test.ts
+          node --import tsx tests/yo/yopratiqoGermanDepth.test.ts
+          node --import tsx tests/yo/yopratiqoPortugueseDepth.test.ts
+          npm run test:yo-german
+          npm run test:yo-portuguese
           node --import tsx tests/yo/yopratiqoCourseReview.test.tsx
           node --import tsx tests/yo/yopratiqoAssessmentDraft.test.tsx
           node --import tsx tests/yo/yopratiqoFoundationIsolation.test.tsx
@@ -55,7 +64,7 @@ jobs:
           - {os: ubuntu-24.04, browser: chromium}
           - {os: macos-15, browser: webkit}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       NEXT_TELEMETRY_DISABLED: '1'
       NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
@@ -88,6 +97,7 @@ jobs:
           trap 'kill "$server_pid" || true' EXIT
           curl --retry 30 --retry-connrefused --retry-delay 1 -fsS -o /dev/null http://127.0.0.1:3246/companion/travel/journal/yoppo-journal.webp
           python tests/yo/yopratiqoFoundations.browser.py
+          python tests/yo/yopratiqoCourseDepth.browser.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

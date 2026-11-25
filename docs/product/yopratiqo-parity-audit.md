@@ -3,6 +3,7 @@
 Audit date: 2026-11-25. Original baseline: `5631295cd44fa9566776d622a6bcde412ce0fc4d`.
 First overnight release: PR #480, production main `8c60fa16457e604bd570c27ad6d50d89cb17b45d`.
 Second overnight release: PR #481, production main `89e8bbe780a339f7472b7811d80bc0f611957453`.
+Third overnight release: PR #482, production main `c1bbb66ea8ebb7488e4de2247271e1e1febcfad8`.
 
 ## Decision
 
@@ -95,14 +96,30 @@ The actual EN/ES/FR courses passed Chromium and macOS WebKit at 393px and 320px;
 the production deployment passed 24 read-only page/API checks. See the
 [release ledger](yopratiqo-overnight-roadmap.md#verification-and-release-record).
 
-The next prepared audio lot contains 255 reviewed MP3 clips (6,559,441 bytes,
+The deployed PR #482 audio lot contains 255 reviewed MP3 clips (6,559,441 bytes,
 402.625 seconds). It covers all 19 introduction phrases in each of the seven
 shared introductions, all 96 interest phrases across eight targets, and part of
 the Italian gap. Fifteen Italian slash lists remain withheld. Independent ASR,
 silence boundaries, codec decoding and exact hashes establish technical checks;
 they do not establish a human native-accent review. A separate full EN/ES/FR
-recording batch is still in progress. These assets are not counted as deployed
-until the audio release's own CI, merge and public delivery checks succeed.
+recording batch is still in progress. All six triggered workflows and both Vercel
+builds passed, and all 255 public MP3s were checked against their exact hashes,
+audio MIME and immutable cache headers after the production deployment.
+
+## Fourth overnight lot: German and Brazilian Portuguese prepared
+
+| Target | Complete authored sequence in this branch | Preserved evidence and remaining audio work |
+| --- | --- | --- |
+| German | 12 units, 36 lessons, 232 practice activities, 180 vocabulary references (179 distinct), 72 unit questions, new 24-question cumulative written final | Original eight units, 16-question final and eight-question culture final remain byte-identical. Old final uses `/bilan-initial`; new `/final` has a distinct ID. All original published MP3 checks remain intact; new-unit coverage is incomplete. |
+| Brazilian Portuguese | 12 units, 36 lessons, 232 practice activities, 180 distinct vocabulary phrases, 72 unit questions, new 24-question cumulative written final | Same separation of old/new assessment IDs and original eight-unit evidence. Earlier recordings stay fully checked; new exercises do not require unavailable audio to complete their written assessments. |
+
+Both additions have twelve new three-turn dialogues, explicit language notes,
+contextual readings, typed recall and source-backed cultural content. Counts do
+not establish equal study time or certified proficiency. Independent content and
+integration reviews and local regressions have passed; the new real-control
+Chromium/WebKit depth gate and production release are still pending. Japanese
+and Mandarin expansions are in a separate reviewed worktree, not counted here
+as deployed.
 
 ## Shared surfaces: what exists and what does not
 
