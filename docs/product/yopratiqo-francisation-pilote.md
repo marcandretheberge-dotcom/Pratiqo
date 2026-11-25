@@ -19,6 +19,6 @@ Tous les résultats servent à la pratique. Les indices et reprises peuvent êtr
 
 - Faire relire les situations, le registre, les distracteurs et les critères par un spécialiste de la francisation des adultes.
 - Pour les dialogues, obtenir deux voix québécoises autorisées. Documenter l’origine des fichiers et les droits de diffusion, faire valider la diction et la fidélité au texte, puis synchroniser les sous-titres par réplique et vérifier l’écoute sur mobile. Les transcriptions accessibles portent déjà les noms des interlocuteurs. Aucune voix n’a été commandée pour ce lot.
-- Présenter le lot à Marc-André pour revue avant publication. La page d’aperçu porte la directive noindex. Le point d’entrée professeur demeure [/francisation](/francisation).
+- Présenter le lot à Marc-André pour revue avant publication. La page d’aperçu porte la directive noindex. Le point d’entrée professeur demeure `/francisation`.
 
 L’aperçu s’active sur la branche Vercel dédiée. Pour une revue locale, lancer le serveur de développement avec `YO_FRANCISATION_PREVIEW=1` et entrer par `/yo`, puis la carte de français québécois.

@@ -143,6 +143,11 @@ function Question({ question, checked, helped, onHint, onCheck, onNext }: {
 }) {
   const [answer, setAnswer] = useState<number | null>(null);
   const [wrong, setWrong] = useState(false);
+  const nextButton = useRef<HTMLButtonElement>(null);
+  const submitted = useRef(false);
+  useEffect(() => {
+    if (checked && submitted.current) nextButton.current?.focus();
+  }, [checked]);
   return <div className="space-y-4">
     <fieldset disabled={checked}>
       <legend className="mb-2 font-semibold">{question.prompt}</legend>
@@ -151,12 +156,15 @@ function Question({ question, checked, helped, onHint, onCheck, onNext }: {
       </label>)}
     </fieldset>
     <p role="status">{checked ? question.explanation : wrong ? "À revoir. Compare ton choix avec la fiche ou le dialogue, puis réessaie." : ""}</p>
-    {checked ? <button type="button" className={primary} onClick={onNext}>Continuer</button> : <>
+    {checked ? <button ref={nextButton} type="button" className={primary} onClick={onNext}>Continuer</button> : <>
       <button type="button" className={primary} disabled={answer === null} onClick={() => {
-        if (answer !== null && onCheck(answer)) setWrong(answer !== question.correct);
+        if (answer !== null && onCheck(answer)) {
+          submitted.current = true;
+          setWrong(answer !== question.correct);
+        }
       }}>Vérifier</button>
       <button type="button" className={secondary} aria-expanded={helped} disabled={helped} onClick={onHint}>Voir un indice</button>
-      {helped && <p>{question.hint}</p>}
+      {helped && <p role="status">{question.hint}</p>}
     </>}
   </div>;
 }

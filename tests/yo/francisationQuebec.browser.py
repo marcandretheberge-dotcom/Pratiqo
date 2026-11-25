@@ -1,4 +1,5 @@
 """Run against the full preview app. Start from its learner-facing language card."""
+import json
 import os
 import re
 from urllib.parse import urlsplit
@@ -30,15 +31,12 @@ def exercise(browser):
     page.on("pageerror", lambda error: errors.append(str(error)))
     page.set_default_timeout(20000)
     banner = page.get_by_test_id("cookie-consent-banner")
-    page.add_locator_handler(banner, lambda: banner.get_by_role("button", name=re.compile("Nécessaires|Necessary")).click())
-    install = page.get_by_label("Installer Pratiqo", exact=True)
-    page.add_locator_handler(install, lambda: install.get_by_role("button", name="Pas maintenant", exact=True).first.click())
+    install = page.locator("aside").filter(has=page.get_by_role("button", name=re.compile("Pas maintenant|Not now")))
 
     def button(name):
         return page.get_by_role("button", name=name, exact=True)
 
-    def entry():
-        page.goto(base + "/yo", wait_until="domcontentloaded")
+    def select_french():
         page.get_by_role("link", name=re.compile("^Français québécois")).click()
         expect(page).to_have_url(re.compile(path + "/demarrer"))
 
@@ -71,7 +69,11 @@ def exercise(browser):
     assert html.locator(f'a[href="{path}"]').count()
     seo.close()
 
-    entry()
+    page.goto(base + "/yo", wait_until="domcontentloaded")
+    # Consent and install prompts may overlap briefly on small touch screens.
+    banner.get_by_role("button", name=re.compile("Nécessaires|Necessary")).click()
+    page.add_locator_handler(install, lambda: install.get_by_role("button", name=re.compile("Pas maintenant|Not now")).first.click())
+    select_french()
     button("Je pars de zéro").click()
     for name in ("Voyager", "Famille et amis", "Travail ou études", "Parler au quotidien", "Apprendre en profondeur"):
         expect(button(name)).to_be_visible()
@@ -86,13 +88,15 @@ def exercise(browser):
     answer("418 555-0116")
     expect(page.get_by_role("status").filter(has_text="À revoir")).to_be_visible()
     answer("418 555-0161")
+    expect(button("Continuer")).to_be_focused()
     page.reload()
     button("Continuer").click()
     expect(page.get_by_role("radio", name="418 555-0161")).to_be_checked()
     button("Continuer").click()
     button("Retour à la mission").click()
-    button("Retour aux langues").click()
-    entry()
+    page.get_by_role("link", name="Retour aux langues").click()
+    expect(page).to_have_url(base + "/yo")
+    select_french()
     button("Continuer").click()
     expect(page.get_by_role("heading", name="Vérifier le nom")).to_be_visible()
     answer("C’est Leduc, L-E-D-U-C. Vous pouvez me le répéter ?")
@@ -111,23 +115,17 @@ def exercise(browser):
     button("Changer d’objectif").click()
     button("Travail ou études").click()
     button("Continuer").click()
-    page.get_by_role("radio", name="À mon rythme").check()
+    page.get_by_text("À mon rythme", exact=True).click()
     button("Continuer").click()
     button("Commencer ici").click()
     world = page.locator("[data-shared-world-map]")
     expect(world).to_be_visible()
-    def skip_films():
-        for _ in range(5):
-            page.evaluate("() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)))")
-            film = page.locator("[data-travel-film], [data-mission-film]")
-            if not film.count():
-                return
-            film.first.get_by_role("button", name=re.compile("Passer|Ignorer")).click()
-    skip_films()
+    film = page.locator("[data-travel-film], [data-mission-film]").first
+    page.add_locator_handler(film, lambda: film.get_by_role("button", name="Passer", exact=True).click())
     world.get_by_role("button", name="Continuer", exact=True).click()
     expect(page.get_by_role("progressbar")).to_be_visible()
-    skip_films()
-    button("Entrer dans la mission").click()
+    button("Passer à la pratique").click()
+    original_question = page.locator("[data-intro-question]").get_attribute("data-intro-question")
     legacy = value(legacy_key)
     assert legacy
     button("Mes outils").click()
@@ -141,8 +139,16 @@ def exercise(browser):
     assert value(legacy_key) == legacy
     button("Changer d’objectif").click()
     button("Garder mon parcours").click()
-    expect(page.get_by_role("progressbar")).to_be_visible()
-    assert value(legacy_key) == legacy
+    expect(world).to_be_visible()
+    world.get_by_role("button", name="Continuer", exact=True).click()
+    expect(page.locator("[data-intro-question]")).to_have_attribute("data-intro-question", original_question)
+    before, after = json.loads(legacy), json.loads(value(legacy_key))
+    for field in ("profile", "visited", "completed", "answers", "best", "step", "draft"):
+        assert before[field] == after[field], field
+    page.goto(base + path)
+    page.get_by_role("link", name="Découvrir la mission gratuite").click()
+    expect(page.get_by_role("heading", name="Donner mon nom et mes coordonnées")).to_be_visible()
+    expect(button("Continuer")).to_be_visible()
     assert not errors, errors
     ctx.close()
 
