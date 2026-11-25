@@ -131,7 +131,7 @@ const tests: [string, () => void][] = [
     assert.ok(film, "the optional introduction opens after the mission briefing");
     assert.equal(within(panel).queryByRole("heading", { name: "Word notebook" }), null, "lesson controls stay inaccessible while the film is open");
     assertNoFakeMastery();
-    click(within(film).getByRole("button", { name: "Skip", exact: true }));
+    click(within(film).getByRole("button", { name: "Skip" }));
     assert.equal(document.querySelector("[data-mission-film]"), null);
     assert.equal(map, view.container.querySelector("[data-yoppo-world-map]"), "skipping a film never remounts the map");
     assert.ok(within(panel).getByRole("heading", { name: "Word notebook" }));
@@ -184,7 +184,7 @@ const tests: [string, () => void][] = [
     click(within(panel).getByRole("button",{name:"Start my mission"}));
     const film=document.querySelector('[data-mission-film="mission-start"]') as HTMLElement;
     assert.ok(film,"a fresh mission introduction does not depend on another test's seen ledger");
-    click(within(film).getByRole("button",{name:"Skip",exact:true}));
+    click(within(film).getByRole("button",{name:"Skip"}));
     click(within(panel).getByRole("button",{name:"Next expression"}));
     click(within(panel).getByRole("button",{name:"Leave and save my place"}));
     view.unmount();
