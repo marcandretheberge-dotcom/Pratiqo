@@ -120,10 +120,9 @@ integration reviews and local regressions passed. PR #483 then passed all five
 triggered GitHub workflows and both Vercel checks. Chromium and macOS WebKit each
 completed all twelve checkpoints and the new final per language through real
 controls, including 24 actual MP3 completions. Its production deployment passed
-27 public checks. Japanese and Mandarin's separate fifth lot below is not yet
-counted as deployed.
+27 public checks. Japanese and Mandarin's separate fifth lot is recorded below.
 
-## Fifth overnight lot: Japanese and Mandarin prepared
+## Fifth overnight lot: Japanese and Mandarin deployed
 
 | Target | Authored expansion in this branch | Preserved evidence and limits |
 | --- | --- | --- |
@@ -136,13 +135,27 @@ The public review route now returns one actual Japanese or Mandarin practice ite
 only when requested, preserves the original reading/roleplay context, and excludes
 both finals. The dated journal remains separate from course grades and bookmarks.
 
-The real mobile gate is prepared for both targets at 393px and 320px in Chromium
+The real mobile gate passed for both targets at 393px and 320px in Chromium
 and macOS WebKit. It explicitly seeds only historical eight-module learner records
 and the original final bookmark, then checks two new recall answers through the
 rendered controls, including one helped answer. It checks locked routes, resume,
 reload, old-result preservation and zero automatic speech/audio requests. This is
-not a full twelve-module UI-completion or listening-quality test. The new lot is
-not counted as deployed until its exact-head CI and production checks succeed.
+not a full twelve-module UI-completion or listening-quality test. PR #484 passed
+all six triggered workflows and both Vercel checks, and its production deployment
+passed 33 public page/API checks. The exact commits and deployment are recorded
+in the release ledger.
+
+## Sixth overnight lot: unfinished typed answers prepared
+
+The five shared DE/PT/EN/ES/Québec French course players now retain partial typed
+answers locally across reloads, with reset/content scoping and two-tab merging.
+A stale view cannot submit an old grade against another view's new text. Restoring
+a draft emits neither a course attempt nor a review event; help and checked
+outcomes remain attached to their actual attempt. The full rules and 29 focused
+cases are in `yopratiqoTypedDrafts.test.tsx`. Typed answers do not leave the device.
+Yoppo has reserved inline space, following Italian's existing layout, and mobile
+lesson selection is compact. This lot is prepared; real browser CI and production
+delivery are still required before counting it as shipped.
 
 ## Shared surfaces: what exists and what does not
 
