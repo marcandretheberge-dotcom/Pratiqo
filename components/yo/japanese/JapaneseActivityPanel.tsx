@@ -4,22 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Lightbulb, RotateCcw, X } from "lucide-react";
 import type { YoLocale } from "@/lib/yo/types";
 import type { JapaneseActivity, JapaneseChoice } from "@/lib/yo/japaneseCourseTypes";
-import { checkJapaneseAnswer, type JapaneseAnswer } from "@/lib/yo/japaneseCourseProgress";
+import { checkJapaneseAnswer } from "@/lib/yo/japaneseCourseProgress";
+import { initialJapaneseActivityState, JAPANESE_ANSWER_LIMIT, type JapaneseActivityState } from "@/lib/yo/japaneseActivityDraft";
 import { JapaneseCourseAudio } from "./JapaneseCourseAudio";
 
-export interface JapaneseActivityState {
-  answer: JapaneseAnswer;
-  checked: boolean;
-  correct: boolean;
-  assisted: boolean;
-  showHint: boolean;
-  showTranscript: boolean;
-  matchLeft: string | null;
-  revision: number;
-}
-export function initialJapaneseActivityState(activity: JapaneseActivity, revision = 0): JapaneseActivityState {
-  return { answer: activity.kind === "build" ? [] : activity.kind === "match" ? {} : "", checked: false, correct: false, assisted: false, showHint: false, showTranscript: false, matchLeft: null, revision };
-}
+export { initialJapaneseActivityState, type JapaneseActivityState } from "@/lib/yo/japaneseActivityDraft";
 const COPY = {
   fr: { check: "Vérifier", retry: "Réessayer", hint: "Un indice avec Yoppo", correct: "Bien joué.", incorrect: "Une autre tentative ?", assisted: "Réussi avec aide", independent: "Réussi dans cet exercice", transcript: "Lire la transcription", hide: "Masquer la transcription", listen: "Écoute le message, puis choisis.", answer: "Ta réponse", kana: "Réponds en kana.", romaji: "Kana ou rōmaji accepté.", build: "Compose la phrase", bank: "Mots disponibles", undo: "Annuler le dernier mot", clear: "Recommencer la phrase", left: "Choisis un mot japonais, puis son sens.", chosen: "Sélectionné", paired: "Associé", model: "Modèle", feedback: "Retour", reading: "Lecture" },
   en: { check: "Check", retry: "Try again", hint: "A hint from Yoppo", correct: "Well done.", incorrect: "Try another approach?", assisted: "Completed with help", independent: "Correct in this exercise", transcript: "Read the transcript", hide: "Hide the transcript", listen: "Listen to the message, then choose.", answer: "Your answer", kana: "Answer in kana.", romaji: "Kana or rōmaji accepted.", build: "Build the sentence", bank: "Available words", undo: "Undo last word", clear: "Restart sentence", left: "Choose a Japanese word, then its meaning.", chosen: "Selected", paired: "Paired", model: "Model", feedback: "Feedback", reading: "Reading" },
@@ -35,10 +24,13 @@ const RECALL_COPY = {
 };
 type FocusTarget = { kind: "feedback" | "question" | "build" | "check" } | { kind: "bank" | "match"; id: string };
 
-export function JapaneseActivityPanel({ activity, locale, state, onChange, onResult, showRomaji = false }: {
+export function JapaneseActivityPanel({ activity, locale, state, onChange, onResult, onCheck, onRestart, showRomaji = false }: {
   activity: JapaneseActivity; locale: YoLocale; state: JapaneseActivityState;
   onChange: (state: JapaneseActivityState) => void;
-  onResult: (correct: boolean, assisted: boolean) => void;
+  onResult?: (correct: boolean, assisted: boolean) => void;
+  /** Optional durable owner validates the rendered answer, commits, and records the accepted check. */
+  onCheck?: (rendered: JapaneseActivityState, visibleHelp: boolean) => JapaneseActivityState | null;
+  onRestart?: () => void;
   showRomaji?: boolean;
 }) {
   const c = COPY[locale];
@@ -81,16 +73,21 @@ export function JapaneseActivityPanel({ activity, locale, state, onChange, onRes
 
   function check() {
     if (!ready || state.checked || composing.current || submittedAttempt.current === attemptId) return;
+    if (onCheck) {
+      if (!onCheck(state, choiceRomajiVisible)) return;
+      submittedAttempt.current = attemptId;
+      requestFocus({ kind: "feedback" });
+      return;
+    }
     submittedAttempt.current = attemptId;
-    const correct = checkJapaneseAnswer(activity, state.answer);
-    const assisted = state.assisted || choiceRomajiVisible;
+    const correct = checkJapaneseAnswer(activity, state.answer), assisted = state.assisted || choiceRomajiVisible;
     requestFocus({ kind: "feedback" });
     change({ checked: true, correct, assisted });
-    onResult(correct, assisted);
+    onResult?.(correct, assisted);
   }
   function retry() {
     requestFocus({ kind: "question" });
-    onChange(initialJapaneseActivityState(activity, state.revision + 1));
+    if (onRestart) onRestart(); else onChange(initialJapaneseActivityState(activity, state.revision + 1));
   }
   function choiceText(choice: JapaneseChoice) {
     return <>
@@ -116,7 +113,7 @@ export function JapaneseActivityPanel({ activity, locale, state, onChange, onRes
         <p lang="ja" className="rounded-2xl bg-slate-50 p-5 text-center text-4xl font-medium">{activity.stimulus}</p>}
       <label className="block text-sm font-semibold">
         {activity.responseMode === "recall" ? RECALL_COPY[locale].label : <>{c.reading} <span className="font-normal text-slate-500">· {activity.acceptsRomaji ? c.romaji : c.kana}</span></>}
-        <input lang="ja" aria-describedby={activity.responseMode === "recall" ? `${activity.id}-instruction` : undefined} value={selected} onChange={(event) => change({ answer: event.target.value })} disabled={state.checked} maxLength={100} autoComplete="off" autoCapitalize="off" spellCheck={false}
+        <input lang="ja" aria-describedby={activity.responseMode === "recall" ? `${activity.id}-instruction` : undefined} value={selected} onChange={(event) => change({ answer: event.target.value.slice(0, JAPANESE_ANSWER_LIMIT) })} disabled={state.checked} maxLength={JAPANESE_ANSWER_LIMIT} autoComplete="off" autoCapitalize="off" spellCheck={false}
           onCompositionStart={() => { composing.current = true; ignoreImeSubmit.current = true; }}
           onCompositionEnd={() => { composing.current = false; }}
           onKeyDown={(event) => {

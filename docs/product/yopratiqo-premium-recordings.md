@@ -1,6 +1,6 @@
 # Premium course recordings
 
-## Reviewed repository bundle — 2026-11-25
+## Deployed and verified bundle — 2026-11-25
 
 This repository revision contains **1,460 generated MP3 recordings**, covering eight
 languages across nine locale keys. This update adds **1,205 files**: 1,192 English,
@@ -13,9 +13,13 @@ duration checks and SHA-256 verification. **These checks do not certify native
 pronunciation or a regional accent; no human/native listening approval is claimed.**
 
 Publication is tracked in [the release ledger](yopratiqo-overnight-roadmap.md).
-At preparation, only the preceding 255-file bundle had passed production delivery
-checks. The additional 1,205 files require exact-commit CI and public-byte checks
-after deployment; a Git object or a local registry entry alone is not that evidence.
+PR #489 passed exact-commit CI and deployed at main
+`9e9a30a9fab124bcd39a6d4ab96eda747b7ac0e9` /
+`dpl_9C2jd2dbyjEAkZb3qX9m5DfvDc5Z`. All 1,460 public files matched their
+reviewed SHA-256, audio MIME and immutable caching, totaling 60,366,970 bytes.
+Chromium and macOS WebKit completed actual vocabulary, grammar, reading and
+dialogue playback in each of the three new foundation courses. These delivery
+and playback checks remain distinct from human/native listening approval.
 
 The files are served from
 `public/audio/yo/premium/{locale}/{sha256}.mp3`, totaling 60,366,970 bytes and

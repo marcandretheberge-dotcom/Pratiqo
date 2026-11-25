@@ -48,6 +48,8 @@ jobs:
           npm run test:yo-mandarin
           node --import tsx --test tests/yo/yopratiqoJapaneseDepth.test.ts tests/yo/yopratiqoMandarinDepth.test.ts tests/yo/yopratiqoMandarinDepthProgress.test.ts tests/yo/yopratiqoEasternReviewRoute.test.ts
           node --import tsx tests/yo/yopratiqoJapaneseDepthUi.test.tsx
+          node --import tsx --test tests/yo/yopratiqoJapaneseActivityDraft.test.ts
+          node --import tsx tests/yo/yopratiqoJapaneseResume.test.tsx
           node --import tsx tests/yo/yopratiqoMandarinDepthPlayer.test.tsx
   mobile-browser:
     name: Eastern mobile course (${{ matrix.browser }})

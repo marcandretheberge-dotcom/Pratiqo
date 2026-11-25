@@ -166,7 +166,7 @@ test("ink never self-grades or records practice; an explicit learner action repo
   assert.equal(recorded.disabled, true);
   fireEvent.click(recorded);
   assert.deepEqual(reported, ["人"]);
-  assert.match(view.getByRole("status").textContent ?? "", /Practice recorded/);
+  assert.ok(view.getByText("Practice recorded for this session.", { selector: '[role="status"]' }));
   assert.ok(view.getByText("This practice does not grade calligraphy or measure kanji mastery."));
 });
 
@@ -213,7 +213,7 @@ test("reduced motion avoids automatic stroke animation while keeping manual cont
   fireEvent.click(view.getByRole("button", { name: "Replay strokes" }));
   assert.equal(modelCount(view.container), 2);
   assert.equal(view.queryByRole("button", { name: "Stop animation" }), null);
-  assert.match(view.getByRole("status").textContent ?? "", /Reduced motion/);
+  assert.ok(view.getByText("Reduced motion: full model shown, manual steps available.", { selector: '[role="status"]' }));
   assert.equal(view.container.querySelector("[data-kanji-model-stroke][style]"), null);
   fireEvent.click(view.getByRole("button", { name: "Previous stroke" }));
   assert.equal(modelCount(view.container), 1);

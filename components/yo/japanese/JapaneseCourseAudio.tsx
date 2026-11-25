@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Loader2, Volume2, Square } from "lucide-react";
 import { buildPublicAudioUrl } from "@/lib/yo/audio/audioUrl";
 import { getJapaneseFoundationAudioItem } from "@/lib/yo/audio/japaneseFoundationAudio";
@@ -22,6 +22,9 @@ export function JapaneseCourseAudio({ text, locale, onListen, label }: { text: s
   const [state, setState] = useState<PlaybackState>("idle");
   const [slow, setSlow] = useState(false);
   const [error, setError] = useState<"unavailable" | "failed" | null>(null);
+  const noticeId = useId();
+  const recording = getJapaneseFoundationAudioItem(text);
+  const url = recording && buildPublicAudioUrl(recording.storagePath);
   const root = useRef<HTMLSpanElement>(null);
   const session = useRef<AudioSession | null>(null);
   const latestOnListen = useRef(onListen);
@@ -54,8 +57,6 @@ export function JapaneseCourseAudio({ text, locale, onListen, label }: { text: s
   function play() {
     if (session.current) { stop(); return; }
     setError(null);
-    const item = getJapaneseFoundationAudioItem(text);
-    const url = item && buildPublicAudioUrl(item.storagePath);
     if (!url || typeof window.Audio !== "function") { setError("unavailable"); return; }
 
     window.dispatchEvent(new Event(AUDIO_STOP_EVENT));
@@ -76,7 +77,7 @@ export function JapaneseCourseAudio({ text, locale, onListen, label }: { text: s
       audio.removeEventListener("waiting", onWaiting);
       audio.removeEventListener("stalled", onWaiting);
       audio.removeEventListener("ended", onEnded);
-      audio.removeEventListener("pause", onEnded);
+      audio.removeEventListener("pause", onPause);
       audio.removeEventListener("error", onError);
     } };
     const isCurrent = () => session.current === active;
@@ -91,13 +92,16 @@ export function JapaneseCourseAudio({ text, locale, onListen, label }: { text: s
     };
     const onWaiting = () => { if (!isCurrent()) return; setState("loading"); armTimeout(); };
     const onEnded = () => { if (isCurrent()) stop(); };
+    // Native media may emit pause immediately before ended. Leave that natural
+    // end event attached; only an interrupted pause should cancel the session.
+    const onPause = () => { if (!audio.ended && isCurrent()) stop(); };
     const onError = () => fail();
     session.current = active;
     audio.addEventListener("playing", onPlaying);
     audio.addEventListener("waiting", onWaiting);
     audio.addEventListener("stalled", onWaiting);
     audio.addEventListener("ended", onEnded);
-    audio.addEventListener("pause", onEnded);
+    audio.addEventListener("pause", onPause);
     audio.addEventListener("error", onError);
 
     // Study panels stay mounted to preserve drafts. Stop if an ancestor becomes hidden.
@@ -116,16 +120,17 @@ export function JapaneseCourseAudio({ text, locale, onListen, label }: { text: s
   }
 
   const active = state !== "idle";
+  const notice = url ? error : "unavailable";
   return <span ref={root} className="inline-flex max-w-full flex-wrap items-center gap-2 align-middle" data-no-deck-swipe data-no-deck-tap>
-    <button type="button" onClick={(event) => { event.stopPropagation(); play(); }} aria-label={(active ? copy[locale].stop : copy[locale].play) + " : " + (label ?? text)}
-      className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 text-xs font-semibold text-indigo-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+    <button type="button" disabled={!url} aria-describedby={notice ? noticeId : undefined} onClick={(event) => { event.stopPropagation(); play(); }} aria-label={(active ? copy[locale].stop : copy[locale].play) + " : " + (label ?? text)}
+      className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 text-xs font-semibold text-indigo-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-default disabled:opacity-60">
       {state === "loading" ? <Loader2 size={15} className="motion-safe:animate-spin" aria-hidden /> : active ? <Square size={13} aria-hidden /> : <Volume2 size={15} aria-hidden />}{active ? copy[locale].stop : copy[locale].play}
     </button>
-    <button type="button" aria-pressed={slow} onClick={(event) => { event.stopPropagation(); stop(); setSlow(!slow); }}
+    <button type="button" disabled={!url} aria-pressed={slow} onClick={(event) => { event.stopPropagation(); stop(); setSlow(!slow); }}
       className="min-h-9 rounded-full px-2 text-xs font-medium text-slate-600 underline decoration-dotted underline-offset-4 focus-visible:outline focus-visible:outline-2">
       {slow ? "0.78×" : "1×"} · {copy[locale].slow}
     </button>
-    <span className="text-[10px] text-slate-500">{copy[locale].aiVoice}</span>
-    {error ? <span role="status" className="basis-full text-xs text-amber-900">{copy[locale][error]}</span> : null}
+    {url ? <span className="text-[10px] text-slate-500">{copy[locale].aiVoice}</span> : null}
+    {notice ? <span id={noticeId} role="status" className="basis-full text-xs text-amber-900">{copy[locale][notice]}</span> : null}
   </span>;
 }

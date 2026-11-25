@@ -35,6 +35,7 @@ class FakeAudio extends dom.window.EventTarget {
   playCalls = 0;
   pauseCalls = 0;
   loadCalls = 0;
+  ended = false;
   rejectPending?: (reason: Error) => void;
   constructor(src: string) { super(); this.src = src; this.initialSrc = src; audioCalls.push(this); }
   play(): Promise<void> {
@@ -176,6 +177,21 @@ test("a browser media pause returns the control to Listen", () => {
   assert.ok(view.getByRole("button", { name: `Listen : ${FIRST}` }));
 });
 
+test("natural pause-before-ended retains the active session until ended and does not count a second listening", () => {
+  let listened = 0;
+  const view = render(node(FIRST, { onListen: () => { listened++; } }));
+  fireEvent.click(view.getByRole("button", { name: `Listen : ${FIRST}` }));
+  const audio = audioCalls[0];
+  act(() => audio.emit("playing")); assert.equal(listened, 1);
+  audio.ended = true;
+  act(() => audio.emit("pause"));
+  assert.equal(audio.pauseCalls, 0, "natural pause must not detach the pending ended listener");
+  assert.ok(view.getByRole("button", { name: `Stop : ${FIRST}` }));
+  act(() => audio.emit("ended"));
+  assert.equal(audio.pauseCalls, 1); assert.equal(audio.src, "");
+  assert.ok(view.getByRole("button", { name: `Listen : ${FIRST}` })); assert.equal(listened, 1);
+});
+
 test("a missing or invalid MP3 gives feedback and a new click retries the actual recording", () => {
   let listened = 0;
   const view = render(node(FIRST, { onListen: () => { listened += 1; } }));
@@ -223,12 +239,15 @@ test("a synchronous media failure gives the same usable retry path", () => {
 test("missing configuration or unknown text never silently substitutes browser speech", () => {
   delete process.env.NEXT_PUBLIC_SUPABASE_URL;
   const view = render(node());
-  fireEvent.click(view.getByRole("button", { name: `Listen : ${FIRST}` }));
+  assert.equal((view.getByRole("button", { name: `Listen : ${FIRST}` }) as HTMLButtonElement).disabled, true);
+  assert.match(view.getByRole("status").textContent ?? "", /recording is unavailable/, "unavailability is visible before a failed click");
   assert.match(view.getByRole("status").textContent ?? "", /recording is unavailable/);
   assert.equal(audioCalls.length, 0);
   process.env.NEXT_PUBLIC_SUPABASE_URL = ORIGIN;
   view.rerender(node("not a registered course phrase"));
-  fireEvent.click(view.getByRole("button", { name: /Listen : not a registered/ }));
+  assert.equal((view.getByRole("button", { name: /Listen : not a registered/ }) as HTMLButtonElement).disabled, true);
+  assert.equal((view.getByRole("button", { name: "1× · Slow down" }) as HTMLButtonElement).disabled, true);
+  assert.equal(view.queryByText("AI voice"), null, "an absent recording is not described as an available voice");
   assert.match(view.getByRole("status").textContent ?? "", /recording is unavailable/);
   assert.equal(audioCalls.length, 0);
 });

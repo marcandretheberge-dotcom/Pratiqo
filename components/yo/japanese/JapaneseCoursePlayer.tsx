@@ -19,11 +19,14 @@ import { JapaneseActivityPanel, initialJapaneseActivityState, type JapaneseActiv
 import { JapaneseDialoguePanel, JapaneseKanaLab, JapaneseVocabularyLab, JapaneseWritingLab } from "./JapaneseStudyPanels";
 import { JapanesePhraseView } from "./JapanesePhraseView";
 import { useJapaneseCourseProgress } from "./useJapaneseCourseProgress";
+import { useJapaneseActivityDrafts } from "./useJapaneseActivityDrafts";
+import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { MissionFilm } from "../travel/MissionFilm";
 import { useMissionCinema } from "../travel/useMissionCinema";
 import { YoSpeechPractice } from "../speech/YoSpeechPractice";
 import { courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
 import { recordReviewAttempt } from "@/lib/yo/review/store";
+import { exerciseDraftRevision } from "@/lib/yo/foundations/typedDraft";
 
 const L = (fr: string, en: string, es: string): JapaneseLocalized => ({ fr, en, es });
 const C = {
@@ -50,6 +53,8 @@ const C = {
   audio: L("Audio de pratique : voix générée par IA. La transcription reste accessible.", "Practice audio uses an AI-generated voice. Transcripts remain accessible.", "Audio de práctica con voz generada por IA. La transcripción sigue accesible."),
   local: L("Progression conservée sur cet appareil.", "Progress is saved on this device.", "El progreso se guarda en este dispositivo."),
   noStorage: L("La sauvegarde locale est indisponible. Tu peux poursuivre cette séance.", "Local saving is unavailable. You can continue this session.", "El guardado local no está disponible. Puedes continuar esta sesión."),
+  contentChanged: L("Le contenu de cette activité a changé. Recharge la page pour reprendre.", "This activity has changed. Reload the page to continue.", "Esta actividad ha cambiado. Recarga la página para continuar."),
+  reload: L("Recharger la page", "Reload the page", "Recargar la página"),
   complete: L("Les exercices du module sont terminés.", "You have completed this module’s exercises.", "Has completado los ejercicios del módulo."),
   pending: L("Reviens aux exercices restants pour terminer ton bilan.", "Return to the remaining exercises to finish your review.", "Vuelve a los ejercicios pendientes para completar el balance."),
   self: L("Mon autoévaluation", "My self-assessment", "Mi autoevaluación"),
@@ -101,8 +106,9 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
   const finalOpen = canEnterFoundationStep(journey, "bilan", finalStarted);
   const href = (id?: string) => buildYoLocaleHref(JAPANESE_COURSE_PATH + (id ? "/" + japanesePublicUnitSlug(id) : ""), locale);
   const stages = useMemo(() => buildStages(unit, final), [unit, final]);
+  const activities = useMemo(() => stages.flatMap(item => item.activity ? [item.activity] : []), [stages]);
+  const drafts = useJapaneseActivityDrafts(unit.id, activities);
   const [index, setIndex] = useState(0);
-  const [activityStates, setActivityStates] = useState<Record<string, JapaneseActivityState>>({});
   const [showRomaji, setShowRomaji] = useState(false);
   const [selfChecks, setSelfChecks] = useState<Record<number, boolean>>({});
   const [notes, setNotes] = useState("");
@@ -112,7 +118,8 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
   const pane = useRef<HTMLDivElement>(null);
   const stage = stages[index] ?? stages[0];
   const currentActivity = stage.activity;
-  const currentState = currentActivity ? activityStates[currentActivity.id] ?? initialJapaneseActivityState(currentActivity) : undefined;
+  const currentState = currentActivity ? drafts.states[currentActivity.id] ?? initialJapaneseActivityState(currentActivity) : undefined;
+  const currentToken = currentActivity ? drafts.tokens[currentActivity.id] : "";
   const counts = japaneseUnitProgress(unit, progress);
   const reviewStages = stages.filter((item) => item.activity && progress.results[item.id]?.needsReview);
   const uncompleted = stages.filter((item) => item.activity && !progress.results[item.id]?.passed);
@@ -140,17 +147,28 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
   }, [index]);
   function go(next: number) {
     if (next < 0 || next >= stages.length || next === index) return;
-    window.dispatchEvent(new Event("yo-japanese-audio-stop"));
+    stopLessonAudio();
     focusRequested.current = true;
     setIndex(next);
   }
   function changeActivity(next: JapaneseActivityState) {
-    if (!currentActivity) return;
-    setActivityStates((current) => ({ ...current, [currentActivity.id]: next }));
+    if (!currentActivity || !currentState) return;
+    drafts.store.edit(currentActivity.id, currentToken, currentState, next);
   }
-  function result(correct: boolean, assisted: boolean) {
-    if (currentActivity) update((current) => recordJapaneseResult(current, currentActivity.id, correct, assisted));
-    if (currentActivity && !final) recordReviewAttempt({ language: "ja", itemId: `course:${unit.id}:${stage.kind === "roleplay" ? "roleplay" : "practice"}:${currentActivity.id}`, correct, assisted });
+  function checkActivity(rendered: JapaneseActivityState, visibleHelp: boolean) {
+    if (!currentActivity) return null;
+    const checked = drafts.store.check(currentActivity.id, currentToken, rendered, visibleHelp);
+    if (!checked) return null;
+    const accepted = update(current => recordJapaneseResult(current, currentActivity.id, checked.correct, checked.assisted), drafts.store.getSnapshot().epoch);
+    if (!accepted) { drafts.store.refresh(); return null; }
+    if (!final) recordReviewAttempt({ language: "ja", itemId: `course:${unit.id}:${stage.kind === "roleplay" ? "roleplay" : "practice"}:${currentActivity.id}`,
+      attemptId: "ja-draft-" + exerciseDraftRevision(currentToken), correct: checked.correct, assisted: checked.assisted });
+    return checked;
+  }
+  function restartActivity() {
+    if (!currentActivity) return;
+    stopLessonAudio();
+    if (drafts.store.restart(currentActivity.id, currentToken)) setShowRomaji(false);
   }
   function bookmark() {
     if (!currentActivity) return;
@@ -164,7 +182,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
     }
     if (!currentActivity || !currentState) return;
     if (action === "retry") {
-      changeActivity(initialJapaneseActivityState(currentActivity, currentState.revision + 1));
+      restartActivity();
       heading.current?.focus();
     } else changeActivity({ ...currentState, assisted: currentState.checked ? currentState.assisted : true, showHint: action === "hint" ? true : currentState.showHint });
   }
@@ -208,7 +226,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
     { id: "writing", content: <JapaneseWritingLab unit={unit} locale={locale} showRomaji={showRomaji} /> },
   ];
 
-  if (!ready || !allowed) return <CourseJourneyGate locale={locale} ready={ready} href={href()} />;
+  if (!ready || !drafts.ready || !allowed) return <CourseJourneyGate locale={locale} ready={ready && drafts.ready} href={href()} />;
   return <div lang={htmlLangFor(locale)} className="flex h-[100dvh] flex-col overflow-hidden bg-[#f7f5ef] text-slate-800" data-japanese-course-player={unit.id}>
     <JapaneseCourseHeader locale={locale} pathname={JAPANESE_COURSE_PATH + "/" + japanesePublicUnitSlug(unit.slug)} backHref={JAPANESE_COURSE_PATH} title={(final ? C.final[locale] : "日本語 · " + String(unit.number).padStart(2, "0"))} />
     <div className="flex min-h-0 flex-1">
@@ -230,6 +248,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
           <div className="mx-auto max-w-3xl pb-24 sm:pb-20">
             <AdventureProgress journey={journey} world="japanese" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} cinematic />
             <div className="mb-5"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-500">{final ? C.final[locale] : C.module[locale] + " " + String(unit.number).padStart(2, "0")} · {unit.title[locale]}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 outline-none sm:text-3xl">{stage.title[locale]}</h1></div>
+            {drafts.contentChanged ? <div role="alert" className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><p>{C.contentChanged[locale]}</p><button type="button" className="mt-2 min-h-11 font-semibold underline" onClick={() => window.location.reload()}>{C.reload[locale]}</button></div> : null}
             {stage.kind === "mission" ? <div className="space-y-5">
               <div className="relative overflow-hidden rounded-3xl bg-[#25285b] p-6 text-white sm:p-8"><div className="pointer-events-none absolute -right-5 -top-8 h-44 w-44 rounded-full border-[28px] border-white/5" aria-hidden /><Compass size={26} className="mb-6 text-[#f2b2a2]" aria-hidden /><p className="max-w-xl text-xl leading-relaxed">{unit.subtitle[locale]}</p><p className="mt-4 text-sm leading-relaxed text-indigo-100">{unit.setting[locale]}</p></div>
               <div className="grid gap-3 sm:grid-cols-2">{unit.goals.map((goal, i) => <div key={i} className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-relaxed"><span className="font-semibold text-indigo-500">0{i + 1}</span>{goal[locale]}</div>)}</div>
@@ -240,7 +259,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
             {stage.kind === "grammar" ? <div className="space-y-5">{unit.grammar.map((point, i) => <article key={point.id} className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6"><p className="text-xs font-bold uppercase tracking-widest text-indigo-500">0{i + 1}</p><h2 className="mt-2 text-xl font-semibold">{point.title[locale]}</h2><p className="my-4 text-sm leading-relaxed text-slate-600">{point.explanation[locale]}</p><div className="border-t border-slate-100 pt-4"><JapanesePhraseView phrase={point.example} locale={locale} showRomaji={showRomaji} /></div></article>)}</div> : null}
             {currentActivity && currentState ? <div>
               {stage.kind === "roleplay" ? <p className="mb-5 rounded-2xl bg-indigo-50 p-4 text-sm leading-relaxed text-indigo-900">{unit.roleplay.context[locale]}</p> : null}
-              <JapaneseActivityPanel key={currentActivity.id} activity={currentActivity} locale={locale} state={currentState} onChange={changeActivity} onResult={result} showRomaji={showRomaji} />
+              <JapaneseActivityPanel key={currentActivity.id} activity={currentActivity} locale={locale} state={currentState} onChange={changeActivity} onCheck={checkActivity} onRestart={restartActivity} showRomaji={showRomaji} />
               <button type="button" onClick={bookmark} className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-full px-2 text-xs font-medium text-slate-600 underline underline-offset-4"><BookmarkPlus size={14} aria-hidden />{C.saved[locale]}{progress.results[currentActivity.id]?.needsReview ? " ✓" : ""}</button>
             </div> : null}
             {stage.kind === "culture" ? <div className="space-y-5">
@@ -270,10 +289,10 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
     </div>
     <footer className="z-30 shrink-0 border-t border-slate-200 bg-[#fbf8f1] px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-3 sm:px-8">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3"><button type="button" aria-label={C.previous[locale]} onClick={() => go(index - 1)} disabled={index === 0} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-300 bg-white px-4 text-sm font-semibold disabled:opacity-30"><ArrowLeft size={16} aria-hidden /><span className="hidden sm:inline">{C.previous[locale]}</span></button>
-        <div className="min-w-0 flex-1 px-2 text-center"><p className="text-[11px] text-slate-500">{index + 1}/{stages.length} · {counts.passed}/{counts.total} {C.practices[locale].toLowerCase()}</p><div className="mx-auto mt-1.5 h-1 max-w-48 overflow-hidden rounded-full bg-slate-200" aria-hidden><div className="h-full rounded-full bg-indigo-600 transition-[width] motion-reduce:transition-none" style={{ width: ((index + 1) / stages.length * 100) + "%" }} /></div><p className="mt-1 hidden text-[9px] text-slate-400 sm:block">{storageAvailable ? C.local[locale] : C.noStorage[locale]}</p></div>
+        <div className="min-w-0 flex-1 px-2 text-center"><p className="text-[11px] text-slate-500">{index + 1}/{stages.length} · {counts.passed}/{counts.total} {C.practices[locale].toLowerCase()}</p><div className="mx-auto mt-1.5 h-1 max-w-48 overflow-hidden rounded-full bg-slate-200" aria-hidden><div className="h-full rounded-full bg-indigo-600 transition-[width] motion-reduce:transition-none" style={{ width: ((index + 1) / stages.length * 100) + "%" }} /></div><p className="mt-1 hidden text-[9px] text-slate-400 sm:block">{storageAvailable && !drafts.storageError ? C.local[locale] : C.noStorage[locale]}</p></div>
         {index < stages.length - 1 ? <button type="button" onClick={() => go(index + 1)} className="inline-flex min-h-11 items-center gap-2 rounded-full bg-indigo-700 px-5 text-sm font-semibold text-white">{C.next[locale]}<ArrowRight size={16} aria-hidden /></button> : <Link href={buildYoLocaleHref(JAPANESE_COURSE_PATH, locale)} className="inline-flex min-h-11 items-center rounded-full bg-indigo-700 px-5 text-sm font-semibold text-white">{C.path[locale]}</Link>}
       </div>
-      {!storageAvailable ? <p role="status" className="mt-1 text-center text-xs text-amber-900">{C.noStorage[locale]}</p> : null}
+      {!storageAvailable || drafts.storageError ? <p role="status" className="mt-1 text-center text-xs text-amber-900">{C.noStorage[locale]}</p> : null}
     </footer>
     <JapaneseYoppoCoach locale={locale} contextId={unit.id + ":" + stage.id + ":" + (currentState?.revision ?? 0)} message={coachMessage} hint={currentActivity?.hint ?? studyCoach.hint} explanation={currentActivity?.explanation ?? studyCoach.explanation} example={coachExample} visualState={stage.kind === "summary" && counts.complete && counts.independent === counts.total ? final ? "badge_unlocked" : "level_up" : currentState?.checked ? currentState.correct ? "celebrating" : "confused" : stage.kind === "mission" ? "map" : "idle"} onAction={coachAction} canRetry={!!currentState?.checked} reviewCount={reviewStages.length} />
     {scene && <MissionFilm scene={scene} locale={locale} onContinue={finishMission}/>}
