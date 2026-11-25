@@ -59,11 +59,23 @@ def progress(page, language):
 
 
 def fits(page):
-    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), "Horizontal document overflow"
+    dimensions = page.evaluate("""() => ({
+      viewport: innerWidth, document: document.documentElement.scrollWidth,
+      offenders: [...document.querySelectorAll('body *')].flatMap(element => {
+        const box = element.getBoundingClientRect(), style = getComputedStyle(element);
+        if (!box.width || style.visibility === 'hidden' || style.display === 'none'
+          || box.left >= -1 && box.right <= innerWidth + 1) return [];
+        return [{tag: element.tagName, role: element.getAttribute('role'),
+          className: element.getAttribute('class'), left: box.left, right: box.right,
+          width: box.width, position: style.position, minWidth: style.minWidth,
+          overflowX: style.overflowX, transform: style.transform}];
+      }).slice(0, 12)
+    })""")
+    assert dimensions["document"] <= dimensions["viewport"] + 1, dimensions
     dialog = page.get_by_role("dialog")
     if dialog.count():
         box = dialog.bounding_box()
-        assert box and box["x"] >= -1 and box["x"] + box["width"] <= page.viewport_size["width"] + 1, box
+        assert box and box["x"] >= -1 and box["x"] + box["width"] <= page.viewport_size["width"] + 1, {"dialog": box, **dimensions}
 
 
 def capture(page, name):

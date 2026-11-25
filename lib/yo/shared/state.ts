@@ -34,7 +34,7 @@ export function parseIntro(raw: string | null, c: IntroCourse): IntroState {
     if (d.tiles.some(n => Number(n) >= parts.length)) return fresh;
     if (d.selected !== null && !exercise?.options.includes(String(d.selected))) return fresh;
     // Optional preferences cannot invalidate historical progress or unfinished answers.
-    if (obj(s.profile)) s.profile = { ...s.profile, interests: parseInterests(s.profile.interests) };
+    if (obj(s.profile) && Object.hasOwn(s.profile, "interests")) s.profile = { ...s.profile, interests: parseInterests(s.profile.interests) };
     return { ...s, version: 2, completed: [...new Set(s.completed as string[])], visited: [...new Set(s.visited as string[])] } as unknown as IntroState;
   } catch { return fresh; }
 }

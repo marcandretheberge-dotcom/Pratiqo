@@ -116,8 +116,8 @@ function InterestPractice({ language, locale, interests, city }: Omit<Props, "la
     return <button type="button" key={id} aria-pressed={selected === id} disabled={feedback !== null} className={choiceClass(id)} onClick={() => setSelected(id)}><Icon aria-hidden size={22}/>{directionMeaning[id][locale]}</button>;
   })}</div>; }
   const resume = Boolean(session && session.step < 6);
-  return <section className="mt-5 rounded-3xl border border-emerald-200 bg-white p-5 text-stone-800" data-interest-practice={language}>
-    <div className="flex items-start gap-3"><Compass className="mt-1 shrink-0 text-emerald-800" size={22} aria-hidden/><div>
+  return <section className="mt-5 min-w-0 max-w-full rounded-3xl border border-emerald-200 bg-white p-5 text-stone-800" data-interest-practice={language}>
+    <div className="flex min-w-0 items-start gap-3"><Compass className="mt-1 shrink-0 text-emerald-800" size={22} aria-hidden/><div className="min-w-0">
       <h2 className="text-lg font-bold">{say("Une escale qui te ressemble", "A stop inspired by you", "Una parada a tu medida")}</h2>
       <p className="mt-1 text-sm leading-6 text-stone-600">{say("Dialogue, orientation et rappel · environ 4 minutes", "Dialogue, directions and recall · about 4 minutes", "Diálogo, orientación y recuerdo · unos 4 minutos")}{city ? ` · ${city}` : ""}</p>
     </div></div>
@@ -135,9 +135,9 @@ function InterestPractice({ language, locale, interests, city }: Omit<Props, "la
       <p className="mt-2 text-xs leading-5 text-stone-600">{say("Le choix modifie tes prochaines escales; une escale commencée garde sa place.", "Your choice changes upcoming stops; an unfinished stop keeps its place.", "Tu elección cambia las próximas paradas; una parada empezada conserva su lugar.")}</p></div>}
     {(!saved || review.ready && !review.persistent) && <p role="status" className="mt-3 text-sm text-amber-900">{say("La sauvegarde est indisponible. Garde cette page ouverte pour continuer.", "Saving is unavailable. Keep this page open to continue.", "No se puede guardar. Mantén esta página abierta para continuar.")}</p>}
     <Dialog.Root open={open && !scene} onOpenChange={close}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-black/50"/>
-      <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { event.preventDefault(); if (!open && !scene && returnFocus.current?.isConnected) returnFocus.current.focus(); }} className="fixed inset-x-0 bottom-0 top-0 z-50 overflow-y-auto bg-[#fbf9f3] p-4 sm:inset-6 sm:mx-auto sm:max-w-2xl sm:rounded-3xl sm:p-7" onKeyDown={event => event.stopPropagation()}>
+      <Dialog.Content aria-describedby={undefined} onCloseAutoFocus={event => { event.preventDefault(); if (!open && !scene && returnFocus.current?.isConnected) returnFocus.current.focus(); }} className="fixed inset-x-0 bottom-0 top-0 z-50 min-w-0 max-w-full overflow-x-hidden overflow-y-auto overscroll-contain bg-[#fbf9f3] p-4 sm:inset-6 sm:mx-auto sm:max-w-2xl sm:rounded-3xl sm:p-7" onKeyDown={event => event.stopPropagation()}>
         <div className="flex items-center justify-between gap-3"><Dialog.Title className="text-sm font-bold text-emerald-800">Yoppo · {session ? interestLabels[session.interest][locale] : ""}</Dialog.Title><Dialog.Close className={secondary} aria-label={say("Fermer et garder ma place", "Close and save my place", "Cerrar y guardar mi lugar")}><X size={22}/></Dialog.Close></div>
-        {session && <div className="mx-auto mt-3 max-w-xl" data-interest-step={session.step}>
+        {session && <div className="mx-auto mt-3 min-w-0 max-w-xl" data-interest-step={session.step}>
           <p className="text-xs font-semibold text-stone-500">{Math.min(session.step + 1, 6)} / 6 · {say("Pratique libre", "Open practice", "Práctica libre")}</p>
           <h2 ref={heading} tabIndex={-1} className="mb-5 mt-3 text-2xl font-bold leading-snug outline-none">{
             session.step === 0 ? say("Trouve le lieu qui t’intéresse", "Find the place you want to visit", "Encuentra el lugar que te interesa") :

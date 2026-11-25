@@ -18,7 +18,7 @@ export function parseProfile(raw: string | null, language: string, units: readon
       !["beginner", "manual", "check"].includes(p.placement) || !Array.isArray(p.reviewUnitIds) || p.reviewUnitIds.length > units.length ||
       !p.reviewUnitIds.every((id: unknown) => typeof id === "string" && units.includes(id)) || !Number.isFinite(p.updatedAt) || p.updatedAt < 0 || p.updatedAt > Date.now() + 300000) return null;
     return { version: 1, language, experience: p.experience, goal: p.goal, weeklyMinutes: p.weeklyMinutes,
-      startUnitId: p.startUnitId, placement: p.placement, reviewUnitIds: [...new Set(p.reviewUnitIds)] as string[], updatedAt: p.updatedAt, interests: parseInterests(p.interests) };
+      startUnitId: p.startUnitId, placement: p.placement, reviewUnitIds: [...new Set(p.reviewUnitIds)] as string[], updatedAt: p.updatedAt, ...(Object.hasOwn(p, "interests") ? { interests: parseInterests(p.interests) } : {}) };
   } catch { return null; }
 }
 export function weeklyRhythm(minutes: number): { sessions: number; minutes: number } | null {

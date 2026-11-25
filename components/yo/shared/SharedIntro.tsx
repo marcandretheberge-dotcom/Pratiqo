@@ -125,10 +125,10 @@ function IntroPlayer({course,locale,audio}:Props){
  const smallStatus=!stored?<p role="status" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm">{say('La sauvegarde est indisponible dans ce navigateur.','Saving is unavailable in this browser.','No se puede guardar en este navegador.')}</p>:null;
  const example=(id:string)=>{const p=phrase(id);return <div key={id} className="rounded-2xl bg-emerald-50 p-4"><p lang={course.language} className="text-xl font-semibold leading-relaxed">{p.text}</p>{p.reading&&<p className="mt-1 text-base text-stone-600">{p.reading}</p>}{p.meaning[locale]!==p.text&&<p className="my-2 leading-7">{p.meaning[locale]}</p>}<IntroAudio text={p.text} speechLocale={course.speechLocale} path={audio[p.text]} locale={locale}/></div>;};
  return <div lang={locale} data-shared-course={course.language} className="min-h-screen bg-[#fbf9f3] text-stone-800">
-  <header className="border-b border-stone-200 bg-white"><div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-3">
+  <header className="border-b border-stone-200 bg-white"><div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
    {state.view==='map'?<Link prefetch={false} className="text-lg font-black text-emerald-900" href={`/yo/langues?lang=${locale}`}>YoPratiqo</Link>:<button type="button" className={secondary} aria-label={say('Quitter et garder ma place','Leave and save my place','Salir y guardar mi lugar')} onClick={leave}><X size={21}/></button>}
-   <span lang={course.language} className="text-sm font-bold">{course.nativeName}</span>
-   <div className="flex">{state.view === "map" && <button type="button" className={secondary}
+   <span lang={course.language} className="col-span-2 row-start-2 min-w-0 text-sm font-bold sm:col-span-1 sm:col-start-2 sm:row-start-1 sm:text-center">{course.nativeName}</span>
+   <div className="col-start-2 row-start-1 flex justify-end sm:col-start-3">{state.view === "map" && <button type="button" className={secondary}
       aria-label={say("Revoir l’arrivée","Replay arrival","Repetir la llegada")}
       onClick={() => { const place = introPlace(course.language, course.city); if (place) depart(place, undefined, true); }}><Plane size={21}/></button>}<button type="button" className={secondary} disabled={state.view==='final'} onClick={notebook} aria-label={say('Carnet de mots','Word notebook','Cuaderno de palabras')}><BookOpen size={21}/></button><button type="button" className={secondary} onClick={()=>{stopLessonAudio();setPanel('settings');}} aria-label={say('Mes outils','My tools','Mis herramientas')}><Settings size={21}/></button></div>
   </div></header>
