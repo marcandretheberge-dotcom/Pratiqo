@@ -79,8 +79,11 @@ def verify(browser, engine, course, locale, width):
         dismiss_films(page, locale)
         capture(page, name + "-map")
         page.goto(url + "/" + unit["id"] + "?lang=" + locale)
-        expect(page.get_by_role("heading", name=unit["title"][locale], exact=True, level=1)).to_be_visible(timeout=60000)
+        # The film intentionally makes the lesson underneath inert. Wait for the
+        # real unit, dismiss its dialogs, then inspect the accessible heading.
+        expect(page.locator('[data-course-unit="' + unit["id"] + '"]')).to_be_attached(timeout=60000)
         dismiss_films(page, locale)
+        expect(page.get_by_role("heading", name=unit["title"][locale], exact=True, level=1)).to_be_visible(timeout=60000)
         assert page.evaluate("window.__foundationAudio + window.__foundationVoice + window.__foundationMic") == 0
         expect(page.locator("[data-course-culture]")).to_contain_text(unit["culture"]["title"][locale])
         capture(page, name + "-mission")

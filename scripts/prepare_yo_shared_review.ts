@@ -13,6 +13,7 @@ async function main() {
   "app/yo/langues/page.tsx":"import {YoLanguageQuickStart} from '@/components/yo/YoLanguageQuickStart'; import {getYoLocale} from '@/lib/yo/localize'; export default async function Page({searchParams}:{searchParams:Promise<{lang?:string}>}){return <main className='mx-auto max-w-5xl p-5'><YoLanguageQuickStart locale={getYoLocale((await searchParams).lang)}/></main>}",
   "app/layout.tsx":"import './globals.css'; export default function Layout({children}:{children:React.ReactNode}){return <html lang='en'><body>{children}</body></html>}",
   "app/globals.css":"@import '../../app/globals.css';\n@source '../../components';\n@source '../../lib';\nbody{font-family:Arial,sans-serif;margin:0}",
+  "app/api/yo/review/exercise/route.ts":"export {GET} from '@/app/api/yo/review/exercise/route';",
   "next.config.mjs":"export default {images:{unoptimized:true},allowedDevOrigins:['127.0.0.1','localhost'],experimental:{externalDir:true},devIndicators:false};",
   "postcss.config.mjs":"export default {plugins:{'@tailwindcss/postcss':{}}};",
   "package.json":JSON.stringify({name:"yo-shared-review",private:true}),

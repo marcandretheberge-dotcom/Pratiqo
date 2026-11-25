@@ -18,7 +18,14 @@ let audioStarts = 0;
 dom.window.HTMLMediaElement.prototype.pause = () => {};
 dom.window.HTMLMediaElement.prototype.load = () => {};
 dom.window.HTMLMediaElement.prototype.play = () => { audioStarts++; return Promise.resolve(); };
-globalThis.fetch = async () => new Response('{"available":false}', { status: 503 });
+globalThis.fetch = async input => {
+  const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url, "https://example.test");
+  if (url.pathname === "/api/yo/review/exercise") {
+    const { GET } = await import("@/app/api/yo/review/exercise/route");
+    return GET(new Request(url));
+  }
+  return new Response('{"available":false}', { status: 503 });
+};
 const { render, cleanup, fireEvent, act, waitFor } = require("@testing-library/react") as typeof import("@testing-library/react");
 const { useItalianCourseProgress } = require("@/components/yo/italian/course/useItalianCourseProgress") as typeof import("@/components/yo/italian/course/useItalianCourseProgress");
 const { CourseDueReview } = require("@/components/yo/review/CourseDueReview") as typeof import("@/components/yo/review/CourseDueReview");
@@ -49,6 +56,13 @@ function Probe({ catalog, storageKey, id }: { catalog: CourseCatalog; storageKey
   return <button type="button" disabled={!state.ready} onClick={() => state.recordActivity(id, false, false)}>Record an actual mistake</button>;
 }
 async function main() {
+  const { GET } = await import("@/app/api/yo/review/exercise/route");
+  for (const query of ["language=xx&item=course:u01:l01:a01", "language=it&item=../../secret", "language=it"]) {
+    assert.equal((await GET(new Request(`https://example.test/api/yo/review/exercise?${query}`))).status, 400);
+  }
+  for (const item of ["course:u01:final:de1-final", "course:u01:l01:does-not-exist"]) {
+    assert.equal((await GET(new Request(`https://example.test/api/yo/review/exercise?language=it&item=${item}`))).status, 404);
+  }
   for (const course of courses) {
     reset();
     const unit = course.units[0], lesson = unit.lessons[0];
