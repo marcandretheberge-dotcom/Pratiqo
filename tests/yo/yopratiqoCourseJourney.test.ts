@@ -106,16 +106,19 @@ for (const locale of ["fr", "en", "es"] as const) test(`${locale}: semantic map 
   const view = render(React.createElement(CourseJourney, { catalog, progress: pass(), ready: true, locale, href: id => `/course/${id ?? ""}` }));
   assert.ok(view.getByRole("region", { name: journeyCopy[locale].title }));
   const visibleIds = () => Array.from(view.container.querySelectorAll("[data-journey-unit]")).map(node => node.getAttribute("data-journey-unit"));
-  assert.deepEqual(visibleIds(), catalog.units.slice(0,4).map(unit => unit.id));
+  assert.deepEqual(visibleIds(), catalog.units.slice(0,3).map(unit => unit.id));
   assert.equal(view.container.querySelector("[data-yoppo-position]")?.getAttribute("data-yoppo-position"), second.id);
   assert.equal(view.container.querySelector('[data-unlocked="false"] a:not([target])'), null);
   const continueLabel = {fr:"Continuer",en:"Continue",es:"Continuar"}[locale];
   assert.equal(view.getByRole("link", { name: continueLabel }).getAttribute("href"), `/course/${second.id}`);
   assert.ok(view.getByText(second.objectives[0][locale]));
-  fireEvent.click(view.getByRole("button", {name:{fr:"Étapes suivantes",en:"Next stops",es:"Etapas siguientes"}[locale]}));
-  assert.deepEqual(visibleIds(),catalog.units.slice(4).map(unit=>unit.id));
-  assert.ok(Array.from(view.container.querySelectorAll<HTMLButtonElement>('.yo-shared-destinations button')).every(button=>button.disabled));
-  assert.equal(view.queryByRole("link",{name:continueLabel}),null);
+  const nextPage = { fr: "Étapes suivantes", en: "Next stops", es: "Etapas siguientes" }[locale];
+  for (const remaining of [catalog.units.slice(3, 6), catalog.units.slice(6)]) {
+    fireEvent.click(view.getByRole("button", { name: nextPage }));
+    assert.deepEqual(visibleIds(), remaining.map(unit => unit.id));
+    assert.ok(Array.from(view.container.querySelectorAll<HTMLButtonElement>(".yo-shared-destinations button")).every(button => button.disabled));
+    assert.equal(view.queryByRole("link", { name: continueLabel }), null);
+  }
 });
 test("direct locked route cannot create a resume entry or unlock itself", () => {
   const view = render(React.createElement(GermanCourseUnit, { catalog, unit: germanCourseUnits[1], locale: "fr", audioPaths: {} }));

@@ -7,10 +7,10 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { CATEGORIES } from "@/constants";
 import type { Discipline } from "@/types";
 import { cn } from "@/lib/utils";
-import { isSessionBookable, spotsRemaining, type GroupSessionRow } from "@/lib/groupSessions";
+import { isSessionBookable, spotsRemaining, type GroupSessionListing } from "@/lib/groupSessions";
 import { isEnabled } from "@/lib/features";
 
-type RowWithTeacher = GroupSessionRow & { teachers?: { name: string; image_url: string } | null };
+type RowWithTeacher = GroupSessionListing & { teachers?: { name: string; image_url: string } | null };
 
 export default function GroupSessionsMarketplacePage() {
   const checkoutLive = isEnabled("group_sessions");
@@ -25,8 +25,8 @@ export default function GroupSessionsMarketplacePage() {
     const supabase = getSupabaseClient();
     const load = async () => {
       const { data, error } = await supabase
-        .from("group_sessions")
-        .select("*, teachers(name, image_url)")
+        .from("group_sessions_public")
+        .select("*")
         .in("status", ["open", "full"])
         .order("date", { ascending: true });
       if (error) {

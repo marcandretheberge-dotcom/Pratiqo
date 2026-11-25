@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { announceAdventureEvaluation } from "@/lib/yo/adventure";
 import type { CourseCatalog } from "@/lib/yo/italian/course/courseTypes";
 import { emptyCourseProgress, ITALIAN_COURSE_PROGRESS_KEY, markCourseProduction, mergeCourseProgress, parseCourseProgress, recordCourseActivity, recordCourseAssessment, resetCourseProgress, serializeCourseProgress, setCourseResume, type CourseProgress } from "@/lib/yo/italian/course/courseProgress";
+import { GUIDED_PROGRESS_KEY } from "@/lib/yo/personalized/profile";
+import { syncSrsActivityRecord } from "@/lib/yo/srs/srsClientSync";
 
 export function useItalianCourseProgress(catalog: CourseCatalog, storageKey = ITALIAN_COURSE_PROGRESS_KEY) {
   const [progress, setProgress] = useState(emptyCourseProgress);
@@ -62,7 +64,11 @@ export function useItalianCourseProgress(catalog: CourseCatalog, storageKey = IT
     if (saved && evaluated && !receivedProgress) announceAdventureEvaluation();
   }, [catalog, apply, persist, storageKey]);
 
-  const recordActivity = useCallback((id: string, correct: boolean, assisted: boolean) => update(base => recordCourseActivity(base, catalog, id, correct, assisted), true), [catalog, update]);
+  const recordActivity = useCallback((id: string, correct: boolean, assisted: boolean) => {
+    update(base => recordCourseActivity(base, catalog, id, correct, assisted), true);
+    // Only the canonical learner course feeds the ledger, not demo or legacy views.
+    if (storageKey === GUIDED_PROGRESS_KEY) void syncSrsActivityRecord(id, correct, assisted);
+  }, [catalog, storageKey, update]);
   const recordAssessment = useCallback((id: string, correct: number, total: number, assisted: boolean) => update(base => recordCourseAssessment(base, catalog, id, correct, total, assisted), true), [catalog, update]);
   const markProduction = useCallback((id: string, done: boolean) => update(base => markCourseProduction(base, catalog, id, done)), [catalog, update]);
   const setResume = useCallback((unitId: string, lessonId: string, activityId?: string) => update(base => setCourseResume(base, catalog, unitId, lessonId, activityId)), [catalog, update]);

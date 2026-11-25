@@ -1,0 +1,32 @@
+name: Yo Italian daily loop
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/yo-daily-loop.yml"
+      - "app/api/yo/**"
+      - "app/yo/langues/italien/**"
+      - "components/yo/daily/**"
+      - "components/yo/personalized/**"
+      - "lib/yo/**"
+      - "supabase/migrations/*yo_daily*"
+      - "supabase/migrations/*yo_srs*"
+      - "tests/yo/**"
+      - "package*.json"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run test:yo-daily-loop
+      - run: npm run test:yo-srs

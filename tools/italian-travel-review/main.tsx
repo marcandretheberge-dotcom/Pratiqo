@@ -24,7 +24,7 @@ function seed(scenario: Scenario) {
   let progress = emptyCourseProgress();
   if (scenario !== "beginner") for (const unit of units.slice(0, 5)) progress = recordCourseAssessment(progress, catalog, unit.quiz.id, unit.quiz.questions.length, unit.quiz.questions.length, false);
   if (scenario === "checkpoint") for (const lesson of units[5].lessons.slice(0, 2)) for (const activity of lesson.activities) progress = recordCourseActivity(progress, catalog, activity.id, true, false);
-  localStorage.setItem(COURSE_KEY, JSON.stringify(progress)); localStorage.removeItem(UI_KEY);
+  localStorage.setItem(COURSE_KEY, JSON.stringify(progress)); localStorage.removeItem(UI_KEY); localStorage.removeItem(UI_KEY + ".last-place");
   for (const unit of units) localStorage.removeItem(`yo.italian.guided.v2.${unit.id}`);
   localStorage.setItem(TOUR_KEY, "seen"); sessionStorage.setItem("travel-review-scenario", scenario);
 }

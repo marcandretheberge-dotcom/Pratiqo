@@ -30,7 +30,7 @@ import {
 import { isLaunchEligibleTeacherRow, teacherRowToTeacher, type TeacherRow } from "../lib/teacherMapper";
 import { formatPublicTeacherDisplayName } from "@/lib/identity/displayName";
 import { haversineDistance } from "../lib/geo";
-import { spotsRemaining, type GroupSessionRow } from "../lib/groupSessions";
+import { spotsRemaining, type GroupSessionListing } from "../lib/groupSessions";
 import { getVerificationLevel } from "../lib/verification";
 import { useAuth } from "./AuthProvider";
 import { useRouter } from "next/navigation";
@@ -55,7 +55,7 @@ function verificationSortKey(t: Teacher) {
   });
 }
 
-type ExploreGroupSession = GroupSessionRow & {
+type ExploreGroupSession = GroupSessionListing & {
   teachers?: { name: string; image_url: string | null } | null;
 };
 
@@ -145,8 +145,8 @@ export function Explore({
     const supabase = getSupabaseClient();
     const loadGroups = async () => {
       const { data, error } = await supabase
-        .from("group_sessions")
-        .select("*, teachers(name, image_url)")
+        .from("group_sessions_public")
+        .select("*")
         .in("status", ["open", "full"])
         .order("date", { ascending: true });
       if (!error && data) setGroupSessions(data as ExploreGroupSession[]);

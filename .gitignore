@@ -91,3 +91,7 @@ artifacts/cafe-people/
 
 
 .env.cafe-community-runtime
+
+# Local Supabase CLI state and retired prototype archive
+/supabase/.temp/
+/pratiqo.zip
