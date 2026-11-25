@@ -425,9 +425,15 @@ test("all live language tiles point to real lessons or course dashboards", () =>
   for(const destination of paths) assert.ok(catalogRouteExists(destination), destination);
   assert.match(catalogSrc, /isAccessibleForFree/);
 });
-test("Italian and Japanese describe their complete courses; English remains an introduction", () => {
-  assert.match(catalogSrc, /12 unités/);
-  assert.match(catalogSrc, /8 modules/);
+test("expanded course cards describe twelve units in every UI locale; English remains an introduction", () => {
+  for (const slug of ["italien", "japonais", "allemand", "portugais-bresil", "mandarin"]) {
+    const course = getYoPublicLanguages().find(item => item.slug === slug);
+    assert.ok(course);
+    for (const locale of ["fr", "en", "es"] as const) {
+      assert.match(course.detail[locale] ?? "", /\b12\b/, `${slug} ${locale} must describe the current course`);
+      assert.match(course.description[locale] ?? "", /douze|twelve|doce/i, `${slug} ${locale} must describe the current course`);
+    }
+  }
   assert.match(catalogSrc, /Oser parler · introduction/);
   assert.doesNotMatch(pageCopySrc, /status:\s*"coming_soon"|Nouveau\./);
 });

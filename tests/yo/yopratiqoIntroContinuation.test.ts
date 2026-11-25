@@ -29,6 +29,7 @@ for (const course of introCourses) {
     assert.equal(next.href, `${expected}?lang=${locale}`, "Keep the interface language on continuation");
     assert.ok(existsSync(path.join(process.cwd(), "app", next.path, "page.tsx")), `Missing continuation route: ${next.path}`);
     assert.ok(next.title[locale].length > 15 && next.description[locale].length > 35);
+    assert.match(next.description[locale], /12|douze|twelve|doce/, "Continuation describes the current twelve-unit foundation course");
     assert.doesNotMatch(`${next.title[locale]} ${next.description[locale]}`, /\b(?:B2|C1|C2|certif\w*|unlocked|débloqué)\b/i);
     destinations++;
   }

@@ -1,4 +1,9 @@
-"""Regression for the opening that previously showed one static Yoppo portrait."""
+"""Blank-profile opening through recommendation, in all eight target languages.
+
+These checks cover the first learner choices and Yoppo interaction. They do not
+seed completion, certify course depth or substitute for a physical iPhone test.
+"""
+import json
 import os
 import re
 from pathlib import Path
@@ -7,6 +12,7 @@ from playwright.sync_api import expect, sync_playwright
 base = os.environ.get("YO_JOURNAL_URL", "http://127.0.0.1:3246").rstrip("/")
 out = Path(os.environ.get("YO_JOURNAL_QA_DIR", "/tmp/yoppo-journal-qa"))
 out.mkdir(parents=True, exist_ok=True)
+evidence = []
 
 
 def dismiss_notices(page):
@@ -22,7 +28,7 @@ def sample(page, selector):
     return page.locator(selector).evaluate("(el) => getComputedStyle(el).transform")
 
 
-def check_journal(browser, engine, path, goal, zero, travel, width, height, reduced=False):
+def check_journal(browser, engine, path, goal, zero, travel, width, height, reduced=False, language="it"):
     context = browser.new_context(
         viewport={"width": width, "height": height}, locale="fr-CA",
         is_mobile=width < 600, has_touch=width < 600, device_scale_factor=2 if width < 600 else 1,
@@ -34,6 +40,8 @@ def check_journal(browser, engine, path, goal, zero, travel, width, height, redu
         first = page.get_by_role("button", name=zero, exact=True)
         expect(first).to_be_visible(timeout=30000)
         dismiss_notices(page)
+        if language != "it":
+            expect(page.locator("[data-shared-welcome]")).to_have_attribute("data-shared-welcome", language)
         figure = page.locator("[data-journal-figure]")
         atlas = figure.locator("img")
         atlas.evaluate("image => image.decode()")
@@ -75,7 +83,21 @@ def check_journal(browser, engine, path, goal, zero, travel, width, height, redu
         assert "30" in page.locator(".yj-receipt").inner_text()
         page.get_by_role("button", name="Retour", exact=True).click()
         expect(page.locator(".yj-receipt")).to_have_count(0)
+        # Complete the actual choices from this fresh browser context. A profile
+        # fixture must not hide a broken route, language label or recommendation.
+        page.get_by_role("button", name="Continuer", exact=True).click()
+        expect(page.get_by_role("radio", name=re.compile(r"^30 min\b"))).to_be_checked()
+        page.get_by_role("button", name="Continuer", exact=True).click()
+        recommendation = page.locator("[data-onboarding-recommendation], [data-shared-recommendation]")
+        expect(recommendation).to_be_visible()
+        expect(recommendation.get_by_role("button", name="Commencer ici", exact=True)).to_be_enabled()
+        assert "30 min" in recommendation.inner_text()
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        page.screenshot(path=str(out / f"{engine}-{path.split('/')[3]}-{width}-recommendation.png"))
+        evidence.append({"engine": engine, "language": language, "path": path,
+                         "width": width, "height": height, "reducedMotion": reduced,
+                         "entry": "fresh browser context; no learner fixture",
+                         "result": "animated guide, choices, focus, back, retained pace choice and recommendation passed"})
     except Exception:
         page.screenshot(path=str(out / f"{engine}-{width}-failure.png"))
         print(page.locator("body").inner_text()[:1500], flush=True)
@@ -117,9 +139,18 @@ with sync_playwright() as playwright:
             italian = "/yo/langues/italien/parcours?lang=fr"
             for width, height in [(393, 690), (320, 568), (1024, 768)]:
                 check_journal(browser, engine, italian, question, "Je pars de zéro", "Voyager", width, height, reduced=width == 320)
-            check_journal(browser, engine, "/yo/langues/japonais/demarrer?lang=fr", question, "Je pars de zéro", "Voyager", 390, 750)
+            for language, slug in [("en", "anglais"), ("fr-CA", "francais-quebec"),
+                                   ("es", "espagnol"), ("de", "allemand"),
+                                   ("pt-BR", "portugais-bresil"), ("ja", "japonais"),
+                                   ("zh-Hans", "mandarin")]:
+                for width, height in [(393, 690), (320, 568)]:
+                    check_journal(browser, engine, f"/yo/langues/{slug}/demarrer?lang=fr",
+                                  question, "Je pars de zéro", "Voyager", width, height,
+                                  reduced=width == 320, language=language)
             if engine == "chromium" and os.environ.get("YO_JOURNAL_VIDEO"):
                 record_opening(browser)
-            print(f"PASS {engine}: opening, writing, pause, reduced motion, back, Italian and shared entry", flush=True)
+            (out / f"{engine}-eight-language-opening.json").write_text(json.dumps(
+                [row for row in evidence if row["engine"] == engine], ensure_ascii=False, indent=2))
+            print(f"PASS {engine}: eight blank-profile language entries, writing, pause, reduced motion, back, pace and recommendation", flush=True)
         finally:
             browser.close()

@@ -13,7 +13,7 @@ import { guidedCopy, primary, secondary } from "./copy";
 
 export function GuidedGame({ activity, locale, value, onChange, onAttempt, onContinue, assessment = false, continueLabel, paused = false }: {
   activity: ItalianActivity; locale: YoLocale; value: GameDraft;
-  onChange: (next: GameDraft) => void; onAttempt: (correct: boolean, assisted: boolean) => void;
+  onChange: (next: GameDraft, before: GameDraft) => void | GameDraft | null; onAttempt: (correct: boolean, assisted: boolean) => void;
   onContinue: () => void; assessment?: boolean; continueLabel?: string; paused?: boolean;
 }) {
   const response = useAnswerFeedback();
@@ -32,22 +32,27 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
       else onContinue();
     },
   });
-  function edit(patch: Partial<GameDraft>) { if (patch.feedback === false || patch.feedback === null) response.clear(); const next = { ...current.current, ...patch }; current.current = next; onChange(next); }
+  function edit(patch: Partial<GameDraft>) {
+    const before = current.current, next = { ...before, ...patch }, accepted = onChange(next, before);
+    if (accepted === null) return null;
+    if (patch.feedback === false || patch.feedback === null) response.clear();
+    current.current = accepted ?? next; return current.current;
+  }
   function report(correct: boolean, complete: boolean) {
     const previous = current.current;
-    if (previous.complete || previous.feedback === true) return;
+    if (previous.complete || previous.feedback === true) return false;
     const assisted = previous.assisted;
-    edit({ feedback: correct, complete, assisted: assisted || (!correct && !assessment) });
-    onAttempt(correct, assisted);
+    if (!edit({ feedback: correct, complete, assisted: assisted || (!correct && !assessment) })) return false;
+    onAttempt(correct, assisted); return true;
   }
   function check() {
     const g = current.current;
     const readyNow = (!audio || g.heard || g.transcript) && (options ? Boolean(g.selected) : pool.length ? g.tiles.length > 0 : activity.kind === "cafe" ? Object.values(g.basket ?? {}).some(n => n > 0) : activity.kind === "map" ? Boolean(g.path?.length) : false);
-    if (!readyNow || g.complete || g.feedback === true) return;
+    if (paused || !readyNow || g.complete || g.feedback === true) return;
     const correct = checkGuided(activity, current.current);
     const complete = assessment || (correct && (activity.kind !== "dialogue" || current.current.turn === activity.turns.length - 1));
-    if (activity.kind === "dialogue" && correct && !complete) { edit({ feedback: true }); response.correct(`${activity.id}:turn:${current.current.turn}`); flow.arm(); return; }
-    report(correct, complete);
+    if (activity.kind === "dialogue" && correct && !complete) { if (!edit({ feedback: true })) return; response.correct(`${activity.id}:turn:${current.current.turn}`); flow.arm(); return; }
+    if (!report(correct, complete)) return;
     if (correct) { response.correct(`${activity.id}:turn:${current.current.turn}`); if (activity.kind !== "cafe" && activity.kind !== "map") flow.arm(); }
   }
   function pair(id: string) {
@@ -55,10 +60,10 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
     if (!g.left || g.pairs.includes(id) || g.complete || activity.kind !== "match") return;
     if (g.left === id) {
       const pairs = [...g.pairs, id];
-      if (pairs.length === activity.pairs.length) { edit({ pairs, left: null }); report(true, true); flow.arm(); }
-      else edit({ pairs, left: null, feedback: null });
+      if (pairs.length === activity.pairs.length) { if (!edit({ pairs, left: null }) || !report(true, true)) return; flow.arm(); }
+      else if (!edit({ pairs, left: null, feedback: null })) return;
       response.correct(`${activity.id}:pair:${id}`);
-    } else { edit({ feedback: false, assisted: true }); onAttempt(false, g.assisted); }
+    } else { if (edit({ feedback: false, assisted: true })) onAttempt(false, g.assisted); }
   }
   const optionStyle = "yo-answer-option min-h-14 w-full rounded-2xl border-2 px-4 py-4 text-left text-base font-medium shadow-[0_3px_0_rgba(51,65,61,.12),0_8px_18px_rgba(51,65,61,.07)] transition-[transform,border-color,background-color,box-shadow] duration-150 ease-out hover:-translate-y-px active:translate-y-[2px] active:shadow-none motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 ";
   const title = activity.kind === "type" ? activity.listeningText ? c.listenBuild : activity.prompt[locale].replace(/^(Écris en italien|Write in Italian|Escribe en italiano)/, c.writtenTarget) : turn?.prompt[locale] ?? activity.prompt[locale];
@@ -66,7 +71,7 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
     <h2 className="mb-6 text-xl font-bold leading-relaxed sm:text-2xl">{title}</h2>
     {audio ? <div className="mb-6 rounded-2xl bg-emerald-50 p-4"><LearningAudio text={audio} locale={locale} label={c.audio} onListen={() => edit({ heard: true })} />{!value.heard && !value.transcript ? <p className="mt-2 text-sm">{c.listenFirst}</p> : null}<button type="button" className={`${secondary} mt-2`} disabled={finished} onClick={() => edit({ transcript: true, assisted: true })}>{c.transcript}</button>{value.transcript ? <p lang="it" className="mt-3 font-semibold">{audio}</p> : null}</div> : null}
     {turn ? <div className="mb-5 rounded-2xl bg-emerald-50 p-5"><p className="mb-2 text-xs font-bold">{turn.speaker} · {value.turn + 1}/{activity.kind === "dialogue" ? activity.turns.length : 1}</p><p lang="it" className="mb-3 text-xl">{turn.line}</p><LearningAudio text={turn.line} locale={locale} /></div> : null}
-    {options ? <div className="grid gap-3" role="group" aria-label={c.choose}>{options.map(option => <button key={option.id} type="button" disabled={finished || feedback === true || Boolean(audio && !value.heard && !value.transcript) || feedback === false && value.selected === option.id} aria-pressed={value.selected === option.id} lang={option.it ? "it" : undefined} className={`${optionStyle} ${value.selected === option.id ? feedback === false ? "border-red-700 bg-red-50 text-red-950" : "border-emerald-700 bg-emerald-50 text-emerald-950" : "border-stone-200 bg-white hover:border-emerald-400"}`} onClick={e => { if (!acceptPracticeTap(e.detail) || current.current.complete || current.current.feedback === true) return; edit({ selected: option.id, feedback: null }); check(); }}><span>{option.it ?? option.label?.[locale]}</span>{value.selected === option.id && feedback !== null ? feedback ? <Check className="ml-2 inline" size={20} aria-hidden/> : <X className="ml-2 inline" size={20} aria-hidden/> : null}</button>)}</div> : null}
+    {options ? <div className="grid gap-3" role="group" aria-label={c.choose}>{options.map(option => <button key={option.id} type="button" disabled={finished || feedback === true || Boolean(audio && !value.heard && !value.transcript) || feedback === false && value.selected === option.id} aria-pressed={value.selected === option.id} lang={option.it ? "it" : undefined} className={`${optionStyle} ${value.selected === option.id ? feedback === false ? "border-red-700 bg-red-50 text-red-950" : "border-emerald-700 bg-emerald-50 text-emerald-950" : "border-stone-200 bg-white hover:border-emerald-400"}`} onClick={e => { if (!acceptPracticeTap(e.detail) || current.current.complete || current.current.feedback === true) return; if (edit({ selected: option.id, feedback: null })) check(); }}><span>{option.it ?? option.label?.[locale]}</span>{value.selected === option.id && feedback !== null ? feedback ? <Check className="ml-2 inline" size={20} aria-hidden/> : <X className="ml-2 inline" size={20} aria-hidden/> : null}</button>)}</div> : null}
     {pool.length ? <><div role="group" aria-label={c.sentence} className="flex min-h-28 flex-wrap content-start gap-2 rounded-2xl border-2 border-dashed border-stone-300 p-4">{!value.tiles.length ? <p className="text-sm text-stone-600">{c.tap}</p> : value.tiles.map((id, i) => <button key={id} lang="it" type="button" disabled={finished} aria-label={`${c.remove} ${pool[id]}`} className="min-h-11 rounded-xl border border-emerald-300 bg-emerald-50 px-3 font-semibold" onClick={() => edit({ tiles: current.current.tiles.filter((_, position) => position !== i), feedback: null })}>{pool[id]}</button>)}</div><div className="mt-5 flex flex-wrap gap-2" role="group" aria-label={c.words}>{scrambleItalianItems(pool.map((text, id) => ({ text, id })), activity.id).map(token => <button key={token.id} lang="it" type="button" disabled={finished || value.tiles.includes(token.id)} className="min-h-12 rounded-xl border-2 border-b-4 border-stone-200 bg-white px-4 font-semibold shadow-[0_3px_0_rgba(51,65,61,.12)] transition-[transform,box-shadow] duration-150 ease-out active:translate-y-[2px] active:border-b-2 active:shadow-none motion-reduce:transform-none motion-reduce:transition-none disabled:opacity-25 focus-visible:outline-2" onClick={() => { if (!current.current.tiles.includes(token.id)) edit({ tiles: [...current.current.tiles, token.id], feedback: null }); }}>{token.text}</button>)}</div></> : null}
     {activity.kind === "match" ? <><p className="mb-4 text-sm">{c.pair}</p><div className="grid grid-cols-2 gap-3"><div className="grid gap-3">{activity.pairs.map(item => <button key={item.id} data-pair-complete={value.pairs.includes(item.id)} type="button" lang="it" aria-pressed={value.left === item.id} disabled={value.pairs.includes(item.id)} className={`${optionStyle} ${value.left === item.id ? "border-emerald-700 bg-emerald-50" : "border-stone-200 bg-white"}`} onClick={() => edit({ left: item.id, feedback: null })}>{value.pairs.includes(item.id) ? "✓ " : ""}{item.it}</button>)}</div><div className="grid gap-3">{scrambleItalianItems(activity.pairs, activity.id).map(item => <button key={item.id} data-pair-complete={value.pairs.includes(item.id)} type="button" disabled={!value.left || value.pairs.includes(item.id)} className={`${optionStyle} border-stone-200 bg-white`} onClick={() => pair(item.id)}>{value.pairs.includes(item.id) ? "✓ " : ""}{item.meaning[locale]}</button>)}</div></div></> : null}
     <SpatialExercise activity={activity} value={value} onChange={edit} locale={locale}/>

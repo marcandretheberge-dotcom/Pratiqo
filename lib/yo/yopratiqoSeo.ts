@@ -183,19 +183,19 @@ export const yopratiqoSeoEntries = {
     slug: "japonais",
     copy: {
       fr: {
-        title: "Japonais avec Yoppo | YoPratiqo — 8 modules",
+        title: "Japonais avec Yoppo | YoPratiqo — 12 modules",
         description:
-          "Un parcours de fondation en huit modules : dialogues guidés, 92 kana, 40 kanji en contexte, culture, écriture et révisions avec Yoppo.",
+          "Un parcours de fondation en douze modules : dialogues guidés, 92 kana, 40 kanji en contexte, culture, écriture et révisions avec Yoppo.",
       },
       en: {
-        title: "Japanese with Yoppo | YoPratiqo — 8 modules",
+        title: "Japanese with Yoppo | YoPratiqo — 12 modules",
         description:
-          "An eight-module foundation course: guided dialogues, 92 kana, 40 kanji in context, culture, writing and review with Yoppo.",
+          "A foundation course with twelve modules: guided dialogues, 92 kana, 40 kanji in context, culture, writing and review with Yoppo.",
       },
       es: {
-        title: "Japonés con Yoppo | YoPratiqo — 8 módulos",
+        title: "Japonés con Yoppo | YoPratiqo — 12 módulos",
         description:
-          "Un curso de fundamentos en ocho módulos: diálogos guiados, 92 kana, 40 kanji en contexto, cultura, escritura y repaso con Yoppo.",
+          "Un curso de fundamentos en doce módulos: diálogos guiados, 92 kana, 40 kanji en contexto, cultura, escritura y repaso con Yoppo.",
       },
     },
   },

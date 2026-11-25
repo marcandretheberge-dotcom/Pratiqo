@@ -50,7 +50,7 @@ availability varies by course, base language, platform and subscription.
 | Workstream | State before this increment | Change prepared in this increment | Completion still required |
 | --- | --- | --- | --- |
 | Shared entry | Experience, purpose and pace; interests absent | Six interests, up to three choices, editable, preserved separately from progress, all eight languages | Account preference sync and deeper interest variants within each authored course |
-| Continuity | Intro final mostly returned to the same map | PR #481 deployed original 12-unit/36-lesson EN, ES and Québec French courses. PR #485 preserves unfinished typed unit/assessment answers in the five shared courses. PR #488 preserves shared-intro attempts, help and separate tab changes, with reset/revision boundaries and stale-check protection | Japanese unfinished activity state, authenticated device restoration and language-specific listening approval |
+| Continuity | Intro final mostly returned to the same map | PR #481 deployed original 12-unit/36-lesson EN, ES and Québec French courses. PR #485 preserves unfinished typed unit/assessment answers in the five shared courses. PR #488 preserves shared-intro attempts, help and separate tab changes. PR #490 now preserves Japanese unfinished activity answers and checked attempts, with reset/revision boundaries and stale-check protection | Onboarding/placement recovery, full-course goal/pace guidance and authenticated device restoration |
 | Feedback | Mostly correct phrase/translation in shared intro | Authored concept plus chosen/expected phrase, correct assistance tracking | Broader language-specific correction banks and unseen transfer assessments |
 | Review | IT/DE/PT have dated local review; intro/JA/ZH inconsistent | First release connects seven intros and interest missions. Deployed PR #481 connects actual IT/DE/PT/new EN/ES/FR practice writers plus JA/ZH, and reuses their real answer checkers for dated review | Authenticated ownership, complete two-device restoration and offline server delivery |
 | Interests | Local Parma reason only | 48 authored mini-mission variants: dialogue, venue choice, directions, typed noun recall, changed exit route, later error review | Destination-specific cultural variants throughout the full curricula; these mini-missions are not complete replacement courses |
@@ -298,7 +298,7 @@ no product guard or assertion was weakened. Production delivery verified all
 1,460 exact MP3 hashes, audio MIME and immutable caching (60,366,970 bytes), the
 three foundation homes and disabled live speech.
 
-## Eleventh lot: Japanese activity continuity prepared
+## Eleventh lot: Japanese activity continuity deployed
 
 The existing twelve Japanese modules and both finals now preserve unfinished
 answers and checked attempts locally. Assistance remains attached to an attempt,
@@ -310,9 +310,44 @@ results and access rules remain compatible. This is not authenticated backup.
 Recorded audio availability is shown before a click, and natural media completion
 is distinguished from interruption. No new Japanese recording is claimed by this
 lot. Focused store, renderer and audio regressions passed. The existing Eastern
-Chromium/macOS WebKit gate now exercises two actual pages, unfinished drafts,
-sticky assistance and checked restoration; exact-commit execution remains required
-before release. See [the continuity contract](yopratiqo-japanese-continuity.md).
+Chromium/macOS WebKit gate exercises two actual pages, unfinished drafts,
+sticky assistance and checked restoration. All five triggered workflows and both
+Vercel builds passed on final head `21eb0916d9adafe3d7ce3922839766e32072a0aa`.
+Two Kanji assertions were narrowed to their exact status messages after the new
+audio-availability status made the old unqualified selector ambiguous; no product
+notice or assertion was removed. PR #490 merged at
+`c61a45d7808106da65392a567bb2b48fe63640dc` and reached production. See
+[the continuity contract](yopratiqo-japanese-continuity.md).
+
+## Twelfth lot: onboarding recovery and course guidance prepared
+
+One bounded draft store now serves Italian onboarding and the seven shared
+introductions. It preserves the learner's experience, goal, interests, selected
+pace, unfinished custom pace, placement cursor, partial answer, first checked
+answer, help and recommended starting mission. Reload and interface-language
+changes do not grade, advance, start audio or call profile completion. Explicit
+restart begins a new placement attempt. A stale answer or finish is rejected;
+changed profiles, content and reset generations invalidate the old setup. A
+storage failure remains usable for the current session with a visible notice.
+This is local continuity, not account backup or a new placement certification.
+
+All eight full-course maps retain the chosen goal and weekly pace as supporting
+guidance beside their existing next action. The existing lesson/activity URL,
+course outcome and entitlement logic are unchanged. This guidance does not claim
+to generate a new curriculum. Public German/Portuguese/Japanese/Mandarin course
+summaries now describe their actual twelve units/modules; the three-mission
+introductions and original eight-module assessments keep their distinct scope.
+
+The expanded opening-browser gate starts from a genuinely blank profile for all
+eight languages: 17 viewport/motion cases per engine, through the actual
+recommendation. A separate Italian/shared two-tab scenario exercises custom pace,
+locale-changing reload, first checked answer, stale finish and deliberate restart.
+Renderer tests cover all eight targets and all three interface languages. Local
+browser interaction verified German custom-pace and checked-answer recovery and
+heading focus. Exact-commit Chromium/macOS WebKit execution and production
+verification remain required before this candidate is called deployed. See the
+[onboarding contract](yopratiqo-onboarding-continuity.md) and
+[course-guidance contract](yopratiqo-course-study-plan.md).
 
 ## Speech funding observed in the account dashboard
 
@@ -392,5 +427,7 @@ release progresses; a prepared change is not yet a production release.
 - Eighth production deployment: `dpl_AtG9CUuxPAUrt7phzxyFjksqPPaF`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All nine public checks passed: five Mandarin pages, two Japanese pages, the served Mandarin layout bundle and disabled speech. No error/fatal logs were returned in the initial five-minute observation window.
 - Tenth release: [PR #489](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/489), merged at `9e9a30a9fab124bcd39a6d4ab96eda747b7ac0e9` after all six triggered workflows and both Vercel builds passed. Both foundation browser engines completed actual recorded playback; the unchanged onboarding WebKit failed-job rerun passed after one documented cinema loading timeout.
 - Tenth production deployment: `dpl_9C2jd2dbyjEAkZb3qX9m5DfvDc5Z`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 1,460 public MP3 hashes, MIME types and immutable cache headers passed (60,366,970 bytes), along with three course homes and disabled speech. The initial five-minute runtime query returned no error/fatal logs.
+- Eleventh release: [PR #490](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/490), merged at `c61a45d7808106da65392a567bb2b48fe63640dc` after all five triggered workflows and both Vercel builds passed. Eastern and shared-foundation Chromium/macOS WebKit checks passed on the exact final head; Japanese draft restoration does not replay a grade or review receipt.
+- Eleventh production deployment: `dpl_AQUZLghqcq4DqKjAWyGD49nUMzn1`, READY and assigned to pratiqo.ca/www.pratiqo.ca. Nine public checks passed: seven Japanese/Mandarin/Italian course pages, the new Japanese draft-store marker in the actual served module bundle, and disabled live speech. These HTTP/bundle checks supplement the browser gates; they are not a new physical-device or live-speaking test.
 - Morning verification: scheduled for November 25 around 08:00 Toronto; it must
   read current GitHub/deployment state and this ledger, not repeat stale claims.

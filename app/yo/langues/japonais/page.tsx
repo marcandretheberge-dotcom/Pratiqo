@@ -33,7 +33,7 @@ export default async function YoJapaneseLandingPage({
       languageLabelOverride={lstr("Japonais", "Japanese", "Japonés")}
       entryHref="/yo/langues/japonais/parcours"
       entryCta={lstr("Commencer le parcours japonais", "Start the Japanese course", "Empezar el curso de japonés")}
-      entryBadge={lstr("8 modules · Fondations", "8 modules · Foundations", "8 módulos · Fundamentos")}
+      entryBadge={lstr("12 modules · Fondations", "12 modules · Foundations", "12 módulos · Fundamentos")}
     />
   );
 }

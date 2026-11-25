@@ -40,6 +40,7 @@ import { t } from "@/lib/yo/italian/course/courseAuthoring";
 import { GUIDED_PROGRESS_KEY, placementAllowsReview, weeklyRhythm, type LearningProfile } from "@/lib/yo/personalized/profile";
 import { InterestPracticeCard } from "../../interests/InterestPracticeCard";
 import { CourseDueReview } from "../../review/CourseDueReview";
+import { CourseStudyPlan } from "../../journey/CourseStudyPlan";
 import type { VisualWord, WordBankEntry } from "@/lib/yo/personalized/types";
 import { VocabularyStudy } from "../../personalized/VocabularyStudy";
 import { VisualVocabulary } from "../../personalized/VisualVocabulary";
@@ -270,6 +271,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
         missionHint={passed ? c.reviewLabel : ui.resumeView === "challenge" || next < 0 ? c.challenge : next >= 0 ? `${c.mission} ${steps[ui.resumeView === "mission" ? ui.step : next].lesson + 1}` : c.start}
         triviaAvailable={canPlayItalianTrivia(unit, progress)} onOpenTrivia={() => { finishTour(); stopLessonAudio(); setCheckpointOpen(true); }}
         showGuide={tour !== null && !canPlayItalianTrivia(unit, progress)} onDismissGuide={finishTour}/>}
+      {ui.view === "map" && <CourseStudyPlan language="it" locale={locale} profile={profile}/>}
       {ui.view === "map" && <InterestPracticeCard language="it" locale={locale} interests={profile?.interests} city={city}/>}
       {ui.view === "map" && progressKey === GUIDED_PROGRESS_KEY && <CourseDueReview language="it" locale={locale} catalog={catalog}/>}
     </main>

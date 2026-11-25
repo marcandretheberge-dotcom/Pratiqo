@@ -143,9 +143,9 @@ export const yopratiqoLandingContent = {
       "Japonés: una lengua, sus escrituras, una vida por descubrir.",
     ),
     heroSubtitle: lstr(
-      "Huit modules de fondation avec Yoppo : dialogues, 92 kana de base, 40 kanji en contexte, culture, écriture et missions interactives.",
-      "Eight foundation modules with Yoppo: dialogues, 92 basic kana, 40 kanji in context, culture, writing and interactive missions.",
-      "Ocho módulos de fundamentos con Yoppo: diálogos, 92 kana básicos, 40 kanji en contexto, cultura, escritura y misiones interactivas.",
+      "Douze modules de fondation avec Yoppo : dialogues, 92 kana de base, 40 kanji en contexte, culture, écriture et missions interactives.",
+      "Twelve foundation modules with Yoppo: dialogues, 92 basic kana, 40 kanji in context, culture, writing and interactive missions.",
+      "Doce módulos de fundamentos con Yoppo: diálogos, 92 kana básicos, 40 kanji en contexto, cultura, escritura y misiones interactivas.",
     ),
     audience: lstr(
       "Pour les débutants qui veulent construire des bases structurées à travers un premier séjour d’étude fictif au Japon.",
@@ -165,9 +165,9 @@ export const yopratiqoLandingContent = {
     ],
     introCardTitle: lstr("Ouvrir le parcours japonais", "Open the Japanese course", "Abrir el curso de japonés"),
     introCardBody: lstr(
-      "Explore huit modules complets, un atelier de kanji, des révisions et un carnet imprimable. L’introduction reste accessible dans le parcours.",
-      "Explore eight complete modules, a kanji studio, review and a printable notebook. The introduction remains available in the course.",
-      "Explora ocho módulos completos, un taller de kanji, repaso y un cuaderno imprimible. La introducción sigue disponible en el curso.",
+      "Explore douze modules, un atelier de kanji, des révisions et un carnet imprimable. L’introduction reste accessible dans le parcours.",
+      "Explore twelve modules, a kanji studio, review and a printable notebook. The introduction remains available in the course.",
+      "Explora doce módulos, un taller de kanji, repaso y un cuaderno imprimible. La introducción sigue disponible en el curso.",
     ),
     teacherCardTitle: lstr("Pratiquer avec un professeur de japonais", "Practice with a Japanese teacher", "Practicar con un profesor de japonés"),
     teacherCardBody: lstr(
@@ -176,7 +176,7 @@ export const yopratiqoLandingContent = {
       "Continúa las escenas guiadas con conversación real y comentarios sobre tus producciones.",
     ),
     schemaName: "YoPratiqo Japanese Foundations",
-    schemaDescription: "An original free beginner Japanese foundation course with eight modules, kana, contextual kanji practice, guided communication, culture and teacher continuation.",
+    schemaDescription: "An original free beginner Japanese foundation course with twelve modules, kana, contextual kanji practice, guided communication, culture and teacher continuation.",
     teaches: ["Basic Japanese communication", "Kana", "Kanji in context", "Japanese cultural situations", "Beginning Japanese writing"],
     about: ["Japanese learning", "Japanese culture"],
   },
