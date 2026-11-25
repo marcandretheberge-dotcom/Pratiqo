@@ -21,7 +21,7 @@ import images from "@/lib/yo/mandarin/imageAssets.json";
 import toneAssets from "@/lib/yo/mandarin/toneAssets.json";
 
 export const control =
-  "min-h-11 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 hover:border-teal-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-700 disabled:opacity-50";
+  "min-h-11 rounded-xl border border-[#d5ccbd] bg-white px-4 py-2 text-sm text-[#302f27] hover:border-[#245a46] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245a46] disabled:opacity-50";
 export function PhraseView({
   phrase,
   locale,
@@ -127,11 +127,11 @@ export function MandarinExercise({
   }
   return (
     <section aria-label={exercise.prompt[locale]} className="space-y-5">
-      <h2 className="text-xl font-semibold leading-relaxed">
+      <h2 className="text-lg font-semibold leading-relaxed sm:text-xl">
         {exercise.prompt[locale]}
       </h2>
       {exercise.stimulus && (
-        <article className="space-y-3 rounded-lg border border-teal-200 bg-white p-4" aria-label={L("Message à lire", "Message to read", "Mensaje para leer")[locale]}>
+        <article className="space-y-3 rounded-xl border border-[#c9d8bd] bg-[#edf2e6] p-4" aria-label={L("Message à lire", "Message to read", "Mensaje para leer")[locale]}>
           <p className="text-sm font-semibold text-teal-900">{L("Message à lire", "Message to read", "Mensaje para leer")[locale]}</p>
           <PhraseView phrase={exercise.stimulus} locale={locale} pinyin={pinyin} translation={translation} />
         </article>
@@ -256,7 +256,7 @@ export function MandarinExercise({
             disabled={state.checked}
             autoComplete="off"
             maxLength={500}
-            className="min-h-12 w-full rounded-lg border border-gray-400 p-3 text-xl"
+            className="min-h-12 w-full rounded-xl border border-[#bfb5a4] bg-white p-3 text-xl leading-relaxed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245a46] disabled:bg-[#f6f2e8]"
             onCompositionStart={() => {
               composing.current = true;
             }}
@@ -322,7 +322,7 @@ export function MandarinExercise({
         </div>
       )}
       {state.hint && (
-        <aside className="border-l-4 border-amber-500 pl-4 text-sm leading-relaxed">
+        <aside className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-relaxed">
           {exercise.hint[locale]}
           <PhraseView
             phrase={exercise.model}
@@ -357,7 +357,7 @@ export function MandarinExercise({
           ref={feedback}
           tabIndex={-1}
           role="status"
-          className="space-y-3 border-l-4 border-teal-700 pl-4"
+          className={`space-y-3 rounded-xl border p-4 outline-none ${state.correct ? "border-[#b7cfaa] bg-[#edf2e6]" : "border-amber-300 bg-amber-50"}`}
         >
           <strong>
             {state.correct

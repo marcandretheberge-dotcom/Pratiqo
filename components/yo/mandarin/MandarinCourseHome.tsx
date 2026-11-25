@@ -44,29 +44,29 @@ export function MandarinCourseHome({
   const resumeFinal = isMandarinAssessment(progress.unit) && (progress.unit === "bilan" ? legacyFinalOpen : finalOpen);
   const href = (id?: string) => buildYoLocaleHref(MANDARIN_PATH + (id ? "/" + mandarinRouteId(id) : ""), locale);
   return (
-    <main className="min-h-screen bg-[#f6f9f8] px-4 py-6 text-gray-900">
+    <main className="min-h-screen bg-[#f6f2e8] px-4 py-5 text-[#302f27] sm:px-6 sm:py-8">
       <div className="mx-auto max-w-6xl">
         <nav className="mb-6 flex items-center justify-between">
           <Link
             href={buildYoLocaleHref("/yo/langues", locale)}
-            className="min-h-11 py-3 text-teal-900 underline"
+            className="min-h-11 py-3 text-sm font-bold text-[#245a46]"
           >
             YoPratiqo
           </Link>
-          <div className="flex gap-3">
+          <div className="flex rounded-full border border-[#e4dbcb] bg-[#fffdf8] p-1">
             {(["fr", "en", "es"] as const).map((lang) => (
               <Link
                 key={lang}
                 href={buildYoLocaleHref(MANDARIN_PATH, lang)}
                 aria-current={locale === lang ? "page" : undefined}
-                className="p-3 text-sm underline"
+                className={`inline-flex min-h-10 min-w-10 items-center justify-center rounded-full text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245a46] ${locale === lang ? "bg-[#245a46] text-white" : "text-[#776a55] hover:bg-white"}`}
               >
                 {lang.toUpperCase()}
               </Link>
             ))}
           </div>
         </nav>
-        <header className="mb-8 flex items-center gap-4">
+        <header className="mb-7 flex items-center gap-4 rounded-3xl border border-[#e4dbcb] bg-[#fffdf8] p-4 shadow-sm sm:gap-6 sm:p-7">
           <CompanionAvatar
             visualId="travel"
             state="map"
@@ -75,10 +75,10 @@ export function MandarinCourseHome({
             compact
           />
           <div className="min-w-0">
-            <p className="text-sm text-teal-800">
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#a66040]">
               中文 · {L("Fondations", "Foundations", "Fundamentos")[locale]}
             </p>
-            <h1 className="text-3xl font-bold">
+            <h1 className="mt-2 font-serif text-2xl leading-tight text-[#245a46] sm:text-4xl">
               {
                 L(
                   "Tes premiers échanges en mandarin",
@@ -87,7 +87,7 @@ export function MandarinCourseHome({
                 )[locale]
               }
             </h1>
-            <p className="mt-2 text-gray-600">
+            <p className="mt-3 text-sm leading-relaxed text-[#776a55]">
               {
                 L(
                   "Douze unités pour rencontrer, choisir, raconter et préparer un projet avec Yoppo.",
@@ -128,7 +128,7 @@ export function MandarinCourseHome({
         <LearningJourney journey={journey} ready={ready} locale={locale} href={href} copy={foundationJourneyCopy[locale]} />
         <InterestPracticeCard language="zh" locale={locale} />
         <EasternDueReview language="zh" locale={locale} itemIds={reviewIds}/>
-        <section className="mt-8 border-y border-teal-200 py-6">
+        <section className="mt-8 rounded-2xl border border-[#c9d8bd] bg-[#edf2e6] p-5 sm:p-6">
           {ready && finalOpen ? <Link
             href={href("bilan-fondations")}
             className="inline-flex min-h-12 items-center gap-3 text-xl font-bold text-teal-900"

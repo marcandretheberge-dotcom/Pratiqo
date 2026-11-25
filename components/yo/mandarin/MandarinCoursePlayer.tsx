@@ -188,16 +188,16 @@ export function MandarinCoursePlayer({
   if (!ready || !allowed) return <CourseJourneyGate locale={locale} ready={ready} href={href()} />;
   return (
     <div
-      className="flex h-dvh flex-col overflow-hidden bg-[#f6f9f8] text-gray-900"
+      className="flex h-dvh flex-col overflow-hidden bg-[#f6f2e8] text-[#302f27]"
       data-testid="mandarin-player"
     >
-      <header className="border-b border-teal-100 bg-white px-4 py-4">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3">
+      <header className="shrink-0 border-b border-[#e4dbcb] bg-[#fffdf8] px-4 py-2 sm:px-6 sm:py-3">
+        <div className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1">
           <Link
             href={buildYoLocaleHref(MANDARIN_PATH, locale)}
-            className="inline-flex min-h-11 items-center gap-2 text-teal-900"
+            className="inline-flex min-h-11 min-w-0 items-center gap-2 text-xs font-semibold text-[#245a46] sm:text-sm"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={18} className="shrink-0" aria-hidden />
             {
               L(
                 "Mandarin · Fondations",
@@ -206,17 +206,17 @@ export function MandarinCoursePlayer({
               )[locale]
             }
           </Link>
-          <span className="text-sm">
+          <span className="col-span-2 row-start-2 truncate pb-1 text-xs text-[#776a55]">
             {unit.number} · {unit.title[locale]}
           </span>
-          <div className="flex gap-2">
+          <div className="col-start-2 row-start-1 flex rounded-full border border-[#e4dbcb] bg-white p-1">
             {(["fr", "en", "es"] as const).map((lang) => (
               <Link
                 key={lang}
                 href={buildYoLocaleHref(`${MANDARIN_PATH}/${mandarinRouteId(unit.id)}`, lang)}
                 lang={lang}
                 aria-current={lang === locale ? "page" : undefined}
-                className="min-h-11 p-3 text-xs underline"
+                className={`inline-flex min-h-9 min-w-9 items-center justify-center rounded-full text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245a46] ${lang === locale ? "bg-[#245a46] text-white" : "text-[#776a55] hover:bg-[#f6f2e8]"}`}
               >
                 {lang.toUpperCase()}
               </Link>
@@ -226,7 +226,8 @@ export function MandarinCoursePlayer({
       </header>
       <div
         ref={main}
-        className="mx-auto min-h-0 w-full max-w-5xl flex-1 overflow-y-auto px-4 pb-8 pt-6 sm:px-6"
+        className="mx-auto min-h-0 w-full max-w-5xl flex-1 overflow-y-auto px-4 pb-6 pt-4 sm:px-6"
+        data-mandarin-scroll="true"
       >
         {!stored && (
           <p role="status" className="mb-4 text-sm text-amber-900">
@@ -240,7 +241,7 @@ export function MandarinCoursePlayer({
           </p>
         )}
         <AdventureProgress journey={journey} world="mandarin" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} cinematic />
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-2xl border border-[#e4dbcb] bg-[#fffdf8] p-3">
           <label className="min-w-0 flex-1">
             <span className="sr-only">
               {L("Étape", "Step", "Etapa")[locale]}
@@ -292,11 +293,11 @@ export function MandarinCoursePlayer({
         <h1
           ref={heading}
           tabIndex={-1}
-          className="mb-6 text-2xl font-bold outline-none"
+          className="mb-5 font-serif text-3xl leading-tight text-[#245a46] outline-none sm:text-4xl"
         >
           {title}
         </h1>
-        <div className="min-h-80">
+        <div className="min-h-80 rounded-2xl border border-[#e4dbcb] bg-[#fffdf8] p-4 shadow-sm sm:p-6">
           {stage === "scene" && (
             <section className="space-y-6">
               <figure>
@@ -310,7 +311,7 @@ export function MandarinCoursePlayer({
                   width={image.width}
                   height={image.height}
                   priority
-                  className="aspect-[16/7] w-full rounded-lg object-cover"
+                  className="aspect-[16/7] w-full rounded-xl object-cover"
                 />
                 <figcaption className="mt-2 text-xs text-gray-500">
                   <a
@@ -323,7 +324,7 @@ export function MandarinCoursePlayer({
                   </a>
                 </figcaption>
               </figure>
-              <h2 className="text-3xl font-bold">{unit.title[locale]}</h2>
+              <h2 className="font-serif text-3xl text-[#245a46]">{unit.title[locale]}</h2>
               <p className="max-w-2xl leading-relaxed">
                 {unit.setting[locale]}
               </p>
@@ -345,7 +346,7 @@ export function MandarinCoursePlayer({
               {unit.dialogue.map((phrase, index) => (
                 <article
                   key={index}
-                  className={`border-l-4 p-4 ${index % 2 ? "border-amber-400 bg-amber-50" : "border-teal-500 bg-teal-50"}`}
+                  className={`rounded-2xl border p-4 ${index % 2 ? "border-[#ecd6bd] bg-[#fff6e8]" : "border-[#c9d8bd] bg-[#edf2e6]"}`}
                 >
                   <p className="mb-2 text-sm font-semibold">{phrase.speaker}</p>
                   <PhraseView
@@ -574,43 +575,9 @@ export function MandarinCoursePlayer({
           {!currentExercise && !isMandarinAssessment(unit.id) && !scene && <div className="mt-6"><YoSpeechPractice key={unit.id} language="zh" locale={locale} scenarioId={courseSpeechScenario("zh", unit.number)}/></div>}
         </div>
       </div>
-      <div className="h-44 shrink-0" aria-hidden />
-      <nav
-        aria-label={
-          L(
-            "Navigation de la leçon",
-            "Lesson navigation",
-            "Navegación de la lección",
-          )[locale]
-        }
-        className="fixed inset-x-0 bottom-0 z-40 h-16 border-t border-gray-200 bg-white p-2"
-      >
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
-          <button
-            type="button"
-            className={control}
-            disabled={!ready || step === 0}
-            onClick={() => go(step - 1)}
-            aria-label={L("Précédent", "Previous", "Anterior")[locale]}
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <span className="text-sm">
-            {step + 1} / {stages.length}
-          </span>
-          <button
-            type="button"
-            className={control}
-            disabled={!ready || step === stages.length - 1}
-            onClick={() => go(step + 1)}
-            aria-label={L("Suivant", "Next", "Siguiente")[locale]}
-          >
-            <ArrowRight size={20} />
-          </button>
-        </div>
-      </nav>
       {ready && (
         <YoppoLearningCompanion
+          dock="inline"
           locale={locale}
           lesson={unit.title}
           games={games}
@@ -698,6 +665,43 @@ export function MandarinCoursePlayer({
           }}
         />
       )}
+      <nav
+        aria-label={
+          L(
+            "Navigation de la leçon",
+            "Lesson navigation",
+            "Navegación de la lección",
+          )[locale]
+        }
+        className="z-40 shrink-0 border-t border-[#e4dbcb] bg-[#fffdf8] px-4 pb-[max(env(safe-area-inset-bottom),0.5rem)] pt-2"
+      >
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
+          <button
+            type="button"
+            className={control}
+            disabled={!ready || step === 0}
+            onClick={() => go(step - 1)}
+            aria-label={L("Précédent", "Previous", "Anterior")[locale]}
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div className="min-w-0 flex-1 px-4 text-center">
+            <span className="text-xs font-semibold text-[#776a55]">{step + 1} / {stages.length}</span>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#e4dbcb]" aria-hidden>
+              <div className="h-full rounded-full bg-[#245a46]" style={{ width: `${(step + 1) / stages.length * 100}%` }} />
+            </div>
+          </div>
+          <button
+            type="button"
+            className={control}
+            disabled={!ready || step === stages.length - 1}
+            onClick={() => go(step + 1)}
+            aria-label={L("Suivant", "Next", "Siguiente")[locale]}
+          >
+            <ArrowRight size={20} />
+          </button>
+        </div>
+      </nav>
       {scene && <MissionFilm scene={scene} locale={locale} onContinue={finishMission}/>}
     </div>
   );

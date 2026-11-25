@@ -157,6 +157,24 @@ def verify(browser, engine, course, width):
 
         page.goto(route + "/" + course["module9"]["slug"] + "?lang=en")
         player_ready(page)
+        if course["language"] == "zh":
+            rail = page.get_by_test_id("yoppo-reserved-rail")
+            expect(rail).to_be_visible()
+            layout = page.evaluate("""() => {
+              const rail = document.querySelector('[data-testid="yoppo-reserved-rail"]');
+              const scroll = document.querySelector('[data-mandarin-scroll]');
+              const navigation = document.querySelector('nav[aria-label="Lesson navigation"]');
+              const rect = element => { const box = element.getBoundingClientRect(); return {top:box.top,bottom:box.bottom,height:box.height}; };
+              return {rail:rect(rail), scroll:rect(scroll), navigation:rect(navigation),
+                railPosition:getComputedStyle(rail).position, navigationPosition:getComputedStyle(navigation).position,
+                viewport:innerHeight};
+            }""")
+            assert layout["railPosition"] == "relative" and layout["navigationPosition"] == "static", layout
+            assert 44 <= layout["rail"]["height"] <= 60, layout
+            assert layout["scroll"]["height"] >= layout["viewport"] * .55, layout
+            assert layout["scroll"]["bottom"] <= layout["rail"]["top"] + 1, layout
+            assert layout["rail"]["bottom"] <= layout["navigation"]["top"] + 1, layout
+            assert layout["navigation"]["bottom"] <= layout["viewport"] + 1, layout
         preserve_history(page, course)
         answered = []
         for index, exercise in enumerate(course["module9"]["recalls"]):
