@@ -42,6 +42,8 @@ jobs:
         run: npm run test:yo-speech
       - name: Film playback, fallback, progression and audio ownership
         run: npm run test:yo-cinema
+      - name: All-language continuity, interests, error feedback and dated review
+        run: npm run test:yo-premium-parity
       - name: Offline recording plan, provider protocol and verified publication
         run: npm run test:yo-premium-recordings
       - name: Recording plan performs no network calls

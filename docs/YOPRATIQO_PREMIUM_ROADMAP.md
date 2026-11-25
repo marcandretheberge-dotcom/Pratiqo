@@ -1,5 +1,12 @@
 # YoPratiqo: release scope and first premium experiment
 
+> **Current direction — November 24–25, 2026:** use
+> [`product/yopratiqo-overnight-roadmap.md`](product/yopratiqo-overnight-roadmap.md)
+> for the reconciled eight-language roadmap, independent-review decisions,
+> completion criteria and verified release state. The sections below describe
+> the earlier map release and its first experiment; they are not the full current
+> roadmap or permission to call unequal curricula complete.
+
 ## This release
 
 - Public: three or more maps per primary language path. The Italian course uses the illustrated twelve-city itinerary on the existing real routes. Existing course evidence, placement access and optional practice still decide where a learner may enter.

@@ -1,3 +1,4 @@
+import { parseInterests, type InterestId } from "../interests/preferences";
 /** Local learning preferences only. Never an entitlement, certification, credit or reward. */
 export const experienceOptions = ["new", "words", "conversation", "rusty", "unsure"] as const;
 export const goalOptions = ["travel", "family", "work", "conversation", "thorough"] as const;
@@ -5,7 +6,7 @@ export const weeklyOptions = [30, 60, 120, 180, 0] as const;
 export type LearningProfile = {
   version: 1; language: string; experience: typeof experienceOptions[number]; goal: typeof goalOptions[number];
   weeklyMinutes: number; startUnitId: string; placement: "beginner" | "manual" | "check";
-  reviewUnitIds: string[]; updatedAt: number;
+  reviewUnitIds: string[]; updatedAt: number; interests?: InterestId[];
 };
 export const profileKey = (language: string) => `yo.learning-profile.v1.${language}`;
 export function parseProfile(raw: string | null, language: string, units: readonly string[]): LearningProfile | null {
@@ -17,7 +18,7 @@ export function parseProfile(raw: string | null, language: string, units: readon
       !["beginner", "manual", "check"].includes(p.placement) || !Array.isArray(p.reviewUnitIds) || p.reviewUnitIds.length > units.length ||
       !p.reviewUnitIds.every((id: unknown) => typeof id === "string" && units.includes(id)) || !Number.isFinite(p.updatedAt) || p.updatedAt < 0 || p.updatedAt > Date.now() + 300000) return null;
     return { version: 1, language, experience: p.experience, goal: p.goal, weeklyMinutes: p.weeklyMinutes,
-      startUnitId: p.startUnitId, placement: p.placement, reviewUnitIds: [...new Set(p.reviewUnitIds)] as string[], updatedAt: p.updatedAt };
+      startUnitId: p.startUnitId, placement: p.placement, reviewUnitIds: [...new Set(p.reviewUnitIds)] as string[], updatedAt: p.updatedAt, interests: parseInterests(p.interests) };
   } catch { return null; }
 }
 export function weeklyRhythm(minutes: number): { sessions: number; minutes: number } | null {

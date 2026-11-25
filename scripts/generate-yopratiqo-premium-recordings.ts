@@ -16,7 +16,7 @@ import {
   type CourseRecording, type CourseRecordingInput,
 } from "./lib/realtimeCourseRecording";
 
-export type RecordingScope = "introductions" | "italian-current" | "all";
+export type RecordingScope = "introductions" | "italian-current" | "interests" | "all";
 export type RecordingOptions = { scope: RecordingScope; generate: boolean; budgetMicroUsd?: number; limit?: number };
 export function parsePremiumRecordingOptions(args: readonly string[]): RecordingOptions {
   if (args.includes("--generate") && args.includes("--dry-run")) throw new Error("Choose generation or an offline plan, not both.");
@@ -29,7 +29,7 @@ export function parsePremiumRecordingOptions(args: readonly string[]): Recording
       const value = args[++index];
       if (!value || value.startsWith("--")) throw new Error(`${arg} requires a value.`);
       if (arg === "--scope") {
-        if (!["introductions", "italian-current", "all"].includes(value)) throw new Error("Unknown recording scope.");
+        if (!["introductions", "italian-current", "interests", "all"].includes(value)) throw new Error("Unknown recording scope.");
         options.scope = value as RecordingScope;
       } else if (arg === "--budget-usd") {
         if (!/^\d+(\.\d{1,2})?$/.test(value) || Number(value) <= 0 || Number(value) > 10) throw new Error("Recording budget must be greater than zero and at most $10 USD.");

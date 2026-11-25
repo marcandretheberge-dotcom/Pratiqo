@@ -12,9 +12,14 @@ on:
       - 'tests/yo/yopratiqoJournal.browser.py'
       - 'tests/yo/yopratiqoTravelFilms.browser.py'
       - 'tests/yo/yopratiqoPremiumCinema.browser.py'
+      - 'tests/yo/yopratiqoInterests.browser.py'
       - 'tests/yo/yopratiqoTravelFilmRoutes.test.ts'
       - 'components/yo/travel/**'
       - 'lib/yo/travelCinema.ts'
+      - 'components/yo/interests/**'
+      - 'lib/yo/interests/**'
+      - 'components/yo/review/**'
+      - 'lib/yo/review/**'
       - 'components/yo/learning/YoLessonPractice.tsx'
       - 'components/yo/speech/**'
       - 'lib/yo/speech/**'
@@ -75,6 +80,7 @@ jobs:
           python tests/yo/yopratiqoJournal.browser.py
           python tests/yo/yopratiqoTravelFilms.browser.py
           python tests/yo/yopratiqoPremiumCinema.browser.py
+          python tests/yo/yopratiqoInterests.browser.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

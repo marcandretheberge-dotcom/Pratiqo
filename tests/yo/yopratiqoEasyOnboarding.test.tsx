@@ -25,7 +25,7 @@ function mount(locale:"fr"|"en"|"es"="en",profile?:LearningProfile){
  const view=render(<ItalianOnboarding locale={locale} catalog={personalizedItalianCatalog} checks={placementChecks} audioPaths={{}} initial={profile} onComplete={p=>{saved=p;}}/>);flush();
  return {view,result:()=>saved};
 }
-function time(v:View){click(v.getByRole("button",{name:"I’m starting from zero"}));click(v.getByRole("button",{name:"Travel"}));}
+function time(v:View){click(v.getByRole("button",{name:"I’m starting from zero"}));click(v.getByRole("button",{name:"Travel"}));click(v.getByRole("button",{name:"Continue"}));}
 const options=[[30,"30 min / week"],[60,"1 h / week"],[120,"2 h / week"],[180,"3 h / week"],[0,"At my pace"]] as const;
 for(const [minutes,label] of options)tests.push([`${minutes}: visible exclusive selection and exact saved pace`,()=>{
  const {view:v,result}=mount();time(v);
@@ -41,7 +41,7 @@ for(const [minutes,label] of options)tests.push([`${minutes}: visible exclusive 
  assert.equal(v.queryByRole("button",{name:"Skip"}),null);
  assert.doesNotMatch(v.container.textContent??"",/certification|Paid access|stamps|Your goal:/);
  click(v.getByRole("button",{name:"Start here"}));
- assert.equal(result()?.weeklyMinutes,minutes);assert.equal(result()?.startUnitId,"u01");assert.equal(result()?.goal,"travel");assert.equal(localStorage.length,0);
+ assert.equal(result()?.weeklyMinutes,minutes);assert.equal(result()?.startUnitId,"u01");assert.equal(result()?.goal,"travel");assert.equal(localStorage.getItem("yo.interests.v1.it"),"[]");
 }]);
 tests.push(["changing an option clears the previous check; Back preserves the final choice",()=>{
  const {view:v,result}=mount();time(v);
@@ -80,7 +80,7 @@ tests.push(["skip without a pace uses untimed mode, not an invented commitment",
  const {view:v,result}=mount();click(v.getByRole("button",{name:"Skip"}));assert.ok(v.getByRole("combobox"));click(v.getByRole("button",{name:"Start here"}));assert.equal(result()?.weeklyMinutes,0);
 }]);
 for(const [locale,zero,travel,next,start]of [["fr","Je pars de zéro","Voyager","Continuer","Commencer ici"],["es","Empiezo de cero","Viajar","Continuar","Empezar aquí"]] as const)tests.push([`${locale}: guide stays in the DOM, focused title and uncluttered recommendation`,()=>{
- const {view:v,result}=mount(locale);click(v.getByRole("button",{name:zero}));click(v.getByRole("button",{name:travel}));
+ const {view:v,result}=mount(locale);click(v.getByRole("button",{name:zero}));click(v.getByRole("button",{name:travel}));click(v.getByRole("button",{name:next}));
  click(v.getAllByRole("radio")[2]);click(v.getByRole("button",{name:next}));assert.ok(v.container.querySelector("[data-yoppo-guide] img"));assert.equal(document.activeElement,v.getByRole("heading",{level:1}));
  assert.equal(v.queryByRole("combobox"),null);assert.equal(v.queryByRole("checkbox"),null);click(v.getByRole("button",{name:start}));assert.equal(result()?.weeklyMinutes,120);
 }]);

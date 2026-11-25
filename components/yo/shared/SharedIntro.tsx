@@ -32,6 +32,10 @@ import { introStageMap } from "@/lib/yo/worldMap";
 import { adventureWorld } from "@/lib/yo/adventure";
 import { SpanishRegionalPractice } from "../SpanishRegionalPractice";
 import { spanishRegionalPractice } from "@/lib/yo/spanishRegionalPractice";
+import { introContinuation, introGoalFocus, introGoalReview, introWeeklyPlan } from "@/lib/yo/shared/continuation";
+import { InterestPracticeCard } from "../interests/InterestPracticeCard";
+import { IntroDueReview } from "../review/IntroDueReview";
+import { recordIntroReviewAttempt } from "@/lib/yo/review/intro";
 
 type Props={course:IntroCourse;locale:YoLocale;audio:Record<string,string>};
 export function SharedIntro(props:Props){return <LearningFeedbackProvider><IntroPlayer {...props}/></LearningFeedbackProvider>;}
@@ -100,6 +104,8 @@ function IntroPlayer({course,locale,audio}:Props){
  const step=steps[state.step],mission=course.missions[step.mission],missionSteps=steps.filter(s=>s.mission===step.mission),position=missionSteps.findIndex(s=>s.id===step.id);
  const phrase=(id:string)=>course.phrases.find(p=>p.id===id)!;
  const passed=introPassed(course,state),currentPassed=independentScore(state.answers)>=Math.ceil(course.final.length*.8);
+ const continuation=introContinuation(course,state.profile.goal,locale);
+ const weeklyPlan=introWeeklyPlan(state.profile.minutes),goalReview=introGoalReview(course,state);
  const map=state.view==='map'?introStageMap(course,state,adventureWorld(course.slug)):null;
  function openStop(id: string, stop: { entryStep?: string }) {
       if(stop.entryStep) {
@@ -136,6 +142,7 @@ function IntroPlayer({course,locale,audio}:Props){
    {state.view==='map'&&showPassPilot&&<SharedPassBalance locale={locale}/>}
    {state.view==='map'&&<div hidden={regionalOpen}>
     <div className="mb-6 flex items-center gap-4"><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="md" compact/><div className="min-w-0"><p className="text-sm font-semibold text-emerald-700">{course.city} · {say('Premières rencontres','First meetings','Primeros encuentros')}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-2xl font-black outline-none">{passed?say('Ton premier tampon est gagné !','You earned your first stamp!','¡Ganaste tu primer sello!'):say('On fait connaissance ?','Shall we get acquainted?','¿Vamos a conocernos?')}</h1></div></div>
+    {passed && <IntroContinuationCard destination={continuation} locale={locale}/>}
     {map && <WorldJourneyMap model={map} locale={locale} active={!regionalOpen && !leg && !scene} onContinue={id => {
       const stop = map.destinations.find(d => d.id === id);
       if (!stop?.accessible) return;
@@ -143,6 +150,18 @@ function IntroPlayer({course,locale,audio}:Props){
       if (place) depart(place, () => openStop(id, stop));
       else openStop(id, stop);
     }}/>}
+    <section data-intro-session-plan className="mb-5 rounded-2xl border border-stone-200 bg-white px-4 py-4 text-sm leading-6">
+     <h2 className="font-bold text-emerald-900">{say("Pour ta prochaine séance", "For your next session", "Para tu próxima sesión")}</h2>
+     <p className="mt-2">{introGoalFocus[state.profile.goal][locale]}</p>
+     <p className="mt-1 text-stone-600">{weeklyPlan
+      ? say(`Rythme proposé : ${weeklyPlan.sessions} séance${weeklyPlan.sessions>1?'s':''} d’environ ${weeklyPlan.minutes} min par semaine.`, `Suggested rhythm: ${weeklyPlan.sessions} session${weeklyPlan.sessions>1?'s':''} of about ${weeklyPlan.minutes} minutes per week.`, `Ritmo propuesto: ${weeklyPlan.sessions} ${weeklyPlan.sessions===1?'sesión':'sesiones'} de unos ${weeklyPlan.minutes} minutos por semana.`)
+      : say("À ton rythme : une étape suffit pour reprendre le fil.", "At your pace: one step is enough to pick up where you left off.", "A tu ritmo: basta una etapa para retomar el hilo.")}</p>
+     {state.resume && <p className="mt-2 font-medium">{state.resume==='final'
+      ? say(`Reprends ton défi à la question ${state.finalIndex+1}.`, `Resume your challenge at question ${state.finalIndex+1}.`, `Retoma el reto en la pregunta ${state.finalIndex+1}.`)
+      : say(`Ta mission en cours : ${mission.title.fr}`, `Your current mission: ${mission.title.en}`, `Tu misión en curso: ${mission.title.es}`)}</p>}
+     {goalReview && <button type="button" className={`${secondary} mt-2 text-left underline`} onClick={()=>move(goalReview.step)}>{say("Revoir", "Revisit", "Repasar")} · {goalReview.title[locale]}</button>}
+    </section>
+    <InterestPracticeCard language={course.language} locale={locale} interests={state.profile.interests} city={course.city}/>
     <Link prefetch={false} href={`/yo/langues/${course.slug}/demarrer/vocabulaire?lang=${locale}`} target="_blank" rel="noopener" className={`${secondary} mt-3 underline`}>{say('Voir / imprimer les mots et verbes','View / print words and verbs','Ver / imprimir palabras y verbos')}</Link>
     <p className="text-sm text-emerald-800">{introPoints(course,state)} {say('points d’apprentissage','learning points','puntos de aprendizaje')}{passed&&<Stamp className="ml-3 inline" aria-label={say('Tampon obtenu','Stamp earned','Sello obtenido')}/>}</p>
     <button type="button" className={`${secondary} mt-3 underline`} onClick={startFinal}>{say('Déjà à l’aise ? Essayer le défi','Already comfortable? Try the challenge','¿Ya dominas esto? Probar el reto')}</button>
@@ -152,8 +171,8 @@ function IntroPlayer({course,locale,audio}:Props){
     <p className="text-sm font-semibold text-emerald-800">{say('Mission','Mission','Misión')} {step.mission+1} · {position+1}/{missionSteps.length}</p><div className="my-3 h-2 overflow-hidden rounded-full bg-stone-200" role="progressbar" aria-valuenow={position} aria-valuemin={0} aria-valuemax={missionSteps.length} aria-label={mission.title[locale]}><div className="h-full bg-emerald-700" style={{width:`${position/missionSteps.length*100}%`}}/></div>
     <h1 ref={heading} tabIndex={-1} className="mb-5 text-2xl font-bold outline-none">{mission.title[locale]}</h1>
     <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-7">
-     {step.kind==='recall'?<IntroQuestion key={step.id} course={course} locale={locale} audio={audio} exercise={mission.preparation[step.index - 1]} paused={panel!==null || Boolean(scene) || Boolean(leg)} value={state.draft} onChange={d=>save({...latest.current,draft:d})} onContinue={advance}/>:
-      step.kind==='exercise'?<IntroQuestion key={step.id} course={course} locale={locale} audio={audio} exercise={mission.practice[step.index]} paused={panel!==null || Boolean(scene) || Boolean(leg)} value={state.draft} onChange={d=>save({...latest.current,draft:d})} onContinue={advance}/>:
+     {step.kind==='recall'?<IntroQuestion key={step.id} course={course} locale={locale} audio={audio} exercise={mission.preparation[step.index - 1]} paused={panel!==null || Boolean(scene) || Boolean(leg)} value={state.draft} onChange={d=>save({...latest.current,draft:d})} onAttempt={result=>recordIntroReviewAttempt(course,mission.preparation[step.index-1],result)} onContinue={advance}/>:
+      step.kind==='exercise'?<IntroQuestion key={step.id} course={course} locale={locale} audio={audio} exercise={mission.practice[step.index]} paused={panel!==null || Boolean(scene) || Boolean(leg)} value={state.draft} onChange={d=>save({...latest.current,draft:d})} onAttempt={result=>recordIntroReviewAttempt(course,mission.practice[step.index],result)} onContinue={advance}/>:
       <>
        {step.kind==='study'&&<><h2 className="mb-4 text-xl font-bold">{say('Tes mots pour la mission','Your words for the mission','Tus palabras para la misión')}</h2><div className="space-y-3">{mission.phrases.map(example)}</div><PracticeAdvanceNotice locale={locale}/></>}
        {step.kind==='words'&&<><h2 className="text-xl font-bold">{say('Prêt pour la rencontre !','Ready for the conversation!','¡Todo listo para el encuentro!')}</h2><p className="mt-4 leading-7">{mission.goal[locale]}</p></>}
@@ -164,7 +183,11 @@ function IntroPlayer({course,locale,audio}:Props){
     </div>
    </>}
    {state.view==='final'&&<><h1 ref={heading} tabIndex={-1} className="text-2xl font-bold outline-none">{say('Défi final','Final challenge','Reto final')} · {state.finalIndex+1}/{course.final.length}</h1><p className="my-4 text-sm leading-6">{say('Réussis 5 réponses sur 6 sans aide pour gagner ton tampon.','Get 5 of 6 answers right without help to earn your stamp.','Acierta 5 de 6 respuestas sin ayuda para ganar el sello.')}</p><div className="rounded-3xl border bg-white p-5"><IntroQuestion key={`final:${state.finalIndex}`} course={course} locale={locale} audio={audio} exercise={course.final[state.finalIndex]} assessment paused={panel!==null || Boolean(scene) || Boolean(leg)} value={state.draft} onChange={d=>save({...latest.current,draft:d})} onContinue={nextFinal}/></div></>}
-   {state.view==='result'&&<section className="rounded-3xl border bg-white p-6 text-center"><div className="flex justify-center"><CompanionAvatar visualId="travel" state={currentPassed?'celebrating':'teacher_ready'} locale={locale} size="md" compact/></div><h1 ref={heading} tabIndex={-1} className="mt-5 text-2xl font-bold outline-none">{currentPassed?say('Ton tampon est dans le passeport !','Your stamp is in your passport!','¡Tu sello está en el pasaporte!'):say('On révise, puis on réessaie.','Let’s review, then try again.','Repasamos y lo intentamos de nuevo.')}</h1><p className="mt-5 text-4xl font-black text-emerald-800">{independentScore(state.answers)}/{course.final.length}</p><p className="mt-2 text-sm">{say('réponses réussies sans aide','answers correct without help','respuestas correctas sin ayuda')}</p><button type="button" className={`${primary} mt-6 w-full`} onClick={()=>{save({...latest.current,view:'map',resume:null});focus();}}>{say('Retour à mon parcours','Back to my journey','Volver a mi recorrido')}</button>{!currentPassed&&<button type="button" className={`${secondary} mt-3`} onClick={startFinal}>{say('Réessayer le défi','Retry the challenge','Reintentar el reto')}</button>}</section>}
+   {state.view==='result'&&<section className="rounded-3xl border bg-white p-6 text-center"><div className="flex justify-center"><CompanionAvatar visualId="travel" state={currentPassed?'celebrating':'teacher_ready'} locale={locale} size="md" compact/></div><h1 ref={heading} tabIndex={-1} className="mt-5 text-2xl font-bold outline-none">{currentPassed?say('Ton tampon est dans le passeport !','Your stamp is in your passport!','¡Tu sello está en el pasaporte!'):say('On révise, puis on réessaie.','Let’s review, then try again.','Repasamos y lo intentamos de nuevo.')}</h1><p className="mt-5 text-4xl font-black text-emerald-800">{independentScore(state.answers)}/{course.final.length}</p><p className="mt-2 text-sm">{say('réponses réussies sans aide','answers correct without help','respuestas correctas sin ayuda')}</p>
+    {passed && <IntroContinuationCard destination={continuation} locale={locale}/>}
+    {goalReview && <div className="mt-4 text-left text-sm"><p>{goalReview.goal[locale]}</p><button type="button" className={`${secondary} mt-2 underline`} onClick={()=>move(goalReview.step)}>{say("Revoir", "Revisit", "Repasar")} · {goalReview.title[locale]}</button></div>}
+    <button type="button" className={`${passed?secondary:primary} mt-6 w-full`} onClick={()=>{save({...latest.current,view:'map',resume:null});focus();}}>{say('Retour à mon parcours','Back to my journey','Volver a mi recorrido')}</button>{!currentPassed&&<button type="button" className={`${secondary} mt-3`} onClick={startFinal}>{say('Réessayer le défi','Retry the challenge','Reintentar el reto')}</button>}</section>}
+   {(state.view==='map'||state.view==='result')&&!regionalOpen&&!scene&&!leg&&panel===null&&<IntroDueReview course={course} locale={locale} audio={audio}/>}
    {speechLanguage && !scene && !leg && panel === null && (state.view === "result" || (state.view === "lesson" && step.kind !== "recall" && step.kind !== "exercise")) && <div className="mt-6"><YoSpeechPractice key={mission.id} language={speechLanguage} locale={locale} scenarioId="introduction"/></div>}
   </main>
   <Dialog.Root open={panel!==null} onOpenChange={open=>{if(!open){stopLessonAudio();setPanel(null);}}}><Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-50 bg-black/40"/><Dialog.Content className="fixed left-1/2 top-1/2 z-50 max-h-[85dvh] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl bg-[#fbf9f3] p-5 shadow-xl" aria-describedby={undefined}>
@@ -174,4 +197,13 @@ function IntroPlayer({course,locale,audio}:Props){
   {leg && <TravelFilm locale={locale} leg={leg} onArrival={finish}/>}
   {scene && <MissionFilm scene={scene} locale={locale} onContinue={finishMission}/>}
  </div>;
+}
+
+function IntroContinuationCard({ destination, locale }: { destination: ReturnType<typeof introContinuation>; locale: YoLocale }) {
+ return <section data-intro-continuation className="my-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-left">
+  <h2 className="text-lg font-bold text-emerald-950">{L("La suite de ton apprentissage", "Keep learning", "Sigue aprendiendo")[locale]}</h2>
+  <p className="mt-2 font-semibold">{destination.title[locale]}</p>
+  <p className="mt-2 text-sm leading-6">{destination.description[locale]}</p>
+  <Link prefetch={false} className={`${primary} mt-4 w-full`} href={destination.href} onClick={stopLessonAudio}>{L("Continuer", "Continue", "Continuar")[locale]} · {destination.title[locale]}</Link>
+ </section>;
 }

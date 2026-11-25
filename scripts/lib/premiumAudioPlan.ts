@@ -9,9 +9,11 @@ import { personalizedItalianUnits, moduleBank, placementChecks } from "../../lib
 import { unitSpeech, activitySpeech, distinctSpeech } from "../../lib/yo/italian/course/courseSpeech";
 import { courseAudioPaths } from "../../lib/yo/italian/course/courseAudio.server";
 import { FLORENCE_DISCOVERY_PHRASES } from "../../lib/yo/italian/travel/journey";
+import { interestCorpus } from "../../lib/yo/interests/content";
+import { interestAudioPath } from "../../lib/yo/interests/audio";
 
 export interface PremiumRecordingItem extends YoAudioItem { locale: string }
-export type PremiumAudioScope = "introductions" | "italian-current" | "all";
+export type PremiumAudioScope = "introductions" | "italian-current" | "interests" | "all";
 export type PremiumAudioCoverage = { language: string; total: number; recorded: number; missing: number };
 
 const accents: Record<YoTargetLanguage, YoAudioAccentProfileId> = {
@@ -22,7 +24,7 @@ const accents: Record<YoTargetLanguage, YoAudioAccentProfileId> = {
 
 /** Offline inventory only. Planned object paths are never published as playable recordings. */
 export function buildPremiumAudioPlan(scope: PremiumAudioScope): { items: PremiumRecordingItem[]; coverage: PremiumAudioCoverage[] } {
-  if (!["introductions", "italian-current", "all"].includes(scope)) throw new Error("Unknown premium recording scope.");
+  if (!["introductions", "italian-current", "interests", "all"].includes(scope)) throw new Error("Unknown premium recording scope.");
   const items: PremiumRecordingItem[] = [], coverage: PremiumAudioCoverage[] = [];
   function collect(language: YoTargetLanguage, locale: string, texts: readonly string[], recordedPaths: Record<string, string>) {
     const phrases = distinctSpeech(texts), missing = phrases.filter(text => !recordedPaths[text]);
@@ -53,5 +55,18 @@ export function buildPremiumAudioPlan(scope: PremiumAudioScope): { items: Premiu
     ]);
     collect("it", "it-IT", texts, courseAudioPaths(texts));
   }
-  return { items, coverage };
+  if (scope === "interests" || scope === "all") {
+    for (const [key, corpus] of Object.entries(interestCorpus)) {
+      const language = courseSpeechLanguage(key);
+      if (!language) throw new Error(`Unmapped interest language: ${key}`);
+      const texts = [...Object.values(corpus.venues).map(v => v.question.text), ...Object.values(corpus.directions).map(d => d.text), corpus.exit.text, corpus.thanks.text, corpus.repeat.text];
+      const recorded = Object.fromEntries(texts.flatMap(text => {
+        const path = interestAudioPath(corpus.speechLocale, text);
+        return path ? [[text, path]] : [];
+      }));
+      collect(language, corpus.speechLocale, texts, recorded);
+    }
+  }
+  // A phrase appearing in two surfaces is generated and charged only once.
+  return { items: [...new Map(items.map(item => [`${item.locale}:${item.text}`, item])).values()], coverage };
 }

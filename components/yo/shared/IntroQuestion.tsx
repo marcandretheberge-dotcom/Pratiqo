@@ -7,14 +7,16 @@ import { L } from "@/lib/yo/shared/types";
 import { scrambleItalianItems } from "@/lib/yo/italian/italianModuleLogic";
 import { validObjectChoices } from "@/lib/yo/learning/vocabularyPractice";
 import { artworkPath } from "@/lib/yo/personalized/approvedVocabulary";
+import { introAnswerExplanation } from "@/lib/yo/shared/questionFeedback";
 import { useAnswerFeedback, YoppoAnswerReaction } from "../feedback/LearningFeedback";
 import { acceptPracticeTap, PracticeAdvanceStatus, usePracticeAdvance } from "../learning/PracticeAdvance";
 import { primary, secondary } from "../italian/guided/copy";
 import { IntroAudio } from "./IntroAudio";
 
-export function IntroQuestion({ course, locale, audio, exercise, visual, value, onChange, onContinue, assessment = false, paused = false }: {
+export function IntroQuestion({ course, locale, audio, exercise, visual, value, onChange, onContinue, onAttempt, assessment = false, paused = false }: {
   course: IntroCourse; locale: YoLocale; audio: Record<string,string>; exercise?: Exercise; visual?: Mission["visuals"][number]; audioFirst?: boolean;
   value: Draft; onChange: (draft: Draft) => void; onContinue: () => void; assessment?: boolean; paused?: boolean;
+  onAttempt?: (result: { correct: boolean; assisted: boolean }) => void;
 }) {
   const id = exercise?.id ?? visual!.phrase, feedback = useAnswerFeedback(), last = useRef(value);
   useLayoutEffect(() => { last.current = value; }, [value]);
@@ -26,16 +28,19 @@ export function IntroQuestion({ course, locale, audio, exercise, visual, value, 
   function edit(patch: Partial<Draft>) { const next = { ...last.current, ...patch }; last.current = next; onChange(next); }
   function submit(selected?: string) {
     const d = last.current;
-    if (d.checked && (d.correct || assessment) || listen && !d.heard && !d.transcript) return;
+    if (paused || d.checked && (d.correct || assessment || exercise?.kind === "order") || listen && !d.heard && !d.transcript) return;
     if (exercise?.kind === "order" && d.tiles.length !== parts.length) return;
     const chosen = selected ?? d.selected;
     if (exercise?.kind !== "order" && !chosen) return;
     const correct = exercise?.kind === "order" ? d.tiles.every((v,i) => v === i) : chosen === (visual?.answer ?? exercise!.answer);
-    edit({ selected: chosen, checked: true, correct, assisted: d.assisted || !correct && !assessment });
+    const assisted = d.assisted || !correct && !assessment;
+    edit({ selected: chosen, checked: true, correct, assisted });
+    onAttempt?.({ correct, assisted });
     if (correct) { feedback.correct(id); flow.arm(); }
   }
   function choose(selected: string, detail: number) { if (acceptPracticeTap(detail)) submit(selected); }
   const cue = exercise?.cue && course.phrases.find(p => p.id === exercise.cue);
+  const explanation = exercise && value.checked ? introAnswerExplanation(course, exercise, value) : null;
   // A content error must not silently bring back labelled portraits or age/flag guessing.
   if (visual && !validObjectChoices(visual.pictures)) throw new Error("Vocabulary image questions require four distinct, unlabelled concrete objects.");
   const selectedStyle = (selected: boolean) => selected && value.checked ? value.correct ? "border-emerald-700 bg-emerald-50 text-emerald-950" : "border-red-700 bg-red-50 text-red-950" : "border-stone-200 bg-white text-stone-800";
@@ -63,8 +68,21 @@ export function IntroQuestion({ course, locale, audio, exercise, visual, value, 
         <span>{text}{!meaning&&!number&&p.reading && <span className="mt-1 block text-sm text-stone-600">{p.reading}</span>}</span>{value.selected===option&&value.checked&&(value.correct?<Check size={20} aria-hidden/>:<X size={20} aria-hidden/>)}</button>;
     })}</div>}
     <div role="status" aria-live="polite" aria-atomic="true" className="mt-5">{value.checked && <p className={`font-bold ${value.correct?'text-emerald-900':'text-red-800'}`}>{value.correct?say("Bien joué !","Well done!","¡Bien hecho!"):assessment?say("On regarde la réponse.","Let’s review the answer.","Veamos la respuesta."):say("Pas tout à fait. Essaie encore.","Not quite. Try again.","No del todo. Inténtalo de nuevo.")}</p>}</div>
-    {value.checked && (value.correct || assessment) && <details className="mt-3 text-sm leading-6" onToggle={e=>{if(e.currentTarget.open)flow.hold();}} open={assessment&&!value.correct || undefined}>
-      <summary className="min-h-11 cursor-pointer py-2 font-semibold text-emerald-900">{say("Comprendre la réponse","Understand the answer","Entender la respuesta")}</summary><p lang={course.language} className="font-semibold">{phrase.text}</p><p>{phrase.meaning[locale]}</p>
+    {value.checked && <details data-intro-answer-feedback className="mt-3 rounded-2xl border border-stone-200 bg-stone-50 px-4 pb-4 text-sm leading-6" onToggle={e=>{if(e.currentTarget.open)flow.hold();}} open={!value.correct || undefined}>
+      <summary className="min-h-11 cursor-pointer py-2 font-semibold text-emerald-900">{say("Comprendre la réponse","Understand the answer","Entender la respuesta")}</summary>
+      {explanation?.chosen && <div data-intro-chosen-answer className="mb-3 border-l-2 border-stone-300 pl-3">
+        <p className="text-xs font-semibold text-stone-600">{say("Ton choix","Your choice","Tu elección")}</p>
+        <p lang={course.language}>{explanation.chosen.text}</p><p>{explanation.chosen.meaning[locale]}</p>
+      </div>}
+      {!value.correct && explanation && <p className="mb-3" data-intro-feedback-guidance>{explanation.guidance[locale]}</p>}
+      <p className="text-xs font-semibold text-emerald-800">{say("Le modèle","The model","El modelo")}</p>
+      <p lang={course.language} className="font-semibold">{phrase.text}</p>
+      {phrase.reading && <p className="text-stone-600">{phrase.reading}</p>}
+      <p>{phrase.meaning[locale]}</p>
+      {explanation?.orderCorrection && <p className="mt-3" data-intro-order-correction>
+        {say(`À la position ${explanation.orderCorrection.position}, le modèle utilise`, `At position ${explanation.orderCorrection.position}, the model uses`, `En la posición ${explanation.orderCorrection.position}, el modelo usa`)} <strong lang={course.language}>{explanation.orderCorrection.expected}</strong>.
+      </p>}
+      {explanation?.concept && <div data-intro-feedback-concept className="mt-4 border-t border-stone-200 pt-3"><h3 className="font-semibold">{explanation.concept.title[locale]}</h3><p className="mt-1">{explanation.concept.body[locale]}</p></div>}
     </details>}
     <YoppoAnswerReaction revision={value.correct?feedback.reaction:0} locale={locale}/>
     <PracticeAdvanceStatus flow={flow} locale={locale}/>

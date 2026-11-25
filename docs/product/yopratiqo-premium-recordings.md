@@ -2,14 +2,15 @@
 
 ## Current state
 
-The current workflow inventories the seven shared introductions and the actual
-personalized Italian curriculum. It does not substitute older manifest counts
+The current workflow inventories the seven shared introductions, the actual
+personalized Italian curriculum and all eight interest-practice corpora. It does not substitute older manifest counts
 for the phrases shown in today's lessons. Its default is an offline plan:
 
 ```sh
 npm run generate:yopratiqo-audio
 npm run generate:yo-premium-recordings -- --scope introductions --dry-run
 npm run generate:yo-premium-recordings -- --scope italian-current --dry-run
+npm run generate:yo-premium-recordings -- --scope interests --dry-run
 ```
 
 As audited on 2026-11-24, the source mapping is:
@@ -24,10 +25,14 @@ As audited on 2026-11-24, the source mapping is:
 | Japanese introduction | 19 | 3 | 16 |
 | Mandarin introduction | 19 | 3 | 16 |
 | Current Italian course, placement and Florence phrases | 836 | 770 | 66 |
-| **Total** | **969** | **793** | **176** |
+| Interest practice, eight languages | 96 | 2 | 94 |
+| **Total within the listed scopes** | **1,065** | **795** | **270** |
 
-Mapped paths are source evidence, not a fresh verification of every live object
-in Supabase Storage. German and Portuguese extended courses also have bundled
+The original 785 distinct mapped MP3 objects passed delivery/format checks on
+November 24; this does not certify natural pronunciation. Interest practice reuses
+two exact Italian phrases; both objects were downloaded and decoded again during
+this release. The other 94 interest phrases remain explicitly missing. The combined
+offline plan deduplicates requests by locale and normalized script. German and Portuguese extended courses also have bundled
 recordings; these are separate from their newer shared introductions. Eight
 Italian strings safely reuse existing recordings after NFC, punctuation, case
 and whitespace normalization within the same language and accent. Lesson text

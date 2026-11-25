@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { JournalChoice, useYoppoJournal, YoppoWelcomeGuide } from "../onboarding/YoppoJournal";
 import type { YoLocale } from "@/lib/yo/types";
@@ -13,9 +13,11 @@ import { primary, secondary } from "../italian/guided/copy";
 import { ItalianAudioProvider } from "../italian/ItalianAudioProvider";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { FeedbackSettings } from "../feedback/LearningFeedback";
+import { InterestChoices } from "../interests/InterestChoices";
+import { interestLabels, parseInterests, readInterestPreferences, writeInterestPreferences } from "@/lib/yo/interests/preferences";
 
 export type PlacementCheck = { unitId: string; activity: CourseQuestion };
-type Screen = "experience" | "goal" | "time" | "choice" | "check" | "result";
+type Screen = "experience" | "goal" | "interests" | "time" | "choice" | "check" | "result";
 type Props = {
   locale: YoLocale; catalog: CourseCatalog; checks: PlacementCheck[];
   audioPaths: Record<string, string>; initial?: LearningProfile | null;
@@ -28,6 +30,8 @@ export function ItalianOnboarding({ locale, catalog, checks, audioPaths, initial
   const [screen, setScreen] = useState<Screen>("experience");
   const [experience, setExperience] = useState<LearningProfile["experience"]>(initial?.experience ?? "new");
   const [goal, setGoal] = useState<LearningProfile["goal"]>(initial?.goal ?? "thorough");
+  const [interests, setInterests] = useState(() => parseInterests(initial?.interests));
+  useEffect(() => { const frame = requestAnimationFrame(() => { const saved = readInterestPreferences("it"); if (saved !== null) setInterests(saved); }); return () => cancelAnimationFrame(frame); }, []);
   // A new learner chooses a pace explicitly. Zero means the deliberate "at my pace" choice.
   const [minutes, setMinutes] = useState<number | null>(initial?.weeklyMinutes ?? null);
   const [custom, setCustom] = useState(Boolean(initial && !weeklyOptions.some(n => n === initial.weeklyMinutes)));
@@ -61,6 +65,7 @@ export function ItalianOnboarding({ locale, catalog, checks, audioPaths, initial
   const titles: Record<Screen, string> = {
     experience: say("Ciao ! Tu connais déjà un peu l’italien ?", "Ciao! Know a little Italian already?", "¡Ciao! ¿Ya sabes un poco de italiano?"),
     goal: say("Qu’est-ce qui te donne envie d’apprendre ?", "What makes you want to learn?", "¿Qué te anima a aprender?"),
+    interests: say("Qu’est-ce qui t’intéresse ?", "What do you enjoy?", "¿Qué te interesa?"),
     time: say("Quel rythme te convient ?", "What pace suits you?", "¿Qué ritmo te viene bien?"),
     choice: say("On trouve ton point de départ ?", "Shall we find your starting point?", "¿Buscamos tu punto de partida?"),
     check: say("Voyons ce que tu connais déjà.", "Let’s see what you already know.", "Veamos lo que ya sabes."),
@@ -84,15 +89,16 @@ export function ItalianOnboarding({ locale, catalog, checks, audioPaths, initial
   }
   function finish() {
     stopLessonAudio();
+    writeInterestPreferences("it", interests);
     onComplete({ version: 1, language: "it", experience, goal, weeklyMinutes: validPace ? resolvedMinutes! : 0,
-      startUnitId: selected.id, placement: mode, reviewUnitIds: reviews, updatedAt: Date.now() });
+      startUnitId: selected.id, placement: mode, reviewUnitIds: reviews, updatedAt: Date.now(), interests });
   }
   function skip() {
     journal.clear();
     if (!validPace) { setMinutes(0); setCustom(false); }
     setMode("manual"); showResult(true);
   }
-  const backScreen: Record<Exclude<Screen, "experience" | "check">, Screen> = { goal: "experience", time: "goal", choice: "time", result: experience === "new" ? "time" : "choice" };
+  const backScreen: Record<Exclude<Screen, "experience" | "check">, Screen> = { goal: "experience", interests: "goal", time: "interests", choice: "time", result: experience === "new" ? "time" : "choice" };
 
   return <ItalianAudioProvider paths={audioPaths}>
     <main lang={locale} data-yoppo-onboarding data-onboarding-step={screen} className="yj-welcome">
@@ -108,9 +114,13 @@ export function ItalianOnboarding({ locale, catalog, checks, audioPaths, initial
         )}</div>}
         {screen === "goal" && <div className="yj-options">{goalOptions.map((v, i) =>
           <JournalChoice key={v} kind={v} label={goalLabels[i]} onPick={() => {
-            journal.write(goalLabels[i]); setGoal(v); go("time");
+            journal.write(goalLabels[i]); setGoal(v); go("interests");
           }}/>
         )}</div>}
+
+        {screen === "interests" && <><InterestChoices locale={locale} value={interests} onChange={next => {
+          setInterests(next); journal.write(next.map(id => interestLabels[id][locale]).join(" · ") || say("Surprends-moi", "Surprise me", "Sorpréndeme"));
+        }}/><button type="button" className={`${primary} mt-5 w-full`} onClick={() => go("time")}>{say("Continuer", "Continue", "Continuar")}</button></>}
 
         {screen === "time" && <>
           <p className="mb-4 text-sm leading-6 text-stone-600">{say("Choisis ce qui te convient. Tu pourras changer plus tard.", "Choose what works for you. You can change it later.", "Elige lo que te venga bien. Puedes cambiarlo después.")}</p>

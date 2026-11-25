@@ -68,13 +68,12 @@ export function rememberPlace(place: TravelPlace, key = travelLocationKey) {
   catch { inMemory.set(key, place); }
 }
 
-// Preserve the reviewed travel films above. A mission slot stays on its real
-// companion illustration until its separate film has been installed and reviewed.
-// Planned filenames: mission-ready.mp4, mission-success.mp4, artifact-reveal.mp4.
+// Each independent, nonverbal mission film has been rendered and visually reviewed.
+// Keep the real posters available for reduced motion, offline and media errors.
 const missionFilms: Record<MissionCinemaKind, CinemaFilmAsset> = {
-  "mission-start": { src: null, poster: "/companion/travel/films/mission-ready.webp", aspectRatio: 16 / 9 },
-  "mission-success": { src: null, poster: "/companion/travel/films/mission-success.webp", aspectRatio: 16 / 9 },
-  artifact: { src: null, poster: "/companion/travel/films/artifact-reveal.webp", aspectRatio: 16 / 9 },
+  "mission-start": { src: "/companion/travel/films/mission-ready.mp4", poster: "/companion/travel/films/mission-ready.webp", aspectRatio: 16 / 9 },
+  "mission-success": { src: "/companion/travel/films/mission-success.mp4", poster: "/companion/travel/films/mission-success.webp", aspectRatio: 16 / 9 },
+  artifact: { src: "/companion/travel/films/artifact-reveal.mp4", poster: "/companion/travel/films/artifact-reveal.webp", aspectRatio: 16 / 9 },
 };
 export function filmForMission(kind: MissionCinemaKind): CinemaFilmAsset { return missionFilms[kind]; }
 

@@ -12,6 +12,7 @@ import { L } from "@/lib/yo/mandarin/types";
 import images from "@/lib/yo/mandarin/imageAssets.json";
 import type { YoLocale } from "@/lib/yo/types";
 import { useMandarinProgress } from "./useMandarinProgress";
+import { InterestPracticeCard } from "../interests/InterestPracticeCard";
 
 export function MandarinCourseHome({
   locale,
@@ -115,6 +116,7 @@ export function MandarinCourseHome({
         )}
         <AdventureProgress journey={journey} world="mandarin" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} />
         <LearningJourney journey={journey} ready={ready} locale={locale} href={href} copy={foundationJourneyCopy[locale]} />
+        <InterestPracticeCard language="zh" locale={locale} />
         <section className="mt-8 border-y border-teal-200 py-6">
           {ready && finalOpen ? <Link
             href={href("bilan")}

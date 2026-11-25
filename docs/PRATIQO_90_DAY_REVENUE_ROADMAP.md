@@ -144,10 +144,13 @@ modules.
   before scaling. The founder's brief lists the suggested priority as:
   1. **Spanish — Mexico A1** (travel)
   2. **English — USA A1 for francophones** (travel)
-- [ ] **Pricing**: keep **24,99 $ CAD** unit pricing for travel
-  modules unless `lib/yo/yopratiqoProductConfig.ts` says otherwise.
-  The existing scaffold uses `24.99 CAD` for RD A1 — match that for
-  the follow-up modules to keep the comparison clean.
+- [ ] **Pricing — superseded November 23–24, 2026:** the founder retired
+  the CAD 24.99 travel-module hypothesis. The Yoppo Pass pilot uses CAD 3.49
+  for one eligible stage, CAD 8.99 for three passes and CAD 19.99 for the
+  named Italian itinerary for 12 months, without automatic renewal.
+  See the [current roadmap](product/yopratiqo-overnight-roadmap.md).
+  The legacy RD scaffold is not the current offer and must not be activated
+  just to make this old checklist complete. Hosted purchasing is unfinished.
 - [ ] **Test one bundle only after multiple modules exist.** Do not
   bundle RD A1 alone; bundles are a Day 30+ idea, gated on at least
   two travel modules being live and selling.
@@ -393,7 +396,7 @@ each phase opens.
 
 | Item                            | Canonical price | Source of truth |
 |---------------------------------|-----------------|-----------------|
-| YoPratiqo travel module (RD A1, follow-ups) | **24,99 $ CAD** | `lib/yo/yopratiqoPremiumCheckout.ts` |
+| YoPratiqo Yoppo Pass pilot (hosted purchases unfinished) | **3,49 $ CAD / stage; 8,99 $ / 3 passes; Italian itinerary 19,99 $ / 12 months** | [Current roadmap](product/yopratiqo-overnight-roadmap.md), `lib/yo/passPilot/` |
 | Membre Pro Pratiqo subscription | **29,99 $ CAD / mois + taxes applicables** | `lib/config/membrePro.ts`, asserted in `tests/membrePro/membreProPriceCopyConsistency.test.ts` |
 | Marketplace lesson bookings     | Set per teacher, display-only currency | Existing booking flow, unchanged |
 

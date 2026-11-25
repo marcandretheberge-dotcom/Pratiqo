@@ -20,6 +20,7 @@ with sync_playwright() as pw:
   dismiss_install()
   for label in ['Je pars de zéro','Voyager']:
    dismiss_install();onb.get_by_role('button',name=label,exact=True).click()
+  onb.get_by_role('button',name='Continuer',exact=True).click()
   onb.locator('[data-pace-choice="60"]').click()
   for label in ['Continuer','Commencer ici']:
    dismiss_install();onb.get_by_role('button',name=label,exact=True).click()

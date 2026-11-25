@@ -1,5 +1,6 @@
 import type { IntroCourse, IntroState, Draft, Answer } from "./types";
 import { courseSteps } from "./steps";
+import { parseInterests } from "../interests/preferences";
 export const introKey = (language: string) => `yo.shared-intro.v1.${language}`;
 export const emptyDraft = (): Draft => ({ selected: null, tiles: [], checked: false, correct: false, assisted: false, heard: false, transcript: false });
 export const freshIntro = (c: IntroCourse): IntroState => ({ version: 2, language: c.language, profile: null, view: "map", resume: null, step: 0, finalIndex: 0, draft: emptyDraft(), completed: [], visited: [], answers: [], best: 0 });
@@ -32,6 +33,8 @@ export function parseIntro(raw: string | null, c: IntroCourse): IntroState {
     const parts = exercise?.kind === "order" ? c.phrases.find(p => p.id === exercise.answer)?.parts ?? [] : [];
     if (d.tiles.some(n => Number(n) >= parts.length)) return fresh;
     if (d.selected !== null && !exercise?.options.includes(String(d.selected))) return fresh;
+    // Optional preferences cannot invalidate historical progress or unfinished answers.
+    if (obj(s.profile)) s.profile = { ...s.profile, interests: parseInterests(s.profile.interests) };
     return { ...s, version: 2, completed: [...new Set(s.completed as string[])], visited: [...new Set(s.visited as string[])] } as unknown as IntroState;
   } catch { return fresh; }
 }

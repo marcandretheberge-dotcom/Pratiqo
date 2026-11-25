@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import {
   filmForMission, finishMissionScene, missionSceneKey, parseMissionCinemaState, queueMissionScene,
@@ -29,13 +30,21 @@ assert.deepEqual(polluted.queue, [start], "malformed kinds and duplicate restore
 for (let i = 0; i < 100; i++) state = queueMissionScene(state, { ...start, id: "burst-" + i });
 assert.equal(state.queue.length, 6, "cosmetic queue is bounded");
 assert.equal(state.queue[0].kind, "mission-success", "a burst preserves the currently visible moment");
+// Hash the independently reviewed, compressed delivery files so a missing or
+// substituted clip cannot silently return the production registry to a placeholder.
+const reviewedFilms = {
+  "mission-start": ["mission-ready", "edd383efeb20eb8d692084b71dcd363d937cfb2c3fbc9958878552e5b20c64b5"],
+  "mission-success": ["mission-success", "d22df95099e3f9a6bdee1a984efff41dc6682302873a294ad092366725a85d54"],
+  artifact: ["artifact-reveal", "5be4d7cec26f74f652db90d594ee67b9406cf9ef447274b3aff91042512dac57"],
+} as const;
 for (const kind of ["mission-start", "mission-success", "artifact"] as const) {
   const film = filmForMission(kind);
+  const [name, hash] = reviewedFilms[kind];
   assert.ok(existsSync("public" + film.poster), `${kind} needs an actual fallback image`);
-  if (film.src) {
-    assert.ok(existsSync("public" + film.src), `${kind} must not point to an unrendered film`);
-    assert.equal(readFileSync("public" + film.src).toString("ascii", 4, 8), "ftyp");
-    assert.ok(!film.src.includes("taxi"), "a generic mission must not mislabel the approved taxi trip");
-  }
+  assert.equal(film.src, `/companion/travel/films/${name}.mp4`, `${kind} must use its own completed film`);
+  assert.ok(existsSync("public" + film.src), `${kind} must not point to an unrendered film`);
+  const bytes = readFileSync("public" + film.src);
+  assert.equal(bytes.toString("ascii", 4, 8), "ftyp");
+  assert.equal(createHash("sha256").update(bytes).digest("hex"), hash, `${kind} must match the reviewed delivery file`);
 }
 console.log("PASS: ordered scenes, duplicate guards, interruption restore, stale-data validation, bounded state and actual asset registry");

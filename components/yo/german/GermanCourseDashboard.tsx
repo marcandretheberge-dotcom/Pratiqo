@@ -12,6 +12,7 @@ import { GermanCourseShell, outline, copy } from "./GermanCourseShared";
 import { CourseJourney } from "../journey/CourseJourney";
 import { canEnterCourseAssessment } from "@/lib/yo/courseJourney";
 import { journeyCopy } from "../journey/journeyCopy";
+import { InterestPracticeCard } from "../interests/InterestPracticeCard";
 
 export function GermanCourseDashboard({
   locale,
@@ -81,6 +82,7 @@ export function GermanCourseDashboard({
         </p>
         <CourseJourney locale={locale} catalog={catalog} progress={state.progress} ready={state.ready} href={courseHref} />
       </section>
+      <InterestPracticeCard language={experience.language} locale={locale} />
       {photo ? <div className="my-6 max-w-md"><CourseCulturePhoto photo={photo} locale={locale} /></div> : null}
       <section className="mt-8 grid gap-4 border-t border-gray-200 pt-6 sm:grid-cols-2">
         {catalog.assessments

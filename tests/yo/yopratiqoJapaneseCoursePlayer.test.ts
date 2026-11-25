@@ -25,6 +25,10 @@ const bindings = {
   window: dom.window, self: dom.window, document: dom.window.document, navigator: dom.window.navigator,
   HTMLElement: dom.window.HTMLElement, Element: dom.window.Element,
   Event: dom.window.Event, MouseEvent: dom.window.MouseEvent,
+  // The optional home practice hydrates saved preferences on a browser frame.
+  localStorage: dom.window.localStorage,
+  requestAnimationFrame: dom.window.requestAnimationFrame.bind(dom.window),
+  cancelAnimationFrame: dom.window.cancelAnimationFrame.bind(dom.window),
   IS_REACT_ACT_ENVIRONMENT: true,
 };
 const originals = new Map(Object.keys(bindings).map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
