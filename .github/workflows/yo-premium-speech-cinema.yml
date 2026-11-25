@@ -13,6 +13,7 @@ on:
       - 'public/companion/travel/**'
       - 'public/audio/yo/premium/**'
       - 'scripts/generate-yopratiqo-premium-recordings.ts'
+      - 'scripts/probe-yo-speech-gateway.ts'
       - 'scripts/sync-yopratiqo-audio-index.ts'
       - 'scripts/lib/**'
       - 'supabase/migrations/*yo_speech*'
@@ -42,6 +43,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Server authorization, budget, microphone lifecycle and route permissions
         run: npm run test:yo-speech
+      - name: Opt-in gateway preflight stays bounded and inert by default
+        run: npm run test:yo-speech-gateway-probe
       - name: Film playback, fallback, progression and audio ownership
         run: npm run test:yo-cinema
       - name: All-language continuity, interests, error feedback and dated review
