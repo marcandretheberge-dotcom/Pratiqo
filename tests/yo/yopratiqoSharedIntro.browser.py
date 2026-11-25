@@ -33,7 +33,7 @@ with sync_playwright() as pw:
   try:
    p.goto(f"{base}/yo/langues/{c['slug']}/demarrer?lang=en",timeout=60000);p.locator('[data-shared-welcome]').wait_for(timeout=60000)
    p.evaluate("localStorage.setItem('legacy-sentinel','unchanged')")
-   click(p,'I’m starting from zero');click(p,'Travel');assert p.get_by_role('button',name='Continue',exact=True).is_disabled()
+   click(p,'I’m starting from zero');click(p,'Travel');click(p,'Continue');assert p.get_by_role('button',name='Continue',exact=True).is_disabled()
    for n in [30,60,120,180,0,120]:
     p.locator(f'[data-shared-pace="{n}"]').tap();assert p.locator(f'input[type=radio][value="{n}"]').is_checked();assert p.locator('input[type=radio]:checked').count()==1
    click(p,'Continue');assert p.get_by_role('combobox').count()==0;assert len(p.locator('[data-shared-recommendation]').inner_text())<350
@@ -82,7 +82,7 @@ with sync_playwright() as pw:
   c=item['course']
   for locale,zero,goal,nxt,start,begin,images in [('fr','Je pars de zéro','Voyager','Continuer','Commencer ici','Commencer ma mission','Quatre images'),('es','Empiezo de cero','Viajar','Continuar','Empezar aquí','Empezar mi misión','Cuatro imágenes')]:
    ctx=context(browser);p=ctx.new_page();errors=[];p.on('pageerror',lambda e:errors.append(str(e)))
-   p.goto(f"{base}/yo/langues/{c['slug']}/demarrer?lang={locale}",timeout=60000);p.locator('[data-shared-welcome]').wait_for();click(p,zero);click(p,goal)
+   p.goto(f"{base}/yo/langues/{c['slug']}/demarrer?lang={locale}",timeout=60000);p.locator('[data-shared-welcome]').wait_for();click(p,zero);click(p,goal);click(p,nxt)
    p.locator('[data-shared-pace="120"]').tap();assert p.locator('input[type=radio][value="120"]').is_checked();click(p,nxt)
    assert p.get_by_role('combobox').count()==0
    box=p.locator('[data-shared-guide]').bounding_box();assert box and box['y']>=0

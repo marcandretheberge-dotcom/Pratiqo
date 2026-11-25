@@ -79,18 +79,36 @@ def travel(page, name, reduced):
     expect(page.locator("[data-travel-film]")).to_have_count(0)
 
 
-def mission(page, name, keyboard_guard=False):
+def mission(page, name, reduced, keyboard_guard=False):
     scene = page.locator('[data-mission-film="mission-start"]')
     expect(scene).to_be_visible(timeout=30000)
     expect(page.locator("[data-travel-film]")).to_have_count(0)
     expect(page.locator("[data-mission-film]")).to_have_count(1)
     video = scene.locator("video")
-    assert video.get_attribute("src") is None, "A pending movie must not advertise an MP4"
+    expect(video).to_have_attribute("src", "/companion/travel/films/mission-ready.mp4")
     expect(video).to_have_attribute("poster", "/companion/travel/films/mission-ready.webp")
-    expect(scene.get_by_role("button", name="Lire le film", exact=True)).to_have_count(0)
     expect(scene.locator("[data-cinema-caption]")).to_be_visible()
-    # Decode the genuine local poster before taking visual evidence.
+    # The original image remains a genuine fallback even with an approved movie.
     video.evaluate("video => { const poster = new Image(); poster.src = video.poster; return poster.decode(); }")
+    if reduced:
+        assert video.evaluate("video => video.paused")
+        expect(video).to_have_attribute("preload", "none")
+        screenshot(page, name + "-mission-reduced-motion")
+        scene.get_by_role("button", name="Lire le film", exact=True).click()
+    else:
+        page.wait_for_function("""() => {
+          const scene = document.querySelector('[data-mission-film]');
+          return scene?.querySelector('video')?.currentTime > 0.15
+            || scene?.querySelector('[role="status"]')?.textContent.includes('Touche Lecture');
+        }""", timeout=20000)
+        if video.evaluate("video => video.paused"):
+            scene.get_by_role("button", name="Lire le film", exact=True).click()
+    page.wait_for_function("""() => {
+      const video = document.querySelector('[data-mission-film] video');
+      return video && video.currentTime > 0.15 && video.videoWidth === 1280;
+    }""", timeout=20000)
+    assert video.evaluate("video => video.muted && video.playsInline")
+    scene.get_by_role("button", name="Mettre en pause", exact=True).click()
     if keyboard_guard:
         screen = page.locator('[data-yo-lesson-deck-screen-host-active="true"]')
         before = screen.get_attribute("data-yo-lesson-deck-screen-host-id")
@@ -99,7 +117,7 @@ def mission(page, name, keyboard_guard=False):
         expect(screen).to_have_attribute("data-yo-lesson-deck-screen-host-id", before)
         expect(page.get_by_role("dialog")).to_have_count(1)
     fits(page, scene)
-    screenshot(page, name + "-mission-poster")
+    screenshot(page, name + "-mission-film")
     scene.get_by_role("button", name="Continuer", exact=True).click()
     expect(page.locator("[data-mission-film]")).to_have_count(0)
 
@@ -152,7 +170,7 @@ def verify(browser, engine, route, width):
             page.goto(base + "/yo/langues/anglais/demarrer?lang=fr")
             travel(page, name, reduced)
             page.locator("[data-shared-world-map] .yo-shared-continue").click()
-            mission(page, name)
+            mission(page, name, reduced)
         elif route == "it":
             # A manual starting preference is not a passed assessment or earned reward.
             seed(page, {"yo.learning-profile.v1.it": {"version": 1, "language": "it", "experience": "words",
@@ -164,7 +182,7 @@ def verify(browser, engine, route, width):
             briefing = page.locator("[data-yoppo-mission-briefing]")
             expect(briefing).to_be_visible()
             briefing.get_by_role("button", name="Commencer ma mission", exact=True).click()
-            mission(page, name)
+            mission(page, name, reduced)
             # The real route layout supplies its readable mobile spacing; missing it
             # can otherwise leave functional buttons in a visually unstyled fixture.
             assert page.locator(".yo-mission-window").evaluate("window => parseFloat(getComputedStyle(window).paddingLeft) >= 16"), "Italian route layout CSS is missing"
@@ -179,12 +197,12 @@ def verify(browser, engine, route, width):
             page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
             expect(screen).to_have_attribute("data-yo-lesson-deck-screen-host-id", before)
             travel(page, name, reduced)
-            mission(page, name, keyboard_guard=True)
+            mission(page, name, reduced, keyboard_guard=True)
         closed_speech(page, requests, name)
         assert not errors, errors
         result = {"route": route, "width": width, "reducedMotion": reduced, "passed": True,
                   "speechRequestsBeforeOpening": len(requests), "microphoneRequests": page.evaluate("window.__premiumQaMicrophones")}
-        print("PASS " + name + ": real flight + skip, honest mission poster, collapsed voice, no automatic speech/mic, no horizontal overflow", flush=True)
+        print("PASS " + name + ": decoded flight and mission films + skip, reduced motion, collapsed voice, no automatic speech/mic, no horizontal overflow", flush=True)
         return result
     except Exception:
         screenshot(page, name + "-failure")

@@ -37,7 +37,7 @@ with sync_playwright() as pw:
    page.on('requestfailed',lambda request:failed_requests.append({'url':request.url,'failure':request.failure}))
    try:
     page.goto(base+'?lang='+locale,timeout=60000);page.locator('[data-yoppo-onboarding]').wait_for(timeout=60000);notices(page)
-    page.get_by_role('button',name=zero,exact=True).tap();page.get_by_role('button',name=goal,exact=True).tap()
+    page.get_by_role('button',name=zero,exact=True).tap();page.get_by_role('button',name=goal,exact=True).tap();page.get_by_role('button',name=next_label,exact=True).tap()
     guide_visible(page)
     assert page.get_by_role('button',name=next_label,exact=True).is_disabled()
     assert page.locator('input[type=radio]:checked').count()==0

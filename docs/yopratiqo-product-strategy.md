@@ -34,17 +34,20 @@ The current active language pillars are:
 - Spanish
 - Japanese
 - Italian
+- German
+- Brazilian Portuguese
+- Mandarin
 
-Do not activate additional languages until the current five have stable learning depth, SEO positioning, legal coverage, and teacher-bridge coherence.
+These eight are the current scope. Italian is the reference journey and Spanish
+the market priority. Equal interface components do not imply equal curriculum
+depth. Consult the [current roadmap](product/yopratiqo-overnight-roadmap.md) and
+[parity audit](product/yopratiqo-parity-audit.md) before claiming launch readiness.
 
 ## Next Language Candidates
 
 Future candidates, not active now:
 
 - Korean
-- Portuguese
-- German
-- Mandarin
 
 These should remain candidates only. They should not appear as launched premium products or live modules until a specific product decision opens them.
 

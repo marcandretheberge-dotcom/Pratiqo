@@ -49,7 +49,7 @@ function solve(v:View,c:IntroCourse,e:Exercise){
 let tests=0;
 for(const c of introCourses){
  cleanup();localStorage.clear();frames.clear();cues.length=0;localStorage.setItem('legacy-progress-sentinel','do-not-change');localStorage.setItem('yo.practice.auto-next.v1','off');
- let v=mount(c);click(v.getByRole('button',{name:'I’m starting from zero'}));click(v.getByRole('button',{name:'Travel'}));
+ let v=mount(c);click(v.getByRole('button',{name:'I’m starting from zero'}));click(v.getByRole('button',{name:'Travel'}));click(v.getByRole('button',{name:'Continue'}));
  assert.equal((v.getByRole('button',{name:'Continue'}) as HTMLButtonElement).disabled,true);
  click(v.getByRole('radio',{name:'120 min'}));assert.equal((v.getByRole('radio',{name:'120 min'}) as HTMLInputElement).checked,true);
  click(v.getByRole('button',{name:'Continue'}));assert.equal(v.queryByRole('combobox'),null);click(v.getByRole('button',{name:'Start here'}));

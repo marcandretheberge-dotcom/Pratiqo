@@ -1,5 +1,6 @@
 import type { YoLocale } from "../types";
 import type { VocabularyPicture } from "../personalized/types";
+import type { InterestId } from "../interests/preferences";
 export type Text = Record<YoLocale, string>;
 export const L = (fr: string, en: string, es: string): Text => ({ fr, en, es });
 export type Phrase = { id: string; text: string; meaning: Text; reading?: string; parts?: string[] };
@@ -11,7 +12,7 @@ export type IntroCourse = {
   city: string; legacyPath: string; teacherQuery: string; phrases: Phrase[]; glossary: { text: string; meaning: Text; group: "words" | "verbs" | "numbers" }[];
   missions: Mission[]; final: Exercise[]; sources: { title: string; url: string }[];
 };
-export type IntroProfile = { experience: "new" | "some" | "confident"; goal: "travel" | "family" | "work" | "conversation" | "thorough"; minutes: number; entry: number };
+export type IntroProfile = { experience: "new" | "some" | "confident"; goal: "travel" | "family" | "work" | "conversation" | "thorough"; minutes: number; entry: number; interests?: InterestId[] };
 export type Answer = { correct: boolean; assisted: boolean };
 export type Draft = { selected: string | null; tiles: number[]; checked: boolean; correct: boolean; assisted: boolean; heard: boolean; transcript: boolean };
 export type IntroState = {

@@ -7,7 +7,7 @@ import type { YoLocale } from "@/lib/yo/types";
 
 const atlas = "/companion/travel/journal/yoppo-journal.webp";
 type Entry = { number: number; label: string };
-export type WelcomeStep = "experience" | "goal" | "time" | "pace" | "choice" | "check" | "result";
+export type WelcomeStep = "experience" | "goal" | "interests" | "time" | "pace" | "choice" | "check" | "result";
 const motionLabels = {
   fr: { pause: "Mettre Yoppo en pause", play: "Relancer l’animation de Yoppo", loading: "Yoppo prépare ton parcours…" },
   en: { pause: "Pause Yoppo", play: "Resume Yoppo’s animation", loading: "Yoppo is preparing your journey…" },
@@ -98,13 +98,13 @@ function JournalScene({ entry = blank, finished, locale, interactive = false }: 
 export function YoppoWelcomeGuide({ title, language, locale, step, entry, headingRef }: {
   title: string; language: string; locale: YoLocale; step: WelcomeStep; entry: Entry; headingRef: RefObject<HTMLHeadingElement | null>;
 }) {
-  const progress = step === "experience" ? 1 : step === "goal" ? 2 : 3;
+  const progress = step === "experience" ? 1 : step === "goal" ? 2 : step === "interests" ? 3 : 4;
   const done = step === "result";
   const stepLabel = { fr: "Étape", en: "Step", es: "Paso" }[locale];
   return <header className="yj-header">
     <div className="yj-mast"><span><BookOpen size={16} strokeWidth={1.7}/> Yoppo <i aria-hidden="true">/</i> {language}</span>
-      <span className="yj-progress" role="img" aria-label={`${stepLabel} ${progress} / 3`}>
-        {[1, 2, 3].map(n => <i key={n} data-current={n <= progress || undefined}/>)}
+      <span className="yj-progress" role="img" aria-label={`${stepLabel} ${progress} / 4`}>
+        {[1, 2, 3, 4].map(n => <i key={n} data-current={n <= progress || undefined}/>)}
       </span>
     </div>
     <JournalScene locale={locale} entry={entry} finished={done} interactive/>

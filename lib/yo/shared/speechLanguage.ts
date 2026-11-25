@@ -1,21 +1,9 @@
 import type { SpeechLanguage, SpeechScenarioId } from "../speech/catalog";
+import { learningLanguageId } from "../config/languages";
 
 /** Map curriculum tags explicitly; never fall back to another language. */
 export function courseSpeechLanguage(language: string): SpeechLanguage | null {
-  switch (language) {
-    case "en": return "en";
-    case "fr":
-    case "fr-CA": return "fr";
-    case "es": return "es";
-    case "it": return "it";
-    case "ja": return "ja";
-    case "de": return "de";
-    case "pt":
-    case "pt-BR": return "pt";
-    case "zh":
-    case "zh-Hans": return "zh";
-    default: return null;
-  }
+  return learningLanguageId(language);
 }
 
 /** A starting suggestion from the published unit themes; learners can choose another scene. */
