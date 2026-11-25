@@ -6,6 +6,7 @@ import { introAudioPaths } from "../lib/yo/shared/audio.server";
 import { courseSteps } from "../lib/yo/shared/steps";
 import { foundationContent } from "../lib/yo/foundations/catalog.server";
 import { foundationSettings } from "../lib/yo/foundations/experience";
+import { foundationAudioPaths } from "../lib/yo/foundations/audio.server";
 import { germanCourseUnits, germanExtendedFinal, germanFinal } from "../lib/yo/german/courseData";
 import { portugueseCourseUnits, portugueseExtendedFinal, portugueseFinal } from "../lib/yo/portuguese/courseData";
 import { GERMAN_PROGRESS_KEY } from "../lib/yo/german/courseLogic";
@@ -34,7 +35,26 @@ async function main() {
  for(const [name,text]of Object.entries(files)){const target=join(dir,name);await mkdir(join(target,".."),{recursive:true});await writeFile(target,text);}
  try{await symlink(join(root,"public"),join(dir,"public"),"dir");}catch(e){if((e as NodeJS.ErrnoException).code!=="EEXIST")throw e;}
  await mkdir(out,{recursive:true});
- await writeFile(join(out,"foundation-courses.json"), JSON.stringify((["en", "es", "fr-CA"] as const).map(language => ({language, ...foundationSettings[language], ...foundationContent(language)}))));
+ await writeFile(join(out,"foundation-courses.json"), JSON.stringify((["en", "es", "fr-CA"] as const).map(language => {
+  const content = foundationContent(language), unit = content.units[0], lesson = unit.lessons[0];
+  const paths = foundationAudioPaths(language, unit);
+  const sample = (text: string) => ({ text, path: paths[text] });
+  // These are real visible controls and exact published paths. In Québec, the
+  // first dialogue starts with an existing Storage clip; use the next local one.
+  const dialogue = unit.lessons.flatMap(item => item.activities.flatMap(activity =>
+   activity.kind === "dialogue" && paths[activity.turns[0].line]?.startsWith("/audio/yo/premium/")
+    ? [{ ...sample(activity.turns[0].line), lessonId: item.id, activityId: activity.id }] : []))[0];
+  const audioSamples = {
+   vocabulary: sample(lesson.vocabulary[0].it),
+   grammar: sample(lesson.grammar.examples[1].it),
+   reading: sample(lesson.reading.it),
+   dialogue,
+  };
+  if (Object.values(audioSamples).some(item => !item?.path?.startsWith("/audio/yo/premium/"))) {
+   throw new Error(`Missing published foundation playback sample for ${language}`);
+  }
+  return { language, ...foundationSettings[language], ...content, audioSamples };
+ })));
  await writeFile(join(out,"depth-courses.json"), JSON.stringify([
   {language:"de",slug:"allemand",progressKey:GERMAN_PROGRESS_KEY,units:germanCourseUnits,final:germanExtendedFinal,legacyFinal:germanFinal},
   {language:"pt-BR",slug:"portugais-bresil",progressKey:PORTUGUESE_PROGRESS_KEY,units:portugueseCourseUnits,final:portugueseExtendedFinal,legacyFinal:portugueseFinal},

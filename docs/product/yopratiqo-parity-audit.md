@@ -27,6 +27,77 @@ establish equal difficulty, equivalent study time, CEFR certification or native
 audio quality. A reachable route and a passing unit test are different evidence
 from an exercised production purchase or a delayed independent learning result.
 
+## Current curriculum snapshot after PR #488
+
+The historical table below is retained for audit. The current authored catalogs
+have the following scope; equal unit counts do not imply equal difficulty,
+instructional time, independent proficiency or native voice quality.
+
+| Language | Current main course | Main practice objects | Written assessments |
+| --- | --- | ---: | --- |
+| Italian personalized path | 12 units / 36 lessons | 228 | 12 five-question unit quizzes; the separate legacy catalog retains its two eight-question checkpoints and eight-question final |
+| English | 12 units / 36 lessons | 252, including 36 dialogues | 12 six-question quizzes and a 24-question final |
+| Spanish | 12 units / 36 lessons | 252, including 36 dialogues | 12 six-question quizzes and a 24-question final |
+| Québec French | 12 units / 36 lessons | 252, including 36 dialogues | 12 six-question quizzes and a 24-question final |
+| German | 12 units / 36 lessons | 232, including 14 dialogues | 12 six-question quizzes and a new 24-question final; old assessments retained |
+| Brazilian Portuguese | 12 units / 36 lessons | 232, including 14 dialogues | 12 six-question quizzes and a new 24-question final; old assessments retained |
+| Japanese | 12 modules | 96 activities and 36 checked roleplay turns | New 24-question final; original eight-question final retained |
+| Mandarin | 12 modules | 160 exercises | New 24-question final; original eight-question final retained |
+
+The seven shared introductions each add three missions, 17 preparations,
+15 practices, a six-question final and 19 phrases. They are not counted as three
+additional full-depth units. Sources are the actual `lib/yo/personalized`,
+`english`, `spanish`, `frenchQuebec`, `german`, `portuguese`, `japaneseCourse.ts`
+and `mandarin/course.ts` catalogs.
+
+All eight languages now connect actual wrong/helped practice to local dated
+review and authored explanations. All have opening travel films and earned
+mission celebrations; Japanese and Mandarin use the cinematic adventure-progress
+component for their latter events. The 48 interest variants are small authored
+missions across six themes, not 48 complete courses. The main-course goal/weekly
+pace recommendation and Japanese unfinished-answer continuity remain separate
+work; ordinary authenticated two-device restoration remains unfinished.
+
+### Recording release under review
+
+The prepared bundle adds 1,205 verified MP3s to the preceding 255, for 1,460 files
+in this repository revision. The release ledger, rather than this file count,
+records whether the new bytes are deployed and checked publicly.
+
+| Exact playable-text scope | Before this audio lot | Prepared bundle | Remaining |
+| --- | ---: | ---: | ---: |
+| English foundations | 1 / 423 | 420 / 423 | 3 |
+| Spanish foundations | 1 / 354 | 347 / 354 | 7 |
+| Québec French foundations | 2 / 430 | 429 / 430 | 1 |
+| Current Italian course, placement and Florence inventory | 821 / 836 | 834 / 836 | 2 |
+| German full course | 132 / 273 | Unchanged | 141 |
+| Brazilian Portuguese full course | 128 / 260 | Unchanged | 132 |
+
+Each denominator inventories actual playback controls, not all written prompts
+or distractors. These are exact code/registry mappings; original Japanese and
+Mandarin manifest sizes (206 and 155) are not substituted for such coverage.
+Their new-module recordings remain a separate inventory and release. Every
+introduction already resolves 19/19 phrases and each interest corpus 12/12.
+Human/native listening approval is still outstanding; ASR, decoding and hashes
+verify different properties.
+
+### Comparison with the named references
+
+Official documentation was rechecked on November 25. [Duolingo](https://blog.duolingo.com/courses-teach-advanced-content/)
+describes B2 content for most learners in nine major courses, including our eight
+general target languages. [Babbel](https://support.babbel.com/hc/en-gb/articles/205600508-Available-languages)
+lists different depths for English-base learners: European Spanish C1, Mexican
+Spanish B1, French/German/Italian B2 and Brazilian Portuguese B1, with some
+additional higher-level topics; Japanese and Mandarin are absent from that list.
+[Lingvist](https://lingvist.com/help/how-large-is-the-course/) publishes different
+lexical counts, including Japanese 3,107, Latin American Spanish 5,000 and German
+6,009. Those lexical counts are not comparable to our activity-object counts or
+a common proficiency level.
+
+The practical gap remains reliable voice coverage, course-specific pronunciation
+review, useful progression from the learner's goals, delayed unseen transfer,
+authenticated continuity and substantially more authored depth. Polished films,+twelve units and local written finals alone do not close those gaps.
+
 ## Baseline curriculum matrix
 
 This table preserves the original baseline. The second-lot changes are listed

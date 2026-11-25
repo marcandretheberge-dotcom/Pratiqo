@@ -3,15 +3,16 @@ import { GermanCourseDashboard } from "../german/GermanCourseDashboard";
 import { GermanCourseUnit } from "../german/GermanCourseUnit";
 import { GermanCourseFinal } from "../german/GermanCourseFinal";
 import { foundationContent } from "@/lib/yo/foundations/catalog.server";
-import { foundationAudioPaths } from "@/lib/yo/foundations/audio.server";
+import { foundationAudioPaths, foundationAudioCoverage } from "@/lib/yo/foundations/audio.server";
 import { foundationSettings, type NewFoundationLanguage } from "@/lib/yo/foundations/experience";
 import { getYoLocale } from "@/lib/yo/localize";
 import type { Metadata } from "next";
 
 export type FoundationQuery = { lang?: string | string[]; lesson?: string; activity?: string };
 export async function FoundationHome({ language, searchParams }: { language: NewFoundationLanguage; searchParams: Promise<FoundationQuery> }) {
-  const { catalog, sources } = foundationContent(language);
-  return <GermanCourseDashboard locale={getYoLocale((await searchParams).lang)} catalog={catalog} audioReady={false} sources={sources}/>;
+  const { catalog, sources, units, final } = foundationContent(language);
+  const coverage = foundationAudioCoverage(language, [...units, final]);
+  return <GermanCourseDashboard locale={getYoLocale((await searchParams).lang)} catalog={catalog} audioReady={coverage.missing === 0} audioCoverage={coverage} sources={sources}/>;
 }
 export async function FoundationUnit({ language, params, searchParams }: {
   language: NewFoundationLanguage; params: Promise<{ unitId: string }>; searchParams: Promise<FoundationQuery>;

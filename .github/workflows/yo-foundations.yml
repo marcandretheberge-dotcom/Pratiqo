@@ -11,6 +11,8 @@ on:
       - 'components/yo/mandarin/**'
       - 'components/yo/review/**'
       - 'lib/yo/foundations/**'
+      - 'lib/yo/audio/premium*'
+      - 'public/audio/yo/premium/**'
       - 'lib/yo/english/**'
       - 'lib/yo/spanish/**'
       - 'lib/yo/frenchQuebec/**'
@@ -19,6 +21,7 @@ on:
       - 'lib/yo/review/**'
       - 'lib/yo/shared/continuation.ts'
       - 'tests/yo/*Foundations*'
+      - 'tests/yo/*FoundationRecordedCoverage*'
       - 'tests/yo/*FoundationIsolation*'
       - 'tests/yo/*GermanDepth*'
       - 'tests/yo/*PortugueseDepth*'
@@ -48,6 +51,7 @@ jobs:
           node --import tsx tests/yo/yopratiqoEnglishFoundations.test.ts
           node --import tsx tests/yo/yopratiqoSpanishFoundations.test.ts
           node --import tsx tests/yo/yopratiqoFrenchQuebecFoundations.test.ts
+          node --import tsx tests/yo/yopratiqoFoundationRecordedCoverage.test.tsx
           node --import tsx tests/yo/yopratiqoGermanDepth.test.ts
           node --import tsx tests/yo/yopratiqoPortugueseDepth.test.ts
           npm run test:yo-german
