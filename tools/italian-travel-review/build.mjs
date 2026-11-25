@@ -14,7 +14,7 @@ await build({entryPoints:['tools/italian-travel-review/main.tsx'],outfile:path.j
   b.onLoad({filter:/.*/,namespace:'review-next'},a=>({contents:a.path.endsWith('navigation')?`export {usePathname,useSearchParams,useRouter,notFound} from ${JSON.stringify(shim)};`:`export {${a.path.endsWith('image')?'Image':'Link'} as default} from ${JSON.stringify(shim)}`,loader:'tsx',resolveDir:root}));
  }}]});
 const css=await postcss([tailwind()]).process('@import "tailwindcss" source(none);\n@source "../../components/yo";\n@source "../../components/companion";\n@source "./main.tsx";',{from:path.join(root,'tools/italian-travel-review/styles.css')});
-await fs.writeFile(path.join(out,'app.css'),css.css+'\n'+await fs.readFile('components/yo/italian/guided/ItalianCourseExperience.css','utf8')+'\n'+await fs.readFile('tools/italian-travel-review/review.css','utf8'));
+await fs.writeFile(path.join(out,'app.css'),css.css+'\n'+await fs.readFile('components/yo/italian/guided/ItalianCourseExperience.css','utf8')+'\n'+await fs.readFile('components/yo/travel/travelFilm.css','utf8')+'\n'+await fs.readFile('tools/italian-travel-review/review.css','utf8'));
 for(const sub of ['images/yo/italian','images/yo/vocabulary','companion/travel','fonts']) {
  await fs.mkdir(path.dirname(path.join(out,sub)),{recursive:true});
  await fs.cp(path.join(root,'public',sub),path.join(out,sub),{recursive:true});

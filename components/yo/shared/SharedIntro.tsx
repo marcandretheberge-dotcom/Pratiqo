@@ -1,9 +1,12 @@
 "use client";
 import { YoppoWelcomeLoading } from "../onboarding/YoppoJournal";
+import { introPlace, lastPlace, rememberPlace } from "@/lib/yo/travelCinema";
+import { TravelFilm } from "../travel/TravelFilm";
+import { useTravelCinema } from "../travel/useTravelCinema";
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { BookOpen, Settings, Stamp, X } from "lucide-react";
+import { BookOpen, Plane, Settings, Stamp, X } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { IntroCourse, IntroState, IntroProfile } from "@/lib/yo/shared/types";
 import { L } from "@/lib/yo/shared/types";
@@ -32,6 +35,19 @@ function IntroPlayer({course,locale,audio}:Props){
  const [panel,setPanel]=useState<'notebook'|'settings'|null>(null),latest=useRef(state),heading=useRef<HTMLHeadingElement>(null);
  const feedback=useLearningFeedback();
  const [regionalOpen,setRegionalOpen]=useState(false),[regionalIndex,setRegionalIndex]=useState(0);
+ const { leg, depart, finish } = useTravelCinema();
+ const opened = useRef<string | null>(null);
+ const hasProfile = Boolean(state.profile);
+ useEffect(() => {
+   if (!ready || !hasProfile || state.view !== "map" || opened.current === key) return;
+   opened.current = key;
+   const place = introPlace(course.language, course.city);
+   if (!place) return;
+   // Learners with saved lesson activity are already at this destination.
+   const saved = latest.current;
+   if (!lastPlace() && (saved.visited.length || saved.completed.length || saved.answers.length || saved.best)) rememberPlace(place);
+   else depart(place);
+ }, [ready, hasProfile, state.view, key, course.language, course.city, depart]);
  useLayoutEffect(()=>{latest.current=state;},[state]);
  useEffect(()=>{const frame=requestAnimationFrame(()=>{try{const saved=parseIntro(localStorage.getItem(key),course);if(saved.view==='lesson'||saved.view==='final'){saved.resume=saved.view;saved.view='map';}latest.current=saved;setState(saved);}catch{setStored(false);}setReady(true);});return()=>cancelAnimationFrame(frame);},[key,course]);
  useEffect(()=>{return()=>stopLessonAudio();},[]);
@@ -64,28 +80,9 @@ function IntroPlayer({course,locale,audio}:Props){
  const phrase=(id:string)=>course.phrases.find(p=>p.id===id)!;
  const passed=introPassed(course,state),currentPassed=independentScore(state.answers)>=Math.ceil(course.final.length*.8);
  const map=state.view==='map'?introStageMap(course,state,adventureWorld(course.slug)):null;
- const smallStatus=!stored?<p role="status" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm">{say('La sauvegarde est indisponible dans ce navigateur.','Saving is unavailable in this browser.','No se puede guardar en este navegador.')}</p>:null;
- const example=(id:string)=>{const p=phrase(id);return <div key={id} className="rounded-2xl bg-emerald-50 p-4"><p lang={course.language} className="text-xl font-semibold leading-relaxed">{p.text}</p>{p.reading&&<p className="mt-1 text-base text-stone-600">{p.reading}</p>}{p.meaning[locale]!==p.text&&<p className="my-2 leading-7">{p.meaning[locale]}</p>}<IntroAudio text={p.text} speechLocale={course.speechLocale} path={audio[p.text]} locale={locale}/></div>;};
- return <div lang={locale} data-shared-course={course.language} className="min-h-screen bg-[#fbf9f3] text-stone-800">
-  <header className="border-b border-stone-200 bg-white"><div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-3">
-   {state.view==='map'?<Link prefetch={false} className="text-lg font-black text-emerald-900" href={`/yo/langues?lang=${locale}`}>YoPratiqo</Link>:<button type="button" className={secondary} aria-label={say('Quitter et garder ma place','Leave and save my place','Salir y guardar mi lugar')} onClick={leave}><X size={21}/></button>}
-   <span lang={course.language} className="text-sm font-bold">{course.nativeName}</span>
-   <div className="flex"><button type="button" className={secondary} disabled={state.view==='final'} onClick={notebook} aria-label={say('Carnet de mots','Word notebook','Cuaderno de palabras')}><BookOpen size={21}/></button><button type="button" className={secondary} onClick={()=>{stopLessonAudio();setPanel('settings');}} aria-label={say('Mes outils','My tools','Mis herramientas')}><Settings size={21}/></button></div>
-  </div></header>
-  <main className={`mx-auto ${state.view==='map'?'max-w-5xl':'max-w-2xl'} px-4 pt-6 pb-[calc(5rem+env(safe-area-inset-bottom))]`}>
-   {smallStatus}
-   {course.slug==='espagnol'&&<section hidden={!regionalOpen}>
-    <button type="button" className={secondary} onClick={()=>{setRegionalOpen(false);focus();}}>{say('Retour à la carte','Back to the map','Volver al mapa')}</button>
-    <SpanishRegionalPractice locale={locale} selectedIndex={regionalIndex} onIndexChange={setRegionalIndex}/>
-    {spanishRegionalPractice[regionalIndex].id==='es-region-caribbean-bus'&&<Link prefetch={false} href={`/yo/langues/espagnol/pays/republique-dominicaine?lang=${locale}`} className={`${secondary} mt-4 underline`}>{say('Découvrir le parcours dominicain existant','Explore the existing Dominican course','Explorar el curso dominicano existente')}</Link>}
-   </section>}
-   {state.view==='map'&&<div hidden={regionalOpen}>
-    <div className="mb-6 flex items-center gap-4"><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="md" compact/><div className="min-w-0"><p className="text-sm font-semibold text-emerald-700">{course.city} · {say('Premières rencontres','First meetings','Primeros encuentros')}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-2xl font-black outline-none">{passed?say('Ton premier tampon est gagné !','You earned your first stamp!','¡Ganaste tu primer sello!'):say('On fait connaissance ?','Shall we get acquainted?','¿Vamos a conocernos?')}</h1></div></div>
-    {map && <WorldJourneyMap model={map} locale={locale} active={!regionalOpen} onContinue={id=>{
-      const stop=map.destinations.find(d=>d.id===id);
-      if(!stop?.accessible)return;
+ function openStop(id: string, stop: { entryStep?: string }) {
       if(stop.entryStep) {
-        if(map.guideId===id && latest.current.resume==='lesson'){resume();return;}
+        if(map?.guideId===id && latest.current.resume==='lesson'){resume();return;}
         const at=steps.findIndex(s=>s.id===stop.entryStep); if(at>=0)move(at);
         return;
       }
@@ -97,6 +94,32 @@ function IntroPlayer({course,locale,audio}:Props){
       if(steps[s.step].mission===index&&s.resume==='lesson'){resume();return;}
       const at=steps.findIndex(item=>item.mission===index&&!s.visited.includes(item.id));
       move(at<0?steps.findIndex(item=>item.mission===index):at);
+ }
+ const smallStatus=!stored?<p role="status" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm">{say('La sauvegarde est indisponible dans ce navigateur.','Saving is unavailable in this browser.','No se puede guardar en este navegador.')}</p>:null;
+ const example=(id:string)=>{const p=phrase(id);return <div key={id} className="rounded-2xl bg-emerald-50 p-4"><p lang={course.language} className="text-xl font-semibold leading-relaxed">{p.text}</p>{p.reading&&<p className="mt-1 text-base text-stone-600">{p.reading}</p>}{p.meaning[locale]!==p.text&&<p className="my-2 leading-7">{p.meaning[locale]}</p>}<IntroAudio text={p.text} speechLocale={course.speechLocale} path={audio[p.text]} locale={locale}/></div>;};
+ return <div lang={locale} data-shared-course={course.language} className="min-h-screen bg-[#fbf9f3] text-stone-800">
+  <header className="border-b border-stone-200 bg-white"><div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-3">
+   {state.view==='map'?<Link prefetch={false} className="text-lg font-black text-emerald-900" href={`/yo/langues?lang=${locale}`}>YoPratiqo</Link>:<button type="button" className={secondary} aria-label={say('Quitter et garder ma place','Leave and save my place','Salir y guardar mi lugar')} onClick={leave}><X size={21}/></button>}
+   <span lang={course.language} className="text-sm font-bold">{course.nativeName}</span>
+   <div className="flex">{state.view === "map" && <button type="button" className={secondary}
+      aria-label={say("Revoir l’arrivée","Replay arrival","Repetir la llegada")}
+      onClick={() => { const place = introPlace(course.language, course.city); if (place) depart(place, undefined, true); }}><Plane size={21}/></button>}<button type="button" className={secondary} disabled={state.view==='final'} onClick={notebook} aria-label={say('Carnet de mots','Word notebook','Cuaderno de palabras')}><BookOpen size={21}/></button><button type="button" className={secondary} onClick={()=>{stopLessonAudio();setPanel('settings');}} aria-label={say('Mes outils','My tools','Mis herramientas')}><Settings size={21}/></button></div>
+  </div></header>
+  <main className={`mx-auto ${state.view==='map'?'max-w-5xl':'max-w-2xl'} px-4 pt-6 pb-[calc(5rem+env(safe-area-inset-bottom))]`}>
+   {smallStatus}
+   {course.slug==='espagnol'&&<section hidden={!regionalOpen}>
+    <button type="button" className={secondary} onClick={()=>{setRegionalOpen(false);focus();}}>{say('Retour à la carte','Back to the map','Volver al mapa')}</button>
+    <SpanishRegionalPractice locale={locale} selectedIndex={regionalIndex} onIndexChange={setRegionalIndex}/>
+    {spanishRegionalPractice[regionalIndex].id==='es-region-caribbean-bus'&&<Link prefetch={false} href={`/yo/langues/espagnol/pays/republique-dominicaine?lang=${locale}`} className={`${secondary} mt-4 underline`}>{say('Découvrir le parcours dominicain existant','Explore the existing Dominican course','Explorar el curso dominicano existente')}</Link>}
+   </section>}
+   {state.view==='map'&&<div hidden={regionalOpen}>
+    <div className="mb-6 flex items-center gap-4"><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="md" compact/><div className="min-w-0"><p className="text-sm font-semibold text-emerald-700">{course.city} · {say('Premières rencontres','First meetings','Primeros encuentros')}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-2xl font-black outline-none">{passed?say('Ton premier tampon est gagné !','You earned your first stamp!','¡Ganaste tu primer sello!'):say('On fait connaissance ?','Shall we get acquainted?','¿Vamos a conocernos?')}</h1></div></div>
+    {map && <WorldJourneyMap model={map} locale={locale} active={!regionalOpen && !leg} onContinue={id => {
+      const stop = map.destinations.find(d => d.id === id);
+      if (!stop?.accessible) return;
+      const place = introPlace(course.language, course.city);
+      if (place) depart(place, () => openStop(id, stop));
+      else openStop(id, stop);
     }}/>}
     <Link prefetch={false} href={`/yo/langues/${course.slug}/demarrer/vocabulaire?lang=${locale}`} target="_blank" rel="noopener" className={`${secondary} mt-3 underline`}>{say('Voir / imprimer les mots et verbes','View / print words and verbs','Ver / imprimir palabras y verbos')}</Link>
     <p className="text-sm text-emerald-800">{introPoints(course,state)} {say('points d’apprentissage','learning points','puntos de aprendizaje')}{passed&&<Stamp className="ml-3 inline" aria-label={say('Tampon obtenu','Stamp earned','Sello obtenido')}/>}</p>
@@ -125,5 +148,6 @@ function IntroPlayer({course,locale,audio}:Props){
    <div className="mb-4 flex items-center justify-between gap-3"><Dialog.Title className="text-xl font-bold">{panel==='notebook'?say('Carnet de mots','Word notebook','Cuaderno de palabras'):say('Mes outils','My tools','Mis herramientas')}</Dialog.Title><Dialog.Close className={secondary} aria-label={say('Fermer','Close','Cerrar')}><X/></Dialog.Close></div>
    {panel==='notebook'?<IntroNotebook course={course} locale={locale} audio={audio}/>:<div className="space-y-5"><FeedbackSettings locale={locale}/><button type="button" className={secondary} onClick={()=>{setPanel(null);setEditing(true);}}>{say('Ajuster mon départ et mon rythme','Adjust my start and pace','Ajustar mi inicio y mi ritmo')}</button><section><h3 className="font-bold">Pratiqo Match</h3><Link prefetch={false} href={`/trouver-un-prof?q=${encodeURIComponent(course.teacherQuery)}&lang=${locale}`} className={`${secondary} mt-2 underline`}>{say('Pratiquer avec un professeur','Practise with a teacher','Practicar con un profesor')}</Link></section><nav aria-label={say('Langue de l’interface','Interface language','Idioma de la interfaz')} className="flex">{(['fr','en','es'] as const).map(l=><Link prefetch={false} key={l} href={`/yo/langues/${course.slug}/demarrer?lang=${l}`} className={secondary} aria-current={locale===l?'page':undefined}>{l.toUpperCase()}</Link>)}</nav></div>}
   </Dialog.Content></Dialog.Portal></Dialog.Root>
+  {leg && <TravelFilm locale={locale} leg={leg} onArrival={finish}/>}
  </div>;
 }

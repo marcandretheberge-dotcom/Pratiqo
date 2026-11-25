@@ -51,6 +51,7 @@ for(const c of introCourses){
  assert.equal((v.getByRole('button',{name:'Continue'}) as HTMLButtonElement).disabled,true);
  click(v.getByRole('radio',{name:'120 min'}));assert.equal((v.getByRole('radio',{name:'120 min'}) as HTMLInputElement).checked,true);
  click(v.getByRole('button',{name:'Continue'}));assert.equal(v.queryByRole('combobox'),null);click(v.getByRole('button',{name:'Start here'}));
+ assert.ok(document.querySelector('[data-travel-film="flight"] video'));click(v.getByRole('button',{name:'Skip'}));
  click(v.getByRole('button',{name:'Word notebook'}));assert.ok(v.getByRole('dialog'));assert.ok(within(v.getByRole('dialog')).getByText(c.phrases.find(p=>p.id==='age30')!.text,{exact:true}));click(within(v.getByRole('dialog')).getByRole('button',{name:'Close'}));
  click(v.getByRole('button',{name:'Continue'}));
  for(const step of courseSteps(c)){

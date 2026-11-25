@@ -13,7 +13,9 @@ import outline from "@/lib/yo/italian/travel/italy-outline.json";
 import { MapTraveler } from "../../journey/map/MapTraveler";
 import { approvedRoad, roadPath, roadPoint } from "../../journey/map/roadGeometry";
 import { FeedbackSettings, useLearningFeedback } from "../../feedback/LearningFeedback";
-import { TravelArrival } from "./TravelArrival";
+import { TravelFilm } from "../../travel/TravelFilm";
+import { useTravelCinema } from "../../travel/useTravelCinema";
+import { italianPlace, lastPlace, rememberPlace, travelLocationKey } from "@/lib/yo/travelCinema";
 import { FlorenceDiscovery } from "./FlorenceDiscovery";
 import { MapScooter } from "./MapScooter";
 import { travelStyles } from "./styles";
@@ -30,6 +32,8 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
   const [discovery, setDiscovery] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   const [atlasOpen, setAtlasOpen] = useState(false);
+  const locationKey = storageKey === "yo.it.travel.cosmetics.v1" ? travelLocationKey : storageKey + ".last-place";
+  const { leg, depart, finish } = useTravelCinema(locationKey);
   const guideBefore = useRef(guide);
   const initialJourney = useRef({ guide, steps: journey.steps, currentUnitId: unit.id, canReview });
   const persist = useCallback(() => {
@@ -46,11 +50,19 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
       value.selected = initial.canReview?.(initial.currentUnitId) ? initial.currentUnitId : initial.guide;
     }
     latest.current = value;
-    const frame = requestAnimationFrame(() => { setMemory(value); setReady(true); });
+    const frame = requestAnimationFrame(() => {
+      setMemory(value); setReady(true);
+      const destination = italianPlace(value.selected), previous = lastPlace(locationKey);
+      if (!destination) return;
+      // Existing Italian travelers keep their saved city on their first visit after the update.
+      if (!previous && value.arrived) { rememberPlace(destination, locationKey); return; }
+      if (previous?.country === destination.country && value.arrived) return;
+      depart(destination, () => commit({ arrived: true }));
+    });
     window.addEventListener("pagehide", persist);
     return () => { cancelAnimationFrame(frame); persist(); window.removeEventListener("pagehide", persist); };
     // Hydrate once per cosmetic store; earned progress is handled separately below.
-  }, [storageKey, persist]);
+  }, [storageKey, locationKey, persist, depart, commit]);
   useEffect(() => {
     if (guide === guideBefore.current) return;
     guideBefore.current = guide;
@@ -70,16 +82,19 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
     if (positionTimer.current) clearTimeout(positionTimer.current);
     positionTimer.current = setTimeout(persist, 120);
   }
-  const arrive = useCallback(() => commit({ arrived: true }), [commit]);
   function enterMission() {
     if (!canVisit(city.unitId)) return;
-    if (city.unitId === "u06" && !memory.discovered) { setDiscovery(true); return; }
-    if (city.unitId === unit.id) openCurrentMission(); else openUnit(city.unitId);
+    const destination = italianPlace(city.unitId);
+    if (!destination) return;
+    depart(destination, () => {
+      if (city.unitId === "u06" && !memory.discovered) { setDiscovery(true); return; }
+      if (city.unitId === unit.id) openCurrentMission(); else openUnit(city.unitId);
+    });
   }
   if (!ready) return <p role="status">{t("Ton voyage se prépare…", "Preparing your journey…", "Preparando tu viaje…")[locale]}</p>;
-  return <section className="italian-travel" data-travel-review data-scene-active={active && !toolsOpen && !discovery && memory.arrived}>
+  return <section className="italian-travel" data-travel-review data-scene-active={active && !toolsOpen && !discovery && !leg && memory.arrived}>
     <style>{travelStyles}</style>
-    <header className="travel-heading"><h1>{t("Mon voyage en Italie", "My Italian journey", "Mi viaje por Italia")[locale]}</h1><div className="travel-heading-tools"><button type="button" className="travel-icon" title={t("Revoir l’arrivée", "Replay arrival", "Repetir la llegada")[locale]} onClick={() => commit({ arrived: false })}><Plane size={21}/></button><button type="button" className="travel-icon" aria-label={t("Voyage et équipement", "Journey and equipment", "Viaje y equipo")[locale]} title={t("Voyage et équipement", "Journey and equipment", "Viaje y equipo")[locale]} onClick={() => setToolsOpen(true)}><Backpack size={21}/></button></div></header>
+    <header className="travel-heading"><h1>{t("Mon voyage en Italie", "My Italian journey", "Mi viaje por Italia")[locale]}</h1><div className="travel-heading-tools"><button type="button" className="travel-icon" title={t("Revoir l’arrivée", "Replay arrival", "Repetir la llegada")[locale]} onClick={() => { const to = italianPlace(city.unitId); if (to) depart(to, undefined, true); }}><Plane size={21}/></button><button type="button" className="travel-icon" aria-label={t("Voyage et équipement", "Journey and equipment", "Viaje y equipo")[locale]} title={t("Voyage et équipement", "Journey and equipment", "Viaje y equipo")[locale]} onClick={() => setToolsOpen(true)}><Backpack size={21}/></button></div></header>
     {!stored && <p role="status">{t("La reprise est limitée à cette session : le stockage est indisponible.", "Resume is limited to this session: storage is unavailable.", "La reanudación se limita a esta sesión: el almacenamiento no está disponible.")[locale]}</p>}
     {illustrated ? <Dialog.Root open={atlasOpen} onOpenChange={setAtlasOpen}>
       <Dialog.Trigger asChild><button className="reward-atlas-index" type="button"><Route size={18}/><strong>{t("Carte","Map","Mapa")[locale]} {worldIndex+1}/{worlds.length}</strong><span>{world.title[locale]}</span><small>{worlds.reduce((n,w)=>n+w.cities.length,0)} {t("villes","cities","ciudades")[locale]}</small><ChevronDown size={16}/></button></Dialog.Trigger>
@@ -112,7 +127,7 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
         </svg>
         {world.citiesWithProgress.map((c, i) => { const [x,y] = roadPoint(i, road); return <button type="button" key={c.unitId} className="travel-city" data-city={c.unitId} data-side={x < 160 || i % 2 ? "right" : "left"} aria-pressed={memory.selected === c.unitId} aria-disabled={!canVisit(c.unitId)} style={{ left: x / 480 * 100 + "%", top: y / 600 * 100 + "%" }}
           onClick={() => { if (!canVisit(c.unitId) || memory.selected === c.unitId) return; feedback.step(); commit({ selected: c.unitId }); }}><span>{c.name}</span>{!canVisit(c.unitId) ? <LockKeyhole size={13}/> : <span className="travel-city-number">{i + worldIndex * 4 + 1}</span>}</button>; })}
-        <MapTraveler key={world.id} index={index} locale={locale} road={road} initialPosition={memory.positions[world.id] ?? index} onPosition={positionChanged} active={active && memory.arrived && !discovery && !toolsOpen} pose={equipped ? "riding" : "walking"} accessory={equipped ? <MapScooter/> : undefined}/>
+        <MapTraveler key={world.id} index={index} locale={locale} road={road} initialPosition={memory.positions[world.id] ?? index} onPosition={positionChanged} active={active && memory.arrived && !leg && !discovery && !toolsOpen} pose={equipped ? "riding" : "walking"} accessory={equipped ? <MapScooter/> : undefined}/>
         {!illustrated && <span className="travel-map-credit">Natural Earth · WGS84</span>}
       </div>
       </div>
@@ -139,7 +154,7 @@ export function ItalianTravelNavigator({ journey, progress, active, openCurrentM
         {canUseItalianFlute(worlds, worldIndex) && <button className="travel-text-button" data-yoppo-flute={world.id} type="button" onClick={() => { feedback.sample("unlock"); commit({ selected: worlds[worldIndex + 1].cities[0].unitId }); setToolsOpen(false); }}><Music2 size={18}/>{t("Jouer de la flûte : monde suivant", "Play the flute: next world", "Tocar la flauta: siguiente mundo")[locale]}</button>}
         <details className="travel-details"><summary>{t("Carnet de voyage", "Travel notebook", "Diario de viaje")[locale]}</summary><p>{t("Les trajets suivent les modules, pas les routes. Le scooter et le trivia ne débloquent aucune ville.", "Paths follow the modules, not roads. The scooter and trivia do not unlock cities.", "Los caminos siguen los módulos, no las carreteras. El scooter y el trivia no desbloquean ciudades.")[locale]}</p><FeedbackSettings locale={locale}/></details>
     </Dialog.Content></Dialog.Portal></Dialog.Root>
-    {!memory.arrived && active && <TravelArrival locale={locale} onArrive={arrive}/>}
+    {leg && active && <TravelFilm leg={leg} locale={locale} onArrival={finish}/>}
     {discovery && <FlorenceDiscovery locale={locale} unit={florence} onClose={() => setDiscovery(false)} onCultureComplete={() => commit({ cultureComplete: true })} onContinue={() => { commit({ discovered: true }); setDiscovery(false); if (unit.id === "u06") openCurrentMission(); else openUnit("u06"); }}/>}
   </section>;
 }
