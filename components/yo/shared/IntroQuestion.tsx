@@ -13,10 +13,12 @@ import { acceptPracticeTap, PracticeAdvanceStatus, usePracticeAdvance } from "..
 import { primary, secondary } from "../italian/guided/copy";
 import { IntroAudio } from "./IntroAudio";
 
-export function IntroQuestion({ course, locale, audio, exercise, visual, value, onChange, onContinue, onAttempt, assessment = false, paused = false }: {
+export function IntroQuestion({ course, locale, audio, exercise, visual, value, onChange, onContinue, onAttempt, onSubmit, onRestart, assessment = false, paused = false }: {
   course: IntroCourse; locale: YoLocale; audio: Record<string,string>; exercise?: Exercise; visual?: Mission["visuals"][number]; audioFirst?: boolean;
-  value: Draft; onChange: (draft: Draft) => void; onContinue: () => void; assessment?: boolean; paused?: boolean;
+  value: Draft; onChange: (draft: Draft) => void | Draft | null; onContinue: () => void; assessment?: boolean; paused?: boolean;
   onAttempt?: (result: { correct: boolean; assisted: boolean }) => void;
+  onSubmit?: (draft: Draft, before: Draft) => Draft | null;
+  onRestart?: () => void;
 }) {
   const id = exercise?.id ?? visual!.phrase, feedback = useAnswerFeedback(), last = useRef(value);
   useLayoutEffect(() => { last.current = value; }, [value]);
@@ -25,7 +27,11 @@ export function IntroQuestion({ course, locale, audio, exercise, visual, value, 
   const parts = phrase.parts ?? [], answered = value.checked && (value.correct || assessment);
   const flow = usePracticeAdvance({ token: id, correct: value.checked && value.correct, paused, onNext: onContinue });
   const say = (fr:string,en:string,es:string) => L(fr,en,es)[locale];
-  function edit(patch: Partial<Draft>) { const next = { ...last.current, ...patch }; last.current = next; onChange(next); }
+  function edit(patch: Partial<Draft>) {
+    const next = { ...last.current, ...patch }, accepted = onChange(next);
+    if (accepted === null) return null;
+    last.current = accepted ?? next; return last.current;
+  }
   function submit(selected?: string) {
     const d = last.current;
     if (paused || d.checked && (d.correct || assessment || exercise?.kind === "order") || listen && !d.heard && !d.transcript) return;
@@ -34,9 +40,12 @@ export function IntroQuestion({ course, locale, audio, exercise, visual, value, 
     if (exercise?.kind !== "order" && !chosen) return;
     const correct = exercise?.kind === "order" ? d.tiles.every((v,i) => v === i) : chosen === (visual?.answer ?? exercise!.answer);
     const assisted = d.assisted || !correct && !assessment;
-    edit({ selected: chosen, checked: true, correct, assisted });
-    onAttempt?.({ correct, assisted });
-    if (correct) { feedback.correct(id); flow.arm(); }
+    const next = { ...d, selected: chosen, checked: true, correct, assisted };
+    const accepted = onSubmit ? onSubmit(next, d) : edit(next);
+    if (!accepted) return;
+    last.current = accepted;
+    onAttempt?.({ correct: accepted.correct, assisted: accepted.assisted });
+    if (accepted.correct) { feedback.correct(id); flow.arm(); }
   }
   function choose(selected: string, detail: number) { if (acceptPracticeTap(detail)) submit(selected); }
   const cue = exercise?.cue && course.phrases.find(p => p.id === exercise.cue);
@@ -87,5 +96,6 @@ export function IntroQuestion({ course, locale, audio, exercise, visual, value, 
     <YoppoAnswerReaction revision={value.correct?feedback.reaction:0} locale={locale}/>
     <PracticeAdvanceStatus flow={flow} locale={locale}/>
     {answered && !flow.pending ? <button type="button" className={`${primary} mt-5 w-full`} onClick={flow.next}>{say("Continuer","Continue","Continuar")}</button> : exercise?.kind==='order'&&!answered ? <button type="button" className={`${primary} mt-5 w-full`} disabled={value.tiles.length!==parts.length} onClick={()=>submit()}>{say("Vérifier la phrase","Check sentence","Comprobar la frase")}</button> : null}
+    {value.checked && !assessment && onRestart ? <button type="button" className={secondary + " mt-3 w-full"} onClick={onRestart}>{say("Recommencer sans aide", "Start again without help", "Empezar de nuevo sin ayuda")}</button> : null}
   </section>;
 }

@@ -10,14 +10,15 @@ import { courseSpeechLanguage } from "@/lib/yo/shared/speechLanguage";
 import Link from "next/link";
 import {SharedPassBalance} from "../italian/pass/SharedPassBalance";
 import {showPassPilot} from "@/lib/yo/passPilot/proof.client";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { BookOpen, Plane, Settings, Stamp, X } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
-import type { IntroCourse, IntroState, IntroProfile } from "@/lib/yo/shared/types";
+import type { IntroCourse, IntroProfile } from "@/lib/yo/shared/types";
 import { L } from "@/lib/yo/shared/types";
 import { courseSteps } from "@/lib/yo/shared/steps";
-import { emptyDraft, freshIntro, introKey, parseIntro, introPassed, introPoints, independentScore } from "@/lib/yo/shared/state";
+import { freshIntro, introKey, introPassed, introPoints, independentScore } from "@/lib/yo/shared/state";
+import { createIntroSyncStore, introRevision } from "@/lib/yo/shared/introSync";
 import type { YoLocale } from "@/lib/yo/types";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { LearningFeedbackProvider, FeedbackSettings, useLearningFeedback } from "../feedback/LearningFeedback";
@@ -38,11 +39,14 @@ import { IntroDueReview } from "../review/IntroDueReview";
 import { recordIntroReviewAttempt } from "@/lib/yo/review/intro";
 
 type Props={course:IntroCourse;locale:YoLocale;audio:Record<string,string>};
-export function SharedIntro(props:Props){return <LearningFeedbackProvider><IntroPlayer {...props}/></LearningFeedbackProvider>;}
+export function SharedIntro(props:Props){return <LearningFeedbackProvider><IntroPlayer key={props.course.language + "-" + introRevision(props.course)} {...props}/></LearningFeedbackProvider>;}
+const introServerSnapshot = () => null;
 function IntroPlayer({course,locale,audio}:Props){
  const say=(fr:string,en:string,es:string)=>L(fr,en,es)[locale],steps=courseSteps(course),key=introKey(course.language);
- const [state,setState]=useState<IntroState>(()=>freshIntro(course)),[ready,setReady]=useState(false),[stored,setStored]=useState(true),[editing,setEditing]=useState(false);
- const [panel,setPanel]=useState<'notebook'|'settings'|null>(null),latest=useRef(state),heading=useRef<HTMLHeadingElement>(null);
+ const [store]=useState(()=>createIntroSyncStore(course)),[editing,setEditing]=useState(false);
+ const snapshot=useSyncExternalStore(store.subscribe,store.getSnapshot,introServerSnapshot);
+ const state=snapshot?.state??freshIntro(course),ready=Boolean(snapshot),stored=!snapshot?.storageError;
+ const [panel,setPanel]=useState<'notebook'|'settings'|null>(null),latest=useRef(state),heading=useRef<HTMLHeadingElement>(null),live=useRef(true);
  const feedback=useLearningFeedback();
  const [regionalOpen,setRegionalOpen]=useState(false),[regionalIndex,setRegionalIndex]=useState(0);
  const { leg, depart, finish } = useTravelCinema();
@@ -67,40 +71,42 @@ function IntroPlayer({course,locale,audio}:Props){
    else depart(place);
  }, [ready, hasProfile, state.view, key, course.language, course.city, depart]);
  useLayoutEffect(()=>{latest.current=state;},[state]);
- useEffect(()=>{const frame=requestAnimationFrame(()=>{try{const saved=parseIntro(localStorage.getItem(key),course);if(saved.view==='lesson'||saved.view==='final'){saved.resume=saved.view;saved.view='map';}latest.current=saved;setState(saved);}catch{setStored(false);}setReady(true);});return()=>cancelAnimationFrame(frame);},[key,course]);
- useEffect(()=>{return()=>stopLessonAudio();},[]);
- function save(next:IntroState){latest.current=next;setState(next);try{localStorage.setItem(key,JSON.stringify(next));setStored(true);}catch{setStored(false);}}
+ useEffect(()=>{live.current=true;return()=>{live.current=false;stopLessonAudio();};},[]);
  function focus(){requestAnimationFrame(()=>{heading.current?.focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});});}
- function move(at:number){if(at<0||at>=steps.length)return;const fromMap=latest.current.view==='map';stopLessonAudio();save({...latest.current,view:'lesson',resume:'lesson',step:at,draft:emptyDraft()});focus();if(fromMap)feedback.step();}
- function leave(){stopLessonAudio();save({...latest.current,view:'map',resume:latest.current.view==='final'?'final':latest.current.view==='lesson'?'lesson':latest.current.resume});focus();}
- function startFinal(){stopLessonAudio();save({...latest.current,view:'final',resume:'final',finalIndex:0,answers:[],draft:emptyDraft()});focus();}
- function advance(){const s=latest.current,step=steps[s.step];if((step.kind==='recall'||step.kind==='exercise')&&(!s.draft.checked||!s.draft.correct))return;
-  const completed=(step.kind==='recall'||step.kind==='exercise')?[...new Set([...s.completed,step.id])]:s.completed;
-  save({...s,completed,visited:[...new Set([...s.visited,step.id])]});if(s.step===steps.length-1)startFinal();else move(s.step+1);
-  const mission=course.missions[step.mission];
-  const boundary=s.step===steps.length-1||steps[s.step+1].mission!==step.mission;
-  if(boundary&&mission.practice.every(e=>completed.includes(e.id))){
-   feedback.emit(`mission:${course.language}:${mission.id}`,'mission');
-   present({id:`${mission.id}:success`,kind:"mission-success",title:mission.title[locale],detail:mission.goal[locale]});
+ function move(at:number){if(!live.current||at<0||at>=steps.length)return;const fromMap=store.getSnapshot().state.view==='map';stopLessonAudio();store.move(at);focus();if(fromMap)feedback.step();}
+ function leave(){if(!live.current)return;stopLessonAudio();store.leave();focus();}
+ function startFinal(){if(!live.current)return;stopLessonAudio();store.startFinal();focus();}
+ function advance(){
+  if(!live.current||!snapshot)return;
+  const result=store.advance(snapshot.token);if(!result.accepted)return;stopLessonAudio();focus();
+  if(result.mission!==null){
+   const mission=course.missions[result.mission];
+   feedback.emit('mission:'+course.language+':'+mission.id,'mission');
+   present({id:mission.id+':success',kind:'mission-success',title:mission.title[locale],detail:mission.goal[locale]});
   }
  }
- function nextFinal(){const s=latest.current;if(!s.draft.checked||s.answers.length!==s.finalIndex)return;stopLessonAudio();
-  const answers=[...s.answers,{correct:s.draft.correct,assisted:s.draft.assisted}];
-  if(answers.length===course.final.length){const score=independentScore(answers);save({...s,view:'result',resume:null,answers,best:Math.max(s.best,score),draft:emptyDraft()});if(score>=Math.ceil(course.final.length*.8)&&!introPassed(course,s)){
-   feedback.emit(`intro-stamp:${course.language}`,'stamp');
-   present({id:"intro-final:success",kind:"mission-success",title:say("Défi final réussi", "Final challenge completed", "Reto final superado")});
-   present({id:"intro-stamp",kind:"artifact",title:say("Ton premier tampon", "Your first stamp", "Tu primer sello"),detail:course.city});
-  }}
-  else save({...s,finalIndex:s.finalIndex+1,answers,draft:emptyDraft()});focus();
+ function nextFinal(){
+  if(!live.current||!snapshot)return;
+  const result=store.nextFinal(snapshot.token);if(!result.accepted)return;stopLessonAudio();focus();
+  if(result.firstPass){
+   feedback.emit('intro-stamp:'+course.language,'stamp');
+   present({id:'intro-final:success',kind:'mission-success',title:say('Défi final réussi','Final challenge completed','Reto final superado')});
+   present({id:'intro-stamp',kind:'artifact',title:say('Ton premier tampon','Your first stamp','Tu primer sello'),detail:course.city});
+  }
  }
- function profileDone(profile:IntroProfile){const existing=latest.current,entry=steps.findIndex(s=>s.mission===profile.entry);
-  // Editing the same starting point preserves the exact draft and every earned outcome.
-  save({...existing,profile,...(existing.profile?.entry===profile.entry?{}:{step:entry,resume:'lesson' as const,draft:emptyDraft()}),view:'map'});setEditing(false);focus();
+ function profileDone(profile:IntroProfile){if(!live.current)return;store.profile(profile);setEditing(false);focus();}
+ function resume(){if(!live.current)return;store.resume();focus();feedback.step();}
+ function notebook(){
+  if(state.view==='final')return;stopLessonAudio();
+  if(snapshot&&state.view==='lesson'&&['exercise','recall'].includes(steps[state.step].kind)&&!state.draft.checked)store.edit(snapshot.token,{...state.draft,assisted:true});
+  setPanel('notebook');
  }
- function resume(){const s=latest.current;if(s.resume){save({...s,view:s.resume});focus();feedback.step();}else move(steps.findIndex(x=>x.mission===(s.profile?.entry??0)));}
- function notebook(){if(state.view==='final')return;stopLessonAudio();if(state.view==='lesson'&&steps[state.step].kind==='exercise'&&!state.draft.checked)save({...latest.current,draft:{...latest.current.draft,assisted:true}});setPanel('notebook');}
+ const smallStatus=snapshot?.contentChanged?<div role="alert" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm">
+  <p>{say('Cette leçon a changé. Actualise la page pour continuer.','This lesson has changed. Refresh the page to continue.','Esta lección ha cambiado. Actualiza la página para continuar.')}</p>
+  <button type="button" className={`${secondary} mt-2`} onClick={()=>window.location.reload()}>{say('Actualiser la leçon','Refresh lesson','Actualizar la lección')}</button>
+ </div>:!stored?<p role="status" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm">{say('La sauvegarde est indisponible dans ce navigateur.','Saving is unavailable in this browser.','No se puede guardar en este navegador.')}</p>:null;
  if(!ready)return <YoppoWelcomeLoading locale={locale}/>;
- if(!state.profile||editing)return <IntroWelcome course={course} locale={locale} audio={audio} initial={state.profile} onComplete={profileDone} onCancel={state.profile?()=>setEditing(false):undefined}/>;
+ if(!state.profile||editing)return <>{smallStatus&&<div className="mx-auto max-w-xl px-5 pt-5">{smallStatus}</div>}<IntroWelcome course={course} locale={locale} audio={audio} initial={state.profile} onComplete={profileDone} onCancel={state.profile?()=>setEditing(false):undefined}/></>;
  const step=steps[state.step],mission=course.missions[step.mission],missionSteps=steps.filter(s=>s.mission===step.mission),position=missionSteps.findIndex(s=>s.id===step.id);
  const phrase=(id:string)=>course.phrases.find(p=>p.id===id)!;
  const passed=introPassed(course,state),currentPassed=independentScore(state.answers)>=Math.ceil(course.final.length*.8);
@@ -122,7 +128,6 @@ function IntroPlayer({course,locale,audio}:Props){
       const at=steps.findIndex(item=>item.mission===index&&!s.visited.includes(item.id));
       move(at<0?steps.findIndex(item=>item.mission===index):at);
  }
- const smallStatus=!stored?<p role="status" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm">{say('La sauvegarde est indisponible dans ce navigateur.','Saving is unavailable in this browser.','No se puede guardar en este navegador.')}</p>:null;
  const example=(id:string)=>{const p=phrase(id);return <div key={id} className="rounded-2xl bg-emerald-50 p-4"><p lang={course.language} className="text-xl font-semibold leading-relaxed">{p.text}</p>{p.reading&&<p className="mt-1 text-base text-stone-600">{p.reading}</p>}{p.meaning[locale]!==p.text&&<p className="my-2 leading-7">{p.meaning[locale]}</p>}<IntroAudio text={p.text} speechLocale={course.speechLocale} path={audio[p.text]} locale={locale}/></div>;};
  return <div lang={locale} data-shared-course={course.language} className="min-h-screen bg-[#fbf9f3] text-stone-800">
   <header className="border-b border-stone-200 bg-white"><div className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
@@ -171,8 +176,8 @@ function IntroPlayer({course,locale,audio}:Props){
     <p className="text-sm font-semibold text-emerald-800">{say('Mission','Mission','Misión')} {step.mission+1} · {position+1}/{missionSteps.length}</p><div className="my-3 h-2 overflow-hidden rounded-full bg-stone-200" role="progressbar" aria-valuenow={position} aria-valuemin={0} aria-valuemax={missionSteps.length} aria-label={mission.title[locale]}><div className="h-full bg-emerald-700" style={{width:`${position/missionSteps.length*100}%`}}/></div>
     <h1 ref={heading} tabIndex={-1} className="mb-5 text-2xl font-bold outline-none">{mission.title[locale]}</h1>
     <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-7">
-     {step.kind==='recall'?<IntroQuestion key={step.id} course={course} locale={locale} audio={audio} exercise={mission.preparation[step.index - 1]} paused={panel!==null || Boolean(scene) || Boolean(leg)} value={state.draft} onChange={d=>save({...latest.current,draft:d})} onAttempt={result=>recordIntroReviewAttempt(course,mission.preparation[step.index-1],result)} onContinue={advance}/>:
-      step.kind==='exercise'?<IntroQuestion key={step.id} course={course} locale={locale} audio={audio} exercise={mission.practice[step.index]} paused={panel!==null || Boolean(scene) || Boolean(leg)} value={state.draft} onChange={d=>save({...latest.current,draft:d})} onAttempt={result=>recordIntroReviewAttempt(course,mission.practice[step.index],result)} onContinue={advance}/>:
+     {step.kind==='recall'?<IntroQuestion key={snapshot!.token} course={course} locale={locale} audio={audio} exercise={mission.preparation[step.index - 1]} paused={panel!==null || Boolean(scene) || Boolean(leg)} value={state.draft} onChange={d=>live.current?store.edit(snapshot!.token,d):null} onSubmit={(draft,before)=>live.current?store.edit(snapshot!.token,draft,{draft,before}):null} onAttempt={result=>recordIntroReviewAttempt(course,mission.preparation[step.index-1],result)} onContinue={advance} onRestart={()=>{stopLessonAudio();store.restart(snapshot!.token);focus();}}/>:
+      step.kind==='exercise'?<IntroQuestion key={snapshot!.token} course={course} locale={locale} audio={audio} exercise={mission.practice[step.index]} paused={panel!==null || Boolean(scene) || Boolean(leg)} value={state.draft} onChange={d=>live.current?store.edit(snapshot!.token,d):null} onSubmit={(draft,before)=>live.current?store.edit(snapshot!.token,draft,{draft,before}):null} onAttempt={result=>recordIntroReviewAttempt(course,mission.practice[step.index],result)} onContinue={advance} onRestart={()=>{stopLessonAudio();store.restart(snapshot!.token);focus();}}/>:
       <>
        {step.kind==='study'&&<><h2 className="mb-4 text-xl font-bold">{say('Tes mots pour la mission','Your words for the mission','Tus palabras para la misión')}</h2><div className="space-y-3">{mission.phrases.map(example)}</div><PracticeAdvanceNotice locale={locale}/></>}
        {step.kind==='words'&&<><h2 className="text-xl font-bold">{say('Prêt pour la rencontre !','Ready for the conversation!','¡Todo listo para el encuentro!')}</h2><p className="mt-4 leading-7">{mission.goal[locale]}</p></>}
@@ -182,11 +187,11 @@ function IntroPlayer({course,locale,audio}:Props){
       </>}
     </div>
    </>}
-   {state.view==='final'&&<><h1 ref={heading} tabIndex={-1} className="text-2xl font-bold outline-none">{say('Défi final','Final challenge','Reto final')} · {state.finalIndex+1}/{course.final.length}</h1><p className="my-4 text-sm leading-6">{say('Réussis 5 réponses sur 6 sans aide pour gagner ton tampon.','Get 5 of 6 answers right without help to earn your stamp.','Acierta 5 de 6 respuestas sin ayuda para ganar el sello.')}</p><div className="rounded-3xl border bg-white p-5"><IntroQuestion key={`final:${state.finalIndex}`} course={course} locale={locale} audio={audio} exercise={course.final[state.finalIndex]} assessment paused={panel!==null || Boolean(scene) || Boolean(leg)} value={state.draft} onChange={d=>save({...latest.current,draft:d})} onContinue={nextFinal}/></div></>}
+   {state.view==='final'&&<><h1 ref={heading} tabIndex={-1} className="text-2xl font-bold outline-none">{say('Défi final','Final challenge','Reto final')} · {state.finalIndex+1}/{course.final.length}</h1><p className="my-4 text-sm leading-6">{say('Réussis 5 réponses sur 6 sans aide pour gagner ton tampon.','Get 5 of 6 answers right without help to earn your stamp.','Acierta 5 de 6 respuestas sin ayuda para ganar el sello.')}</p><div className="rounded-3xl border bg-white p-5"><IntroQuestion key={snapshot!.token} course={course} locale={locale} audio={audio} exercise={course.final[state.finalIndex]} assessment paused={panel!==null || Boolean(scene) || Boolean(leg)} value={state.draft} onChange={d=>live.current?store.edit(snapshot!.token,d):null} onSubmit={(draft,before)=>live.current?store.edit(snapshot!.token,draft,{draft,before}):null} onContinue={nextFinal}/></div></>}
    {state.view==='result'&&<section className="rounded-3xl border bg-white p-6 text-center"><div className="flex justify-center"><CompanionAvatar visualId="travel" state={currentPassed?'celebrating':'teacher_ready'} locale={locale} size="md" compact/></div><h1 ref={heading} tabIndex={-1} className="mt-5 text-2xl font-bold outline-none">{currentPassed?say('Ton tampon est dans le passeport !','Your stamp is in your passport!','¡Tu sello está en el pasaporte!'):say('On révise, puis on réessaie.','Let’s review, then try again.','Repasamos y lo intentamos de nuevo.')}</h1><p className="mt-5 text-4xl font-black text-emerald-800">{independentScore(state.answers)}/{course.final.length}</p><p className="mt-2 text-sm">{say('réponses réussies sans aide','answers correct without help','respuestas correctas sin ayuda')}</p>
     {passed && <IntroContinuationCard destination={continuation} locale={locale}/>}
     {goalReview && <div className="mt-4 text-left text-sm"><p>{goalReview.goal[locale]}</p><button type="button" className={`${secondary} mt-2 underline`} onClick={()=>move(goalReview.step)}>{say("Revoir", "Revisit", "Repasar")} · {goalReview.title[locale]}</button></div>}
-    <button type="button" className={`${passed?secondary:primary} mt-6 w-full`} onClick={()=>{save({...latest.current,view:'map',resume:null});focus();}}>{say('Retour à mon parcours','Back to my journey','Volver a mi recorrido')}</button>{!currentPassed&&<button type="button" className={`${secondary} mt-3`} onClick={startFinal}>{say('Réessayer le défi','Retry the challenge','Reintentar el reto')}</button>}</section>}
+    <button type="button" className={`${passed?secondary:primary} mt-6 w-full`} onClick={()=>{store.map();focus();}}>{say('Retour à mon parcours','Back to my journey','Volver a mi recorrido')}</button>{!currentPassed&&<button type="button" className={`${secondary} mt-3`} onClick={startFinal}>{say('Réessayer le défi','Retry the challenge','Reintentar el reto')}</button>}</section>}
    {(state.view==='map'||state.view==='result')&&!regionalOpen&&!scene&&!leg&&panel===null&&<IntroDueReview course={course} locale={locale} audio={audio}/>}
    {speechLanguage && !scene && !leg && panel === null && (state.view === "result" || (state.view === "lesson" && step.kind !== "recall" && step.kind !== "exercise")) && <div className="mt-6"><YoSpeechPractice key={mission.id} language={speechLanguage} locale={locale} scenarioId="introduction"/></div>}
   </main>

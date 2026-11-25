@@ -162,6 +162,13 @@ delivery passed all 17 public page/bundle/status checks; details are in the ledg
 
 ## Shared surfaces: what exists and what does not
 
+PR #487 subsequently deployed the Mandarin mobile layout improvement: compact
+header, warm surfaces, more reading space and a 56-pixel inline companion rail
+with navigation below it. Chromium and macOS WebKit verified its actual geometry
+at 393px and 320px, with screenshots reviewed. All five workflows, both Vercel
+builds and nine production route/bundle/status checks passed. This is presentation
+parity work; it does not change answers, assistance, grades or course locks.
+
 The seven non-Italian introductions each contain three missions, 19 phrases,
 17 preparation questions, 15 practice questions and six final questions. Their
 content and controls are shared with authored language-specific phrases,

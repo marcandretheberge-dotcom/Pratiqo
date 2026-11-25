@@ -216,7 +216,7 @@ credit purchase, budget change or retry occurred. Realtime parameter compatibili
 and eight-language live voice quality remain unverified. See the
 [diagnostic record](yopratiqo-speech-gateway-preflight.md).
 
-## Eighth lot: Mandarin mobile reading space prepared
+## Eighth lot: Mandarin mobile reading space deployed
 
 The Mandarin map and player use the warm paper, green controls and serif headings
 of the Italian reference. The mobile player keeps its existing learning controls
@@ -231,8 +231,35 @@ locks and navigation handlers are unchanged. Independent review found no blocker
 The Eastern Chromium/macOS WebKit gate adds actual layout measurements at 393px
 and 320px: at least 55% of viewport height for the reading area, a 44–60px companion
 rail, correctly ordered controls and no overflow. The existing historical fixtures,
-two real new recall answers, help and reload checks remain intact. Those browser
-results and production verification are still pending for this lot.
+two real new recall answers, help and reload checks remain intact. All eight
+Eastern cases passed across Chromium and macOS WebKit, and their screenshots
+were reviewed. The shared foundation browser gates also passed. All five triggered
+workflows and both Vercel builds passed on head `b980b2dbd792d5bf1606bcc7598fb7113fb4b118`.
+PR #487 is deployed; all nine public route/bundle/status checks passed.
+
+## Ninth lot: introduction continuity across tabs prepared
+
+The seven shared introductions retain their original local storage keys and
+historical results while adding bounded, content-scoped attempt metadata. Separate
+activities changed in different tabs are preserved. Consulted help, a wrong answer
+and an already checked result remain attached to their actual attempt; restoring
+them emits no grade, reward or dated-review event. An explicit fresh attempt is
+required to clear assistance. A stale Check reads current storage and cannot grade
+words changed in another view or resubmit an already checked answer.
+
+Reset markers dominate older views. Content changes clear unfinished drafts/final
+runs while retaining historical best results. An invalidated old tab displays a
+specific refresh action. Storage failure remains a separate visible condition and
+allows the current session to continue in memory. This is browser-local continuity,
+not authenticated cross-device restoration; the independent review journal is not
+deleted by a course reset.
+
+Independent review, eighteen store cases, eight real-component cases, typecheck,
+lint and the preserved historical journeys passed locally. A new real two-tab
+English scenario at 320px joins the existing Chromium/macOS WebKit onboarding gate.
+It seeds only a profile and an unfinished cursor, then checks actual edits, remote
+help, stale/duplicate checks, reload and key removal. Its browser CI and production
+delivery remain pending. See [the continuity contract](yopratiqo-intro-continuity.md).
 
 ## Commercial decisions retained
 
@@ -293,5 +320,7 @@ release progresses; a prepared change is not yet a production release.
 - Sixth production deployment: `dpl_3TK6HusWF54hbgpbGyfTAf7Yw98z`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 17 public checks passed: fifteen course/unit/final pages, the served typed-resume/mobile-selector bundle and disabled speech. No error/fatal runtime logs were returned in the initial five-minute observation window.
 - Seventh release: [PR #486](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/486), merged at `2e6c44a69e6339f92e764167434978c8cc00b3bd` after all ten triggered GitHub workflows and both Vercel builds passed on final head `133e51babc19500b52084a5f50e93ae589608712`. The single diagnostic preview stopped on insufficient reservation credit; its flag was cleared before the healthy final build.
 - Seventh production deployment: `dpl_6Pnbew4yDCbfXDLc9nsYFQCfbUJr`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All nine public checks passed: eight course homes and disabled speech. The production build emitted no diagnostic report, and the initial five-minute runtime query returned no error/fatal logs. No inference or purchase was requested.
+- Eighth release: [PR #487](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/487), merged at `a00016602f789d09b060f30119c86b610e2462d8` after all five triggered workflows and both Vercel builds passed. The actual Eastern browser screenshots and geometry checks confirm the mobile layout; shared foundation regressions also passed.
+- Eighth production deployment: `dpl_AtG9CUuxPAUrt7phzxyFjksqPPaF`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All nine public checks passed: five Mandarin pages, two Japanese pages, the served Mandarin layout bundle and disabled speech. No error/fatal logs were returned in the initial five-minute observation window.
 - Morning verification: scheduled for November 25 around 08:00 Toronto; it must
   read current GitHub/deployment state and this ledger, not repeat stale claims.
