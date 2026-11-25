@@ -17,7 +17,12 @@ import { validateMp3 } from "../../scripts/generate-yopratiqo-audio";
 import { buildPremiumAudioPlan } from "../../scripts/lib/premiumAudioPlan";
 
 test("every published local path has the exact reviewed MP3 bytes and source evidence", () => {
-  assert.equal(recordings.length, 255);
+  assert.equal(recordings.length, 1460);
+  assert.equal(provenance.counts.newPublished, 1205);
+  assert.equal(provenance.preservedPublication.count, 255);
+  const preservedRegistry = `${JSON.stringify(recordings.slice(0, 255), null, 2)}\n`;
+  assert.equal(createHash("sha256").update(preservedRegistry).digest("hex"), provenance.preservedPublication.registrySha256,
+    "the 255 previously published records are preserved byte for byte");
   assert.equal(provenance.counts.published, recordings.length);
   assert.equal(provenance.clips.length, recordings.length);
   assert.equal(new Set(recordings.map(item => `${item.locale}:${item.text}`)).size, recordings.length);
@@ -103,10 +108,11 @@ test("all seven introductions and all eight interest corpora resolve their actua
   assert.equal(publishedPremiumAudioPath("__proto__", "text"), undefined);
 });
 
-test("the fifteen rejected slash lists remain missing and never acquire a guessed MP3 path", () => {
+test("only the two unresolved Italian lists remain missing after reviewed corrected recordings", () => {
   const remaining = buildPremiumAudioPlan("all");
-  assert.equal(remaining.items.length, 15);
-  assert.equal(provenance.counts.rejectedAndNotPublished, 15);
+  assert.equal(remaining.items.length, 2);
+  assert.deepEqual(new Set(remaining.items.map(item => item.text)), new Set(["di / e", "Montréal / Bologna / Roma / Paris"]));
+  assert.equal(provenance.unpublishedSources.filter(item => item.locale === "it-IT").length, 2);
   assert.ok(remaining.items.every(item => item.locale === "it-IT" && item.text.includes(" / ")));
   for (const item of remaining.items) {
     assert.equal(publishedPremiumAudioPath(item.locale, item.text), undefined);

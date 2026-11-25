@@ -1,39 +1,47 @@
 # Premium course recordings
 
-## Published bundle — 2026-11-25
+## Reviewed repository bundle — 2026-11-25
 
-This release contains **255 new generated MP3 recordings**, covering eight
-languages across nine locale keys. They use stock ElevenLabs v4 voices through
+This repository revision contains **1,460 generated MP3 recordings**, covering eight
+languages across nine locale keys. This update adds **1,205 files**: 1,192 English,
+Spanish and Québec French foundation excerpts, plus 13 reviewed corrections of
+Italian vocabulary lists. The previous 255 records and their file bytes are
+preserved. They use stock ElevenLabs v4 voices through
 CreativeClaw. They have passed exact-script comparison against independent
 Scribe transcription, bounded silence-based segmentation, full decoding,
 duration checks and SHA-256 verification. **These checks do not certify native
 pronunciation or a regional accent; no human/native listening approval is claimed.**
 
+Publication is tracked in [the release ledger](yopratiqo-overnight-roadmap.md).
+At preparation, only the preceding 255-file bundle had passed production delivery
+checks. The additional 1,205 files require exact-commit CI and public-byte checks
+after deployment; a Git object or a local registry entry alone is not that evidence.
+
 The files are served from
-`public/audio/yo/premium/{locale}/{sha256}.mp3`, totaling 6,559,441 bytes and
-402.625 seconds. The registry contains only the corresponding reviewed files.
-It contains no planned paths for the 15 rejected Italian lists. A runtime
+`public/audio/yo/premium/{locale}/{sha256}.mp3`, totaling 60,366,970 bytes and
+3,730.913 seconds. The registry contains only the corresponding reviewed files.
+It contains no planned paths for the 13 remaining withheld excerpts. A runtime
 request cannot start generation or spend provider credits.
 
-Players import a compact exact-text/path index (23,629 bytes for this bundle),
-not the 136 KB provider metadata ledger. After any reviewed registry update, run
+Players import a compact exact-text/path index (160,156 bytes for this bundle),
+not the 806,653-byte provider metadata ledger. After any reviewed registry update, run
 `node --import tsx scripts/sync-yopratiqo-audio-index.ts`; this is offline and
 does not generate or upload audio. The existing capped Realtime publication
 tool also updates this index after public-byte verification. File and player
 tests check that the index exposes exactly the reviewed recordings.
 
-| Locale | New MP3 files |
+| Locale | Published MP3 files |
 | --- | ---: |
-| Canadian English `en-CA` | 30 |
-| Québec French `fr-CA` | 30 |
-| Spanish introduction `es-MX` | 13 |
+| Canadian English `en-CA` | 449 |
+| Québec French `fr-CA` | 457 |
+| Spanish introduction and foundations `es-MX` | 359 |
 | Spanish interest practice `es-419` | 12 |
-| Italian `it-IT` | 61 |
+| Italian `it-IT` | 74 |
 | German `de-DE` | 27 |
 | Brazilian Portuguese `pt-BR` | 26 |
 | Japanese `ja-JP` | 28 |
 | Mandarin `zh-CN` | 28 |
-| **Total** | **255** |
+| **Total** | **1,460** |
 
 Locale keys identify the requested curriculum language and variety; they are
 not accent certifications. Exact source-to-file evidence is in
@@ -45,8 +53,12 @@ Temporary workstation paths and signed download URLs are excluded.
 
 ## Current curriculum coverage
 
-The current workflow inventories the seven shared introductions, the actual
-personalized Italian curriculum and all eight interest-practice corpora. It does not substitute older manifest counts
+The general workflow inventories the seven shared introductions, the actual
+personalized Italian curriculum and all eight interest-practice corpora. Foundation
+coverage separately inventories the actual audio controls in the English,
+Spanish and Québec French courses. It excludes written assessment stimuli,
+wrong answer options and written production models that have no audio control.
+It does not substitute older manifest counts
 for the phrases shown in today's lessons. Its default is an offline plan:
 
 ```sh
@@ -67,9 +79,17 @@ After adding the verified bundle, the offline plan on 2026-11-25 reports:
 | Brazilian Portuguese introduction | 19 | 19 | 0 |
 | Japanese introduction | 19 | 19 | 0 |
 | Mandarin introduction | 19 | 19 | 0 |
-| Current Italian course, placement and Florence phrases | 836 | 821 | 15 |
+| Current Italian course, placement and Florence phrases | 836 | 834 | 2 |
 | Interest practice, eight languages | 96 | 96 | 0 |
-| **Total within the listed scopes** | **1,065** | **1,050** | **15** |
+| English foundations, actual playback excerpts | 423 | 420 | 3 |
+| Spanish foundations, actual playback excerpts | 354 | 347 | 7 |
+| Québec French foundations, actual playback excerpts | 430 | 429 | 1 |
+| **Total across the listed scopes** | **2,272** | **2,259** | **13** |
+
+Each row deduplicates its exact NFC-normalized text. Shared phrases can appear
+in more than one row; the total is not a unique file count. The foundation home
+pages receive these measured recorded/remaining counts from the same resolver
+used by their audio controls. A planned object path never counts as recorded.
 
 The original 785 distinct mapped MP3 objects passed delivery/format checks on
 November 24; this does not certify natural pronunciation. Interest practice reuses
@@ -81,7 +101,7 @@ Italian strings safely reuse existing recordings after NFC, punctuation, case
 and whitespace normalization within the same language and accent. Lesson text
 is unchanged.
 
-`lib/yo/audio/premiumPublished.json` contains the 255 bundled paths. Matching
+`lib/yo/audio/premiumPublished.json` contains the 1,460 bundled paths. Matching
 uses the exact locale and NFC-normalized script, with surrounding whitespace
 removed. The URL resolver accepts only a canonical, hash-matching path present
 in that registry. It resolves these local files before checking Supabase
@@ -89,23 +109,41 @@ configuration. Unknown, altered or traversal-like paths in the premium
 directory return no audio URL. The introduction player also applies this check
 instead of bypassing it through its legacy local-file shortcut.
 
-The Italian course, shared introductions and interest practice use the same
+The Italian course, shared introductions, foundation courses and interest practice use the same
 registry. Existing Storage recordings retain their existing resolution and
 configuration requirements. The existing unavailable-audio behavior remains
 available; a failed or merely requested playback never counts as listening.
 
 ### Rejected sources and limits
 
-Independent ASR found that 15 slash-separated Italian lists actually pronounce
-the separator as “barra.” Those sources are excluded, and their lesson strings
-remain missing in the offline plan. There is no substituted file, guessed path
-or silent rewrite of the curriculum. A later editorial correction and new
-recording require their own review.
+Independent ASR found that the original 15 slash-separated Italian sources
+pronounced the separator as “barra.” All 15 original sources remain excluded.
+A separately reviewed comma-separated spoken script produced 13 accepted
+replacement lists without changing their displayed lesson text. Two are still
+withheld: `di / e` was recognized with `è`, and
+`Montréal / Bologna / Roma / Paris` substituted `Parigi` for `Paris`.
+
+The new foundation batch leaves 11 excerpts withheld: three English, seven
+Spanish and one Québec French. Reasons include changed tense or contractions,
+ambiguous currency/hour transcription, one unsafe phrase boundary, and an
+infinitive/imperative distinction whose liaison was not established. Exact
+texts, independent transcripts and reasons are retained in the provenance's
+`unpublishedSources`; none has a fabricated public path. Missing audio does not
+block written practice or create an independent-listening completion.
+
+All 34 foundation generation jobs and 34 independent ASR jobs completed once.
+Their settled project cost was 1,447 credits (1,377 generation + 70 transcription)
+against the separately approved 1,500-credit ceiling. No paid retry was made.
+The Italian correction remained within its separate 250-credit project.
 
 The accepted comparisons allow only the explicitly recorded numeric expansions
 and spoken equivalents in the provenance. Examples include a silent feminine
 French `e`, the same Japanese name written in hiragana or katakana, and the
-specific Mandarin name `林月`/`林悦`. This is not fuzzy matching or permission to
+specific Mandarin name `林月`/`林悦`. The foundation batch additionally records
+word-bounded orthographic variants, exact reviewed whole-hour formats, and
+French homophones scoped to complete clauses and source indices. Unknown
+currency symbols retain a distinguishing marker; they cannot collapse to bare
+numbers. This is not fuzzy matching or permission to
 drop negation, change numbers or replace arbitrary characters.
 
 Each cut requires one measured silence near the end of the preceding ASR word
@@ -114,12 +152,15 @@ start that includes a long pause; generator end times do not select boundaries.
 An ambiguous or absent silence is held for review. The clips include at least
 100 ms before and 150 ms after the utterance, adding digital silence only where
 an outer source boundary lacks enough padding. The independent boundary review
-left all 255 final file hashes unchanged.
+left the original 255 file hashes unchanged; every new clip passed the same
+bounded-cut checks and a complete decode before publication.
 
 ASR confidence is preserved for review, not presented as a pronunciation score.
-Three exact-text matches have a minimum word confidence below 0.8: French
+The original bundle had three exact-text matches with minimum word confidence
+below 0.8: French
 `J’ai vingt et un ans.`, the Italian Nina/Montréal/Bologna dialogue, and Japanese
-`二十歳です。`. These and the other recordings still need human listening before
+`二十歳です。`. The expanded bundle has 26 such matches in total, with their exact
+confidence values preserved for review. These and the other recordings still need human listening before
 making any claim about naturalness or a native regional accent.
 
 ## Separate offline Realtime generator
@@ -168,7 +209,7 @@ at most USD 10. This offline recording ledger is separate from the database
 ledger for the live speaking pilot; their caps must not be described as one
 combined provider-account limit. No recording runs on installation, import,
 build, deployment or CI. This release did not invoke this OpenAI generator;
-the 255 bundled files came from the separately authorized CreativeClaw batches.
+the bundled files came from the separately authorized CreativeClaw batches.
 
 Before each paid request, the tool writes a conservative reservation and an
 attempt marker under `.cache/yo-premium-recordings/`. Known usage can release
@@ -208,13 +249,17 @@ hash leaves the registry unchanged.
 npm run test:yo-premium-recordings
 node --import tsx tests/yo/yopratiqoPremiumPublishedAudio.test.ts
 node --import tsx tests/yo/yopratiqoPremiumAudioPlayback.test.tsx
+node --import tsx tests/yo/yopratiqoFoundationRecordedCoverage.test.tsx
 ```
 
 The suite exercises actual curriculum planning, accent-safe reuse, fragmented
 provider streams, response isolation, request and usage caps, exact-script
 validation, explicit budget enforcement, interrupted attempts, storage failures,
 public-file integrity and publication. The two bundled-audio suites verify all
-255 hashes and MP3 frame streams, exact coverage and provenance, reserved-path
+1,460 hashes and MP3 frame streams, preservation of the original 255 records,
+exact coverage and provenance, reserved-path
 rejection, playback without Supabase, the actual intro/Italian/interest
-resolvers, listener lifecycle and rejected-list exclusion. They run without
+resolvers, listener lifecycle and rejected-list exclusion. Foundation coverage
+tests also exercise the actual home routes, all three interface languages,
+and the exclusion of written distractors from recording requirements. They run without
 keys or paid calls.

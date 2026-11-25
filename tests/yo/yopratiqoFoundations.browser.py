@@ -2,6 +2,7 @@
 
 Only empty browser storage is seeded. All six checkpoint answers are entered
 through the rendered controls. No course success, score or entitlement is seeded.
+Separate playback cases click four real study controls and await native ended.
 """
 import json
 import os
@@ -18,6 +19,11 @@ copy = {
     "fr": {"quiz": "Bilan", "start": "Commencer", "check": "Vérifier", "next": "Continuer", "model": "Voir un modèle", "skip": "Passer", "locked": "Une étape à la fois"},
     "en": {"quiz": "Checkpoint", "start": "Start", "check": "Check", "next": "Continue", "model": "Show a model", "skip": "Skip", "locked": "One step at a time"},
     "es": {"quiz": "Repaso", "start": "Empezar", "check": "Comprobar", "next": "Continuar", "model": "Ver un modelo", "skip": "Saltar", "locked": "Una etapa a la vez"},
+}
+recording_copy = {
+    "fr": {"words": "2. Les mots", "pattern": "3. Le déclic", "scene": "5. La scène", "turn": "Retourner la carte", "listen": "Écouter"},
+    "en": {"words": "2. The words", "pattern": "3. The pattern", "scene": "5. The scene", "turn": "Turn the card", "listen": "Listen"},
+    "es": {"words": "2. Las palabras", "pattern": "3. La pauta", "scene": "5. La escena", "turn": "Girar la tarjeta", "listen": "Escuchar"},
 }
 
 
@@ -184,6 +190,98 @@ def verify(browser, engine, course, locale, width):
         context.close()
 
 
+def verify_recordings(browser, engine, course, locale):
+    """Keep the existing no-audio assessment cases intact; opt in here only."""
+    context = browser.new_context(viewport={"width": 320, "height": 800}, is_mobile=True,
+                                  has_touch=True, device_scale_factor=1, locale="en-CA", reduced_motion="reduce")
+    context.add_init_script("""window.__recorded={plays:[],events:[],mic:0,voice:0};
+      if(navigator.mediaDevices)Object.defineProperty(navigator.mediaDevices,'getUserMedia',{configurable:true,
+        value:()=>{window.__recorded.mic++;return Promise.reject(new DOMException('Disabled in QA','NotAllowedError'));}});
+      if(window.speechSynthesis)Object.defineProperty(window.speechSynthesis,'speak',{configurable:true,value:()=>window.__recorded.voice++});
+      const nativePlay=HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play=function(){if(this.tagName==='AUDIO'){
+        const source=this.currentSrc||this.src;
+        window.__recorded.plays.push(source);
+        for(const type of ['loadedmetadata','playing','pause','ended','error'])this.addEventListener(type,()=>{
+          window.__recorded.events.push({type,src:this.currentSrc||source,time:this.currentTime,duration:this.duration,ended:this.ended});
+        },{capture:true});
+      }return nativePlay.call(this);};""")
+    errors, forbidden, responses, completed = [], [], [], []
+
+    def observe(request):
+        url = urlsplit(request.url)
+        if "/api/yo/speech/" in url.path or "/auth/v1/" in url.path or url.hostname in ["api.openai.com", "api.elevenlabs.io", "ai-gateway.vercel.sh"]:
+            forbidden.append(request.url)
+
+    context.on("request", observe)
+    page = context.new_page()
+    page.set_default_timeout(15000)
+    page.set_default_navigation_timeout(90000)
+    page.on("pageerror", lambda error: errors.append({"message": str(error), "stack": error.stack}))
+    page.on("response", lambda response: responses.append({"path": urlsplit(response.url).path, "status": response.status}) if urlsplit(response.url).path.endswith(".mp3") else None)
+    name = f"{engine}-foundation-recordings-{course['language']}-{locale}-320"
+    unit = course["units"][0]
+    route = base + "/yo/langues/" + course["slug"] + "/parcours/" + unit["id"]
+    c = recording_copy[locale]
+
+    def listen(surface):
+        sample = course["audioSamples"][surface]
+        expected = base + sample["path"]
+        before = page.evaluate("window.__recorded.plays.length")
+        # The coach's example precedes the study panel. The last exact match is
+        # the current card/example/reading/dialogue control, never the coach.
+        button = page.get_by_role("button", name=c["listen"] + " : " + sample["text"], exact=True).last
+        expect(button).to_be_visible()
+        button.click()
+        page.wait_for_function("source => window.__recorded.events.some(event => event.type==='ended' && event.src===source && event.ended && event.duration>0 && event.time>=event.duration-0.05)", arg=expected, timeout=45000)
+        state = page.evaluate("window.__recorded")
+        assert state["plays"][before:] == [expected], state
+        events = [event for event in state["events"] if event["src"] == expected]
+        assert any(event["type"] == "playing" for event in events) and not any(event["type"] == "error" for event in events), events
+        assert any(item["path"] == sample["path"] and item["status"] in [200, 206] for item in responses), responses
+        expect(button).to_be_visible()  # The stopped player returns to Listen.
+        assert state["mic"] == state["voice"] == 0
+        ended = next(event for event in reversed(events) if event["type"] == "ended")
+        completed.append({"surface": surface, "path": sample["path"], "seconds": ended["duration"], "nativeEnded": True})
+        capture(page, name + "-" + surface)
+
+    try:
+        page.goto(base + "/companion/travel/films/departure.webp")
+        page.evaluate("() => {localStorage.clear();sessionStorage.clear();}")
+        page.goto(route + "?lang=" + locale)
+        expect(page.locator('[data-course-unit="' + unit["id"] + '"]')).to_be_attached(timeout=60000)
+        dismiss_films(page, locale)
+        assert page.evaluate("window.__recorded.plays.length+window.__recorded.mic+window.__recorded.voice") == 0
+        assert not responses, "recordings must not download before an explicit click"
+        page.get_by_role("button", name=c["words"], exact=True).click()
+        page.get_by_role("button", name=c["turn"], exact=True).click()
+        listen("vocabulary")
+        page.get_by_role("button", name=c["pattern"], exact=True).click()
+        listen("grammar")
+        page.get_by_role("button", name=c["scene"], exact=True).click()
+        listen("reading")
+        sample = course["audioSamples"]["dialogue"]
+        page.goto(route + "?lang=" + locale + "&lesson=" + sample["lessonId"] + "&activity=" + sample["activityId"])
+        expect(page.locator('[data-course-unit="' + unit["id"] + '"]')).to_be_attached(timeout=45000)
+        dismiss_films(page, locale)
+        assert page.evaluate("window.__recorded.plays.length+window.__recorded.mic+window.__recorded.voice") == 0
+        listen("dialogue")
+        assert len(completed) == 4 and all(item["status"] in [200, 206] for item in responses), responses
+        assert not errors and not forbidden, (errors, forbidden)
+        progress = page.evaluate("key => JSON.parse(localStorage.getItem(key))", course["progressKey"])
+        assert not progress["activities"] and not progress["assessments"], "listening alone must not grade or unlock lessons"
+        return {"language": course["language"], "locale": locale, "width": 320, "actualRecordingsCompleted": completed,
+                "noAutomaticAudio": True, "noDeviceVoiceMicOrProvider": True, "passed": True}
+    except Exception:
+        page.screenshot(path=str(out / (name + "-failure.png")), full_page=False)
+        (out / (name + "-failure.html")).write_text(page.content())
+        (out / (name + "-network.json")).write_text(json.dumps({"errors": errors, "forbidden": forbidden, "responses": responses,
+            "completed": completed, "media": page.evaluate("window.__recorded")}, indent=2))
+        raise
+    finally:
+        context.close()
+
+
 with sync_playwright() as playwright:
     for engine in os.environ.get("YO_JOURNAL_BROWSERS", "chromium").split(","):
         browser = getattr(playwright, engine).launch()
@@ -196,6 +294,10 @@ with sync_playwright() as playwright:
                     results.append(verify(browser, engine, course, locale, width))
                 except Exception as error:
                     failed.append({"language": course["language"], "width": width, "error": str(error)})
+            try:
+                results.append(verify_recordings(browser, engine, course, locale))
+            except Exception as error:
+                failed.append({"language": course["language"], "kind": "recordings", "width": 320, "error": str(error)})
         (out / (engine + "-foundations-results.json")).write_text(json.dumps({"passed": results, "failed": failed}, indent=2))
         browser.close()
         assert not failed, failed

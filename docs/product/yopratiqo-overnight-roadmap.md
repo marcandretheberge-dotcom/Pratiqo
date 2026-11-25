@@ -50,13 +50,13 @@ availability varies by course, base language, platform and subscription.
 | Workstream | State before this increment | Change prepared in this increment | Completion still required |
 | --- | --- | --- | --- |
 | Shared entry | Experience, purpose and pace; interests absent | Six interests, up to three choices, editable, preserved separately from progress, all eight languages | Account preference sync and deeper interest variants within each authored course |
-| Continuity | Intro final mostly returned to the same map | PR #481 deployed original 12-unit/36-lesson EN, ES and Québec French courses. PR #485 preserves unfinished typed unit/assessment answers in the five shared courses, with reset/revision boundaries and stale-tab protection | Shared-intro cross-tab continuity, authenticated device restoration and language-specific listening approval |
+| Continuity | Intro final mostly returned to the same map | PR #481 deployed original 12-unit/36-lesson EN, ES and Québec French courses. PR #485 preserves unfinished typed unit/assessment answers in the five shared courses. PR #488 preserves shared-intro attempts, help and separate tab changes, with reset/revision boundaries and stale-check protection | Japanese unfinished activity state, authenticated device restoration and language-specific listening approval |
 | Feedback | Mostly correct phrase/translation in shared intro | Authored concept plus chosen/expected phrase, correct assistance tracking | Broader language-specific correction banks and unseen transfer assessments |
 | Review | IT/DE/PT have dated local review; intro/JA/ZH inconsistent | First release connects seven intros and interest missions. Deployed PR #481 connects actual IT/DE/PT/new EN/ES/FR practice writers plus JA/ZH, and reuses their real answer checkers for dated review | Authenticated ownership, complete two-device restoration and offline server delivery |
 | Interests | Local Parma reason only | 48 authored mini-mission variants: dialogue, venue choice, directions, typed noun recall, changed exit route, later error review | Destination-specific cultural variants throughout the full curricula; these mini-missions are not complete replacement courses |
 | Cinema | Travel MP4s and three still-only mission slots | Three actual 5-second motion clips; opening/success/backpack slots use verified local MP4s | Bespoke destination/mission footage and each specific earned artifact; the generic backpack clip does not display an invented reward |
 | Speech | Bounded eight-language server implementation deployed but disabled | Gateway preview authenticated project OIDC and read credits; credit below one $0.20 reservation stopped the diagnostic before any socket or inference. Its one-time flag is now disabled | Existing Gateway funding or native server credential, observed Realtime configuration acknowledgement, live audio QA in all eight languages and measured quotas, then activation |
-| Recordings | 176 gaps in intro/current Italian inventory; 785 existing MP3 files verified | PR #482 deployed 255 exact-text clips: all seven introductions and all eight interest corpora resolve actual recordings; Italian inventory reaches 821/836 phrases. Every new public MP3 matches its reviewed SHA-256 and has immutable cache headers | Fifteen Italian slash phrases remain missing in this deployed lot; the full EN/ES/FR and Italian correction recordings are a separate generation/QC batch. Native listening approval remains outstanding. Device voice is a disclosed preview for unresolved phrases |
+| Recordings | 176 gaps in intro/current Italian inventory; 785 existing MP3 files verified | PR #482 deployed 255 exact-text clips. The next reviewed lot adds 1,205 files for EN/ES/FR foundations and 13 Italian corrections, with exact playable-text coverage shown below; its CI and public delivery remain pending | Thirteen excerpts are still withheld in this frozen bundle; DE/PT/JA/ZH full-course coverage is a separate release. Native listening approval remains outstanding. Device voice is a disclosed preview for unresolved phrases |
 | Pass pilot | Local/test-only transaction rehearsal; production purchases off | Preserved; no live sale or price activation in this increment | Hosted account/Checkout/webhook/refund lifecycle, complete stage-depth audit, tax/access-channel verification and real authorized test evidence |
 | Daily loop | Italian preview foundation merged, gated | Public local review improves; gated server daily loop remains gated | Required ownership/import/reset, abuse controls, two-device and offline-delivery evidence before broad activation |
 | Teacher/Café | Existing links/invitation contracts | Existing destinations preserved, no transcript sharing | Consent-approved exact teacher brief, retention/expiry and real booking handoff validation |
@@ -237,7 +237,7 @@ were reviewed. The shared foundation browser gates also passed. All five trigger
 workflows and both Vercel builds passed on head `b980b2dbd792d5bf1606bcc7598fb7113fb4b118`.
 PR #487 is deployed; all nine public route/bundle/status checks passed.
 
-## Ninth lot: introduction continuity across tabs prepared
+## Ninth lot: introduction continuity across tabs deployed
 
 The seven shared introductions retain their original local storage keys and
 historical results while adding bounded, content-scoped attempt metadata. Separate
@@ -258,8 +258,51 @@ Independent review, eighteen store cases, eight real-component cases, typecheck,
 lint and the preserved historical journeys passed locally. A new real two-tab
 English scenario at 320px joins the existing Chromium/macOS WebKit onboarding gate.
 It seeds only a profile and an unfinished cursor, then checks actual edits, remote
-help, stale/duplicate checks, reload and key removal. Its browser CI and production
-delivery remain pending. See [the continuity contract](yopratiqo-intro-continuity.md).
+help, stale/duplicate checks, reload and key removal. Both real browser engines
+passed, along with all historical onboarding, travel-film, mission-film and
+interest scenarios. The new harness respects the existing 300 ms trailing-tap
+guard; no product guard was weakened to make the scenario pass. All four triggered
+workflows and both Vercel builds passed on `a47b152514b6958a666833997b2525656524971e`.
+PR #488 is deployed, and all nine public route/bundle/status checks passed.
+See [the continuity contract](yopratiqo-intro-continuity.md).
+
+## Tenth lot: foundation recordings prepared
+
+The reviewed repository bundle adds 1,205 MP3 files, retaining all 255 previous
+records and bytes. It contains 1,192 accepted English, Spanish and Québec French
+excerpts, plus 13 Italian list corrections. Exact playable-text coverage becomes
+420/423 in English, 347/354 in Spanish, 429/430 in Québec French and 834/836 in the
+current Italian inventory. The thirteen withheld excerpts are not registered as
+playable. Further recordings and the remaining four full-course inventories are
+separate work. Details and source evidence are in the
+[recording contract](yopratiqo-premium-recordings.md).
+
+The full 1,460-file bundle totals 60,366,970 bytes and 3,730.913 seconds. Independent
+ASR, exact-script/explicit-equivalence checks, safe phrase boundaries, complete MP3
+decoding and SHA-256 checks passed. These checks do not certify pronunciation or
+regional accent. The course homes show measured coverage from their real playback
+resolver. The compact player index avoids shipping the provider metadata ledger.
+
+Twelve audio/index/coverage cases, TypeScript and targeted lint passed locally.
+The existing foundation browser gate retains all actual written-assessment and
+draft-restoration cases, and adds four explicit playback controls per language:
+vocabulary, grammar example, reading and dialogue. Each requires the expected MP3
+and native completion, with no automatic playback or provider/microphone call.
+Exact-commit CI and subsequent public-byte delivery checks are required before
+this lot is reported as deployed.
+
+## Speech funding observed in the account dashboard
+
+On November 25 at approximately 07:39 UTC, the signed-in
+[Gateway dashboard](https://vercel.com/marcandretheberge-dotcoms-projects/~/ai-gateway)
+showed a $0.00 balance. The minimum supported one-time purchase was US$10 credit,
+plus a US$0.30 processing fee and applicable tax/fees. Auto-reload was disabled.
+The final form required payment verification/billing information and acceptance
+of Vercel's AI Product Terms. The quote was cancelled before submission; no credit,
+key, budget, production flag or inference request was created by this inspection.
+Those payment/identity/terms steps cannot be supplied by an independent code review.
+Token Pass is not a substitute for this model: its current featured-model list
+excludes OpenAI Realtime. See [the current Token Pass scope](https://vercel.com/docs/ai-gateway/token-pass).
 
 ## Commercial decisions retained
 
@@ -320,6 +363,8 @@ release progresses; a prepared change is not yet a production release.
 - Sixth production deployment: `dpl_3TK6HusWF54hbgpbGyfTAf7Yw98z`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 17 public checks passed: fifteen course/unit/final pages, the served typed-resume/mobile-selector bundle and disabled speech. No error/fatal runtime logs were returned in the initial five-minute observation window.
 - Seventh release: [PR #486](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/486), merged at `2e6c44a69e6339f92e764167434978c8cc00b3bd` after all ten triggered GitHub workflows and both Vercel builds passed on final head `133e51babc19500b52084a5f50e93ae589608712`. The single diagnostic preview stopped on insufficient reservation credit; its flag was cleared before the healthy final build.
 - Seventh production deployment: `dpl_6Pnbew4yDCbfXDLc9nsYFQCfbUJr`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All nine public checks passed: eight course homes and disabled speech. The production build emitted no diagnostic report, and the initial five-minute runtime query returned no error/fatal logs. No inference or purchase was requested.
+- Ninth release: [PR #488](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/488), merged at `8cc6accc8d41070ee5d59e0ba4aaef30ef08b065` after all four triggered workflows and both Vercel builds passed. Both real two-tab browser scenarios preserved help, drafts and checked results, rejected stale submissions and kept deletion final without replaying SRS.
+- Ninth production deployment: `dpl_HHBKLS7Z1ori8V1fTewNsUpA3Czc`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All nine public checks passed: seven introduction pages, the served synchronization/refresh bundle and disabled speech. The initial five-minute runtime query returned no error/fatal logs.
 - Eighth release: [PR #487](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/487), merged at `a00016602f789d09b060f30119c86b610e2462d8` after all five triggered workflows and both Vercel builds passed. The actual Eastern browser screenshots and geometry checks confirm the mobile layout; shared foundation regressions also passed.
 - Eighth production deployment: `dpl_AtG9CUuxPAUrt7phzxyFjksqPPaF`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All nine public checks passed: five Mandarin pages, two Japanese pages, the served Mandarin layout bundle and disabled speech. No error/fatal logs were returned in the initial five-minute observation window.
 - Morning verification: scheduled for November 25 around 08:00 Toronto; it must

@@ -14,16 +14,19 @@ import { canEnterCourseAssessment } from "@/lib/yo/courseJourney";
 import { journeyCopy } from "../journey/journeyCopy";
 import { InterestPracticeCard } from "../interests/InterestPracticeCard";
 import { CourseDueReview } from "../review/CourseDueReview";
+import { CourseAudioCoverageNotice, type CourseAudioCoverage } from "./CourseAudioCoverageNotice";
 
 export function GermanCourseDashboard({
   locale,
   catalog,
   audioReady = false,
+  audioCoverage,
   sources = [],
 }: {
   locale: YoLocale;
   catalog: CourseCatalog;
   audioReady?: boolean;
+  audioCoverage?: CourseAudioCoverage;
   sources?: CourseSource[];
 }) {
   const experience = useCourseExperience();
@@ -67,7 +70,7 @@ export function GermanCourseDashboard({
           </p>
         </div>
       </section>
-      {!audioReady ? (
+      {audioCoverage ? <CourseAudioCoverageNotice coverage={audioCoverage} locale={locale} /> : !audioReady ? (
         <p
           role="status"
           className="my-5 border-l-4 border-amber-500 bg-amber-50 p-4 text-sm text-amber-950"
