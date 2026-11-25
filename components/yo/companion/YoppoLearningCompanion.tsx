@@ -186,7 +186,7 @@ export function YoppoLearningCompanion({
       <div
         data-testid="yoppo-reserved-rail"
         data-yoppo-controls="true"
-        className={dock === "inline" ? "pointer-events-none relative z-40 h-14 shrink-0 border-t border-teal-100 bg-[#f6f9f8]" : "pointer-events-none fixed inset-x-0 bottom-16 z-40 h-28 border-t border-teal-100 bg-[#f6f9f8]"}
+        className={dock === "inline" ? "pointer-events-none relative z-40 h-14 shrink-0 border-t border-[#e4dbcb] bg-[#fffdf8]" : "pointer-events-none fixed inset-x-0 bottom-16 z-40 h-28 border-t border-teal-100 bg-[#f6f9f8]"}
       >
         {hidden ? (
           <button
@@ -199,9 +199,9 @@ export function YoppoLearningCompanion({
         ) : (
           <div
             style={{
-              left: `clamp(12px, calc(100% - 108px + ${position}px), calc(100% - 108px))`,
+              left: `clamp(12px, calc(100% - ${dock === "inline" ? 156 : 108}px + ${position}px), calc(100% - ${dock === "inline" ? 156 : 108}px))`,
             }}
-            className={dock === "inline" ? "pointer-events-auto absolute bottom-1 flex items-center" : "pointer-events-auto absolute bottom-1 flex flex-col items-center"}
+            className={dock === "inline" ? "pointer-events-auto absolute bottom-1 flex w-36 items-center justify-end" : "pointer-events-auto absolute bottom-1 flex flex-col items-center"}
           >
             <button
               ref={opener}

@@ -216,6 +216,24 @@ credit purchase, budget change or retry occurred. Realtime parameter compatibili
 and eight-language live voice quality remain unverified. See the
 [diagnostic record](yopratiqo-speech-gateway-preflight.md).
 
+## Eighth lot: Mandarin mobile reading space prepared
+
+The Mandarin map and player use the warm paper, green controls and serif headings
+of the Italian reference. The mobile player keeps its existing learning controls
+while replacing the fixed 112-pixel companion reservation and spacer with a
+56-pixel inline companion rail. Reading content scrolls above that rail; the
+previous/next controls remain below it in normal layout flow with safe-area space.
+The compact header leaves more room for the actual exercise. Keyboard focus
+remains visible, and the companion's horizontal position stays inside the screen.
+
+This is presentation work: authored answers, help, grading, progress, assessment
+locks and navigation handlers are unchanged. Independent review found no blocker.
+The Eastern Chromium/macOS WebKit gate adds actual layout measurements at 393px
+and 320px: at least 55% of viewport height for the reading area, a 44–60px companion
+rail, correctly ordered controls and no overflow. The existing historical fixtures,
+two real new recall answers, help and reload checks remain intact. Those browser
+results and production verification are still pending for this lot.
+
 ## Commercial decisions retained
 
 The retired CAD 24.99 travel-module hypothesis is not the current YoPratiqo offer.
@@ -273,6 +291,7 @@ release progresses; a prepared change is not yet a production release.
 - Fifth production deployment: `dpl_HPxjuKSTfBnvDsMGETowqnT3m1AY`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 33 public checks passed: twelve course/final routes, sixteen exact new-unit review responses with their authored contexts, four final exclusions and disabled speech. No error/fatal runtime logs were returned in the initial observation window.
 - Sixth release: [PR #485](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/485), merged at `bc54a7f56940ba0817f479f32bc044d85da633d6` after all four triggered GitHub workflows and both Vercel builds passed. Chromium/macOS WebKit preserved actual partial unit/assessment text without grading on reload and completed the existing course gates.
 - Sixth production deployment: `dpl_3TK6HusWF54hbgpbGyfTAf7Yw98z`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 17 public checks passed: fifteen course/unit/final pages, the served typed-resume/mobile-selector bundle and disabled speech. No error/fatal runtime logs were returned in the initial five-minute observation window.
-- Seventh release: [PR #486](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/486), prepared. The single diagnostic preview stopped on insufficient reservation credit; the final disabled build, merge and production verification remain pending.
+- Seventh release: [PR #486](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/486), merged at `2e6c44a69e6339f92e764167434978c8cc00b3bd` after all ten triggered GitHub workflows and both Vercel builds passed on final head `133e51babc19500b52084a5f50e93ae589608712`. The single diagnostic preview stopped on insufficient reservation credit; its flag was cleared before the healthy final build.
+- Seventh production deployment: `dpl_6Pnbew4yDCbfXDLc9nsYFQCfbUJr`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All nine public checks passed: eight course homes and disabled speech. The production build emitted no diagnostic report, and the initial five-minute runtime query returned no error/fatal logs. No inference or purchase was requested.
 - Morning verification: scheduled for November 25 around 08:00 Toronto; it must
   read current GitHub/deployment state and this ledger, not repeat stale claims.
