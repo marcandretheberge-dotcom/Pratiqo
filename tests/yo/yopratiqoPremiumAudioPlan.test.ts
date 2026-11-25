@@ -44,7 +44,7 @@ test("scopes keep introductions, the current Italian route and interest practice
   const interests = buildPremiumAudioPlan("interests");
   assert.equal(interests.coverage.length, 8);
   assert.equal(interests.coverage.reduce((n, row) => n + row.total, 0), 96);
-  assert.equal(interests.coverage.reduce((n, row) => n + row.recorded, 0), 2);
+  assert.equal(interests.coverage.reduce((n, row) => n + row.recorded, 0), 96);
   const expected = [...new Map([...intros.items, ...italian.items, ...interests.items].map(item => [`${item.locale}:${item.text}`, item])).values()];
   assert.deepEqual(buildPremiumAudioPlan("all").items, expected);
 });

@@ -8,6 +8,7 @@ import { spawnSync } from "node:child_process";
 import { getYoAudioAccentProfile } from "../lib/yo/audio/accentProfiles";
 import type { PremiumPublishedRecording } from "../lib/yo/audio/premiumPublished";
 import { buildPremiumAudioPlan, type PremiumRecordingItem } from "./lib/premiumAudioPlan";
+import { buildPremiumAudioIndex } from "./lib/premiumAudioIndex";
 import { resolveConfig, sha256, validateMp3 } from "./generate-yopratiqo-audio";
 import {
   COURSE_RECORDING_MODEL, COURSE_RECORDING_VOICE, courseRecordingRequest,
@@ -163,6 +164,7 @@ export async function runPremiumRecordingBatch(items: readonly PremiumRecordingI
       if (!prior) registry.push(published);
       registry.sort((a, b) => a.locale.localeCompare(b.locale) || a.text.localeCompare(b.text));
       await atomicJson(registryPath, registry);
+      await atomicJson(resolve(config.root, "lib/yo/audio/premiumIndex.json"), buildPremiumAudioIndex(registry));
       verified++;
     }
     return { generated, verified, cumulativeUsdUpperBound: ledger.reservedMicroUsd / 1e6, requests: ledger.requests };

@@ -2,6 +2,7 @@
 
 Audit date: 2026-11-25. Original baseline: `5631295cd44fa9566776d622a6bcde412ce0fc4d`.
 First overnight release: PR #480, production main `8c60fa16457e604bd570c27ad6d50d89cb17b45d`.
+Second overnight release: PR #481, production main `89e8bbe780a339f7472b7811d80bc0f611957453`.
 
 ## Decision
 
@@ -52,7 +53,7 @@ Sources: [personalized Italian catalog](../../lib/yo/personalized/courseData.ts)
 `app/yo/langues/`, including
 `app/yo/langues/espagnol/pays/republique-dominicaine/`.
 
-## Second overnight lot: authored, locally verified; deployment pending
+## Second overnight lot: deployed and verified
 
 | Target | New course actually implemented | Independent checks and original dialogues |
 | --- | --- | --- |
@@ -88,6 +89,20 @@ Reviewed sources and locale-specific original content live under
 large gaps are voice recording coverage/listening approval, depth in DE/PT/JA/ZH,
 delayed unseen transfer, authenticated continuity and live speech activation.
 The parity gate remains open while those gaps are material.
+
+PR #481 passed all 11 GitHub workflows and both Vercel checks on its final head.
+The actual EN/ES/FR courses passed Chromium and macOS WebKit at 393px and 320px;
+the production deployment passed 24 read-only page/API checks. See the
+[release ledger](yopratiqo-overnight-roadmap.md#verification-and-release-record).
+
+The next prepared audio lot contains 255 reviewed MP3 clips (6,559,441 bytes,
+402.625 seconds). It covers all 19 introduction phrases in each of the seven
+shared introductions, all 96 interest phrases across eight targets, and part of
+the Italian gap. Fifteen Italian slash lists remain withheld. Independent ASR,
+silence boundaries, codec decoding and exact hashes establish technical checks;
+they do not establish a human native-accent review. A separate full EN/ES/FR
+recording batch is still in progress. These assets are not counted as deployed
+until the audio release's own CI, merge and public delivery checks succeed.
 
 ## Shared surfaces: what exists and what does not
 

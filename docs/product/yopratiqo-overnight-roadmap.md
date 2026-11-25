@@ -50,13 +50,13 @@ availability varies by course, base language, platform and subscription.
 | Workstream | State before this increment | Change prepared in this increment | Completion still required |
 | --- | --- | --- | --- |
 | Shared entry | Experience, purpose and pace; interests absent | Six interests, up to three choices, editable, preserved separately from progress, all eight languages | Account preference sync and deeper interest variants within each authored course |
-| Continuity | Intro final mostly returned to the same map | First release links to real continuation. Second lot adds original 12-unit/36-lesson EN, ES and Québec French courses, with real written checks, regional notes and continuation from the intro | Browser/deployment verification of the second lot; language-specific listening approval; partial typed answers in the new course player still restart on reload |
+| Continuity | Intro final mostly returned to the same map | First release links to real continuation. PR #481 deployed original 12-unit/36-lesson EN, ES and Québec French courses, with real written checks, regional notes and continuation from the intro | Language-specific listening approval; partial typed answers in the new course player still restart on reload |
 | Feedback | Mostly correct phrase/translation in shared intro | Authored concept plus chosen/expected phrase, correct assistance tracking | Broader language-specific correction banks and unseen transfer assessments |
-| Review | IT/DE/PT have dated local review; intro/JA/ZH inconsistent | First release connects seven intros and interest missions. Second lot connects actual IT/DE/PT/new EN/ES/FR practice writers plus JA/ZH, and reuses their real answer checkers for dated review | Deploy and verify second lot; authenticated ownership, complete two-device restoration and offline server delivery |
+| Review | IT/DE/PT have dated local review; intro/JA/ZH inconsistent | First release connects seven intros and interest missions. Deployed PR #481 connects actual IT/DE/PT/new EN/ES/FR practice writers plus JA/ZH, and reuses their real answer checkers for dated review | Authenticated ownership, complete two-device restoration and offline server delivery |
 | Interests | Local Parma reason only | 48 authored mini-mission variants: dialogue, venue choice, directions, typed noun recall, changed exit route, later error review | Destination-specific cultural variants throughout the full curricula; these mini-missions are not complete replacement courses |
 | Cinema | Travel MP4s and three still-only mission slots | Three actual 5-second motion clips; opening/success/backpack slots use verified local MP4s | Bespoke destination/mission footage and each specific earned artifact; the generic backpack clip does not display an invented reward |
 | Speech | Bounded eight-language server implementation deployed but disabled | Kept bounded, no new live requests; locale aliases aligned | Server API credential, live audio QA in all eight languages, measured quotas/payment funding, then activation |
-| Recordings | 176 gaps in intro/current Italian inventory; 785 existing MP3 files verified | Interest corpus is explicitly added to the offline plan: 96 phrases, two exact existing Italian recordings reused, 94 unresolved | Generate, validate transcript/codec/delivery, listen and publish the actual missing recordings. Device voice is a disclosed preview |
+| Recordings | 176 gaps in intro/current Italian inventory; 785 existing MP3 files verified | Prepared audio release adds 255 exact-text clips: all seven introductions and all eight interest corpora resolve actual recordings; Italian inventory reaches 821/836 phrases. Compact client index, exact-byte hashes and independent ASR/silence checks | Exact-head CI and production delivery for this audio lot; fifteen held Italian slash phrases; full EN/ES/FR recordings are being generated separately; native listening approval remains outstanding. Device voice is a disclosed preview for unresolved phrases |
 | Pass pilot | Local/test-only transaction rehearsal; production purchases off | Preserved; no live sale or price activation in this increment | Hosted account/Checkout/webhook/refund lifecycle, complete stage-depth audit, tax/access-channel verification and real authorized test evidence |
 | Daily loop | Italian preview foundation merged, gated | Public local review improves; gated server daily loop remains gated | Required ownership/import/reset, abuse controls, two-device and offline-delivery evidence before broad activation |
 | Teacher/Café | Existing links/invitation contracts | Existing destinations preserved, no transcript sharing | Consent-approved exact teacher brief, retention/expiry and real booking handoff validation |
@@ -95,9 +95,14 @@ placement questions are excluded. The separate append-only journal leaves old
 progress untouched. Mandarin's legacy whole-state progress concurrency and
 authenticated two-device restoration are still separate unfinished work.
 
-Release status: local content, review, assessment and legacy regression tests
-have passed. Chromium/WebKit, exact-head CI, merge and production checks must
-still be recorded before this second lot is called deployed.
+Release status: PR #481 is deployed. All 11 GitHub workflows and both Vercel
+checks passed for head `226d974539906873865f3ded15d1eb3e03bec651`. Real Chromium
+and macOS WebKit exercised all three courses at 393px and 320px, including actual
+checkpoint answers, assistance, reload without duplicate scoring and final locks.
+The browser gates also caught and fixed a Mandarin recall focus race; input focus
+survives delayed heading focus, and an unfinished IME composition cannot be graded
+by Enter. Course navigation now requests pages on demand without speculative
+prefetches. The production record is listed below.
 
 ## Commercial decisions retained
 
@@ -146,5 +151,7 @@ release progresses; a prepared change is not yet a production release.
 
 - First release: [PR #480](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/480), merged at `8c60fa16457e604bd570c27ad6d50d89cb17b45d`. All 15 GitHub workflows and both Vercel builds passed, including Chromium and macOS WebKit. The 320px Québec overflow was fixed before merging.
 - First production deployment: `dpl_GiL9SWg7bD59WSBbCGdGpETDZPoo`, READY and assigned to pratiqo.ca/www.pratiqo.ca. The 24 public smoke checks passed, including exact hashes for all three new MP4s. No runtime errors were returned in the first five-minute log window; this is a short observation window, not an uptime guarantee. Live speech remains disabled.
+- Second release: [PR #481](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/481), merged at `89e8bbe780a339f7472b7811d80bc0f611957453`. All 11 GitHub workflows and both Vercel builds passed on the exact final head, including the foundation and onboarding Chromium/macOS WebKit gates.
+- Second production deployment: `dpl_6k8oqubLzeE7PMWD6cfm1mfjxsqg`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 24 public checks passed: twelve course pages, six actual contextual review responses, five malformed/missing/final-item boundaries, and disabled live speech. No error/fatal runtime logs were returned in the first five-minute observation window. Review returns one public authored practice item, not learner records or a complete course bundle.
 - Morning verification: scheduled for November 25 around 08:00 Toronto; it must
   read current GitHub/deployment state and this ledger, not repeat stale claims.

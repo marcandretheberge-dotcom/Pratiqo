@@ -11,7 +11,9 @@ on:
       - 'lib/security/yoSpeechHeaders.ts'
       - 'next.config.ts'
       - 'public/companion/travel/**'
+      - 'public/audio/yo/premium/**'
       - 'scripts/generate-yopratiqo-premium-recordings.ts'
+      - 'scripts/sync-yopratiqo-audio-index.ts'
       - 'scripts/lib/**'
       - 'supabase/migrations/*yo_speech*'
       - 'tests/yo/**'
@@ -45,6 +47,9 @@ jobs:
       - name: All-language continuity, interests, error feedback and dated review
         run: npm run test:yo-premium-parity
       - name: Offline recording plan, provider protocol and verified publication
-        run: npm run test:yo-premium-recordings
+        run: |
+          npm run test:yo-premium-recordings
+          node --import tsx tests/yo/yopratiqoPremiumPublishedAudio.test.ts
+          node --import tsx tests/yo/yopratiqoPremiumAudioPlayback.test.tsx
       - name: Recording plan performs no network calls
         run: npm run generate:yo-premium-recordings -- --dry-run

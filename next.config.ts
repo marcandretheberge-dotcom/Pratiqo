@@ -201,6 +201,11 @@ const nextConfig: NextConfig = {
         cafeRoomPermissionsPolicy: buildCafeRoomPermissionsPolicy(),
       }),
       ...yoSpeechHeaderRules(),
+      {
+        // These published MP3 filenames are SHA-256 hashes of immutable bytes.
+        source: "/audio/yo/premium/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
     ];
   },
 };

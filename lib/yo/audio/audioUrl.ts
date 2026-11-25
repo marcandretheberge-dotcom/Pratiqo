@@ -1,5 +1,5 @@
 /**
- * YoPratiqo — public Supabase Storage URL builder for audio assets.
+ * YoPratiqo — verified bundled audio and public Supabase Storage URL builder.
  *
  * This file is safe to import from BOTH server and client code:
  *   - it reads only `NEXT_PUBLIC_SUPABASE_URL` (already exposed in the
@@ -21,8 +21,8 @@
  */
 
 import { BUNDLED_AUDIO_REPAIRS } from "./bundledRepairs";
+import { isPublishedPremiumLocalAudioPath } from "./premiumPublished";
 import { YOPRATIQO_AUDIO_BUCKET_DEFAULT } from "@/lib/yo/audio/audioManifest.types-internal";
-// Keep URL construction independent of every language's recording registry.
 
 /** Reserved query string used to bust the browser/CDN cache when audio is regenerated. */
 export const YOPRATIQO_AUDIO_VERSION_PARAM = "v" as const;
@@ -55,8 +55,10 @@ export interface BuildAudioUrlOptions {
 /**
  * Build the public read URL for a manifest item.
  *
- * Returns `null` when `NEXT_PUBLIC_SUPABASE_URL` is missing (e.g. tests
- * running with no `.env.local`). Callers MUST handle the null case —
+ * Bundled premium files use only their exact published path, without Supabase.
+ * Storage paths return `null` when `NEXT_PUBLIC_SUPABASE_URL` is missing.
+ * Unpublished paths in the reserved premium directory also return `null`.
+ * Callers MUST handle the null case —
  * the AudioPlayer renders a disabled fallback rather than a broken
  * `<audio>` element.
  */
@@ -64,15 +66,20 @@ export function buildPublicAudioUrl(
   storagePath: string,
   options: BuildAudioUrlOptions = {},
 ): string | null {
+  // Storage keys may have a leading slash. Bundled premium files still require
+  // their exact canonical path, rather than accepting that normalization.
+  const normalisedPath = storagePath.replace(/^\/+/, "");
+  if (normalisedPath.startsWith("audio/yo/premium")) {
+    if (!isPublishedPremiumLocalAudioPath(storagePath)) return null;
+    return options.version
+      ? `${storagePath}?${YOPRATIQO_AUDIO_VERSION_PARAM}=${encodeURIComponent(options.version)}`
+      : storagePath;
+  }
+
   const origin = getPublicSupabaseOrigin();
   if (!origin) return null;
 
   const bucket = options.bucket?.trim() || YOPRATIQO_AUDIO_BUCKET_DEFAULT;
-
-  // Defensive: ensure the path does not start with a leading slash
-  // (tests already enforce this on the manifest, but client callers
-  // could pass a custom path in future).
-  const normalisedPath = storagePath.replace(/^\/+/, "");
 
   const base = (bucket === YOPRATIQO_AUDIO_BUCKET_DEFAULT && BUNDLED_AUDIO_REPAIRS[normalisedPath]) || `${origin}/storage/v1/object/public/${bucket}/${normalisedPath}`;
   if (options.version) {
