@@ -51,21 +51,23 @@ def verify(browser, engine, course, locale, width):
       if (window.speechSynthesis) Object.defineProperty(window.speechSynthesis,'speak',{configurable:true,value:()=>window.__foundationVoice++});
       const play = HTMLMediaElement.prototype.play;
       HTMLMediaElement.prototype.play = function(){if(this.tagName==='AUDIO')window.__foundationAudio++;return play.call(this);};""")
-    requests, errors = [], []
+    requests, errors, failed_requests = [], [], []
 
     def route_request(route):
         url = urlsplit(route.request.url)
-        if "/api/yo/speech/" in url.path or "/auth/v1/" in url.path or url.hostname == "api.openai.com":
-            requests.append(url.path)
-            route.fulfill(status=503, content_type="application/json", body='{"available":false}')
-        else:
-            route.continue_()
+        requests.append(url.path)
+        route.fulfill(status=503, content_type="application/json", body='{"available":false}')
 
-    context.route("**/*", route_request)
+    # Observe the real page's ordinary network directly. Intercept only services
+    # that this backend-free journey must never call, including during teardown.
+    context.route("**/api/yo/speech/**", route_request)
+    context.route("**/auth/v1/**", route_request)
+    context.route("https://api.openai.com/**", route_request)
     page = context.new_page()
     page.set_default_timeout(15000)
     page.set_default_navigation_timeout(90000)
-    page.on("pageerror", lambda error: errors.append(str(error)))
+    page.on("pageerror", lambda error: errors.append({"message": str(error), "stack": error.stack}))
+    page.on("requestfailed", lambda request: failed_requests.append({"url": request.url, "failure": request.failure}))
     name = f"{engine}-foundations-{course['language']}-{locale}-{width}"
     url = base + "/yo/langues/" + course["slug"] + "/parcours"
     unit = course["units"][0]
@@ -162,6 +164,7 @@ def verify(browser, engine, course, locale, width):
     except Exception:
         page.screenshot(path=str(out / (name + "-failure.png")), full_page=False)
         (out / (name + "-failure.html")).write_text(page.content())
+        (out / (name + "-network.json")).write_text(json.dumps({"errors": errors, "failedRequests": failed_requests}, indent=2))
         raise
     finally:
         context.close()
