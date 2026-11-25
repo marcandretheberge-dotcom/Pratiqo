@@ -218,6 +218,9 @@ def verify(browser, engine):
         # Keep two different activity states in the same real storage document.
         panel(b).get_by_role("button", name="Continue", exact=True).click()
         expect(panel(b, reply)).to_be_visible()
+        # This is a separate answer, outside the existing 300 ms trailing-tap guard.
+        # The other tab's edits are fast enough in CI to fit inside that guard.
+        b.wait_for_timeout(350)
         panel(a).get_by_role("button", name="Start again without help", exact=True).click()
         fill_words(a, parts[:2])
         panel(b, reply).locator('[data-answer-id="' + reply["answer"] + '"]').click()
