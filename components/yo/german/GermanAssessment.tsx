@@ -193,6 +193,9 @@ function GermanAssessmentSession({ assessment, locale, onComplete, resultAction,
             onHelp={() => {
               if (live.current) store.help(token);
             }}
+            typedDraft={question.kind === "type" ? { value: draft.typedText?.value ?? "", initialFeedback: first,
+              onCheck: (correct, renderedText) => live.current && store.attempt(token, correct, renderedText),
+              onChange: value => { if (live.current) store.text(token, value); } } : undefined}
           />
           {first !== null ? (
             <div className="mt-5 border-t border-gray-200 pt-4" role="status">

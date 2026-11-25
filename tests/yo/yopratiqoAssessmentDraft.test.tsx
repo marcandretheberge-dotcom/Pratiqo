@@ -57,7 +57,7 @@ function memory() {
   return { values, getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
 }
 
-test("bounded parsing restores only matching runs and excludes raw answers and forged partial completion", () => {
+test("bounded parsing restores matching runs and excludes unrecognized answer fields and forged completion", () => {
   const storage = memory(), now = 1800000000000;
   const store = createAssessmentDraftStore(context, () => storage, () => now);
   store.start();
@@ -93,7 +93,10 @@ test("same-run views preserve first outcomes and help; stale question and pre-re
   a.attempt(first, true); a.help(first); a.next(first);
   assert.equal(a.getSnapshot().draft.index, 1);
   assert.equal(a.getSnapshot().draft.results.length, 1);
-  a.attempt(second, true);
+  const typedQuestion = assessment.questions[1]; assert.equal(typedQuestion.kind, "type");
+  if (typedQuestion.kind !== "type") throw new Error("Expected the authored typed question");
+  a.text(second, typedQuestion.model);
+  a.attempt(second, true, typedQuestion.model);
   assert.deepEqual(a.next(second), { correct: 1, total: 2, assisted: true });
   assert.equal(a.next(second), null);
   b.next(second);
@@ -126,11 +129,11 @@ test("a checked wrong answer, unsubmitted help and completed result survive real
   assert.equal(state(view).dataset.assessmentIndex, "1");
   click(view.getByRole("button", { name: "Show a model" }));
   fireEvent.change(view.getByRole("textbox"), { target: { value: "a private unsent draft" } });
-  assert.equal(localStorage.getItem(context.key)!.includes("private"), false);
+  assert.equal(parseAssessmentDraft(localStorage.getItem(context.key), context).typedText?.value, "a private unsent draft");
   cleanup(); frames.clear();
   view = mount(events);
   assert.equal(state(view).dataset.assessmentIndex, "1");
-  assert.equal((view.getByRole("textbox") as HTMLInputElement).value, "", "typed learner text is not persisted");
+  assert.equal((view.getByRole("textbox") as HTMLInputElement).value, "a private unsent draft", "the explicitly supported local draft restores without checking");
   assert.equal(parseAssessmentDraft(localStorage.getItem(context.key), context).currentHelp, true);
   answer(view, assessment.questions[1]);
   const next = view.getByRole("button", { name: "Continue" });

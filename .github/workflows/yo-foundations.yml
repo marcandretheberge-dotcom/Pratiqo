@@ -25,6 +25,7 @@ on:
       - 'tests/yo/*CourseDepth*'
       - 'tests/yo/*CourseReview*'
       - 'tests/yo/*AssessmentDraft*'
+      - 'tests/yo/*TypedDrafts*'
       - 'scripts/prepare_yo_shared_review.ts'
       - '.github/workflows/yo-foundations.yml'
   workflow_dispatch:
@@ -53,6 +54,7 @@ jobs:
           npm run test:yo-portuguese
           node --import tsx tests/yo/yopratiqoCourseReview.test.tsx
           node --import tsx tests/yo/yopratiqoAssessmentDraft.test.tsx
+          node --import tsx tests/yo/yopratiqoTypedDrafts.test.tsx
           node --import tsx tests/yo/yopratiqoFoundationIsolation.test.tsx
           node --import tsx tests/yo/yopratiqoIntroContinuation.test.ts
   browser:

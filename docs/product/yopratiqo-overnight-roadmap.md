@@ -92,8 +92,8 @@ The eight full-course review adapters now receive actual wrong/helped attempts.
 Optional review uses the original exercise checkers, preserves the reading
 passage and cannot write course grades, bookmarks, XP or access. Final and
 placement questions are excluded. The separate append-only journal leaves old
-progress untouched. Mandarin's legacy whole-state progress concurrency and
-authenticated two-device restoration are still separate unfinished work.
+progress untouched. PR #484 subsequently fixed Mandarin's local whole-state
+concurrency. Authenticated two-device restoration remains separate unfinished work.
 
 Release status: PR #481 is deployed. All 11 GitHub workflows and both Vercel
 checks passed for head `226d974539906873865f3ded15d1eb3e03bec651`. Real Chromium
@@ -133,9 +133,9 @@ All five triggered workflows and both Vercel builds passed on head `18b34ee`.
 New-unit audio coverage remains incomplete; original published recordings retain
 their full checks. The production record is listed below.
 
-## Fifth lot: Japanese and Mandarin foundations prepared
+## Fifth lot: Japanese and Mandarin foundations deployed
 
-Both courses now have twelve authored modules in this branch, with their original
+Both courses now have twelve authored modules in production, with their original
 eight modules and original eight-question finals preserved byte for byte. Each
 adds a separate 24-question written final, covering all twelve modules with twelve
 reading and twelve recall questions. The old final remains at `/bilan-initial`;
@@ -168,12 +168,39 @@ and the endpoint excludes both old and new finals. The actual course checkers
 remain responsible for answers; review cannot grant course outcomes or access.
 
 Independent content, progress and integration reviews and focused local tests
-have passed. The prepared Chromium/WebKit gate uses explicitly labelled historical
+have passed. The Chromium/WebKit gate passed with explicitly labelled historical
 eight-module learner fixtures, then enters two new recall answers per language at
 393px and 320px, one with help. It checks old-final resume, new-final locks,
 reload without resubmission, and no microphone, provider or automatic audio use.
 It does not claim to earn twelve modules through the UI or certify listening.
-Exact-head CI and production delivery remain pending for this fifth lot.
+All six triggered GitHub workflows and both Vercel builds passed on head
+`07df508cc2f0bddba4591710392f67a754da8eae`. PR #484 is deployed; all 33
+public page/API checks passed. The production record is listed below.
+
+## Sixth lot: typed resume and mobile lesson space prepared
+
+The shared DE/PT/EN/ES/Québec French course player now preserves the unfinished
+160-character typed answer for each matching activity on this device. Assessment
+drafts preserve the current question's text. Reload restores text and feedback
+without calling a grade or review writer; only an explicit Check can submit it.
+The older Italian player remains compatible with its existing transient contract.
+
+Drafts are bounded, namespaced by course, unit and activity, and invalidated by
+reset or content revision. Concurrent tabs merge distinct activities; explicit
+text edits have their own timestamp, so passive cursor/help saves cannot replace
+newer text. A Check rendered before another view changed the answer is rejected
+and displays the current draft for a deliberate new check. Help stays assisted,
+first checked results are retained, and a new independent attempt requires an
+explicit restart. Typed text stays local and is absent from review/grade payloads.
+
+Yoppo uses the same reserved inline coach placement as Italian for these five
+courses, keeping lesson controls clear on narrow screens. A compact lesson
+selector replaces horizontally scrolling lesson cards on mobile. Independent
+review passed; 29 typed-draft cases, nine assessment-draft cases and both course
+isolation cases pass locally. The real Chromium/WebKit gate now types partial
+unit and assessment answers, reloads, checks restored text and absence of a grade,
+then completes the authored checks. Exact-head browser CI and deployment of this
+sixth lot remain pending.
 
 ## Commercial decisions retained
 
@@ -228,5 +255,7 @@ release progresses; a prepared change is not yet a production release.
 - Third production deployment: `dpl_Ckd6mMQQSGmhXcBwAgy4h8AUXK81`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 255 public MP3s returned the reviewed bytes (6,559,441 total) with audio MIME and one-year immutable caching; disabled live speech remained unchanged. No error/fatal logs were returned in the first five-minute observation window.
 - Fourth release: [PR #483](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/483), merged at `8a263150d87c15898c3ac9b0dffa8b0849c07e61` after all five triggered GitHub workflows and both Vercel builds passed on head `18b34ee0d61ebca6ec89a3c58c33e5d09de11f3c`. Both browser engines completed the actual DE/PT assessments and required MP3 playback.
 - Fourth production deployment: `dpl_GVZQFHakW8GsdjxqfVDHPSMPVC7N`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 27 public checks passed: fourteen course/old-final/new-final/culture routes, eight actual new-unit review responses, four final exclusions and disabled speech. No error/fatal logs were returned in the initial five-minute observation window.
+- Fifth release: [PR #484](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/484), merged at `b78d10f3aa3cc88315c95276eb5aedae2ef74ee9` after all six triggered GitHub workflows and both Vercel builds passed. All eight Japanese/Mandarin mobile cases passed in Chromium/macOS WebKit; their historical fixtures and limited new-recall scope are recorded above.
+- Fifth production deployment: `dpl_HPxjuKSTfBnvDsMGETowqnT3m1AY`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 33 public checks passed: twelve course/final routes, sixteen exact new-unit review responses with their authored contexts, four final exclusions and disabled speech. No error/fatal runtime logs were returned in the initial observation window.
 - Morning verification: scheduled for November 25 around 08:00 Toronto; it must
   read current GitHub/deployment state and this ledger, not repeat stale claims.

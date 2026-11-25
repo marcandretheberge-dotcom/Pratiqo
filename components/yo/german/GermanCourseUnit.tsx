@@ -2,7 +2,7 @@
 import { CourseAdventure } from "../journey/AdventureProgress";
 import { useCourseExperience } from "./CourseExperience";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -36,7 +36,8 @@ import { useMissionCinema } from "../travel/useMissionCinema";
 import { YoSpeechPractice } from "../speech/YoSpeechPractice";
 import { courseSpeechLanguage, courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
-import { parseUnitSession, type UnitSessionDraft } from "@/lib/yo/foundations/unitSession";
+import { editUnitTypedResponse, emptyUnitTypedResponse, mergeUnitTypedResponses, parseUnitSession, restartUnitTypedResponse, unitSessionScope, UNIT_SESSION_MAX_LENGTH, type UnitSessionDraft, type UnitTypedResponse } from "@/lib/yo/foundations/unitSession";
+import { exerciseDraftRevision } from "@/lib/yo/foundations/typedDraft";
 
 function RecallCards({
   lesson,
@@ -309,7 +310,7 @@ export function GermanCourseUnit(props: UnitProps) {
   if (!state.ready || !step?.unlocked) return <CourseJourneyGate locale={props.locale} ready={state.ready} href={experience.href(props.locale)} />;
   return (
     <GermanUnitSession
-      key={experience.progressKey + "-" + props.unit.id + "-" + state.progress.resetAt}
+      key={experience.progressKey + "-" + props.unit.id + "-" + state.progress.resetAt + "-" + exerciseDraftRevision(props.unit.lessons)}
       {...props}
       state={state}
     />
@@ -345,6 +346,9 @@ function GermanUnitSession({
     [resultAssisted, setResultAssisted] = useState(false),
     [wrong, setWrong] = useState(false);
   const [sessionReady, setSessionReady] = useState(false), [sessionStored, setSessionStored] = useState(true), [restoredSolved, setRestoredSolved] = useState(false);
+  const [typedValue, setTypedValue] = useState("");
+  const typedResponses = useRef<Record<string, UnitTypedResponse>>({});
+  const observedRevision = useRef<string | null>(null), invalidated = useRef(false), live = useRef(true);
   const assisted = useRef(false),
     answered = useRef(false),
     advancing = useRef(false),
@@ -360,32 +364,102 @@ function GermanUnitSession({
   );
   const { ready, setResume } = state;
   const sessionKey = `yo.course-session.v1.${experience.progressKey}.${unit.id}`;
-  function saveSession(extra: Partial<UnitSessionDraft> = {}) {
+  const unitRevision = exerciseDraftRevision(unit.lessons);
+  useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
+  const synchronizeTyped = useCallback(() => {
+    const before = typedResponses.current[activity.id];
+    if (!live.current || invalidated.current) return { allowed: false, changedGeneration: false };
+    try {
+      const raw = window.localStorage.getItem(sessionKey), scope = unitSessionScope(raw);
+      const course = JSON.parse(window.localStorage.getItem(experience.progressKey) ?? "null");
+      if ((typeof course?.resetAt === "number" && course.resetAt > state.progress.resetAt) ||
+        (scope && scope.courseKey === experience.progressKey && scope.unitId === unit.id &&
+          (scope.resetAt > state.progress.resetAt || (scope.resetAt === state.progress.resetAt && scope.revision !== unitRevision && scope.revision !== observedRevision.current)))) {
+        invalidated.current = true; setSessionStored(false); return { allowed: false, changedGeneration: false };
+      }
+      const disk = parseUnitSession(raw, unit, state.progress.resetAt, experience.progressKey);
+      typedResponses.current = mergeUnitTypedResponses(typedResponses.current, disk?.typedResponses ?? {});
+      // Recover independently edited activities after a read/write race without changing the other tab's cursor.
+      if (disk?.typedResponses && disk.unitRevision === unitRevision && JSON.stringify(mergeUnitTypedResponses({}, disk.typedResponses)) !== JSON.stringify(typedResponses.current)) {
+        const mergedRaw = JSON.stringify({ ...disk, typedResponses: typedResponses.current });
+        if (mergedRaw.length > UNIT_SESSION_MAX_LENGTH) throw new Error("Unit session limit");
+        window.localStorage.setItem(sessionKey, mergedRaw);
+      }
+    } catch { setSessionStored(false); }
+    const after = typedResponses.current[activity.id];
+    const changedGeneration = (before?.generation ?? 0) !== (after?.generation ?? 0);
+    if (after && JSON.stringify(before) !== JSON.stringify(after)) {
+      assisted.current = after.assisted; answered.current = after.solved;
+      setTypedValue(after.text); setSolved(after.solved); setWrong(after.wrong); setResultAssisted(after.resultAssisted); setRestoredSolved(after.solved);
+      if (changedGeneration || before?.solved !== after.solved || before?.wrong !== after.wrong) setEpoch(value => value + 1);
+    }
+    return { allowed: true, changedGeneration };
+  }, [activity.id, experience.progressKey, sessionKey, state.progress.resetAt, unit, unitRevision]);
+  const saveSession = useCallback((extra: Partial<UnitSessionDraft> = {}, text?: string) => {
+    const synchronized = synchronizeTyped();
+    if (!synchronized.allowed) return false;
     const draft: UnitSessionDraft = { version: 1, unitId: unit.id, resetAt: state.progress.resetAt, lessonId: lesson.id, activityId: activity.id,
-      view, study, assisted: assisted.current, solved, wrong, resultAssisted, ...extra };
-    try { window.localStorage.setItem(sessionKey, JSON.stringify(draft)); setSessionStored(true); }
+      view, study, assisted: assisted.current, solved, wrong, resultAssisted, ...extra,
+      courseKey: experience.progressKey, activityRevision: exerciseDraftRevision(activity), unitRevision };
+    if (activity.kind === "type") {
+      const previous = typedResponses.current[activity.id] ?? emptyUnitTypedResponse(exerciseDraftRevision(activity));
+      let response = previous;
+      if (!synchronized.changedGeneration) {
+        const candidate = { ...previous, assisted: draft.assisted || draft.wrong || draft.resultAssisted, solved: draft.solved, wrong: draft.wrong, resultAssisted: draft.resultAssisted };
+        response = mergeUnitTypedResponses({ [activity.id]: previous }, { [activity.id]: candidate })[activity.id];
+        if (JSON.stringify(response) !== JSON.stringify(previous)) response = { ...response, updatedAt: Math.max(Date.now(), previous.updatedAt + 1) };
+        if (text !== undefined) response = editUnitTypedResponse(response, text);
+      }
+      typedResponses.current[activity.id] = response;
+      draft.assisted = response.assisted; draft.solved = response.solved; draft.wrong = response.wrong; draft.resultAssisted = response.resultAssisted;
+      if (text !== undefined) setTypedValue(response.text);
+    }
+    draft.typedResponses = typedResponses.current;
+    try { const raw = JSON.stringify(draft); if (raw.length > UNIT_SESSION_MAX_LENGTH) throw new Error("Unit session limit"); window.localStorage.setItem(sessionKey, raw); observedRevision.current = unitRevision; setSessionStored(true); }
     catch { setSessionStored(false); }
-  }
+    return !synchronized.changedGeneration;
+  }, [synchronizeTyped, unit.id, state.progress.resetAt, lesson.id, activity, view, study, solved, wrong, resultAssisted, experience.progressKey, sessionKey, unitRevision]);
   useEffect(() => {
     try {
-      const draft = parseUnitSession(window.localStorage.getItem(sessionKey), unit, state.progress.resetAt);
+      const raw = window.localStorage.getItem(sessionKey);
+      const draft = parseUnitSession(raw, unit, state.progress.resetAt, experience.progressKey);
+      if (observedRevision.current === null) observedRevision.current = unitSessionScope(raw)?.revision ?? "";
       const matchesLink = draft && (!initialLessonId || initialLessonId === draft.lessonId) && (!initialActivityId || initialActivityId === draft.activityId);
+      typedResponses.current = draft?.typedResponses ?? {};
+      const li = matchesLink ? unit.lessons.findIndex(item => item.id === draft.lessonId) : initialLesson;
+      const ai = matchesLink ? unit.lessons[li].activities.findIndex(item => item.id === draft.activityId) : Math.max(0, initialActivity);
+      const nextActivity = unit.lessons[li].activities[ai];
+      const response = typedResponses.current[nextActivity.id];
+      setLessonIndex(li); setActivityIndex(ai); setTypedValue(response?.text ?? "");
       if (draft && matchesLink) {
-        const li = unit.lessons.findIndex(item => item.id === draft.lessonId);
-        setLessonIndex(li); setActivityIndex(unit.lessons[li].activities.findIndex(item => item.id === draft.activityId));
         setView(draft.view); setStudy(draft.study); assisted.current = draft.assisted; answered.current = draft.solved;
         setSolved(draft.solved); setRestoredSolved(draft.solved); setWrong(draft.wrong); setResultAssisted(draft.resultAssisted);
+      } else {
+        setView(initialActivity >= 0 ? "practice" : "learn"); setStudy(0);
+        assisted.current = false; answered.current = false;
+        setSolved(false); setRestoredSolved(false); setWrong(false); setResultAssisted(false);
+      }
+      if (response) {
+        assisted.current = response.assisted; answered.current = response.solved;
+        setSolved(response.solved); setRestoredSolved(response.solved); setWrong(response.wrong); setResultAssisted(response.resultAssisted);
       }
     } catch { setSessionStored(false); }
     setSessionReady(true);
-  }, [sessionKey, unit, state.progress.resetAt, initialLessonId, initialActivityId]);
+  }, [sessionKey, unit, state.progress.resetAt, initialLessonId, initialActivityId, experience.progressKey, initialLesson, initialActivity]);
   useEffect(() => {
     if (!sessionReady) return;
-    const draft: UnitSessionDraft = { version: 1, unitId: unit.id, resetAt: state.progress.resetAt, lessonId: lesson.id, activityId: activity.id,
-      view, study, assisted: assisted.current, solved, wrong, resultAssisted };
-    try { window.localStorage.setItem(sessionKey, JSON.stringify(draft)); setSessionStored(true); }
-    catch { setSessionStored(false); }
-  }, [sessionReady, sessionKey, unit.id, state.progress.resetAt, lesson.id, activity.id, view, study, solved, wrong, resultAssisted, epoch]);
+    saveSession();
+  }, [sessionReady, saveSession, epoch]);
+  useEffect(() => {
+    if (!sessionReady) return;
+    const onStorage = (event: StorageEvent) => {
+      if (event.storageArea && event.storageArea !== window.localStorage) return;
+      if (event.key === null || event.key === sessionKey || event.key === experience.progressKey) synchronizeTyped();
+    };
+    const onFocus = () => synchronizeTyped();
+    window.addEventListener("storage", onStorage); window.addEventListener("focus", onFocus);
+    return () => { window.removeEventListener("storage", onStorage); window.removeEventListener("focus", onFocus); };
+  }, [sessionReady, sessionKey, experience.progressKey, synchronizeTyped]);
   const { scene, present, finish: finishMission } = useMissionCinema(`${experience.progressKey}:${state.progress.resetAt}`);
   useEffect(() => {
     if (!ready || !sessionReady || (view !== "learn" && view !== "practice")) return;
@@ -399,33 +473,43 @@ function GermanUnitSession({
         view === "practice" ? activity.id : undefined,
       );
   }, [ready, sessionReady, view, unit.id, lesson.id, activity.id, setResume]);
-  function fresh() {
+  function restoreResponse(next: typeof activity, restart = false) {
     stopLessonAudio();
-    assisted.current = false;
-    answered.current = false;
-    setSolved(false);
-    setWrong(false);
-    setResultAssisted(false);
-    setRestoredSolved(false);
+    if (!synchronizeTyped().allowed) return;
+    if (restart && next.kind === "type") typedResponses.current[next.id] = restartUnitTypedResponse(typedResponses.current[next.id] ?? emptyUnitTypedResponse(exerciseDraftRevision(next)));
+    const response = next.kind === "type" ? typedResponses.current[next.id] : undefined;
+    assisted.current = response?.assisted ?? false;
+    answered.current = response?.solved ?? false;
+    setSolved(response?.solved ?? false);
+    setWrong(response?.wrong ?? false);
+    setResultAssisted(response?.resultAssisted ?? false);
+    setRestoredSolved(response?.solved ?? false);
+    setTypedValue(response?.text ?? "");
     setEpoch((e) => e + 1);
     requestAnimationFrame(() => heading.current?.focus());
   }
+  function fresh() { restoreResponse(activity, true); }
   function navigate(next: typeof view) {
-    fresh();
+    restoreResponse(activity);
     setView(next);
   }
   function chooseLesson(i: number) {
-    fresh();
+    restoreResponse(unit.lessons[i].activities[0]);
     setLessonIndex(i);
     setActivityIndex(0);
     setStudy(0);
     setView("learn");
   }
   function help() {
+    if (activity.kind === "type") { const sync = synchronizeTyped(); if (!sync.allowed || sync.changedGeneration) return; }
     if (!answered.current) { assisted.current = true; saveSession({ assisted: true }); }
   }
-  function attempt(correct: boolean) {
-    if (answered.current) return;
+  function attempt(correct: boolean, renderedText?: string) {
+    if (activity.kind === "type") {
+      const sync = synchronizeTyped();
+      if (!sync.allowed || sync.changedGeneration || renderedText === undefined || typedResponses.current[activity.id]?.text !== renderedText) return false;
+    }
+    if (answered.current) return false;
     state.recordActivity(activity.id, correct, assisted.current);
     setWrong(!correct);
     if (correct) {
@@ -434,6 +518,7 @@ function GermanUnitSession({
       setResultAssisted(assisted.current);
       saveSession({ solved: true, wrong: false, resultAssisted: assisted.current });
     } else { assisted.current = true; saveSession({ solved: false, wrong: true, assisted: true }); }
+    return true;
   }
   function nextActivity() {
     if (advancing.current) return;
@@ -441,10 +526,10 @@ function GermanUnitSession({
     requestAnimationFrame(() => {
       advancing.current = false;
     });
-    fresh();
-    if (activityIndex + 1 < lesson.activities.length)
+    if (activityIndex + 1 < lesson.activities.length) {
+      restoreResponse(lesson.activities[activityIndex + 1]);
       setActivityIndex((i) => i + 1);
-    else if (lessonIndex + 1 < unit.lessons.length)
+    } else if (lessonIndex + 1 < unit.lessons.length)
       chooseLesson(lessonIndex + 1);
     else setView("quiz");
     if (activityIndex + 1 === lesson.activities.length && lesson.activities.every(item => state.progress.activities[item.id]?.completed)) {
@@ -457,7 +542,7 @@ function GermanUnitSession({
     const li = unit.lessons.findIndex((l) =>
       l.activities.some((a) => a.id === id),
     );
-    fresh();
+    restoreResponse(unit.lessons[li].activities.find(item => item.id === id)!, true);
     setLessonIndex(li);
     setActivityIndex(unit.lessons[li].activities.findIndex((a) => a.id === id));
     setView("practice");
@@ -500,10 +585,60 @@ function GermanUnitSession({
           {state.ready && (!state.storageAvailable || !sessionStored) ? c.blocked : c.local}
         </p>
         <div className="grid min-w-0 gap-7 lg:grid-cols-[210px_minmax(0,1fr)]">
-          <aside className="min-w-0">
+          <aside className="min-w-0 lg:sticky lg:top-5 lg:self-start">
+            <div className="mb-5">
+              {view !== "quiz" ? (
+                <ItalianYoppoCoach
+                  presentation="inline"
+                  locale={locale}
+                  contextId={`${unit.id}-${lesson.id}-${view}-${activity.id}-${epoch}`}
+                  message={view === "practice" ? activity.prompt : lesson.goal}
+                  hint={view === "practice" ? activity.hint : lesson.grammar.body}
+                  hint2={view === "practice" ? activity.hint2 : undefined}
+                  explanation={
+                    view === "practice" ? activity.explanation : lesson.grammar.body
+                  }
+                  example={lesson.vocabulary[0]}
+                  exampleAudio={
+                    <ItalianModuleAudio
+                      text={lesson.vocabulary[0].it}
+                      locale={locale}
+                    />
+                  }
+                  visualState={solved ? "celebrating" : wrong ? "confused" : "map"}
+                  completedCount={completed}
+                  totalCount={all.length}
+                  reviewCount={due.length}
+                  canRetry={view === "practice"}
+                  onAction={(action) => {
+                    if (action === "hint" || action === "explain") help();
+                    if (action === "retry") fresh();
+                    if (action === "review") review();
+                    if (action === "challenge") {
+                      restoreResponse(lesson.activities[lesson.activities.length - 1]);
+                      setActivityIndex(lesson.activities.length - 1);
+                      setView("practice");
+                    }
+                  }}
+                />
+              ) : null}
+            </div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-600" htmlFor="shared-course-lesson">
+              {t("Leçons", "Lessons", "Lecciones")[locale]}
+            </label>
+            <select
+              id="shared-course-lesson"
+              value={lessonIndex}
+              onChange={(event) => chooseLesson(Number(event.target.value))}
+              className="min-h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-base lg:hidden"
+            >
+              {unit.lessons.map((item, index) => (
+                <option key={item.id} value={index}>{index + 1}. {item.title[locale]}</option>
+              ))}
+            </select>
             <nav
               aria-label={t("Leçons", "Lessons", "Lecciones")[locale]}
-              className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible"
+              className="hidden gap-2 pb-2 lg:flex lg:flex-col"
             >
               {unit.lessons.map((l, i) => (
                 <button
@@ -783,8 +918,10 @@ function GermanUnitSession({
                   key={`${activity.id}-${epoch}`}
                   activity={activity}
                   locale={locale}
-                  onAttempt={attempt}
+                  onAttempt={(correct) => { attempt(correct); }}
                   onHelp={help}
+                  typedDraft={activity.kind === "type" ? { value: typedValue, initialFeedback: wrong ? false : null, onCheck: attempt,
+                    onChange: value => { setTypedValue(value); saveSession({}, value); } } : undefined}
                 />}
                 {solved ? (
                   <p
@@ -803,7 +940,7 @@ function GermanUnitSession({
                     disabled={activityIndex === 0}
                     className={outline}
                     onClick={() => {
-                      fresh();
+                      restoreResponse(lesson.activities[activityIndex - 1]);
                       setActivityIndex((i) => i - 1);
                     }}
                   >
@@ -865,40 +1002,6 @@ function GermanUnitSession({
             {view === "learn" && !scene && <div className="mt-6"><YoSpeechPractice key={lesson.id} language={courseSpeechLanguage(experience.language)!} locale={locale} scenarioId={courseSpeechScenario(courseSpeechLanguage(experience.language)!, unit.number)}/></div>}
           </div>
         </div>
-        {view !== "quiz" ? (
-          <ItalianYoppoCoach
-            locale={locale}
-            contextId={`${unit.id}-${lesson.id}-${view}-${activity.id}-${epoch}`}
-            message={view === "practice" ? activity.prompt : lesson.goal}
-            hint={view === "practice" ? activity.hint : lesson.grammar.body}
-            hint2={view === "practice" ? activity.hint2 : undefined}
-            explanation={
-              view === "practice" ? activity.explanation : lesson.grammar.body
-            }
-            example={lesson.vocabulary[0]}
-            exampleAudio={
-              <ItalianModuleAudio
-                text={lesson.vocabulary[0].it}
-                locale={locale}
-              />
-            }
-            visualState={solved ? "celebrating" : wrong ? "confused" : "map"}
-            completedCount={completed}
-            totalCount={all.length}
-            reviewCount={due.length}
-            canRetry={view === "practice"}
-            onAction={(action) => {
-              if (action === "hint" || action === "explain") help();
-              if (action === "retry") fresh();
-              if (action === "review") review();
-              if (action === "challenge") {
-                fresh();
-                setActivityIndex(lesson.activities.length - 1);
-                setView("practice");
-              }
-            }}
-          />
-        ) : null}
         {scene && <MissionFilm scene={scene} locale={locale} onContinue={finishMission}/>}
       </GermanCourseShell>
     </ItalianAudioProvider>

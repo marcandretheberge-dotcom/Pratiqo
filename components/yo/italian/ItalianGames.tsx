@@ -14,6 +14,7 @@ import { matchesSpanishAnswer } from "@/lib/yo/spanish/courseLogic";
 import { matchesFrenchQuebecAnswer } from "@/lib/yo/frenchQuebec/courseLogic";
 import { courseKeyboard, courseMoney, type TextCourseLanguage } from "@/lib/yo/foundations/experience";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
+import { TYPED_DRAFT_MAX_LENGTH } from "@/lib/yo/foundations/typedDraft";
 
 const C = {
   fr: { check: "Vérifier", correct: "Ecco ! Tu y es.", retry: "Presque. Ajuste et réessaie.", choose: "Choisis une réponse", associate: "Choisis un mot italien, puis son sens.", pair: "Paire trouvée", wrongPair: "Ces deux cartes ne vont pas ensemble. Essaie une autre association.", left: "Expressions italiennes", right: "Leur sens", sentence: "Ta phrase", pool: "Mots disponibles", empty: "Touche les mots pour construire ta phrase.", undo: "Annuler", clear: "Tout remettre", answer: "Ta réponse en italien", model: "Voir un modèle", accent: "Utilise ces touches pour écrire les accents, puis compare avec le modèle.", listen: "le message de l’exercice", transcript: "Lire la transcription (avec aide)", listened: "Audio démarré", beforeListen: "Écoute le message ou choisis la version écrite pour répondre.", written: "Version écrite : cette réussite sera enregistrée avec aide.", cart: "Ta commande", menu: "La carte du bar", fictional: "Prix inventés pour ce jeu.", total: "Total", budget: "Budget", add: "Ajouter", remove: "Retirer", basketHint: "Choisis les produits et les quantités demandés, puis vérifie.", steps: "Déplacements", map: "Plan fictif pour apprendre : ce n’est pas un itinéraire réel.", start: "Départ", destination: "Piazza", you: "Yoppo est ici", boundary: "Tu arrives au bord du plan. Choisis une autre direction.", up: "En haut", down: "En bas", east: "À droite", west: "À gauche", route: "Ton trajet", turn: "Tour", nextTurn: "Poursuivre la conversation", finished: "Conversation réussie", option: "Réponse", listenLine: "Écouter la réplique", matched: "paires trouvées", counter: "quantité" },
@@ -61,9 +62,11 @@ function useGameLanguage(locale: YoLocale) {
 
 export const italianButton = "inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[#245a46] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#183e30] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#245a46]";
 const optionButton = "min-h-14 rounded-2xl border-2 p-4 text-left text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#245a46] disabled:cursor-default";
-/** Optional checked-choice detail; typed answers stay inside their input component. */
+/** Checked-choice detail never includes the learner's typed text. */
 export interface ItalianAttemptDetail { optionId: string }
-interface GameProps { locale: YoLocale; onAttempt: (correct: boolean, detail?: ItalianAttemptDetail) => void; onHelp: () => void }
+/** Opt-in local continuity. Restoring these values never invokes grading or help callbacks. */
+export interface ItalianTypedDraft { value: string; onChange: (value: string) => void; onCheck: (correct: boolean, renderedText: string) => boolean; initialFeedback?: boolean | null }
+interface GameProps { locale: YoLocale; onAttempt: (correct: boolean, detail?: ItalianAttemptDetail) => void; onHelp: () => void; typedDraft?: ItalianTypedDraft }
 
 function Feedback({ correct, locale, children }: { correct: boolean | null; locale: YoLocale; children?: React.ReactNode }) {
   const { copy } = useGameLanguage(locale);
@@ -153,23 +156,36 @@ function OrderGame({ activity, locale, onAttempt }: GameProps & { activity: Ital
   </div>;
 }
 
-function TypeGame({ activity, locale, onAttempt, onHelp }: GameProps & { activity: ItalianTypeActivity }) {
+function TypeGame({ activity, locale, onAttempt, onHelp, typedDraft }: GameProps & { activity: ItalianTypeActivity }) {
   const { language, copy } = useGameLanguage(locale);
-  const [value, setValue] = useState("");
-  const [feedback, setFeedback] = useState<boolean | null>(null);
+  const [localValue, setLocalValue] = useState("");
+  const value = typedDraft?.value ?? localValue;
+  const [feedback, setFeedback] = useState<boolean | null>(() => typedDraft?.initialFeedback ?? null);
+  const [draftChanged, setDraftChanged] = useState(false);
   const [model, setModel] = useState(false);
   const [heard, setHeard] = useState(false);
   const [read, setRead] = useState(false);
   const unlocked = !activity.listeningText || heard || read;
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  function check() { if (!unlocked || !value.trim() || feedback === true) return; const correct = answerMatchers[language](value, activity.accepted); setFeedback(correct); onAttempt(correct); }
+  const composing = useRef(false);
+  function setValue(next: string) { if (typedDraft) typedDraft.onChange(next.slice(0, TYPED_DRAFT_MAX_LENGTH)); else setLocalValue(next); }
+  function check() {
+    if (!unlocked || !value.trim() || feedback === true || (typedDraft && composing.current)) return;
+    const correct = answerMatchers[language](value, activity.accepted);
+    if (typedDraft) {
+      if (!typedDraft.onCheck(correct, value)) { setFeedback(null); setDraftChanged(true); return; }
+      setDraftChanged(false);
+    } else { setFeedback(correct); onAttempt(correct); return; }
+    setFeedback(correct);
+  }
   return <form onSubmit={(event) => { event.preventDefault(); check(); }}>
     {activity.listeningText ? <div className="mb-5"><ItalianModuleAudio text={activity.listeningText} locale={locale} label={copy.listen} onListen={() => setHeard(true)} /><p className="mt-2 text-xs">{read ? copy.written : heard ? copy.listened : copy.beforeListen}</p></div> : null}
     <label htmlFor={id} className="mb-2 block text-sm font-bold">{copy.answer}</label>
-    <input ref={inputRef} id={id} lang={language} autoComplete="off" autoCorrect="off" spellCheck={false} maxLength={160} value={value} disabled={feedback === true} onChange={(event) => { setValue(event.target.value); setFeedback(null); }} className="min-h-16 w-full rounded-2xl border-2 border-[#d8cbb7] bg-white px-4 text-xl outline-none focus:border-[#245a46]" />
+    <input ref={inputRef} id={id} lang={language} autoComplete="off" autoCorrect="off" spellCheck={false} maxLength={160} value={value} disabled={feedback === true} onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }} onKeyDown={(event) => { if (typedDraft && event.key === "Enter" && (composing.current || event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229)) event.preventDefault(); }} onChange={(event) => { setValue(event.target.value); setFeedback(null); }} className="min-h-16 w-full rounded-2xl border-2 border-[#d8cbb7] bg-white px-4 text-xl outline-none focus:border-[#245a46]" />
     <div className="mt-3 flex flex-wrap gap-2">{courseKeyboard[language].map((character) => <button key={character} type="button" aria-label={`${copy.add} ${character}`} disabled={feedback === true} onClick={() => { const start = inputRef.current?.selectionStart ?? value.length; const end = inputRef.current?.selectionEnd ?? start; setValue((value.slice(0, start) + character + value.slice(end)).slice(0, 160)); setFeedback(null); requestAnimationFrame(() => { inputRef.current?.focus(); inputRef.current?.setSelectionRange(start + 1, start + 1); }); }} className="min-h-11 min-w-11 rounded-xl border border-[#e7dfd0] bg-white px-3 text-lg">{character}</button>)}</div>
     <p className="mt-2 text-xs text-[#6c604e]">{copy.accent}</p>
+    {draftChanged ? <p role="status" className="mt-3 text-sm">{{ fr: "Le brouillon a changé dans une autre vue. Relis la réponse affichée, puis vérifie-la à nouveau.", en: "The draft changed in another view. Read the displayed answer, then check it again.", es: "El borrador cambió en otra vista. Lee la respuesta mostrada y compruébala de nuevo." }[locale]}</p> : null}
     <div className="mt-5 flex flex-wrap items-center gap-3"><button className={italianButton} type="submit" disabled={!unlocked || !value.trim() || feedback === true}>{copy.check}</button><button type="button" className="min-h-11 rounded-xl px-3 text-sm underline" onClick={() => { if (!model) { onHelp(); setRead(true); } setModel(!model); }} aria-expanded={model}>{activity.listeningText ? copy.transcript : copy.model}</button></div>
     {model ? <p lang={language} className="mt-4 rounded-xl bg-[#f4efe5] p-4 font-semibold">{activity.model}</p> : null}
     <Feedback correct={feedback} locale={locale}>{feedback ? activity.explanation[locale] : null}</Feedback>

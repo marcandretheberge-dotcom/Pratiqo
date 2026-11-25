@@ -96,9 +96,16 @@ def verify(browser, engine, course, locale, width):
         page.goto(url + "/" + unit["id"] + "?lang=" + locale + "&lesson=" + lesson["id"] + "&activity=" + exercise["id"])
         expect(page.get_by_role("textbox")).to_be_visible(timeout=45000)
         dismiss_films(page, locale)
+        expect(page.locator('[data-yoppo-presentation="inline"]')).to_be_visible()
+        partial = exercise["model"][:max(1, len(exercise["model"]) // 2)]
+        page.get_by_role("textbox").fill(partial)
         page.get_by_role("button", name=c["model"], exact=True).click()
+        before_draft_reload = page.evaluate("args=>JSON.parse(localStorage.getItem(args[0])).activities[args[1]] ?? null", [course["progressKey"], exercise["id"]])
+        assert before_draft_reload is None, "typing and revealing must not grade"
         page.reload()
-        expect(page.get_by_role("textbox")).to_be_visible(timeout=45000)
+        expect(page.get_by_role("textbox")).to_have_value(partial, timeout=45000)
+        assert page.evaluate("args=>JSON.parse(localStorage.getItem(args[0])).activities[args[1]] ?? null", [course["progressKey"], exercise["id"]]) is None
+        capture(page, name + "-draft-resumed")
         page.get_by_role("textbox").fill(exercise["model"])
         page.get_by_role("button", name=c["check"], exact=True).click()
         practice = page.evaluate("args=>JSON.parse(localStorage.getItem(args[0])).activities[args[1]]", [course["progressKey"], exercise["id"]])
@@ -120,6 +127,12 @@ def verify(browser, engine, course, locale, width):
                     page.reload()
                     expect(panel).to_have_attribute("data-assessment-index", str(index), timeout=45000)
                     used_help = True
+                partial = question["model"][:max(1, len(question["model"]) // 2)]
+                panel.get_by_role("textbox").fill(partial)
+                page.reload()
+                expect(panel).to_have_attribute("data-assessment-index", str(index), timeout=45000)
+                expect(panel.get_by_role("textbox")).to_have_value(partial)
+                assert page.evaluate("args=>JSON.parse(localStorage.getItem(args[0])).assessments[args[1]] ?? null", [course["progressKey"], checkpoint["id"]]) is None
                 panel.get_by_role("textbox").fill(question["model"])
             else:
                 answer = next(option for option in question["options"] if option["id"] == question["correctId"])
@@ -161,7 +174,7 @@ def verify(browser, engine, course, locale, width):
         assert not errors, errors
         assert page.evaluate("window.__foundationAudio + window.__foundationVoice + window.__foundationMic") == 0
         return {"language": course["language"], "locale": locale, "width": width, "assisted": assisted,
-                "questionsAnswered": len(checkpoint["questions"]), "checkpointAttempts": 1, "passed": True}
+                "questionsAnswered": len(checkpoint["questions"]), "checkpointAttempts": 1, "unitDraftRestored": True, "assessmentDraftRestored": True, "inlineCoach": True, "passed": True}
     except Exception:
         page.screenshot(path=str(out / (name + "-failure.png")), full_page=False)
         (out / (name + "-failure.html")).write_text(page.content())
