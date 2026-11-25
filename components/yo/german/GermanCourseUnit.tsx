@@ -858,7 +858,7 @@ function GermanUnitSession({
                 }
               />
             ) : null}
-            <Link className={`${outline} mt-8`} href={experience.href(locale)}>
+            <Link prefetch={false} className={`${outline} mt-8`} href={experience.href(locale)}>
               <ArrowLeft size={16} aria-hidden />
               {c.course}
             </Link>

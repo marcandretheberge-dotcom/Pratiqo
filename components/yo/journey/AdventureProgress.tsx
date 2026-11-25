@@ -178,14 +178,14 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
           <p>{visible.kind === "checkpoint" ? c.half : visible.kind === "recap" ? c.recapSuccess : visible.kind === "finale" ? c.final : visible.kind === "unlock" ? c.goal : c.skills}</p>
           {visible.skills.length ? <ul className="list-disc pl-5">{visible.skills.map((skill, index) => <li key={index}>{skill[locale]}</li>)}</ul> : null}
           <p className="mt-2 text-xs text-gray-600">{visible.kind === "unlock" ? c.access : c.proof}</p>
-          {visible.kind === "finale" ? <Link className="mt-2 inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" href={`/yo/langues?lang=${locale}`}>{c.explore}</Link> : null}
+          {visible.kind === "finale" ? <Link prefetch={false} className="mt-2 inline-flex min-h-11 items-center font-semibold text-emerald-900 underline" href={`/yo/langues?lang=${locale}`}>{c.explore}</Link> : null}
         </div>
       </div>
       {destination && hrefForUnit ? <section aria-label={c.nextDestination} data-next-destination={destination.unit.id} className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
         <p className="text-xs font-bold uppercase tracking-wide text-emerald-800">{c.nextDestination}</p>
         <h4 className="mt-1 break-words text-lg font-bold">{destination.unit.title[locale]}</h4>
         <p className="mt-2 text-sm leading-6">{(destination.unit.objectives[0] ?? destination.unit.subtitle)[locale]}</p>
-        <Link href={hrefForUnit(destination.unit.id)} onClick={dismissAll} className={`${button} mt-3 bg-emerald-800 text-white`} aria-label={`${c.visitDestination} : ${destination.unit.title[locale]}`}>{c.visitDestination}</Link>
+        <Link prefetch={false} href={hrefForUnit(destination.unit.id)} onClick={dismissAll} className={`${button} mt-3 bg-emerald-800 text-white`} aria-label={`${c.visitDestination} : ${destination.unit.title[locale]}`}>{c.visitDestination}</Link>
       </section> : null}
       <div className="mt-2 flex flex-wrap gap-2"><button type="button" className={`${button} bg-emerald-800 text-white`} onClick={dismiss}>{c.skip}</button><button type="button" className={button} onClick={() => repeat(visible)}><RotateCcw size={16} aria-hidden />{c.replay}</button>{victory ? <button type="button" className={button} aria-pressed={effects} onClick={() => void toggleEffects(!effects)}><Volume2 size={16} aria-hidden />{c.effects}</button> : null}</div>
       {victory && soundError ? <p role="status" className="mt-2 text-xs text-gray-600">{c.unavailable}</p> : null}

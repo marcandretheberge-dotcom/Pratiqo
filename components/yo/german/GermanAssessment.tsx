@@ -132,11 +132,12 @@ function GermanAssessmentSession({ assessment, locale, onComplete, resultAction,
           <button type="button" className={button} onClick={restart}>
             {c.replay}
           </button>
-          <Link className={outline} href={experience.href(locale)}>
+          <Link prefetch={false} className={outline} href={experience.href(locale)}>
             {c.course}
           </Link>
           {experience.hasCultureFinal && assessment.id === experience.finalId ? (
             <Link
+            prefetch={false}
               className={outline}
               href={experience.href(locale, "culture")}
             >
@@ -212,6 +213,7 @@ function GermanAssessmentSession({ assessment, locale, onComplete, resultAction,
               ) : null}
               {question.taughtInUnitId ? (
                 <Link
+            prefetch={false}
                   className="mt-3 inline-flex min-h-11 items-center text-sm text-emerald-800 underline"
                   href={experience.href(locale, question.taughtInUnitId)}
                 >

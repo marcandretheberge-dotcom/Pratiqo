@@ -79,7 +79,9 @@ def verify(browser, engine, course, locale, width):
         expect(page.locator('[data-course-unit="home"]')).to_be_visible(timeout=60000)
         dismiss_films(page, locale)
         capture(page, name + "-map")
-        page.goto(url + "/" + unit["id"] + "?lang=" + locale)
+        continuation = page.locator("a.yo-shared-continue")
+        expect(continuation).to_have_attribute("href", "/yo/langues/" + course["slug"] + "/parcours/" + unit["id"] + "?lang=" + locale)
+        continuation.click()
         # The film intentionally makes the lesson underneath inert. Wait for the
         # real unit, dismiss its dialogs, then inspect the accessible heading.
         expect(page.locator('[data-course-unit="' + unit["id"] + '"]')).to_be_attached(timeout=60000)

@@ -53,6 +53,7 @@ export function GermanCourseDashboard({
           <div className="mt-5 flex flex-wrap items-center gap-3">
             {dueUnit ? (
               <Link
+            prefetch={false}
                 className={outline}
                 href={`${experience.href(locale, dueUnit.id)}&lesson=${dueUnit.lessons.find((l) => l.activityIds.includes(due[0]))?.id}&activity=${due[0]}`}
               >
@@ -93,6 +94,7 @@ export function GermanCourseDashboard({
           .filter((a) => a.id === experience.finalId || a.theme === "culture")
           .map((a) => state.ready && canEnterCourseAssessment(catalog, state.progress, a.id) ? (
             <Link
+            prefetch={false}
               key={a.id}
               href={experience.href(
                 locale,
