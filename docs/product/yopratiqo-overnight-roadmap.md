@@ -50,9 +50,9 @@ availability varies by course, base language, platform and subscription.
 | Workstream | State before this increment | Change prepared in this increment | Completion still required |
 | --- | --- | --- | --- |
 | Shared entry | Experience, purpose and pace; interests absent | Six interests, up to three choices, editable, preserved separately from progress, all eight languages | Account preference sync and deeper interest variants within each authored course |
-| Continuity | Intro final mostly returned to the same map | Explicit links to real continuation; exact unfinished work stays first; goal/pace recommendations use existing reached content | English and Quebec French still need substantial later courses; Spanish needs a coherent common evaluated curriculum |
+| Continuity | Intro final mostly returned to the same map | First release links to real continuation. Second lot adds original 12-unit/36-lesson EN, ES and Québec French courses, with real written checks, regional notes and continuation from the intro | Browser/deployment verification of the second lot; language-specific listening approval; partial typed answers in the new course player still restart on reload |
 | Feedback | Mostly correct phrase/translation in shared intro | Authored concept plus chosen/expected phrase, correct assistance tracking | Broader language-specific correction banks and unseen transfer assessments |
-| Review | IT/DE/PT have dated local review; intro/JA/ZH inconsistent | Reusable eight-language registry and append-only local review; seven intros plus interest missions actually connected | Wire every legacy course activity, authenticated ownership, complete two-device restoration and offline server delivery |
+| Review | IT/DE/PT have dated local review; intro/JA/ZH inconsistent | First release connects seven intros and interest missions. Second lot connects actual IT/DE/PT/new EN/ES/FR practice writers plus JA/ZH, and reuses their real answer checkers for dated review | Deploy and verify second lot; authenticated ownership, complete two-device restoration and offline server delivery |
 | Interests | Local Parma reason only | 48 authored mini-mission variants: dialogue, venue choice, directions, typed noun recall, changed exit route, later error review | Destination-specific cultural variants throughout the full curricula; these mini-missions are not complete replacement courses |
 | Cinema | Travel MP4s and three still-only mission slots | Three actual 5-second motion clips; opening/success/backpack slots use verified local MP4s | Bespoke destination/mission footage and each specific earned artifact; the generic backpack clip does not display an invented reward |
 | Speech | Bounded eight-language server implementation deployed but disabled | Kept bounded, no new live requests; locale aliases aligned | Server API credential, live audio QA in all eight languages, measured quotas/payment funding, then activation |
@@ -64,6 +64,40 @@ availability varies by course, base language, platform and subscription.
 
 See [the parity audit](yopratiqo-parity-audit.md) for language-by-language evidence.
 Course depth remains unequal. The public parity gate is **not met** by this release.
+
+## Second lot: substantial foundations and course continuity
+
+Prepared on the first production release's tree (`8c60fa1`), not a replacement
+of the older workplace, Dominican or Italian progress contracts. Each new course
+has 12 original units, 36 lessons, 252 authored practice activities, 72 written
+unit questions and a separate 24-question cumulative final. English has 252
+distinct vocabulary phrases and 108 dialogue turns; Spanish has 252 and 72;
+Québec French has 216 and 144. Counts describe content, not proficiency levels.
+The courses do not claim a CEFR or CLB certification.
+
+The shared course engine now uses each language's own answer normalization,
+keyboard, speech locale and progress namespace. Six explicit learning panels
+cover the mission, vocabulary, grammar, sounds, reading and spoken self-practice.
+Regional notes are rendered in the actual player. Device speech is identified
+as a preview and requires a click; missing premium recordings remain visible.
+The new written assessment sequences do not depend on unavailable recordings.
+
+Unit/session restoration preserves the actual cursor, help and checked result.
+Assessment restoration preserves the first checked answer, accumulated help,
+question cursor and completed score, without submitting another result. A new
+attempt requires a deliberate restart. Reset/content revision invalidates stale
+assessment drafts. Unsubmitted exercise text is not included in these drafts.
+
+The eight full-course review adapters now receive actual wrong/helped attempts.
+Optional review uses the original exercise checkers, preserves the reading
+passage and cannot write course grades, bookmarks, XP or access. Final and
+placement questions are excluded. The separate append-only journal leaves old
+progress untouched. Mandarin's legacy whole-state progress concurrency and
+authenticated two-device restoration are still separate unfinished work.
+
+Release status: local content, review, assessment and legacy regression tests
+have passed. Chromium/WebKit, exact-head CI, merge and production checks must
+still be recorded before this second lot is called deployed.
 
 ## Commercial decisions retained
 
@@ -110,7 +144,7 @@ relevant checks succeed, verify the resulting production commit/deployment and
 public assets, and record the real links below. This section is updated as the
 release progresses; a prepared change is not yet a production release.
 
-- Release PR: pending.
-- Production deployment: pending.
+- First release: [PR #480](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/480), merged at `8c60fa16457e604bd570c27ad6d50d89cb17b45d`. All 15 GitHub workflows and both Vercel builds passed, including Chromium and macOS WebKit. The 320px Québec overflow was fixed before merging.
+- First production deployment: `dpl_GiL9SWg7bD59WSBbCGdGpETDZPoo`, READY and assigned to pratiqo.ca/www.pratiqo.ca. The 24 public smoke checks passed, including exact hashes for all three new MP4s. No runtime errors were returned in the first five-minute log window; this is a short observation window, not an uptime guarantee. Live speech remains disabled.
 - Morning verification: scheduled for November 25 around 08:00 Toronto; it must
   read current GitHub/deployment state and this ledger, not repeat stale claims.

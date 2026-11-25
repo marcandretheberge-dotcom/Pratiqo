@@ -53,6 +53,7 @@ export function GermanCourseFinal({
         <GermanAssessment
           key={state.progress.resetAt}
           assessment={assessment}
+          resetAt={state.progress.resetAt}
           locale={locale}
           onComplete={state.recordAssessment}
         />

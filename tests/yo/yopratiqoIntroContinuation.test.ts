@@ -11,9 +11,9 @@ import type { IntroProfile } from "@/lib/yo/shared/types";
 const goals: IntroProfile["goal"][] = ["travel", "family", "work", "conversation", "thorough"];
 const locales = ["fr", "en", "es"] as const;
 const expectedDefault: Record<string, string> = {
-  anglais: "/yo/langues/anglais/intro",
-  "francais-quebec": "/yo/langues/francais-quebec/intro",
-  espagnol: "/yo/langues/espagnol/intro",
+  anglais: "/yo/langues/anglais/parcours",
+  "francais-quebec": "/yo/langues/francais-quebec/parcours",
+  espagnol: "/yo/langues/espagnol/parcours",
   allemand: "/yo/langues/allemand/parcours",
   "portugais-bresil": "/yo/langues/portugais-bresil/parcours",
   japonais: "/yo/langues/japonais/parcours",
@@ -24,11 +24,7 @@ for (const course of introCourses) {
   const snapshot = JSON.stringify(course);
   for (const goal of goals) for (const locale of locales) {
     const next = introContinuation(course, goal, locale);
-    const expected = course.slug === "francais-quebec" && goal === "work"
-      ? "/yo/langues/francais-quebec/module-1/lecon-3"
-      : course.slug === "espagnol" && goal === "travel"
-        ? "/yo/langues/espagnol/pays/republique-dominicaine"
-        : expectedDefault[course.slug];
+    const expected = expectedDefault[course.slug];
     assert.equal(next.path, expected, `${course.slug}/${goal} must lead to its existing activity`);
     assert.equal(next.href, `${expected}?lang=${locale}`, "Keep the interface language on continuation");
     assert.ok(existsSync(path.join(process.cwd(), "app", next.path, "page.tsx")), `Missing continuation route: ${next.path}`);

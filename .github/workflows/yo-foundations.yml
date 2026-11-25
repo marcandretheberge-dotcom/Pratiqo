@@ -1,0 +1,94 @@
+name: Yo multilingual foundations
+on:
+  pull_request:
+    paths:
+      - 'app/yo/langues/**/parcours/**'
+      - 'components/yo/foundations/**'
+      - 'components/yo/german/**'
+      - 'components/yo/italian/**'
+      - 'components/yo/japanese/**'
+      - 'components/yo/mandarin/**'
+      - 'components/yo/review/**'
+      - 'lib/yo/foundations/**'
+      - 'lib/yo/english/**'
+      - 'lib/yo/spanish/**'
+      - 'lib/yo/frenchQuebec/**'
+      - 'lib/yo/review/**'
+      - 'lib/yo/shared/continuation.ts'
+      - 'tests/yo/*Foundations*'
+      - 'tests/yo/*FoundationIsolation*'
+      - 'tests/yo/*CourseReview*'
+      - 'tests/yo/*AssessmentDraft*'
+      - 'scripts/prepare_yo_shared_review.ts'
+      - '.github/workflows/yo-foundations.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  content-and-progress:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: |
+          node --import tsx tests/yo/yopratiqoEnglishFoundations.test.ts
+          node --import tsx tests/yo/yopratiqoSpanishFoundations.test.ts
+          node --import tsx tests/yo/yopratiqoFrenchQuebecFoundations.test.ts
+          node --import tsx tests/yo/yopratiqoCourseReview.test.tsx
+          node --import tsx tests/yo/yopratiqoAssessmentDraft.test.tsx
+          node --import tsx tests/yo/yopratiqoFoundationIsolation.test.tsx
+          node --import tsx tests/yo/yopratiqoIntroContinuation.test.ts
+  browser:
+    name: Foundation player (${{ matrix.browser }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-24.04, browser: chromium}
+          - {os: macos-15, browser: webkit}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_SUPABASE_URL: https://audio.example.test
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: local-ui-test
+      YO_QA_DIR: /tmp/yo-foundations-qa
+      YO_JOURNAL_BROWSERS: ${{ matrix.browser }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps "$YO_JOURNAL_BROWSERS"
+      - name: Use the real course routes, answers and persisted checkpoints
+        run: |
+          set -eu
+          mkdir -p "$YO_QA_DIR"
+          node --import tsx scripts/prepare_yo_shared_review.ts
+          ./node_modules/.bin/next dev .qa-guided --webpack --hostname 127.0.0.1 --port 3246 > "$YO_QA_DIR/server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" || true' EXIT
+          curl --retry 30 --retry-connrefused --retry-delay 1 -fsS -o /dev/null http://127.0.0.1:3246/companion/travel/journal/yoppo-journal.webp
+          python tests/yo/yopratiqoFoundations.browser.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: foundation-browser-evidence-${{ matrix.browser }}
+          path: /tmp/yo-foundations-qa
+          retention-days: 7

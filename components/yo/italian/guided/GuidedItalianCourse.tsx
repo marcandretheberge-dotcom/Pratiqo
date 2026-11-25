@@ -37,8 +37,9 @@ import { ItalianCityBossGate } from "./ItalianCityBossGate";
 import { ItalianBossBattleHud } from "./ItalianBossBattleHud";
 import { GuidedGame } from "./GuidedGame";
 import { t } from "@/lib/yo/italian/course/courseAuthoring";
-import { placementAllowsReview, weeklyRhythm, type LearningProfile } from "@/lib/yo/personalized/profile";
+import { GUIDED_PROGRESS_KEY, placementAllowsReview, weeklyRhythm, type LearningProfile } from "@/lib/yo/personalized/profile";
 import { InterestPracticeCard } from "../../interests/InterestPracticeCard";
+import { CourseDueReview } from "../../review/CourseDueReview";
 import type { VisualWord, WordBankEntry } from "@/lib/yo/personalized/types";
 import { VocabularyStudy } from "../../personalized/VocabularyStudy";
 import { VisualVocabulary } from "../../personalized/VisualVocabulary";
@@ -270,6 +271,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
         triviaAvailable={canPlayItalianTrivia(unit, progress)} onOpenTrivia={() => { finishTour(); stopLessonAudio(); setCheckpointOpen(true); }}
         showGuide={tour !== null && !canPlayItalianTrivia(unit, progress)} onDismissGuide={finishTour}/>}
       {ui.view === "map" && <InterestPracticeCard language="it" locale={locale} interests={profile?.interests} city={city}/>}
+      {ui.view === "map" && progressKey === GUIDED_PROGRESS_KEY && <CourseDueReview language="it" locale={locale} catalog={catalog}/>}
     </main>
     <Dialog.Root open={ui.view !== "map"} onOpenChange={open => { if (!open) leave(); }}>
       <Dialog.Portal>

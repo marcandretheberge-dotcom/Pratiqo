@@ -120,7 +120,7 @@ export function ItalianYoppoCoach({
 }: ItalianYoppoCoachProps) {
   const inline = presentation === "inline";
   const language = useCourseLanguage();
-  const copy = language === "de" ? { ...COPY[locale], subtitle: { fr: "Yoppo · ton compagnon allemand", en: "Yoppo · your German companion", es: "Yoppo · tu compañero de alemán" }[locale] } : language === "pt-BR" ? { ...COPY[locale], subtitle: { fr: "Yoppo · ton compagnon au Brésil", en: "Yoppo · your Brazil companion", es: "Yoppo · tu compañero en Brasil" }[locale] } : COPY[locale];
+  const copy = language === "de" ? { ...COPY[locale], subtitle: { fr: "Yoppo · ton compagnon allemand", en: "Yoppo · your German companion", es: "Yoppo · tu compañero de alemán" }[locale] } : language === "pt-BR" ? { ...COPY[locale], subtitle: { fr: "Yoppo · ton compagnon au Brésil", en: "Yoppo · your Brazil companion", es: "Yoppo · tu compañero en Brasil" }[locale] } : language !== "it" ? { ...COPY[locale], subtitle: { fr: "Yoppo · ton compagnon de conversation", en: "Yoppo · your conversation companion", es: "Yoppo · tu compañero de conversación" }[locale] } : COPY[locale];
   const panelId = useId();
   const headingId = useId();
   const instructionsId = useId();

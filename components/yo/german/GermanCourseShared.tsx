@@ -106,6 +106,8 @@ export function GermanCourseShell({
   return (
     <div
       lang={locale}
+      data-course-unit={unit || "home"}
+      data-course-language={experience.language}
       className="min-h-screen bg-[#f5f8f7] pb-36 text-gray-900"
     >
       <header className="border-b border-emerald-100 bg-white">

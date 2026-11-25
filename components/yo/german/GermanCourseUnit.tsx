@@ -13,6 +13,7 @@ import {
 import type {
   CourseCatalog,
   CourseLesson,
+  CourseSource,
   CourseUnit,
 } from "@/lib/yo/italian/course/courseTypes";
 import type { YoLocale } from "@/lib/yo/types";
@@ -21,7 +22,6 @@ import { getDueActivityIds } from "@/lib/yo/italian/course/courseProgress";
 import { ItalianAudioProvider } from "../italian/ItalianAudioProvider";
 import {
   ItalianModuleAudio,
-  ITALIAN_MODULE_AUDIO_STOP_EVENT,
 } from "../italian/ItalianModuleAudio";
 import { ItalianGame } from "../italian/ItalianGames";
 import { ItalianYoppoCoach } from "../italian/ItalianYoppoCoach";
@@ -34,7 +34,9 @@ import { buildCourseJourney } from "@/lib/yo/courseJourney";
 import { MissionFilm } from "../travel/MissionFilm";
 import { useMissionCinema } from "../travel/useMissionCinema";
 import { YoSpeechPractice } from "../speech/YoSpeechPractice";
-import { courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
+import { courseSpeechLanguage, courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
+import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
+import { parseUnitSession, type UnitSessionDraft } from "@/lib/yo/foundations/unitSession";
 
 function RecallCards({
   lesson,
@@ -296,6 +298,7 @@ type UnitProps = {
   catalog: CourseCatalog;
   locale: YoLocale;
   audioPaths: Record<string, string>;
+  sources?: CourseSource[];
   initialLessonId?: string;
   initialActivityId?: string;
 };
@@ -306,7 +309,7 @@ export function GermanCourseUnit(props: UnitProps) {
   if (!state.ready || !step?.unlocked) return <CourseJourneyGate locale={props.locale} ready={state.ready} href={experience.href(props.locale)} />;
   return (
     <GermanUnitSession
-      key={props.unit.id + "-" + state.progress.resetAt}
+      key={experience.progressKey + "-" + props.unit.id + "-" + state.progress.resetAt}
       {...props}
       state={state}
     />
@@ -317,6 +320,7 @@ function GermanUnitSession({
   catalog,
   locale,
   audioPaths,
+  sources = [],
   initialLessonId,
   initialActivityId,
   state,
@@ -340,6 +344,7 @@ function GermanUnitSession({
     [solved, setSolved] = useState(false),
     [resultAssisted, setResultAssisted] = useState(false),
     [wrong, setWrong] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false), [sessionStored, setSessionStored] = useState(true), [restoredSolved, setRestoredSolved] = useState(false);
   const assisted = useRef(false),
     answered = useRef(false),
     advancing = useRef(false),
@@ -354,26 +359,54 @@ function GermanUnitSession({
     all.includes(id),
   );
   const { ready, setResume } = state;
+  const sessionKey = `yo.course-session.v1.${experience.progressKey}.${unit.id}`;
+  function saveSession(extra: Partial<UnitSessionDraft> = {}) {
+    const draft: UnitSessionDraft = { version: 1, unitId: unit.id, resetAt: state.progress.resetAt, lessonId: lesson.id, activityId: activity.id,
+      view, study, assisted: assisted.current, solved, wrong, resultAssisted, ...extra };
+    try { window.localStorage.setItem(sessionKey, JSON.stringify(draft)); setSessionStored(true); }
+    catch { setSessionStored(false); }
+  }
+  useEffect(() => {
+    try {
+      const draft = parseUnitSession(window.localStorage.getItem(sessionKey), unit, state.progress.resetAt);
+      const matchesLink = draft && (!initialLessonId || initialLessonId === draft.lessonId) && (!initialActivityId || initialActivityId === draft.activityId);
+      if (draft && matchesLink) {
+        const li = unit.lessons.findIndex(item => item.id === draft.lessonId);
+        setLessonIndex(li); setActivityIndex(unit.lessons[li].activities.findIndex(item => item.id === draft.activityId));
+        setView(draft.view); setStudy(draft.study); assisted.current = draft.assisted; answered.current = draft.solved;
+        setSolved(draft.solved); setRestoredSolved(draft.solved); setWrong(draft.wrong); setResultAssisted(draft.resultAssisted);
+      }
+    } catch { setSessionStored(false); }
+    setSessionReady(true);
+  }, [sessionKey, unit, state.progress.resetAt, initialLessonId, initialActivityId]);
+  useEffect(() => {
+    if (!sessionReady) return;
+    const draft: UnitSessionDraft = { version: 1, unitId: unit.id, resetAt: state.progress.resetAt, lessonId: lesson.id, activityId: activity.id,
+      view, study, assisted: assisted.current, solved, wrong, resultAssisted };
+    try { window.localStorage.setItem(sessionKey, JSON.stringify(draft)); setSessionStored(true); }
+    catch { setSessionStored(false); }
+  }, [sessionReady, sessionKey, unit.id, state.progress.resetAt, lesson.id, activity.id, view, study, solved, wrong, resultAssisted, epoch]);
   const { scene, present, finish: finishMission } = useMissionCinema(`${experience.progressKey}:${state.progress.resetAt}`);
   useEffect(() => {
-    if (!ready || (view !== "learn" && view !== "practice")) return;
+    if (!ready || !sessionReady || (view !== "learn" && view !== "practice")) return;
     present({ id: `${lesson.id}:start`, kind: "mission-start", title: lesson.title[locale], detail: lesson.goal[locale] });
-  }, [ready, view, lesson, locale, present]);
+  }, [ready, sessionReady, view, lesson, locale, present]);
   useEffect(() => {
-    if (ready && (view === "learn" || view === "practice"))
+    if (ready && sessionReady && (view === "learn" || view === "practice"))
       setResume(
         unit.id,
         lesson.id,
         view === "practice" ? activity.id : undefined,
       );
-  }, [ready, view, unit.id, lesson.id, activity.id, setResume]);
+  }, [ready, sessionReady, view, unit.id, lesson.id, activity.id, setResume]);
   function fresh() {
-    window.dispatchEvent(new Event(ITALIAN_MODULE_AUDIO_STOP_EVENT));
+    stopLessonAudio();
     assisted.current = false;
     answered.current = false;
     setSolved(false);
     setWrong(false);
     setResultAssisted(false);
+    setRestoredSolved(false);
     setEpoch((e) => e + 1);
     requestAnimationFrame(() => heading.current?.focus());
   }
@@ -389,7 +422,7 @@ function GermanUnitSession({
     setView("learn");
   }
   function help() {
-    if (!answered.current) assisted.current = true;
+    if (!answered.current) { assisted.current = true; saveSession({ assisted: true }); }
   }
   function attempt(correct: boolean) {
     if (answered.current) return;
@@ -399,7 +432,8 @@ function GermanUnitSession({
       answered.current = true;
       setSolved(true);
       setResultAssisted(assisted.current);
-    } else assisted.current = true;
+      saveSession({ solved: true, wrong: false, resultAssisted: assisted.current });
+    } else { assisted.current = true; saveSession({ solved: false, wrong: true, assisted: true }); }
   }
   function nextActivity() {
     if (advancing.current) return;
@@ -436,6 +470,7 @@ function GermanUnitSession({
     t("La scène", "The scene", "La escena"),
     t("À voix haute", "Out loud", "En voz alta"),
   ];
+  if (!sessionReady) return <CourseJourneyGate locale={locale} ready={false} href={experience.href(locale)}/>;
   return (
     <ItalianAudioProvider paths={audioPaths} language={experience.language}>
       <GermanCourseShell locale={locale} unit={unit.id}>
@@ -462,7 +497,7 @@ function GermanUnitSession({
           </p>
         ) : null}
         <p role="status" className="mb-5 text-xs text-gray-600">
-          {state.ready && !state.storageAvailable ? c.blocked : c.local}
+          {state.ready && (!state.storageAvailable || !sessionStored) ? c.blocked : c.local}
         </p>
         <div className="grid min-w-0 gap-7 lg:grid-cols-[210px_minmax(0,1fr)]">
           <aside className="min-w-0">
@@ -550,9 +585,7 @@ function GermanUnitSession({
                       aria-current={study === i ? "step" : undefined}
                       className={`min-h-11 rounded-lg px-3 text-xs font-bold ${study === i ? "bg-emerald-100 text-emerald-950" : "bg-white text-gray-700"}`}
                       onClick={() => {
-                        window.dispatchEvent(
-                          new Event(ITALIAN_MODULE_AUDIO_STOP_EVENT),
-                        );
+                        stopLessonAudio();
                         setStudy(i);
                       }}
                     >
@@ -602,6 +635,17 @@ function GermanUnitSession({
                         {lesson.speaking.prompt[locale]}
                       </p>
                     )}
+                    {lessonIndex === 0 && !unit.cultureStop ? (
+                      <aside data-course-culture className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
+                        <h3 className="text-lg font-bold text-emerald-950">{unit.culture.title[locale]}</h3>
+                        <p className="mt-3 text-sm leading-7 text-gray-700">{unit.culture.body[locale]}</p>
+                        {sources.filter(source => unit.culture.sourceIds.includes(source.id)).map(source => (
+                          <a key={source.id} href={source.url} target="_blank" rel="noopener noreferrer" className="mt-3 block min-h-11 content-center break-words text-xs text-emerald-900 underline underline-offset-4">
+                            {source.publisher} · {source.title}
+                          </a>
+                        ))}
+                      </aside>
+                    ) : null}
                   </div>
                 ) : null}
                 {study === 1 ? (
@@ -696,9 +740,7 @@ function GermanUnitSession({
                     className={outline}
                     disabled={study === 0}
                     onClick={() => {
-                      window.dispatchEvent(
-                        new Event(ITALIAN_MODULE_AUDIO_STOP_EVENT),
-                      );
+                      stopLessonAudio();
                       setStudy((s) => s - 1);
                     }}
                   >
@@ -709,9 +751,7 @@ function GermanUnitSession({
                     type="button"
                     className={button}
                     onClick={() => {
-                      window.dispatchEvent(
-                        new Event(ITALIAN_MODULE_AUDIO_STOP_EVENT),
-                      );
+                      stopLessonAudio();
                       if (study < 5) setStudy((s) => Math.min(5, s + 1));
                       else navigate("practice");
                     }}
@@ -739,13 +779,13 @@ function GermanUnitSession({
                 <p className="my-4 leading-relaxed">
                   {activity.prompt[locale]}
                 </p>
-                <ItalianGame
+                {restoredSolved ? <p role="status" className="rounded-lg bg-emerald-50 p-4 text-sm">{t("Ta réponse vérifiée est conservée. Continue ou recommence volontairement cet exercice.", "Your checked result is saved. Continue or deliberately replay this exercise.", "Tu resultado verificado está guardado. Continúa o repite este ejercicio cuando quieras.")[locale]}</p> : <ItalianGame
                   key={`${activity.id}-${epoch}`}
                   activity={activity}
                   locale={locale}
                   onAttempt={attempt}
                   onHelp={help}
-                />
+                />}
                 {solved ? (
                   <p
                     role="status"
@@ -802,6 +842,7 @@ function GermanUnitSession({
               <GermanAssessment
                 key={`${unit.quiz.id}-${epoch}-${state.progress.resetAt}`}
                 assessment={unit.quiz}
+                resetAt={state.progress.resetAt}
                 locale={locale}
                 onComplete={state.recordAssessment}
                 resultAction={<CourseJourneyAdvance locale={locale} catalog={catalog} progress={state.progress} unitId={unit.id} href={id => experience.href(locale, id)} />}
@@ -821,7 +862,7 @@ function GermanUnitSession({
               <ArrowLeft size={16} aria-hidden />
               {c.course}
             </Link>
-            {view === "learn" && !scene && <div className="mt-6"><YoSpeechPractice key={lesson.id} language={experience.language === "pt-BR" ? "pt" : "de"} locale={locale} scenarioId={courseSpeechScenario(experience.language === "pt-BR" ? "pt" : "de", unit.number)}/></div>}
+            {view === "learn" && !scene && <div className="mt-6"><YoSpeechPractice key={lesson.id} language={courseSpeechLanguage(experience.language)!} locale={locale} scenarioId={courseSpeechScenario(courseSpeechLanguage(experience.language)!, unit.number)}/></div>}
           </div>
         </div>
         {view !== "quiz" ? (

@@ -22,7 +22,7 @@ import {
   type Progress,
   type Unit,
 } from "@/lib/yo/mandarin/types";
-import { initialAttempt, MANDARIN_PATH } from "@/lib/yo/mandarin/progress";
+import { checkAnswer, initialAttempt, MANDARIN_PATH } from "@/lib/yo/mandarin/progress";
 import images from "@/lib/yo/mandarin/imageAssets.json";
 import { sceneDescriptions } from "@/lib/yo/mandarin/visuals";
 import { YoppoLearningCompanion } from "../companion/YoppoLearningCompanion";
@@ -41,6 +41,7 @@ import { MissionFilm } from "../travel/MissionFilm";
 import { useMissionCinema } from "../travel/useMissionCinema";
 import { YoSpeechPractice } from "../speech/YoSpeechPractice";
 import { courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
+import { recordReviewAttempt } from "@/lib/yo/review/store";
 
 export function mandarinStages(unit: Unit) {
   return unit.id === "bilan"
@@ -419,12 +420,15 @@ export function MandarinCoursePlayer({
                   drafts: { ...value.drafts, [stage]: draft },
                 }))
               }
-              onResult={(result) =>
+              onResult={(result) => {
                 update((value) => ({
                   ...value,
                   results: { ...value.results, [stage]: result },
-                }))
-              }
+                }));
+                // Default-visible pinyin is also help, even when no toggle was clicked.
+                const pinyinHelp = progress.pinyin && (currentExercise.kind === "match" || ("choices" in currentExercise && currentExercise.choices.some(choice => choice.phrase)));
+                if (unit.id !== "bilan") recordReviewAttempt({ language: "zh", itemId: `course:${unit.id}:practice:${currentExercise.id}`, correct: checkAnswer(currentExercise, state.answer), assisted: state.assisted || pinyinHelp });
+              }}
             />
           )}
           {stage === "culture" && (

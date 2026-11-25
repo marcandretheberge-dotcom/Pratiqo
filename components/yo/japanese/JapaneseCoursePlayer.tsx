@@ -23,6 +23,7 @@ import { MissionFilm } from "../travel/MissionFilm";
 import { useMissionCinema } from "../travel/useMissionCinema";
 import { YoSpeechPractice } from "../speech/YoSpeechPractice";
 import { courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
+import { recordReviewAttempt } from "@/lib/yo/review/store";
 
 const L = (fr: string, en: string, es: string): JapaneseLocalized => ({ fr, en, es });
 const C = {
@@ -148,6 +149,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
   }
   function result(correct: boolean, assisted: boolean) {
     if (currentActivity) update((current) => recordJapaneseResult(current, currentActivity.id, correct, assisted));
+    if (currentActivity && !final) recordReviewAttempt({ language: "ja", itemId: `course:${unit.id}:${stage.kind === "roleplay" ? "roleplay" : "practice"}:${currentActivity.id}`, correct, assisted });
   }
   function bookmark() {
     if (!currentActivity) return;

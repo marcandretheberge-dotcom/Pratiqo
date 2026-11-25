@@ -14,6 +14,7 @@ import { AdventureProgress } from "../journey/AdventureProgress";
 import { japaneseJourney, canEnterFoundationStep, foundationJourneyCopy } from "@/lib/yo/foundationJourney";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { InterestPracticeCard } from "../interests/InterestPracticeCard";
+import { EasternDueReview } from "../review/EasternDueReview";
 
 export type JapaneseUnitOutline = Pick<JapaneseCourseUnit, "id" | "slug" | "number" | "title" | "subtitle" | "goals" | "kanji" | "kana" | "estimatedMinutes"> & { practiceIds: string[] };
 const COPY = {
@@ -59,6 +60,7 @@ export function JapaneseCourseHome({ locale, units, finalIds, sources }: { local
             <AdventureProgress journey={journey} world="japanese" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} />
             <LearningJourney journey={journey} locale={locale} ready={ready} href={href} copy={foundationJourneyCopy[locale]} />
             <InterestPracticeCard language="ja" locale={locale} />
+            <EasternDueReview language="ja" locale={locale}/>
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#ead9bc] bg-[#fffaf0] p-5"><div className="flex gap-3"><GraduationCap size={25} className="shrink-0 text-amber-800" aria-hidden /><div><h2 className="font-semibold">{c.final}</h2><p className="mt-1 max-w-xl text-xs leading-relaxed text-slate-600">{c.finalBody}</p></div></div>{ready && finalOpen ? <Link href={href("bilan")} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-amber-300 bg-white px-4 text-xs font-semibold text-amber-950">{c.finalAction}<ArrowRight size={14} aria-hidden /></Link> : <p className="text-sm text-slate-600">{foundationJourneyCopy[locale].pending}</p>}</div>
             <div className="flex flex-wrap justify-between gap-3 text-xs"><Link href={buildYoLocaleHref("/yo/langues/japonais/intro", locale)} className="min-h-9 text-indigo-800 underline underline-offset-4">{c.intro}</Link><p className="text-slate-500">{foundationJourneyCopy[locale].rule}</p></div>
           </div> : null}

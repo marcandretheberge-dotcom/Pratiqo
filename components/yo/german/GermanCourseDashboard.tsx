@@ -3,7 +3,7 @@ import { useCourseExperience } from "./CourseExperience";
 import Link from "next/link";
 import { CourseCulturePhoto } from "../italian/course/CourseCulturePhoto";
 import { ArrowRight, BookOpen, Camera, RotateCcw } from "lucide-react";
-import type { CourseCatalog } from "@/lib/yo/italian/course/courseTypes";
+import type { CourseCatalog, CourseSource } from "@/lib/yo/italian/course/courseTypes";
 import type { YoLocale } from "@/lib/yo/types";
 import { useItalianCourseProgress } from "../italian/course/useItalianCourseProgress";
 import { getDueActivityIds } from "@/lib/yo/italian/course/courseProgress";
@@ -13,15 +13,18 @@ import { CourseJourney } from "../journey/CourseJourney";
 import { canEnterCourseAssessment } from "@/lib/yo/courseJourney";
 import { journeyCopy } from "../journey/journeyCopy";
 import { InterestPracticeCard } from "../interests/InterestPracticeCard";
+import { CourseDueReview } from "../review/CourseDueReview";
 
 export function GermanCourseDashboard({
   locale,
   catalog,
   audioReady = false,
+  sources = [],
 }: {
   locale: YoLocale;
   catalog: CourseCatalog;
   audioReady?: boolean;
+  sources?: CourseSource[];
 }) {
   const experience = useCourseExperience();
   const state = useItalianCourseProgress(catalog, experience.progressKey),
@@ -83,6 +86,7 @@ export function GermanCourseDashboard({
         <CourseJourney locale={locale} catalog={catalog} progress={state.progress} ready={state.ready} href={courseHref} />
       </section>
       <InterestPracticeCard language={experience.language} locale={locale} />
+      <CourseDueReview language={experience.language} locale={locale} catalog={catalog}/>
       {photo ? <div className="my-6 max-w-md"><CourseCulturePhoto photo={photo} locale={locale} /></div> : null}
       <section className="mt-8 grid gap-4 border-t border-gray-200 pt-6 sm:grid-cols-2">
         {catalog.assessments
@@ -121,6 +125,10 @@ export function GermanCourseDashboard({
             </Link>
           ) : <div key={a.id} className="border-b border-gray-200 p-5"><h3 className="font-bold">{a.title[locale]}</h3><p className="mt-2 text-sm">{journeyCopy[locale].pending}</p></div>)}
       </section>
+      {sources.length > 0 ? <details className="mt-6 border-t border-emerald-100 pt-4">
+        <summary className="min-h-11 cursor-pointer text-sm font-semibold">{t("Repères et sources", "Guidance and sources", "Pautas y fuentes")[locale]}</summary>
+        <ul className="space-y-3 text-sm">{sources.map(source => <li key={source.id}><a href={source.url} target="_blank" rel="noopener noreferrer" className="underline">{source.publisher} · {source.title}</a><p className="mt-1 text-gray-600">{source.supports[locale]}</p></li>)}</ul>
+      </details> : null}
       <button
         type="button"
         className="mt-8 min-h-11 text-xs text-gray-600 underline"

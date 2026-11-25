@@ -119,7 +119,7 @@ export function createReviewStore(
 const browserStore = createReviewStore(
   () => typeof window === "undefined" ? null : window.localStorage,
   Date.now,
-  (language) => { if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(REVIEW_CHANGED_EVENT, { detail: language })); },
+  (language) => { if (typeof window !== "undefined") window.dispatchEvent(new window.CustomEvent(REVIEW_CHANGED_EVENT, { detail: language })); },
 );
 
 export const recordReviewAttempt = (input: ReviewAttemptInput): ReviewWriteResult => browserStore.record(input);
