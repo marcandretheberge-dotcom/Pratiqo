@@ -2,6 +2,12 @@ import type { JapaneseActivity, JapaneseCourseUnit } from "./japaneseCourseTypes
 
 export const JAPANESE_PROGRESS_KEY = "yopratiqo:japanese-foundations:v1";
 export const JAPANESE_COURSE_PATH = "/yo/langues/japonais/parcours";
+/** Stored assessment IDs stay stable even when the default public route grows. */
+export function japanesePublicUnitSlug(storedSlug: string): string {
+  if (storedSlug === "bilan") return "bilan-initial";
+  if (storedSlug === "bilan-fondations") return "bilan";
+  return storedSlug;
+}
 export type JapaneseAnswer = string | string[] | Record<string, string>;
 export interface JapanesePracticeResult {
   passed: boolean;
@@ -22,7 +28,7 @@ export function emptyJapaneseProgress(): JapaneseCourseProgress {
 }
 
 const validId = (value: string) => /^jp[-a-z0-9]{1,100}$/.test(value);
-const validModule = (value: string) => /^module-[1-8]$/.test(value) || value === "bilan";
+const validModule = (value: string) => /^module-(?:[1-9]|1[0-2])$/.test(value) || value === "bilan" || value === "bilan-fondations";
 const MAX_RESULTS = 500;
 
 /** Never normalize away small kana, long vowels or diacritics: they can change a word. */
@@ -33,6 +39,13 @@ export function normalizeJapaneseAnswer(value: string, acceptsRomaji = false): s
 
 export function checkJapaneseAnswer(activity: JapaneseActivity, answer: JapaneseAnswer): boolean {
   if (activity.kind === "reading") {
+    if (activity.responseMode === "recall") {
+      // Only authored orthographic variants are accepted. Punctuation/spacing
+      // do not grade Japanese, but kana size, vowel length and negation do.
+      const normalized = (value: string) => normalizeJapaneseAnswer(value).replace(/[\s。、，．！？!?]/gu, "");
+      if (typeof answer !== "string" || !normalized(answer)) return false;
+      return activity.accepted.some(accepted => normalized(accepted) === normalized(answer));
+    }
     return typeof answer === "string" && answer.trim().length > 0 &&
       activity.accepted.some((accepted) => normalizeJapaneseAnswer(accepted, activity.acceptsRomaji) === normalizeJapaneseAnswer(answer, activity.acceptsRomaji));
   }

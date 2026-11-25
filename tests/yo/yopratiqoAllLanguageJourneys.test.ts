@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import path from "node:path";
 import * as React from "react";
-import { japaneseJourneyUnits, japaneseFinalIds, mandarinJourneyUnits, mandarinFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
+import { japaneseJourneyUnits, japaneseFinalIds, japaneseLegacyFinalIds, mandarinJourneyUnits, mandarinFinalIds, mandarinLegacyFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
 import { japaneseJourney, mandarinJourney, canEnterFoundationStep } from "@/lib/yo/foundationJourney";
 import { emptyJapaneseProgress, recordJapaneseResult, JAPANESE_PROGRESS_KEY } from "@/lib/yo/japaneseCourseProgress";
 import { emptyProgress, MANDARIN_PROGRESS_KEY } from "@/lib/yo/mandarin/progress";
@@ -25,6 +25,8 @@ const bindings = {
   window: dom.window, self: dom.window, document: dom.window.document, navigator: dom.window.navigator,
   HTMLElement: dom.window.HTMLElement, Element: dom.window.Element, Event: dom.window.Event,
   MouseEvent: dom.window.MouseEvent, localStorage: dom.window.localStorage, IS_REACT_ACT_ENVIRONMENT: true,
+  requestAnimationFrame: dom.window.requestAnimationFrame.bind(dom.window),
+  cancelAnimationFrame: dom.window.cancelAnimationFrame.bind(dom.window),
 };
 const originals = new Map(Object.keys(bindings).map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]));
 for (const [key, value] of Object.entries(bindings)) Object.defineProperty(globalThis, key, { configurable: true, writable: true, value });
@@ -149,19 +151,20 @@ test("Mandarin unfinished summary returns to the journey rather than promising a
   assert.equal(view.container.querySelector('a[href*="/u02"]'), null);
 });
 
-test("both home pages resume an already started final rather than sending the learner back to module one", () => {
-  localStorage.setItem(MANDARIN_PROGRESS_KEY, JSON.stringify({ ...emptyProgress(), unit: "bilan" }));
+for (const internal of ["bilan", "bilan-fondations"] as const) test(`both home pages resume the selected ${internal} contract`, () => {
+  const publicSlug = internal === "bilan" ? "bilan-initial" : "bilan";
+  localStorage.setItem(MANDARIN_PROGRESS_KEY, JSON.stringify({ ...emptyProgress(), unit: internal }));
   const mandarin = render(React.createElement(MandarinCourseHome, {
-    locale: "en", units: mandarinJourneyUnits, finalIds: mandarinFinalIds, languageSource: "https://ocw.mit.edu",
+    locale: "en", units: mandarinJourneyUnits, finalIds: mandarinFinalIds, legacyFinalIds: mandarinLegacyFinalIds, languageSource: "https://ocw.mit.edu",
   }));
-  assert.match(mandarin.getByRole("link", { name: "Resume my session" }).getAttribute("href")!, /\/bilan\?lang=en$/);
+  assert.ok(mandarin.getByRole("link", { name: "Resume my session" }).getAttribute("href")!.endsWith(`/${publicSlug}?lang=en`));
   mandarin.unmount();
-  localStorage.setItem(JAPANESE_PROGRESS_KEY, JSON.stringify({ ...emptyJapaneseProgress(), lastUnit: "bilan" }));
+  localStorage.setItem(JAPANESE_PROGRESS_KEY, JSON.stringify({ ...emptyJapaneseProgress(), lastUnit: internal }));
   const japanese = render(React.createElement(JapaneseCourseHome, {
     locale: "en", units: japaneseCourseUnits.map(unit => ({ ...unit, practiceIds: japaneseUnitPracticeIds(unit) })),
-    finalIds: japaneseFinalIds, sources: japaneseCourseSources,
+    finalIds: japaneseFinalIds, legacyFinalIds: japaneseLegacyFinalIds, sources: japaneseCourseSources,
   }));
-  assert.match(japanese.getByRole("link", { name: "Resume my session" }).getAttribute("href")!, /\/bilan\?lang=en$/);
+  assert.ok(japanese.getByRole("link", { name: "Resume my session" }).getAttribute("href")!.endsWith(`/${publicSlug}?lang=en`));
 });
 
 const screens: YoLessonDeckScreen[] = ["mission", "practice", "summary"].map((id, index) => ({

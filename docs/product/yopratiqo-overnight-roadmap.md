@@ -122,14 +122,58 @@ The old final stays at `/bilan-initial`; `/final` uses a separate new assessment
 Old scores do not become new-final evidence, and earlier independent checkpoints
 remain valid. New written checks do not depend on missing recordings.
 
-Independent content and integration reviews, typecheck, lint, and all original
-content/player/audio regressions have passed. The new mobile browser gate is
-prepared to enter all 72 unit answers and 24 new-final answers through the actual
-controls, play all 24 required legacy recordings through their real `ended`
-events, verify the eight-/twelve-unit boundary, and restore the final without a
-second submission. Exact-head CI, browser results and production verification
-remain required before this lot is called deployed. New-unit audio coverage is
-still incomplete; the original published recording sets retain their full checks.
+PR #483 is deployed. Independent content and integration reviews, typecheck,
+lint, and all original content/player/audio regressions passed. Chromium and
+macOS WebKit each entered all 72 unit answers and 24 new-final answers per
+language through the actual controls, completed all 24 required recordings per
+language through native `ended` events, checked the eight-/twelve-unit boundary,
+and restored the final without a second submission. The gate caught and fixed
+natural audio completion being interrupted by its preceding browser pause event.
+All five triggered workflows and both Vercel builds passed on head `18b34ee`.
+New-unit audio coverage remains incomplete; original published recordings retain
+their full checks. The production record is listed below.
+
+## Fifth lot: Japanese and Mandarin foundations prepared
+
+Both courses now have twelve authored modules in this branch, with their original
+eight modules and original eight-question finals preserved byte for byte. Each
+adds a separate 24-question written final, covering all twelve modules with twelve
+reading and twelve recall questions. The old final remains at `/bilan-initial`;
+the canonical `/bilan` uses a new internal assessment identity. Historical final
+grades and bookmarks never become evidence for the new final.
+
+Japanese adds shopping and quantities, requests and permission, outings and
+wishes, and reasons or sequenced plans. Its four new modules contain 32 vocabulary
+entries, 26 dialogue lines, twelve grammar explanations, 32 written activities,
+twelve roleplay turns and four ungraded productions. The full review catalog now
+has 132 practice items. Cultural notes link to the reviewed primary sources.
+
+Mandarin adds frequency and routines, comparisons and budgets, past events, and
+reasons or conditions. The extension contains forty vocabulary entries, 24
+dialogue lines, twelve grammar explanations, four readings and 56 new exercises;
+the full practice catalog has 160 exercises. Reading context is preserved when
+an exercise returns through the dated review queue. New written checks do not
+depend on recordings that have not been published.
+
+Mandarin progress now merges independent tab changes before applying a local
+action. Reset epochs dominate older snapshots; replayed snapshots do not inflate
+attempt counts; assistance stays attached to the current attempt. Newly checked
+answers with pinyin, translation or hints are marked assisted. Historical
+independent results retain their meaning. A deliberate fresh attempt clears the
+answer and help, and listening evidence is never imported from another tab.
+
+Japanese and Mandarin review now fetch one authored exercise on demand from the
+same bounded public review endpoint. Course maps do not fetch full course banks,
+and the endpoint excludes both old and new finals. The actual course checkers
+remain responsible for answers; review cannot grant course outcomes or access.
+
+Independent content, progress and integration reviews and focused local tests
+have passed. The prepared Chromium/WebKit gate uses explicitly labelled historical
+eight-module learner fixtures, then enters two new recall answers per language at
+393px and 320px, one with help. It checks old-final resume, new-final locks,
+reload without resubmission, and no microphone, provider or automatic audio use.
+It does not claim to earn twelve modules through the UI or certify listening.
+Exact-head CI and production delivery remain pending for this fifth lot.
 
 ## Commercial decisions retained
 
@@ -182,5 +226,7 @@ release progresses; a prepared change is not yet a production release.
 - Second production deployment: `dpl_6k8oqubLzeE7PMWD6cfm1mfjxsqg`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 24 public checks passed: twelve course pages, six actual contextual review responses, five malformed/missing/final-item boundaries, and disabled live speech. No error/fatal runtime logs were returned in the first five-minute observation window. Review returns one public authored practice item, not learner records or a complete course bundle.
 - Third release: [PR #482](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/482), merged at `c1bbb66ea8ebb7488e4de2247271e1e1febcfad8` after all six triggered GitHub workflows and both Vercel builds passed. Independent review verified all 255 clip hashes and the compact-index boundary.
 - Third production deployment: `dpl_Ckd6mMQQSGmhXcBwAgy4h8AUXK81`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 255 public MP3s returned the reviewed bytes (6,559,441 total) with audio MIME and one-year immutable caching; disabled live speech remained unchanged. No error/fatal logs were returned in the first five-minute observation window.
+- Fourth release: [PR #483](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/483), merged at `8a263150d87c15898c3ac9b0dffa8b0849c07e61` after all five triggered GitHub workflows and both Vercel builds passed on head `18b34ee0d61ebca6ec89a3c58c33e5d09de11f3c`. Both browser engines completed the actual DE/PT assessments and required MP3 playback.
+- Fourth production deployment: `dpl_GVZQFHakW8GsdjxqfVDHPSMPVC7N`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 27 public checks passed: fourteen course/old-final/new-final/culture routes, eight actual new-unit review responses, four final exclusions and disabled speech. No error/fatal logs were returned in the initial five-minute observation window.
 - Morning verification: scheduled for November 25 around 08:00 Toronto; it must
   read current GitHub/deployment state and this ledger, not repeat stale claims.

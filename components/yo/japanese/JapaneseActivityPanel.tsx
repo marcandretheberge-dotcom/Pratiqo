@@ -28,6 +28,11 @@ const COPY = {
 const button = "min-h-11 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-800 transition hover:border-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-default disabled:opacity-80";
 const AUDIO_LABEL = { fr: "le message de l’exercice", en: "the exercise message", es: "el mensaje del ejercicio" };
 const REMOVE_WORD = { fr: "Retirer le mot", en: "Remove word", es: "Quitar palabra" };
+const RECALL_COPY = {
+  fr: { label: "Ta phrase de mémoire", instruction: "Écris en japonais avec les formes étudiées. Les variantes kana/kanji prévues sont acceptées; la ponctuation ne compte pas. Ce contrôle porte sur la réponse demandée, pas sur toute formulation libre." },
+  en: { label: "Your sentence from memory", instruction: "Write Japanese using the forms practised. Authored kana/kanji variants are accepted; punctuation does not count. This checks the requested response, not every possible free formulation." },
+  es: { label: "Tu frase de memoria", instruction: "Escribe en japonés con las formas estudiadas. Se aceptan las variantes kana/kanji previstas; la puntuación no cuenta. Se verifica la respuesta pedida, no toda formulación libre posible." },
+};
 type FocusTarget = { kind: "feedback" | "question" | "build" | "check" } | { kind: "bank" | "match"; id: string };
 
 export function JapaneseActivityPanel({ activity, locale, state, onChange, onResult, showRomaji = false }: {
@@ -107,10 +112,11 @@ export function JapaneseActivityPanel({ activity, locale, state, onChange, onRes
         className={button + (selected === choice.id ? " border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100" : "")}>{choiceText(choice)}</button>)}
     </div> : null}
     {activity.kind === "reading" ? <form onSubmit={(event) => { event.preventDefault(); if (!composing.current && !ignoreImeSubmit.current) check(); }} className="space-y-3">
-      <p lang="ja" className="rounded-2xl bg-slate-50 p-5 text-center text-4xl font-medium">{activity.stimulus}</p>
+      {activity.responseMode === "recall" ? <p id={`${activity.id}-instruction`} className="text-sm leading-relaxed text-slate-600">{RECALL_COPY[locale].instruction}</p> :
+        <p lang="ja" className="rounded-2xl bg-slate-50 p-5 text-center text-4xl font-medium">{activity.stimulus}</p>}
       <label className="block text-sm font-semibold">
-        {c.reading} <span className="font-normal text-slate-500">· {activity.acceptsRomaji ? c.romaji : c.kana}</span>
-        <input lang="ja" value={selected} onChange={(event) => change({ answer: event.target.value })} disabled={state.checked} maxLength={100} autoComplete="off" autoCapitalize="off" spellCheck={false}
+        {activity.responseMode === "recall" ? RECALL_COPY[locale].label : <>{c.reading} <span className="font-normal text-slate-500">· {activity.acceptsRomaji ? c.romaji : c.kana}</span></>}
+        <input lang="ja" aria-describedby={activity.responseMode === "recall" ? `${activity.id}-instruction` : undefined} value={selected} onChange={(event) => change({ answer: event.target.value })} disabled={state.checked} maxLength={100} autoComplete="off" autoCapitalize="off" spellCheck={false}
           onCompositionStart={() => { composing.current = true; ignoreImeSubmit.current = true; }}
           onCompositionEnd={() => { composing.current = false; }}
           onKeyDown={(event) => {

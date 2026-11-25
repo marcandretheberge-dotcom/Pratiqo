@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, BookmarkPlus, CheckCircle2, Compass, GraduationCap, RotateCcw } from "lucide-react";
 import type { YoLocale } from "@/lib/yo/types";
 import type { JapaneseActivity, JapaneseChoiceActivity, JapaneseCourseSource, JapaneseCourseUnit, JapaneseLocalized } from "@/lib/yo/japaneseCourseTypes";
-import { JAPANESE_COURSE_PATH, japaneseUnitProgress, recordJapaneseResult } from "@/lib/yo/japaneseCourseProgress";
+import { JAPANESE_COURSE_PATH, japanesePublicUnitSlug, japaneseUnitProgress, recordJapaneseResult } from "@/lib/yo/japaneseCourseProgress";
 import { buildYoLocaleHref, htmlLangFor } from "@/lib/yo/localize";
 import { JapaneseCourseHeader } from "./JapaneseCourseHeader";
 import { JapaneseYoppoCoach } from "./JapaneseYoppoCoach";
@@ -95,10 +95,11 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
 }) {
   const { progress, update, ready, storageAvailable } = useJapaneseCourseProgress();
   const journey = japaneseJourney(journeyUnits, progress);
-  const finalStarted = progress.lastUnit === "bilan" || Boolean(progress.lastSteps.bilan) || finalIds.some(id => Boolean(progress.results[id]));
-  const allowed = canEnterFoundationStep(journey, unit.slug, finalStarted);
+  const finalSlug = final ? unit.slug : "bilan-fondations";
+  const finalStarted = progress.lastUnit === finalSlug || Boolean(progress.lastSteps[finalSlug]) || finalIds.some(id => Boolean(progress.results[id]));
+  const allowed = canEnterFoundationStep(journey, final ? "bilan" : unit.slug, finalStarted);
   const finalOpen = canEnterFoundationStep(journey, "bilan", finalStarted);
-  const href = (id?: string) => buildYoLocaleHref(JAPANESE_COURSE_PATH + (id ? "/" + id : ""), locale);
+  const href = (id?: string) => buildYoLocaleHref(JAPANESE_COURSE_PATH + (id ? "/" + japanesePublicUnitSlug(id) : ""), locale);
   const stages = useMemo(() => buildStages(unit, final), [unit, final]);
   const [index, setIndex] = useState(0);
   const [activityStates, setActivityStates] = useState<Record<string, JapaneseActivityState>>({});
@@ -209,7 +210,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
 
   if (!ready || !allowed) return <CourseJourneyGate locale={locale} ready={ready} href={href()} />;
   return <div lang={htmlLangFor(locale)} className="flex h-[100dvh] flex-col overflow-hidden bg-[#f7f5ef] text-slate-800" data-japanese-course-player={unit.id}>
-    <JapaneseCourseHeader locale={locale} pathname={JAPANESE_COURSE_PATH + "/" + unit.slug} backHref={JAPANESE_COURSE_PATH} title={(final ? C.final[locale] : "日本語 · " + String(unit.number).padStart(2, "0"))} />
+    <JapaneseCourseHeader locale={locale} pathname={JAPANESE_COURSE_PATH + "/" + japanesePublicUnitSlug(unit.slug)} backHref={JAPANESE_COURSE_PATH} title={(final ? C.final[locale] : "日本語 · " + String(unit.number).padStart(2, "0"))} />
     <div className="flex min-h-0 flex-1">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-slate-200 bg-white/60 xl:flex">
         <div className="border-b border-slate-200 p-5"><p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">日本語 · {C.foundations[locale]}</p><h2 className="mt-2 text-lg font-semibold">{unit.title[locale]}</h2><p className="mt-2 text-xs text-slate-500">{counts.passed}/{counts.total} · {C.practices[locale]}</p></div>
@@ -254,7 +255,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
               {reviewStages.length ? <button onClick={() => coachAction("review")} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-indigo-300 bg-indigo-50 px-5 text-sm font-semibold text-indigo-900"><RotateCcw size={15} aria-hidden />{C.reviewAction[locale]}</button> : null}
               {!final ? <fieldset className="space-y-3 rounded-2xl border border-slate-200 bg-white p-5"><legend className="px-2 font-semibold">{C.self[locale]}</legend>{unit.canDos.map((item, i) => <label key={i} className="flex items-start gap-3 text-sm leading-relaxed"><input type="checkbox" className="mt-1 size-4 accent-indigo-700" checked={!!selfChecks[i]} onChange={(event) => setSelfChecks((current) => ({ ...current, [i]: event.target.checked }))} />{item[locale]}</label>)}<p className="text-xs text-slate-500">{C.selfNote[locale]}</p></fieldset> : null}
               {counts.complete && completionAction ? <div className="rounded-2xl border border-slate-200 bg-white p-5">{completionAction}</div> : null}
-              {final ? <Link href={href()} className="inline-flex min-h-11 items-center gap-2 text-indigo-800 underline">{C.path[locale]}</Link> : <FoundationJourneyAdvance journey={journey} unitId={unit.slug} locale={locale} href={href} finalOpen={finalOpen} />}
+              {final ? <Link href={href()} className="inline-flex min-h-11 items-center gap-2 text-indigo-800 underline">{C.path[locale]}</Link> : <FoundationJourneyAdvance journey={journey} unitId={unit.slug} locale={locale} href={(id) => href(id === "bilan" ? "bilan-fondations" : id)} finalOpen={finalOpen} />}
               <Link href={"/trouver-un-prof?q=japonais" + (locale === "fr" ? "" : "&lang=" + locale)} className="inline-flex min-h-11 items-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold">{C.teacher[locale]}</Link>
               <p className="text-xs leading-relaxed text-slate-500">{C.academic[locale]}</p>
             </div> : null}

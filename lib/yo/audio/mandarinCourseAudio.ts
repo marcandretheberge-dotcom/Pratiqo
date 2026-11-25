@@ -1,9 +1,11 @@
 import { createHash } from "node:crypto";
 import type { YoAudioItem } from "./audioManifest.types-internal";
-import { mandarinUnits, mandarinFinal } from "../mandarin/course";
+import { mandarinLegacyUnits, mandarinFinal } from "../mandarin/course";
 import type { Phrase } from "../mandarin/types";
 
-const phrases: Phrase[] = [...mandarinUnits, mandarinFinal].flatMap((unit) => [
+// Published v2 recordings cover the original eight units and original final only.
+// New curriculum text stays unrecorded until matching audio and provenance are published.
+const phrases: Phrase[] = [...mandarinLegacyUnits, mandarinFinal].flatMap((unit) => [
   ...unit.dialogue,
   ...unit.vocabulary,
   ...unit.grammar.map((item) => item.example),

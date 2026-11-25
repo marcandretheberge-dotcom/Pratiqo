@@ -5,7 +5,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { test } from "node:test";
 import sharp from "sharp";
 import {
-  mandarinUnits,
+  mandarinLegacyUnits,
   mandarinFinal,
   getMandarinUnit,
 } from "@/lib/yo/mandarin/course";
@@ -38,7 +38,9 @@ import {
   validateMp3,
 } from "@/scripts/generate-yopratiqo-audio";
 
-const units = [...mandarinUnits, mandarinFinal];
+// Keep the original corpus and all published audio under its exact regression contract.
+// The twelve-unit curriculum is covered by yopratiqoMandarinDepth.test.ts.
+const legacyUnitsWithFinal = [...mandarinLegacyUnits, mandarinFinal];
 export function correctAnswer(exercise: Exercise): Answer {
   return exercise.kind === "write"
     ? exercise.accepted[0]
@@ -47,13 +49,13 @@ export function correctAnswer(exercise: Exercise): Answer {
       : exercise.answer;
 }
 test("eight original scene-led Mandarin modules and a distinct practical mission serialize safely", () => {
-  assert.equal(mandarinUnits.length, 8);
+  assert.equal(mandarinLegacyUnits.length, 8);
   assert.equal(mandarinFinal.exercises.length, 8);
   assert.equal(getMandarinUnit("not-a-unit"), undefined);
-  assert.deepEqual(JSON.parse(JSON.stringify(units)), units);
-  const ids = units.flatMap((unit) => unit.exercises.map((item) => item.id));
+  assert.deepEqual(JSON.parse(JSON.stringify(legacyUnitsWithFinal)), legacyUnitsWithFinal);
+  const ids = legacyUnitsWithFinal.flatMap((unit) => unit.exercises.map((item) => item.id));
   assert.equal(new Set(ids).size, ids.length);
-  for (const unit of mandarinUnits) {
+  for (const unit of mandarinLegacyUnits) {
     assert.ok(unit.dialogue.length >= 6);
     assert.ok(unit.vocabulary.length >= 8);
     assert.ok(unit.grammar.length >= 2);
@@ -78,7 +80,7 @@ test("eight original scene-led Mandarin modules and a distinct practical mission
   }
 });
 test("every answer can be checked, wrong input fails and audio cannot be bypassed", () => {
-  for (const exercise of units.flatMap((unit) => unit.exercises)) {
+  for (const exercise of legacyUnitsWithFinal.flatMap((unit) => unit.exercises)) {
     const answer = correctAnswer(exercise);
     assert.equal(checkAnswer(exercise, answer), true, exercise.id);
     assert.equal(checkAnswer(exercise, "wrong"), false, exercise.id);
@@ -104,7 +106,7 @@ test("every answer can be checked, wrong input fails and audio cannot be bypasse
 });
 test("drafts, assistance and exact steps survive refresh; malformed/foreign versions do not", () => {
   const state = emptyProgress(),
-    exercise = mandarinUnits[0].exercises[3];
+    exercise = mandarinLegacyUnits[0].exercises[3];
   state.unit = "u03";
   state.steps.u03 = 8;
   state.drafts[exercise.id] = {
@@ -298,7 +300,7 @@ test("licensed image dimensions and Chinese source strokes exist locally", async
     assert.equal(metadata.height, image.height);
     assert.ok(image.credit && image.license && image.source);
   }
-  for (const unit of mandarinUnits) {
+  for (const unit of mandarinLegacyUnits) {
     const data = JSON.parse(
       readFileSync(
         `public/yo/mandarin-strokes/${unit.character.codePointAt(0)!.toString(16)}.json`,

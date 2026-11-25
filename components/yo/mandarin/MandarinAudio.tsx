@@ -5,10 +5,11 @@ import audioPaths from "@/lib/yo/mandarin/audioPaths.json";
 import toneAssets from "@/lib/yo/mandarin/toneAssets.json";
 import { L } from "@/lib/yo/mandarin/types";
 import type { YoLocale } from "@/lib/yo/types";
+import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 
 export const MANDARIN_AUDIO_STOP = "yo-mandarin-audio-stop";
 export function stopMandarinAudio() {
-  window.dispatchEvent(new Event(MANDARIN_AUDIO_STOP));
+  stopLessonAudio();
 }
 export function MandarinAudio({
   text,
@@ -31,6 +32,7 @@ export function MandarinAudio({
   const [playing, setPlaying] = useState(false);
   const [slow, setSlow] = useState(false);
   const [failed, setFailed] = useState(false);
+  const path = tone ? toneAssets[tone].src : (audioPaths as Record<string, string>)[text];
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stop = useCallback(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -54,9 +56,13 @@ export function MandarinAudio({
       if (document.visibilityState !== "visible") stop();
     };
     window.addEventListener(MANDARIN_AUDIO_STOP, stop);
+    window.addEventListener("yo-speech-start", stop);
+    window.addEventListener("yo-cinema-open", stop);
     document.addEventListener("visibilitychange", visibility);
     return () => {
       window.removeEventListener(MANDARIN_AUDIO_STOP, stop);
+      window.removeEventListener("yo-speech-start", stop);
+      window.removeEventListener("yo-cinema-open", stop);
       document.removeEventListener("visibilitychange", visibility);
       stop();
     };
@@ -68,9 +74,6 @@ export function MandarinAudio({
     }
     stopMandarinAudio();
     setFailed(false);
-    const path = tone
-      ? toneAssets[tone].src
-      : (audioPaths as Record<string, string>)[text];
     if (!path) {
       setFailed(true);
       return;
@@ -116,6 +119,7 @@ export function MandarinAudio({
       fail();
     }
   }
+  if (!path) return <span className="text-sm text-gray-600">{L("Pas d’enregistrement publié pour cette phrase. Lis le texte et le pinyin pour la travailler.", "No published recording for this phrase. Practise with the text and pinyin.", "No hay una grabación publicada de esta frase. Practica con el texto y el pinyin.")[locale]}</span>;
   return (
     <span className="inline-flex max-w-full flex-wrap items-center gap-2">
       <button

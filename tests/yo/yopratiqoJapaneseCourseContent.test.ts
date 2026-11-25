@@ -2,14 +2,18 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   japaneseCourseUnits,
-  japaneseCourseSources,
+  japaneseLegacyCourseUnits,
+  japaneseLegacyCourseSources,
   japaneseFinalAssessment,
+  japaneseExtendedFinalAssessment,
 } from "../../lib/yo/japaneseCourse";
 import type {
   JapaneseActivity, JapaneseChoice, JapaneseChoiceActivity, JapaneseLocalized, JapanesePhrase,
 } from "../../lib/yo/japaneseCourseTypes";
 
-const allActivities = [...japaneseCourseUnits.flatMap(unit => unit.activities), ...japaneseFinalAssessment];
+// Preserve the original eight-module pedagogy and recording-dependent contract.
+// The four written extension modules have their own depth suite.
+const allActivities = [...japaneseLegacyCourseUnits.flatMap(unit => unit.activities), ...japaneseFinalAssessment];
 const isChoice = (activity: JapaneseActivity): activity is JapaneseChoiceActivity =>
   activity.kind === "choice" || activity.kind === "listening" || activity.kind === "culture";
 const normalizedText = (value: string) => value.normalize("NFKC").replace(/[\s。！？、,.!?]/gu, "");
@@ -50,9 +54,9 @@ function choices(value: { id: string; choices: JapaneseChoice[]; answerId: strin
   }
 }
 
-test("the eight linked modules form a complete ordered course, not missing route placeholders", () => {
-  assert.equal(japaneseCourseUnits.length, 8);
-  japaneseCourseUnits.forEach((unit, index) => {
+test("the original eight linked modules retain their complete ordered course contract", () => {
+  assert.equal(japaneseLegacyCourseUnits.length, 8);
+  japaneseLegacyCourseUnits.forEach((unit, index) => {
     assert.equal(unit.number, index + 1);
     assert.equal(unit.id, `jp-foundation-${String(index + 1).padStart(2, "0")}`);
     assert.equal(unit.slug, `module-${index + 1}`);
@@ -61,7 +65,7 @@ test("the eight linked modules form a complete ordered course, not missing route
 });
 
 test("every module supplies input, explicit goals, language support and an independent writing task", () => {
-  for (const unit of japaneseCourseUnits) {
+  for (const unit of japaneseLegacyCourseUnits) {
     [unit.title, unit.subtitle, unit.setting, unit.roleplay.title, unit.roleplay.context, unit.culture.title,
       unit.culture.note, unit.culture.reflection, unit.writing.prompt].forEach((value, index) => localized(value, `${unit.id}.section-${index}`));
     assert.ok(unit.goals.length >= 3, unit.id);
@@ -79,7 +83,7 @@ test("every module supplies input, explicit goals, language support and an indep
 });
 
 test("each module includes varied executable practice instead of a repeated single question type", () => {
-  for (const unit of japaneseCourseUnits) {
+  for (const unit of japaneseLegacyCourseUnits) {
     const counts = Object.fromEntries(["choice", "listening", "build", "reading", "match", "culture"].map(kind => [kind, unit.activities.filter(activity => activity.kind === kind).length]));
     assert.ok(counts.choice >= 2 && counts.listening >= 1 && counts.build >= 2 && counts.reading >= 1 && counts.match >= 1 && counts.culture >= 1, `${unit.id}: missing an activity mode`);
     assert.ok(unit.activities.length >= 8, unit.id);
@@ -165,19 +169,19 @@ test("matching cards have distinct meanings in every supported locale", () => {
 test("kana coverage contains all 46 basic hiragana and all 46 basic katakana exactly once", () => {
   const hiragana = Array.from("あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをん");
   const katakana = Array.from("アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン");
-  const actual = japaneseCourseUnits.flatMap(unit => unit.kana);
+  const actual = japaneseLegacyCourseUnits.flatMap(unit => unit.kana);
   assert.equal(actual.length, 92);
   assert.equal(new Set(actual).size, 92);
   assert.deepEqual([...actual].sort(), [...hiragana, ...katakana].sort());
-  assert.deepEqual(japaneseCourseUnits.slice(0, 4).flatMap(unit => unit.kana), hiragana);
-  assert.deepEqual(japaneseCourseUnits.slice(4).flatMap(unit => unit.kana), katakana);
+  assert.deepEqual(japaneseLegacyCourseUnits.slice(0, 4).flatMap(unit => unit.kana), hiragana);
+  assert.deepEqual(japaneseLegacyCourseUnits.slice(4).flatMap(unit => unit.kana), katakana);
 });
 
 test("forty kanji are distributed without duplication or accidental kana", () => {
-  const actual = japaneseCourseUnits.flatMap(unit => unit.kanji);
+  const actual = japaneseLegacyCourseUnits.flatMap(unit => unit.kanji);
   assert.equal(actual.length, 40);
   assert.equal(new Set(actual).size, 40);
-  japaneseCourseUnits.forEach(unit => assert.equal(unit.kanji.length, 5, unit.id));
+  japaneseLegacyCourseUnits.forEach(unit => assert.equal(unit.kanji.length, 5, unit.id));
   actual.forEach(character => assert.match(character, /^\p{Script=Han}$/u));
   for (const useful of ["人", "日", "語", "右", "左", "食", "円", "月", "学", "出", "入", "読", "書"]) assert.ok(actual.includes(useful), useful);
 });
@@ -196,19 +200,20 @@ test("global IDs remain unique so persisted answers cannot collide across module
   }
   visit(japaneseCourseUnits);
   visit(japaneseFinalAssessment);
+  visit(japaneseExtendedFinalAssessment);
 });
 
 test("cultural cases and methodology link only to declared authoritative sources", () => {
-  const sourceIds = new Set(japaneseCourseSources.map(source => source.id));
-  assert.equal(sourceIds.size, japaneseCourseSources.length);
-  for (const source of japaneseCourseSources) {
+  const sourceIds = new Set(japaneseLegacyCourseSources.map(source => source.id));
+  assert.equal(sourceIds.size, japaneseLegacyCourseSources.length);
+  for (const source of japaneseLegacyCourseSources) {
     const url = new URL(source.url);
     assert.equal(url.protocol, "https:");
     assert.ok(["www.jfstandard.jpf.go.jp", "www.irodori.jpf.go.jp", "catalog.mit.edu", "kanjivg.tagaini.net"].includes(url.hostname));
     assert.ok(source.title.trim() && source.publisher.trim());
     localized(source.purpose, source.id);
   }
-  for (const unit of japaneseCourseUnits) {
+  for (const unit of japaneseLegacyCourseUnits) {
     assert.ok(unit.culture.sourceIds.length > 0, unit.id);
     unit.culture.sourceIds.forEach(id => assert.ok(sourceIds.has(id), `${unit.id}: unknown source ${id}`));
   }
@@ -221,9 +226,9 @@ test("cultural cases and methodology link only to declared authoritative sources
 test("the cumulative check contains fresh prompts and several response modes", () => {
   assert.equal(japaneseFinalAssessment.length, 8);
   assert.ok(japaneseFinalAssessment.every(activity => activity.id.startsWith("jp-final-")));
-  const unitPrompts = new Set(japaneseCourseUnits.flatMap(unit => unit.activities.map(activity => activity.prompt.en)));
+  const unitPrompts = new Set(japaneseLegacyCourseUnits.flatMap(unit => unit.activities.map(activity => activity.prompt.en)));
   japaneseFinalAssessment.forEach(activity => assert.ok(!unitPrompts.has(activity.prompt.en), `${activity.id}: copied unit prompt`));
   const kinds = new Set(japaneseFinalAssessment.map(activity => activity.kind));
   for (const kind of ["choice", "listening", "build", "reading", "culture"]) assert.ok(kinds.has(kind as JapaneseActivity["kind"]));
-  assert.ok(japaneseCourseSources.find(source => source.id === "mit-japanese")?.purpose.en.includes("No affiliation or credit equivalence"));
+  assert.ok(japaneseLegacyCourseSources.find(source => source.id === "mit-japanese")?.purpose.en.includes("No affiliation or credit equivalence"));
 });

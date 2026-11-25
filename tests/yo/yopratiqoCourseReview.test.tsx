@@ -14,13 +14,14 @@ for (const [key, value] of Object.entries({ React, window: dom.window, document:
 })) Object.defineProperty(globalThis, key, { value, configurable: true, writable: true });
 dom.window.HTMLElement.prototype.scrollIntoView = () => {};
 window.matchMedia = (media: string) => ({ media, matches: true, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => true });
-let audioStarts = 0;
+let audioStarts = 0, reviewRequests = 0;
 dom.window.HTMLMediaElement.prototype.pause = () => {};
 dom.window.HTMLMediaElement.prototype.load = () => {};
 dom.window.HTMLMediaElement.prototype.play = () => { audioStarts++; return Promise.resolve(); };
 globalThis.fetch = async input => {
   const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url, "https://example.test");
   if (url.pathname === "/api/yo/review/exercise") {
+    reviewRequests++;
     const { GET } = await import("@/app/api/yo/review/exercise/route");
     return GET(new Request(url));
   }
@@ -33,7 +34,11 @@ const { EasternDueReview } = require("@/components/yo/review/EasternDueReview") 
 const { readReviewState, recordReviewAttempt } = require("@/lib/yo/review/store") as typeof import("@/lib/yo/review/store");
 const { courseReviewId, reviewLanguageForCourseKey } = require("@/lib/yo/review/courseRegistry") as typeof import("@/lib/yo/review/courseRegistry");
 const { loadCourseReviewContent } = require("@/lib/yo/review/courseContent") as typeof import("@/lib/yo/review/courseContent");
-const { loadEasternReviews } = require("@/lib/yo/review/easternContent") as typeof import("@/lib/yo/review/easternContent");
+const { loadEasternReviewContent } = require("@/lib/yo/review/easternContent") as typeof import("@/lib/yo/review/easternContent");
+const { japaneseCourseReviewIds, mandarinCourseReviewIds } = require("@/lib/yo/foundationJourneyCatalogs") as typeof import("@/lib/yo/foundationJourneyCatalogs");
+const { japaneseReviewItems, mandarinReviewItems } = require("@/lib/yo/review/adapters") as typeof import("@/lib/yo/review/adapters");
+const { japaneseCourseUnits } = require("@/lib/yo/japaneseCourse") as typeof import("@/lib/yo/japaneseCourse");
+const { mandarinUnits } = require("@/lib/yo/mandarin/course") as typeof import("@/lib/yo/mandarin/course");
 const { foundationContent } = require("@/lib/yo/foundations/catalog.server") as typeof import("@/lib/yo/foundations/catalog.server");
 const { foundationSettings } = require("@/lib/yo/foundations/experience") as typeof import("@/lib/yo/foundations/experience");
 const { personalizedItalianCatalog, personalizedItalianUnits } = require("@/lib/yo/personalized/courseData") as typeof import("@/lib/yo/personalized/courseData");
@@ -50,7 +55,7 @@ const courses: { language: TextCourseLanguage; key: string; catalog: CourseCatal
   { language: "pt-BR", key: PORTUGUESE_PROGRESS_KEY, catalog: portugueseCatalog, units: portugueseCourseUnits },
   ...(["en", "es", "fr-CA"] as const).map(language => ({ language, key: foundationSettings[language].progressKey, ...foundationContent(language) })),
 ];
-function reset() { cleanup(); window.localStorage.clear(); window.localStorage.setItem(AUTO_NEXT_KEY, "off"); audioStarts = 0; }
+function reset() { cleanup(); window.localStorage.clear(); window.localStorage.setItem(AUTO_NEXT_KEY, "off"); audioStarts = 0; reviewRequests = 0; }
 function Probe({ catalog, storageKey, id }: { catalog: CourseCatalog; storageKey: string; id: string }) {
   const state = useItalianCourseProgress(catalog, storageKey);
   return <button type="button" disabled={!state.ready} onClick={() => state.recordActivity(id, false, false)}>Record an actual mistake</button>;
@@ -101,17 +106,19 @@ async function main() {
   console.log("PASS legacy and demo progress remain outside the canonical review journal");
   for (const language of ["ja", "zh"] as const) {
     reset();
-    const content = await loadEasternReviews(language);
-    assert.ok(Object.keys(content).length >= 88);
-    assert.equal(Object.keys(content).some(id => /final|bilan/.test(id)), false, "checkpoints are not recycled as graded course attempts");
-    const entry = Object.entries(content).find(([, value]) => value.language === "ja" ? value.activity.kind === "choice" : value.exercise.kind === "choice")!;
-    assert.ok(entry);
-    const [id, item] = entry;
+    const ids = language === "ja" ? japaneseCourseReviewIds : mandarinCourseReviewIds;
+    const refs = language === "ja" ? japaneseReviewItems(japaneseCourseUnits) : mandarinReviewItems(mandarinUnits);
+    assert.ok(ids.length >= 88);
+    assert.equal(ids.some(id => /final|bilan/.test(id)), false, "checkpoints are not recycled as graded course attempts");
+    const id = refs.find(item => item.kind === "choice")!.id;
+    const item = await loadEasternReviewContent(language, id);
+    const beforeOpening = reviewRequests;
     recordReviewAttempt({ language, itemId: id, correct: false, assisted: false, at: Date.now() - 1000 });
     const legacyKey = language === "ja" ? "yopratiqo:japanese-foundations:v1" : "yopratiqo:mandarin-foundations:v1";
     localStorage.setItem(legacyKey, "unchanged-course-evidence");
-    const view = render(<EasternDueReview language={language} locale="en"/>);
+    const view = render(<EasternDueReview language={language} locale="en" itemIds={ids}/>);
     await waitFor(() => assert.ok(view.getByRole("button", { name: "Review up to 3 phrases" })));
+    assert.equal(reviewRequests, beforeOpening, "the course map does not fetch exercise content");
     fireEvent.click(view.getByRole("button", { name: "Review up to 3 phrases" }));
     let answer: string;
     if (item.language === "ja" && "choices" in item.activity) {
@@ -123,6 +130,8 @@ async function main() {
       const correct = exercise.choices.find(option => option.id === exercise.answer)!;
       answer = correct.phrase?.hanzi ?? correct.label!.en;
     } else throw new Error("Written choice required");
+    await waitFor(() => assert.ok(view.getByRole("button", { name: answer })));
+    assert.equal(reviewRequests, beforeOpening + 1, "opening review fetches only the requested exercise");
     fireEvent.click(view.getByRole("button", { name: answer }));
     fireEvent.click(view.getByRole("button", { name: "Check" }));
     fireEvent.click(view.getByRole("button", { name: "Continue" }));

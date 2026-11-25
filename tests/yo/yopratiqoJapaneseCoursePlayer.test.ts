@@ -6,8 +6,9 @@ import * as React from "react";
 
 import { JapaneseCoursePlayer } from "@/components/yo/japanese/JapaneseCoursePlayer";
 import { JapaneseCourseHome, type JapaneseUnitOutline } from "@/components/yo/japanese/JapaneseCourseHome";
-import { japaneseCourseUnits, japaneseCourseSources, japaneseFinalAssessment } from "@/lib/yo/japaneseCourse";
-import { japaneseJourneyUnits, japaneseFinalIds } from "@/lib/yo/foundationJourneyCatalogs";
+import { japaneseCourseUnits, japaneseLegacyCourseUnits, japaneseCourseSources, japaneseFinalAssessment } from "@/lib/yo/japaneseCourse";
+import { japaneseJourneyUnits, japaneseFinalIds, japaneseLegacyFinalIds, japaneseCourseReviewIds } from "@/lib/yo/foundationJourneyCatalogs";
+import { resolveJapaneseCourseUnit } from "@/lib/yo/japaneseCourseRouting";
 import {
   emptyJapaneseProgress, JAPANESE_COURSE_PATH, JAPANESE_PROGRESS_KEY,
   japaneseUnitPracticeIds, parseJapaneseProgress, recordJapaneseResult,
@@ -35,25 +36,23 @@ const originals = new Map(Object.keys(bindings).map((key) => [key, Object.getOwn
 for (const [key, value] of Object.entries(bindings)) Object.defineProperty(globalThis, key, { configurable: true, writable: true, value });
 const { render, cleanup, fireEvent, within, act } = require("@testing-library/react") as typeof import("@testing-library/react");
 
-const unit = japaneseCourseUnits[0];
+const unit = japaneseLegacyCourseUnits[0];
 const firstChoice = unit.activities.find((activity): activity is JapaneseChoiceActivity => activity.kind === "choice")!;
 assert.ok(firstChoice, "The first real course unit must have a choice activity for these interaction checks.");
-const lastUnit = japaneseCourseUnits[japaneseCourseUnits.length - 1];
-// The final route passes a distinct unit with the eight synthesis activities and no module roleplay.
-const finalUnit: JapaneseCourseUnit = {
-  ...lastUnit, id: "jp-foundation-final", slug: "bilan", number: 9,
-  title: { fr: "Une journée au Japon", en: "A day in Japan", es: "Un día en Japón" },
-  activities: japaneseFinalAssessment,
-  roleplay: { ...lastUnit.roleplay, turns: [] }, kana: [], kanji: [],
-};
+// The original final keeps its eight questions and stored `bilan` identity.
+// Its public route moves to bilan-initial; the new 24-question final is separate.
+const finalUnit = resolveJapaneseCourseUnit("bilan-initial")!;
 const outlines: JapaneseUnitOutline[] = japaneseCourseUnits.map((item) => ({ ...item, practiceIds: japaneseUnitPracticeIds(item) }));
 const completionLabel = "Record this completion";
 const completionAction = React.createElement("button", { type: "button" }, completionLabel);
 const courseNode = (chosenUnit = unit, locale: YoLocale = "en", final = false) => React.createElement(JapaneseCoursePlayer, {
-  unit: chosenUnit, locale, final, sources: japaneseCourseSources, completionAction, journeyUnits: japaneseJourneyUnits, finalIds: japaneseFinalIds,
+  unit: chosenUnit, locale, final, sources: japaneseCourseSources, completionAction,
+  journeyUnits: chosenUnit.slug === "bilan" ? japaneseJourneyUnits.slice(0, 8) : japaneseJourneyUnits,
+  finalIds: chosenUnit.slug === "bilan" ? japaneseLegacyFinalIds : japaneseFinalIds,
 });
 const homeNode = (locale: YoLocale = "en") => React.createElement(JapaneseCourseHome, {
-  locale, units: outlines, finalIds: japaneseFinalAssessment.map((activity) => activity.id), sources: japaneseCourseSources,
+  locale, units: outlines, finalIds: japaneseFinalIds, legacyFinalIds: japaneseLegacyFinalIds,
+  reviewIds: japaneseCourseReviewIds, sources: japaneseCourseSources,
 });
 type View = ReturnType<typeof render>;
 const cases: Array<[string, () => void]> = [];
@@ -210,8 +209,8 @@ test("Yoppo follows writing and kanji stages with the current model and relevant
   assert.equal(coach().queryByText(unit.grammar[0].explanation.en), null);
 });
 
-test("passing all eight modules does not complete the separate final assessment", () => {
-  seed(resume(passed(japaneseCourseUnits.flatMap(japaneseUnitPracticeIds)), finalUnit, "summary"));
+test("passing all original eight modules does not complete their separate final assessment", () => {
+  seed(resume(passed(japaneseLegacyCourseUnits.flatMap(japaneseUnitPracticeIds)), finalUnit, "summary"));
   const view = render(courseNode(finalUnit, "en", true));
   assert.equal(view.queryByRole("button", { name: completionLabel }), null);
   assert.equal(view.queryByRole("group", { name: "My self-assessment" }), null);
@@ -277,13 +276,13 @@ test("a home review link saves its exact exercise before navigation and the real
   assert.equal(saved().results[target.id]?.attempts, 1);
 });
 
-test("a final-review link targets the final exercise rather than a module’s remembered step", () => {
+test("the original final-review link targets its retained exercise and public route rather than a module’s remembered step", () => {
   const target = japaneseFinalAssessment[4];
   seed(resume(recordJapaneseResult(emptyJapaneseProgress(), target.id, false, false), unit, "writing"));
   const home = render(homeNode("es"));
   fireEvent.click(home.getByRole("button", { name: "Repaso · 1" }));
-  const link = home.getByRole("link", { name: "Misión de síntesis · 1 ejercicio(s) para repasar" });
-  assert.equal(link.getAttribute("href"), href(`${JAPANESE_COURSE_PATH}/bilan`, "es"));
+  const link = home.getByRole("link", { name: "Balance inicial · 8 módulos · 1 ejercicio(s) para repasar" });
+  assert.equal(link.getAttribute("href"), href(`${JAPANESE_COURSE_PATH}/bilan-initial`, "es"));
   activateLinkAndUnmount(home, link);
   assert.equal(saved().lastUnit, "bilan");
   assert.equal(saved().lastSteps.bilan, target.id);

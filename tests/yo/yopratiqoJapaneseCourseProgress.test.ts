@@ -10,7 +10,7 @@ import {
   normalizeJapaneseAnswer, parseJapaneseProgress, recordJapaneseResult,
   type JapaneseAnswer, type JapaneseCourseProgress,
 } from "@/lib/yo/japaneseCourseProgress";
-import { japaneseCourseUnits } from "@/lib/yo/japaneseCourse";
+import { japaneseLegacyCourseUnits } from "@/lib/yo/japaneseCourse";
 import type {
   JapaneseActivityBase, JapaneseBuildActivity, JapaneseChoiceActivity,
   JapaneseMatchActivity, JapaneseReadingActivity,
@@ -122,7 +122,7 @@ test("checked attempts preserve earned success, separate assistance and set revi
 });
 
 test("module completion counts checked exercises and roleplay, not study screens or bookmarked reviews", () => {
-  const unit = japaneseCourseUnits[0];
+  const unit = japaneseLegacyCourseUnits[0];
   const ids = japaneseUnitPracticeIds(unit);
   assert.equal(ids.length, unit.activities.length + unit.roleplay.turns.length);
   let progress = emptyJapaneseProgress();

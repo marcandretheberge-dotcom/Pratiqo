@@ -3,6 +3,10 @@ import type {
   JapaneseChoiceActivity, JapaneseCourseSource, JapaneseCourseUnit, JapaneseLocalized,
   JapaneseMatchActivity, JapanesePhrase, JapaneseReadingActivity, JapaneseRoleplayTurn,
 } from "./japaneseCourseTypes";
+import { japaneseUnit09, japaneseUnit10 } from "./japaneseDepth09to10";
+import { japaneseUnit11, japaneseUnit12 } from "./japaneseDepth11to12";
+import { japaneseDepthSources } from "./japaneseDepthSources";
+export { japaneseExtendedFinalAssessment, japaneseExtendedFinalBlueprint } from "./japaneseExtendedFinal";
 
 // All scenes, prompts, feedback and translations below are original course content.
 // Source links inform the approach; no textbook activities or recordings are copied.
@@ -42,7 +46,7 @@ const turn = (id: string, speaker: JapaneseLocalized, line: JapanesePhrase, goal
   hint: JapaneseLocalized, choices: JapaneseChoice[], answerId: string): JapaneseRoleplayTurn =>
   ({ id, speaker, line, goal, hint, choices, answerId });
 
-export const japaneseCourseSources: JapaneseCourseSource[] = [
+export const japaneseLegacyCourseSources: JapaneseCourseSource[] = [
   { id: "jf-standard", title: "JF Standard for Japanese-Language Education — Overview", publisher: "The Japan Foundation",
     url: "https://www.jfstandard.jpf.go.jp/summaryen/ja/render.do",
     purpose: l("Objectifs communicatifs et réflexion interculturelle; aucun niveau officiel n’est attribué par nos exercices.", "Communicative outcomes and intercultural reflection; our exercises do not award an official level.", "Objetivos comunicativos y reflexión intercultural; nuestros ejercicios no otorgan un nivel oficial.") },
@@ -442,7 +446,9 @@ const unit8: JapaneseCourseUnit = {
   canDos: [l("Je peux raconter une action passée avec un modèle.", "I can describe a past action using a model.", "Puedo contar una acción pasada usando un modelo."), l("Je peux distinguer passé positif et passé négatif dans les exemples.", "I can distinguish affirmative and negative past forms in the examples.", "Puedo distinguir pasado afirmativo y negativo en los ejemplos."), l("Je peux identifier les situations que je veux revoir avec Yoppo.", "I can identify situations I want to review with Yoppo.", "Puedo identificar situaciones que quiero repasar con Yoppo.")],
 };
 
-export const japaneseCourseUnits: JapaneseCourseUnit[] = [unit1, unit2, unit3, unit4, unit5, unit6, unit7, unit8];
+export const japaneseLegacyCourseUnits: JapaneseCourseUnit[] = [unit1, unit2, unit3, unit4, unit5, unit6, unit7, unit8];
+export const japaneseCourseUnits: JapaneseCourseUnit[] = [...japaneseLegacyCourseUnits, japaneseUnit09, japaneseUnit10, japaneseUnit11, japaneseUnit12];
+export const japaneseCourseSources: JapaneseCourseSource[] = [...japaneseLegacyCourseSources, ...japaneseDepthSources];
 
 /** New cumulative prompts. This is an internal knowledge check, not a language certification. */
 export const japaneseFinalAssessment: JapaneseActivity[] = [
