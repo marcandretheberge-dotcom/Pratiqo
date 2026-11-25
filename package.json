@@ -35,7 +35,11 @@
     "check:seo-edge": "tsx scripts/check_seo_edge_redirects.ts",
     "configure:apex-redirect": "tsx scripts/configure_vercel_apex_permanent_redirect.ts",
     "verify:yopratiqo-seo-deploy": "tsx scripts/verify_yopratiqo_seo_deploy.ts",
-    "generate:yopratiqo-audio": "tsx scripts/generate-yopratiqo-audio.ts",
+    "generate:yopratiqo-audio": "tsx scripts/generate-yopratiqo-premium-recordings.ts",
+    "generate:yo-premium-recordings": "tsx scripts/generate-yopratiqo-premium-recordings.ts",
+    "test:yo-premium-recordings": "node --import tsx tests/yo/yopratiqoPremiumAudioPlan.test.ts && node --import tsx tests/yo/yopratiqoCourseAudioResolution.test.ts && node --import tsx tests/yo/yopratiqoPremiumRecordingTransport.test.ts && node --import tsx tests/yo/yopratiqoPremiumRecordingBatch.test.ts",
+    "test:yo-speech": "node --import tsx tests/security/yoSpeechHeaders.test.ts && node --import tsx tests/yo/yopratiqoSpeechDatabase.test.ts && node --import tsx tests/yo/yopratiqoSpeechProvider.test.ts && node --import tsx tests/yo/yopratiqoSpeechApi.test.ts && node --import tsx tests/yo/yopratiqoSpeechClientLifecycle.test.tsx",
+    "test:yo-cinema": "node --import tsx tests/yo/yopratiqoMissionCinemaState.test.ts && node --import tsx tests/yo/yopratiqoMissionCinemaPlayer.test.tsx && node --import tsx tests/yo/yopratiqoTravelFilmRoutes.test.ts && node --import tsx tests/yo/yopratiqoTravelAudioPolicy.test.tsx",
     "test:yo-audio": "tsx tests/yo/yopratiqoAudio.test.ts && tsx tests/yo/yopratiqoSpanishAudioCoverage.test.ts && tsx tests/yo/yopratiqoFrenchQuebecAudio.test.ts && tsx tests/yo/yopratiqoItalianAudio.test.ts && tsx tests/yo/yopratiqoEnglishAudio.test.ts && tsx tests/yo/yopratiqoJapaneseAudio.test.ts && tsx tests/yo/yopratiqoAudioPronunciationOverrides.test.ts && node --import tsx tests/yo/yopratiqoAudioGenerator.test.ts",
     "test:yo-audio-pronunciation": "tsx tests/yo/yopratiqoAudioPronunciationOverrides.test.ts",
     "test:yo-spanish-coverage": "tsx tests/yo/yopratiqoSpanishAudioCoverage.test.ts",
@@ -141,7 +145,8 @@
     "sharp": "^0.35.5",
     "stripe": "^22.0.2",
     "tailwind-merge": "^3.5.0",
-    "zod": "^4.6.6"
+    "zod": "^4.6.6",
+    "ws": "8.22.0"
   },
   "browserslist": [
     "Chrome >= 90",
@@ -164,7 +169,6 @@
     "jsdom": "26.1.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5",
-    "ws": "8.22.0"
+    "typescript": "^5"
   }
 }

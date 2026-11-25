@@ -28,7 +28,6 @@
  */
 
 import type { Metadata } from "next";
-import { CountryDeparture } from "@/components/yo/travel/CountryDeparture";
 
 import { SITE_URL } from "@/lib/seo/site";
 import { getYoLocale } from "@/lib/yo/localize";
@@ -66,7 +65,6 @@ export default async function YoEspagnolRepubliqueDominicaineIntroPage({
   const locale = getYoLocale(resolvedSearchParams.lang);
 
   return <>
-    <CountryDeparture country="DO" city="Santo Domingo" locale={locale}/>
     <DominicanRepublicIntroContent locale={locale} />
   </>;
 }

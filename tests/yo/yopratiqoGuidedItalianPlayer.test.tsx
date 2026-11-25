@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import * as React from "react";
+import { dismissMissionFilms, prepareCinemaMedia } from "../helpers/lessonCinema";
 import { italianCourseUnits, italianCourseCatalog } from "@/lib/yo/italian/course/courseData";
 import { guidedSteps, GUIDED_KEY } from "@/lib/yo/italian/course/guidedItalian";
 import { guidedMissionOrder } from "@/lib/yo/italian/course/guidedMissionOrder";
@@ -14,6 +15,7 @@ const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http:
 const frames = new Map<number, FrameRequestCallback>(); let frameId = 0;
 for (const [key,value] of Object.entries({ window:dom.window, self:dom.window, document:dom.window.document, navigator:dom.window.navigator, HTMLElement:dom.window.HTMLElement, Element:dom.window.Element, Node:dom.window.Node, NodeFilter:dom.window.NodeFilter, DocumentFragment:dom.window.DocumentFragment, HTMLInputElement:dom.window.HTMLInputElement, CustomEvent:dom.window.CustomEvent, Event:dom.window.Event, MutationObserver:dom.window.MutationObserver, getComputedStyle:dom.window.getComputedStyle, localStorage:dom.window.localStorage, requestAnimationFrame:(fn:FrameRequestCallback)=>{frames.set(++frameId,fn);return frameId;}, cancelAnimationFrame:(id:number)=>frames.delete(id), IS_REACT_ACT_ENVIRONMENT:true })) Object.defineProperty(globalThis,key,{value,configurable:true,writable:true});
 dom.window.HTMLElement.prototype.scrollIntoView=()=>{};window.scrollTo=()=>{};
+prepareCinemaMedia();
 class FakeAudio extends dom.window.EventTarget { src:string;preload="none";playbackRate=1;preservesPitch=true;currentTime=0;constructor(src:string){super();this.src=src;}play(){this.dispatchEvent(new Event("playing"));return Promise.resolve();}pause(){}load(){}removeAttribute(){this.src="";} }
 window.Audio=FakeAudio as unknown as typeof Audio;
 process.env.NEXT_PUBLIC_SUPABASE_URL="https://audio.example.test";
@@ -21,7 +23,7 @@ const { GuidedItalianCourse } = require("@/components/yo/italian/guided/GuidedIt
 const {render,cleanup,fireEvent,act,within}=require("@testing-library/react") as typeof import("@testing-library/react");
 const unit=italianCourseUnits[0],canonicalSteps=guidedSteps(unit),steps=guidedMissionOrder(canonicalSteps).map(index=>canonicalSteps[index]);
 type View=ReturnType<typeof render>;
-function flush(){for(let i=0;i<10&&frames.size;i++){const pending=[...frames.values()];frames.clear();act(()=>pending.forEach(fn=>fn(0)));}}
+function flush(){for(let i=0;i<10&&frames.size;i++){const pending=[...frames.values()];frames.clear();act(()=>pending.forEach(fn=>fn(0)));}dismissMissionFilms();}
 let clock=Date.now();Date.now=()=>clock;
 function click(el:HTMLElement){clock+=500;fireEvent.click(el);flush();}
 function mount(extra:Partial<React.ComponentProps<typeof GuidedItalianCourse>>={}){localStorage.setItem("yo.practice.auto-next.v1","off");const v=render(<GuidedItalianCourse unit={unit} catalog={italianCourseCatalog} locale="en" audioPaths={courseAudioPaths(unitSpeech(unit))} {...extra}/>);flush();return v;}

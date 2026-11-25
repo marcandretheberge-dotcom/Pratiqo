@@ -66,6 +66,7 @@ import { YoFrenchAudioButton } from "@/components/yo/YoFrenchAudioButton";
 import { YoLocaleSwitcher } from "@/components/yo/YoLocaleSwitcher";
 import { DeckYoppoCoach } from "@/components/yo/companion/DeckYoppoCoach";
 import type { FrQuebecModuleLesson } from "@/lib/yo/frQuebecWorkplaceSurvivalModule";
+import { YoLessonPractice } from "./learning/YoLessonPractice";
 
 /**
  * Lesson 1 audio context — passed to every `YoFrenchAudioButton`
@@ -1065,6 +1066,7 @@ function LessonOnePreview({
             {t(PREVIEW_BROWSE_TEACHERS_CTA, locale)}
           </Link>
         </section>
+        <YoLessonPractice id={`fr-quebec-workplace:${lesson.id}`} language="fr" locale={locale} scenarioId="workplace" title={lessonTitle} detail={objective}/>
       </div>
     </section>
   );
@@ -1082,7 +1084,8 @@ function LessonOnePreview({
  *
  * Important invariants (mirrors LessonOnePreview):
  *   - No `"use client"`. Pure server render.
- *   - No form / input / audio playback / recording. The flashcards
+ *   - Lesson content stays server-rendered; optional oral practice opens
+ *     in a separate consent-gated client component. The flashcards
  *     show front + back side-by-side because we don't have client JS
  *     to "flip" the card; learners self-check by reading.
  *   - The teacher CTA links to /trouver-un-prof (the real, free way
@@ -1848,6 +1851,7 @@ function LessonTwoPreview({
             {nextTeaser}
           </p>
         </section>
+        <YoLessonPractice id={`fr-quebec-workplace:${lesson.id}`} language="fr" locale={locale} scenarioId="workplace" title={lessonTitle} detail={beforeYouStart}/>
       </div>
     </section>
   );

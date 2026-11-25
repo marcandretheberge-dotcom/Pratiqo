@@ -720,6 +720,7 @@ export default async function YoFrancaisQuebecIntroPage({
     <YoLessonDeck
       locale={locale}
       moduleLabel={t(meta.moduleLabel, locale)}
+      speechPractice={{ language: "fr", scenarioId: "introduction" }}
       backHref={backHref}
       toggleHref={toggleHref}
       screens={screens}

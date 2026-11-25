@@ -1340,6 +1340,7 @@ function Module3DeckRenderer({ locale }: { locale: YoLocale }) {
     <YoLessonDeck
       locale={locale}
       moduleLabel={t(DECK_MODULE_LABEL, locale)}
+      speechPractice={{ language: "es", scenarioId: "cafe" }}
       backHref={backHref}
       toggleHref={toggleHref}
       screens={screens}

@@ -14,6 +14,7 @@ import { ITALIAN_COURSE_PATH, italianCourseHref } from "@/lib/yo/italian/course/
 import { buildCourseJourney } from "@/lib/yo/courseJourney";
 import { AdventureScenery } from "./AdventureScenery";
 import styles, { adventureCss } from "./adventureStyles";
+import { MissionFilm } from "../travel/MissionFilm";
 
 export { EFFECTS_KEY } from "@/lib/yo/adventureSound";
 const button = "inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg px-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2";
@@ -34,18 +35,18 @@ function keepDialogFocus(event: KeyboardEvent<HTMLDialogElement>) {
   }
 }
 
-export function CourseAdventure({ catalog, progress, locale, ready, href }: {
-  catalog: CourseCatalog; progress: CourseProgress; locale: YoLocale; ready: boolean; href: string;
+export function CourseAdventure({ catalog, progress, locale, ready, href, cinematic = false }: {
+  catalog: CourseCatalog; progress: CourseProgress; locale: YoLocale; ready: boolean; href: string; cinematic?: boolean;
 }) {
   const finals = catalog.assessments.filter(item => item.theme !== "culture" && catalog.units.length > 1 && item.unitIds.length === catalog.units.length);
   const finalPassed = finals.length > 0 && finals.every(item => (progress.assessments[item.id]?.bestIndependent ?? -1) >= item.passPercent);
   const world = adventureWorld(href);
   const hrefForUnit = world === "italian" && href.split("?")[0] === ITALIAN_COURSE_PATH ? (unitId: string) => italianCourseHref(locale, unitId) : undefined;
-  return <AdventureProgress journey={buildCourseJourney(catalog, progress)} world={world} locale={locale} ready={ready} finalPassed={finalPassed} hrefForUnit={hrefForUnit} />;
+  return <AdventureProgress journey={buildCourseJourney(catalog, progress)} world={world} locale={locale} ready={ready} finalPassed={finalPassed} hrefForUnit={hrefForUnit} cinematic={cinematic} />;
 }
 
-export function AdventureProgress({ journey, world, locale, ready, finalPassed = false, hrefForUnit }: {
-  journey: LearningJourney; world: AdventureWorld; locale: YoLocale; ready: boolean; finalPassed?: boolean; hrefForUnit?: (unitId: string) => string;
+export function AdventureProgress({ journey, world, locale, ready, finalPassed = false, hrefForUnit, cinematic = false }: {
+  journey: LearningJourney; world: AdventureWorld; locale: YoLocale; ready: boolean; finalPassed?: boolean; hrefForUnit?: (unitId: string) => string; cinematic?: boolean;
 }) {
   const c = adventureCopy[locale];
   const earned = adventureMilestones(journey, finalPassed);
@@ -59,6 +60,9 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
   const [replay, setReplay] = useState(0);
   const seen = useRef(new Set<string>());
   const visible = queue[0];
+  // This is the existing earned-milestone queue. A film never creates an outcome,
+  // and hydration still recognises old results without replaying celebrations.
+  const filmVisible = cinematic && Boolean(visible && ["recap", "mastery", "finale"].includes(visible.kind));
   const pilotIndex = world === "italian" && hrefForUnit ? journey.steps.findIndex(step => step.unit.id === "u01") : -1;
   const pilotNext = pilotIndex >= 0 ? journey.steps[pilotIndex + 1] : undefined;
   const pilotNextId = pilotNext?.unlocked ? pilotNext.unit.id : undefined;
@@ -68,7 +72,7 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
   const soundState = effects && soundResult?.key === soundKey ? soundResult.state : "idle";
   const soundError = soundState === "unavailable";
   const dialog = useRef<HTMLDialogElement>(null);
-  const showing = Boolean(visible);
+  const showing = Boolean(visible) && !filmVisible;
   const latest = useRef(earned);
   latest.current = earned;
   const effectsRef = useRef(effects);
@@ -107,11 +111,11 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
   }, [fingerprint, ready, world, evaluation, pilotNextId]);
 
   useEffect(() => {
-    if (!visible || !effectsRef.current) return;
+    if (!visible || filmVisible || !effectsRef.current) return;
     let mounted = true;
     void playAdventureSound(visible.kind, victory ? "italian-u01" : undefined).then(ok => { if (mounted && effectsRef.current) setSoundResult({ key: soundKey, state: ok ? "played" : "unavailable" }); });
     return () => { mounted = false; stopAdventureSound(); };
-  }, [visible, victory, soundKey]);
+  }, [visible, victory, soundKey, filmVisible]);
 
   useEffect(() => {
     if (!showing) return;
@@ -128,8 +132,8 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
 
   useEffect(() => {
     // Each scene replaces its controls; retain keyboard focus within the open dialog.
-    if (visible) dialog.current?.querySelector<HTMLButtonElement>("button")?.focus();
-  }, [visible, replay]);
+    if (visible && !filmVisible) dialog.current?.querySelector<HTMLButtonElement>("button")?.focus();
+  }, [visible, replay, filmVisible]);
 
   function dismiss() { stopAdventureSound(); setQueue(items => items.slice(1)); setSoundResult(null); }
   function dismissAll() { stopAdventureSound(); setQueue([]); setSoundResult(null); }
@@ -161,7 +165,7 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
       <label className="flex min-h-11 shrink-0 cursor-pointer items-center gap-2 text-sm text-gray-700"><Volume2 size={16} aria-hidden /><span>{c.effects}</span><input type="checkbox" checked={effects} onChange={event => void toggleEffects(event.target.checked)} className="size-4 accent-emerald-800" /></label>
     </div>
     <dialog ref={dialog} aria-label={visible ? victory ? c.victory : c.kinds[visible.kind] : c.milestones} onKeyDown={keepDialogFocus} onCancel={event => { event.preventDefault(); dismissAll(); }} className="fixed m-auto max-h-[85dvh] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto overscroll-contain rounded-lg border border-emerald-200 bg-white p-4 text-gray-900 shadow-xl backdrop:bg-black/35 sm:p-6" data-yoppo-controls>
-    {visible ? <section key={`${visible.id}-${replay}`} aria-label={victory ? c.victory : c.kinds[visible.kind]} className={styles.celebration} data-celebration={visible.kind} data-celebration-scene={victory ? "italian-u01" : undefined}>
+    {visible && !filmVisible ? <section key={`${visible.id}-${replay}`} aria-label={victory ? c.victory : c.kinds[visible.kind]} className={styles.celebration} data-celebration={visible.kind} data-celebration-scene={victory ? "italian-u01" : undefined}>
       <div className="flex items-start gap-3">
         <CompanionAvatar visualId="travel" state={visible.kind === "unlock" ? "map" : "celebrating"} locale={locale} size="sm" compact />
         <div className="min-w-0 flex-1"><p role="status" className="font-bold text-emerald-950">{victory ? c.victory : c.kinds[visible.kind]}</p><h3 className="mt-1 text-lg font-bold">{visible.title[locale]}</h3></div>
@@ -187,6 +191,12 @@ export function AdventureProgress({ journey, world, locale, ready, finalPassed =
       {victory && soundError ? <p role="status" className="mt-2 text-xs text-gray-600">{c.unavailable}</p> : null}
     </section> : null}
     </dialog>
+    {filmVisible && visible && <MissionFilm scene={{
+      id: `${world}:${visible.id}:${replay}`,
+      kind: visible.kind === "finale" ? "artifact" : "mission-success",
+      title: visible.title[locale],
+      detail: visible.kind === "finale" ? c.final : visible.kind === "recap" ? c.recapSuccess : c.proof,
+    }} locale={locale} onContinue={dismiss}/>}
     {!victory && soundError ? <p role="status" className="mt-2 text-xs text-gray-600">{c.unavailable}</p> : null}
   </div>;
 }

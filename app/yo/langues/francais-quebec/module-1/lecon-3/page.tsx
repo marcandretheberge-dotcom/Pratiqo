@@ -7,6 +7,7 @@ import { YoAdaptiveStepShell } from "@/components/yo/YoAdaptiveStepShell";
 import { YoAppHeader } from "@/components/yo/YoAppHeader";
 import { YoStepNavigator } from "@/components/yo/YoStepNavigator";
 import { YoLessonDraftProvider } from "@/components/yo/YoLessonDraftProvider";
+import { YoLessonPractice } from "@/components/yo/learning/YoLessonPractice";
 import {
   YoChoiceCard,
   YoFixedFlashcardDeck,
@@ -222,6 +223,7 @@ function buildSteps(locale: YoLocale) {
             ))}
           </div>
           <YoppoNote>Yoppo te donne une mini-mission: rester clair, poli et naturel.</YoppoNote>
+          <YoLessonPractice id="fr-quebec-workplace:lesson-3" language="fr" locale={locale} scenarioId="workplace" title={LESSON_TITLE}/>
         </LessonCard>
       ),
     },
@@ -413,6 +415,7 @@ function buildSteps(locale: YoLocale) {
             incorrectFeedback="Réessaie avec une phrase plus naturelle."
             previousLabel="Précédent"
             nextLabel="Suivant"
+            cinema={{ id: "fr-quebec-workplace:lesson-3:quiz", locale, title: t(lstr("Cinq vérifications réussies", "Five checks completed", "Cinco comprobaciones superadas"), locale) }}
           />
         </LessonCard>
       ),

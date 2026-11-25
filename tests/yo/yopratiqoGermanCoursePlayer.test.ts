@@ -192,9 +192,12 @@ for (const locale of ["fr", "en", "es"] as const)
           .length,
         1,
       );
+      // The current eight-unit map is paged 3 + 3 + 2; only the first stop is open.
+      assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length, 2);
+      click(dashboard.getByRole('button',{name:{fr:'Étapes suivantes',en:'Next stops',es:'Etapas siguientes'}[locale]}));
       assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length, 3);
       click(dashboard.getByRole('button',{name:{fr:'Étapes suivantes',en:'Next stops',es:'Etapas siguientes'}[locale]}));
-      assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length, germanCatalog.units.length - 4);
+      assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length, germanCatalog.units.length - 6);
       assert.equal(dashboard.container.querySelector('.yo-shared-continue'),null);
       assert.equal(starts, 0);
     },

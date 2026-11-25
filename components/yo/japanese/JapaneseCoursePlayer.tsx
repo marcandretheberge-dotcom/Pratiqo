@@ -19,6 +19,10 @@ import { JapaneseActivityPanel, initialJapaneseActivityState, type JapaneseActiv
 import { JapaneseDialoguePanel, JapaneseKanaLab, JapaneseVocabularyLab, JapaneseWritingLab } from "./JapaneseStudyPanels";
 import { JapanesePhraseView } from "./JapanesePhraseView";
 import { useJapaneseCourseProgress } from "./useJapaneseCourseProgress";
+import { MissionFilm } from "../travel/MissionFilm";
+import { useMissionCinema } from "../travel/useMissionCinema";
+import { YoSpeechPractice } from "../speech/YoSpeechPractice";
+import { courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
 
 const L = (fr: string, en: string, es: string): JapaneseLocalized => ({ fr, en, es });
 const C = {
@@ -110,6 +114,11 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
   const counts = japaneseUnitProgress(unit, progress);
   const reviewStages = stages.filter((item) => item.activity && progress.results[item.id]?.needsReview);
   const uncompleted = stages.filter((item) => item.activity && !progress.results[item.id]?.passed);
+  const { scene, present, finish: finishMission } = useMissionCinema("ja:foundations", { active: ready && allowed });
+  useEffect(() => {
+    if (!ready || !allowed) return;
+    present({ id: `${unit.id}:start`, kind: "mission-start", title: unit.title[locale], detail: unit.setting[locale] });
+  }, [ready, allowed, unit, locale, present]);
 
   useEffect(() => {
     if (!ready || !allowed || resumeLoaded.current) return;
@@ -216,7 +225,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
         </div>
         <div ref={pane} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-8 sm:py-7" data-japanese-stage-pane>
           <div className="mx-auto max-w-3xl pb-24 sm:pb-20">
-            <AdventureProgress journey={journey} world="japanese" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} />
+            <AdventureProgress journey={journey} world="japanese" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} cinematic />
             <div className="mb-5"><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-indigo-500">{final ? C.final[locale] : C.module[locale] + " " + String(unit.number).padStart(2, "0")} · {unit.title[locale]}</p><h1 ref={heading} tabIndex={-1} className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 outline-none sm:text-3xl">{stage.title[locale]}</h1></div>
             {stage.kind === "mission" ? <div className="space-y-5">
               <div className="relative overflow-hidden rounded-3xl bg-[#25285b] p-6 text-white sm:p-8"><div className="pointer-events-none absolute -right-5 -top-8 h-44 w-44 rounded-full border-[28px] border-white/5" aria-hidden /><Compass size={26} className="mb-6 text-[#f2b2a2]" aria-hidden /><p className="max-w-xl text-xl leading-relaxed">{unit.subtitle[locale]}</p><p className="mt-4 text-sm leading-relaxed text-indigo-100">{unit.setting[locale]}</p></div>
@@ -247,6 +256,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
               <Link href={"/trouver-un-prof?q=japonais" + (locale === "fr" ? "" : "&lang=" + locale)} className="inline-flex min-h-11 items-center rounded-full border border-slate-300 bg-white px-5 text-sm font-semibold">{C.teacher[locale]}</Link>
               <p className="text-xs leading-relaxed text-slate-500">{C.academic[locale]}</p>
             </div> : null}
+            {!currentActivity && !final && !scene && <div className="mt-6"><YoSpeechPractice key={unit.id} language="ja" locale={locale} scenarioId={courseSpeechScenario("ja", unit.number)}/></div>}
           </div>
         </div>
       </div>
@@ -263,5 +273,6 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
       {!storageAvailable ? <p role="status" className="mt-1 text-center text-xs text-amber-900">{C.noStorage[locale]}</p> : null}
     </footer>
     <JapaneseYoppoCoach locale={locale} contextId={unit.id + ":" + stage.id + ":" + (currentState?.revision ?? 0)} message={coachMessage} hint={currentActivity?.hint ?? studyCoach.hint} explanation={currentActivity?.explanation ?? studyCoach.explanation} example={coachExample} visualState={stage.kind === "summary" && counts.complete && counts.independent === counts.total ? final ? "badge_unlocked" : "level_up" : currentState?.checked ? currentState.correct ? "celebrating" : "confused" : stage.kind === "mission" ? "map" : "idle"} onAction={coachAction} canRetry={!!currentState?.checked} reviewCount={reviewStages.length} />
+    {scene && <MissionFilm scene={scene} locale={locale} onContinue={finishMission}/>}
   </div>;
 }

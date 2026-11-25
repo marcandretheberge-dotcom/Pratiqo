@@ -72,6 +72,7 @@ backups/
 /.cache/german-local-audio/
 /.cache/portuguese-local-audio/
 /.cache/mandarin-local-audio/
+/.cache/yo-premium-recordings/
 
 # Backend-free local course QA output
 .qa-guided/

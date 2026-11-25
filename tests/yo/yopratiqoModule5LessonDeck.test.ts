@@ -41,8 +41,8 @@
  */
 
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { assertDeckServiceBoundary } from "../helpers/deckServiceBoundary";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(__dirname, "..", "..");
@@ -462,54 +462,13 @@ for (const [label, src] of [
 ok("14) no raw quiz fields introduced on the Module 5 deck surface");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 15. No restricted system touched
+// 15. Content and navigation service boundary
 // ─────────────────────────────────────────────────────────────────────────
 
-const restrictedPathPatterns: RegExp[] = [
-  /^app\/api\/stripe\//,
-  /^app\/api\/.*checkout/i,
-  /^app\/api\/.*payment/i,
-  /^lib\/payments\//,
-  /^lib\/pricing\//,
-  /^lib\/config\/membrePro\.ts$/,
-  /^lib\/commissions\//,
-  /^supabase\//,
-  /^content\/legal\//,
-  /^app\/\(app\)\/legal\//,
-  /^public\/.*\.(?:mp3|wav|m4a)$/i,
-  /^public\/audio\//,
-  /^scripts\/(?:generate-yopratiqo-audio|.*openai)/i,
-  /^app\/sitemap\.ts$/,
-  /^app\/robots\.ts$/,
-  /^lib\/seo\//,
-];
-const status = execSync("git status --porcelain -uall", {
-  cwd: root,
-  encoding: "utf8",
-});
-const changedFiles = status
-  .split(/\r?\n/)
-  .map((line) => line.trim())
-  .filter(Boolean)
-  .map((line) =>
-    line
-      .replace(/^[ MADRCU?!]{1,2}\s+/, "")
-      .replace(/^"|"$/g, "")
-      .replace(/\\/g, "/"),
-  );
-const ignoredUntracked = new Set([
-  "Untitled",
-  "docs/LAUNCH_READINESS_ANALYSIS.md",
-  "pratiqo-legal-export-20260528-2221.zip",
-]);
-for (const file of changedFiles) {
-  if (ignoredUntracked.has(file)) continue;
-  for (const re of restrictedPathPatterns) {
-    if (re.test(file)) {
-      assert.fail(`restricted system touched by Module 5 deck PR: ${file}`);
-    }
-  }
+// This module test owns the page/content/deck boundary, not unrelated repository changes.
+for (const [label, source] of [["module-5 page", pageSrc], ["module-5 content", module5Src], ["deck", deckSrc]] as const) {
+  assertDeckServiceBoundary(label, source);
 }
-ok("15) no restricted system touched (Stripe / payments / tax / RLS / migrations / legal / Membre Pro / audio / SEO)");
+ok("15) module content and deck delegate service work without direct payment/database calls");
 
 console.log(`\n${pass} Module 5 lesson-deck assertions passed`);

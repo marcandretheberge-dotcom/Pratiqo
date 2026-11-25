@@ -31,6 +31,10 @@ import { GermanAssessment } from "./GermanAssessment";
 import { GermanCourseShell, button, outline, copy } from "./GermanCourseShared";
 import { CourseJourneyGate, CourseJourneyAdvance } from "../journey/CourseJourney";
 import { buildCourseJourney } from "@/lib/yo/courseJourney";
+import { MissionFilm } from "../travel/MissionFilm";
+import { useMissionCinema } from "../travel/useMissionCinema";
+import { YoSpeechPractice } from "../speech/YoSpeechPractice";
+import { courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
 
 function RecallCards({
   lesson,
@@ -350,6 +354,11 @@ function GermanUnitSession({
     all.includes(id),
   );
   const { ready, setResume } = state;
+  const { scene, present, finish: finishMission } = useMissionCinema(`${experience.progressKey}:${state.progress.resetAt}`);
+  useEffect(() => {
+    if (!ready || (view !== "learn" && view !== "practice")) return;
+    present({ id: `${lesson.id}:start`, kind: "mission-start", title: lesson.title[locale], detail: lesson.goal[locale] });
+  }, [ready, view, lesson, locale, present]);
   useEffect(() => {
     if (ready && (view === "learn" || view === "practice"))
       setResume(
@@ -404,6 +413,9 @@ function GermanUnitSession({
     else if (lessonIndex + 1 < unit.lessons.length)
       chooseLesson(lessonIndex + 1);
     else setView("quiz");
+    if (activityIndex + 1 === lesson.activities.length && lesson.activities.every(item => state.progress.activities[item.id]?.completed)) {
+      present({ id: `${lesson.id}:success`, kind: "mission-success", title: lesson.title[locale], detail: lesson.goal[locale] });
+    }
   }
   function review() {
     const id = due[0];
@@ -427,7 +439,7 @@ function GermanUnitSession({
   return (
     <ItalianAudioProvider paths={audioPaths} language={experience.language}>
       <GermanCourseShell locale={locale} unit={unit.id}>
-        <CourseAdventure catalog={catalog} progress={state.progress} locale={locale} ready={state.ready} href={experience.href(locale)} />
+        <CourseAdventure catalog={catalog} progress={state.progress} locale={locale} ready={state.ready} href={experience.href(locale)} cinematic />
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-bold text-emerald-800">
@@ -809,6 +821,7 @@ function GermanUnitSession({
               <ArrowLeft size={16} aria-hidden />
               {c.course}
             </Link>
+            {view === "learn" && !scene && <div className="mt-6"><YoSpeechPractice key={lesson.id} language={experience.language === "pt-BR" ? "pt" : "de"} locale={locale} scenarioId={courseSpeechScenario(experience.language === "pt-BR" ? "pt" : "de", unit.number)}/></div>}
           </div>
         </div>
         {view !== "quiz" ? (
@@ -845,6 +858,7 @@ function GermanUnitSession({
             }}
           />
         ) : null}
+        {scene && <MissionFilm scene={scene} locale={locale} onContinue={finishMission}/>}
       </GermanCourseShell>
     </ItalianAudioProvider>
   );

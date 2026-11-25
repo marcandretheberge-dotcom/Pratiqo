@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import * as React from "react";
+import { dismissMissionFilms, prepareCinemaMedia } from "../helpers/lessonCinema";
 import { woodSamples, type FeedbackCue } from "@/lib/yo/feedback/woodSound";
 import { introCourses } from "@/lib/yo/shared/course";
 import { courseSteps } from "@/lib/yo/shared/steps";
@@ -11,6 +12,7 @@ const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http:
 const frames = new Map<number, FrameRequestCallback>(); let frameId = 0;
 for (const [key,value] of Object.entries({ window:dom.window, self:dom.window, document:dom.window.document, navigator:dom.window.navigator, HTMLElement:dom.window.HTMLElement, Element:dom.window.Element, Node:dom.window.Node, NodeFilter:dom.window.NodeFilter, DocumentFragment:dom.window.DocumentFragment, HTMLInputElement:dom.window.HTMLInputElement, CustomEvent:dom.window.CustomEvent, Event:dom.window.Event, MutationObserver:dom.window.MutationObserver, getComputedStyle:dom.window.getComputedStyle, localStorage:dom.window.localStorage, requestAnimationFrame:(fn:FrameRequestCallback)=>{frames.set(++frameId,fn);return frameId;}, cancelAnimationFrame:(id:number)=>frames.delete(id), IS_REACT_ACT_ENVIRONMENT:true })) Object.defineProperty(globalThis,key,{value,configurable:true,writable:true});
 dom.window.HTMLElement.prototype.scrollIntoView=()=>{};window.scrollTo=()=>{};
+prepareCinemaMedia();
 class FakeAudio extends dom.window.EventTarget { src:string;preload="none";playbackRate=1;preservesPitch=true;currentTime=0;constructor(src:string){super();this.src=src;}play(){this.dispatchEvent(new Event("playing"));return Promise.resolve();}pause(){}load(){}removeAttribute(){this.src="";} }
 window.Audio=FakeAudio as unknown as typeof Audio;
 process.env.NEXT_PUBLIC_SUPABASE_URL="https://audio.example.test";
@@ -30,7 +32,7 @@ class SoundContext {
 }
 Object.defineProperty(window,"AudioContext",{value:SoundContext,configurable:true});
 const {SharedIntro}=require("@/components/yo/shared/SharedIntro") as typeof import("@/components/yo/shared/SharedIntro");
-function flush(){for(let i=0;i<20&&frames.size;i++){const f=[...frames.values()];frames.clear();act(()=>f.forEach(fn=>fn(0)));}}
+function flush(){for(let i=0;i<20&&frames.size;i++){const f=[...frames.values()];frames.clear();act(()=>f.forEach(fn=>fn(0)));}dismissMissionFilms();}
 let clock=Date.now();Date.now=()=>clock;
 function click(el:HTMLElement){clock+=500;fireEvent.click(el);flush();}
 function mount(c:IntroCourse){const v=render(<SharedIntro course={c} locale="en" audio={{}}/>);flush();return v;}

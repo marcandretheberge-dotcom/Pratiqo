@@ -5,6 +5,9 @@ import { CheckCircle2, RotateCw, XCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useYoLessonDraftState } from "@/components/yo/YoLessonDraftProvider";
+import type { YoLocale } from "@/lib/yo/types";
+import { MissionFilm } from "./travel/MissionFilm";
+import { useMissionCinema } from "./travel/useMissionCinema";
 
 export { YoPrintButton } from "@/components/yo/YoPrintButton";
 export { YoPrintableResourceCard } from "@/components/yo/YoPrintableResourceCard";
@@ -108,6 +111,7 @@ export function YoOneQuestionQuiz({
   incorrectFeedback,
   previousLabel,
   nextLabel,
+  cinema,
 }: {
   draftKey?: string;
   questions: readonly YoOneQuestionQuizQuestion[];
@@ -115,6 +119,7 @@ export function YoOneQuestionQuiz({
   incorrectFeedback: string;
   previousLabel: string;
   nextLabel: string;
+  cinema?: { id: string; locale: YoLocale; title: string };
 }) {
   const [draft, setDraft] = useYoLessonDraftState<{
     index: number;
@@ -122,16 +127,20 @@ export function YoOneQuestionQuiz({
   }>(draftKey ? `quiz:${draftKey}` : undefined, { index: 0, answers: {} });
   const { index } = draft;
   const question = questions[index];
+  const { scene, present, finish } = useMissionCinema(`quiz:${cinema?.id ?? draftKey ?? "practice"}`);
 
   return (
     <section data-yo-one-question-quiz="true" className="max-w-full overflow-x-hidden">
       <YoChoiceCard
         key={question.id}
         selectedOptionId={draft.answers[question.id] ?? null}
-        onSelectOption={(optionId) => setDraft((current) => ({
-          ...current,
-          answers: { ...current.answers, [question.id]: optionId },
-        }))}
+        onSelectOption={(optionId) => {
+          const answers = { ...draft.answers, [question.id]: optionId };
+          setDraft((current) => ({ ...current, answers: { ...current.answers, [question.id]: optionId } }));
+          if (cinema && questions.length > 0 && questions.every(item => answers[item.id] === item.correctOptionId)) {
+            present({ id: cinema.id, kind: "mission-success", title: cinema.title });
+          }
+        }}
         prompt={`${index + 1}. ${question.prompt}`}
         options={question.options}
         correctOptionId={question.correctOptionId}
@@ -159,6 +168,7 @@ export function YoOneQuestionQuiz({
           {nextLabel}
         </button>
       </div>
+      {scene && cinema && <MissionFilm scene={scene} locale={cinema.locale} onContinue={finish}/>}
     </section>
   );
 }

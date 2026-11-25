@@ -24,7 +24,7 @@
  */
 
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
+import { assertDeckServiceBoundary } from "../helpers/deckServiceBoundary";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -505,62 +505,13 @@ assert.doesNotMatch(
 ok("14) no raw quiz fields introduced on the Module 4 deck surface");
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-// 15. No restricted system touched
+// 15. Content and navigation service boundary
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-const restrictedPathPatterns: RegExp[] = [
-  /^app\/api\/stripe\//,
-  /^app\/api\/.*checkout/i,
-  /^app\/api\/.*payment/i,
-  /^lib\/payments\//,
-  /^lib\/pricing\//,
-  /^lib\/config\/membrePro\.ts$/,
-  /^lib\/commissions\//,
-  /^supabase\//,
-  /^content\/legal\//,
-  /^app\/\(app\)\/legal\//,
-  /^public\/.*\.(?:mp3|wav|m4a)$/i,
-  /^public\/audio\//,
-  /^scripts\/(?:generate-yopratiqo-audio|.*openai)/i,
-  /^app\/sitemap\.ts$/,
-  /^app\/robots\.ts$/,
-  /^lib\/seo\//,
-  // Module 5 + Intro deck were promoted to the deck pattern in a
-  // follow-on PR (`feat/yopratiqo-module5-and-intro-decks`); their
-  // dedicated deck tests
-  // (`tests/yo/yopratiqoModule5LessonDeck.test.ts`,
-  // `tests/yo/yopratiqoIntroLessonDeck.test.ts`,
-  // `tests/yo/yopratiqoFullDominicanPathDeck.test.ts`) now own
-  // those contracts. None of them count as a restricted-system
-  // touch from the Module 4 test's perspective.
-];
-const status = execSync("git status --porcelain -uall", {
-  cwd: root,
-  encoding: "utf8",
-});
-const changedFiles = status
-  .split(/\r?\n/)
-  .map((line) => line.trim())
-  .filter(Boolean)
-  .map((line) =>
-    line
-      .replace(/^[ MADRCU?!]{1,2}\s+/, "")
-      .replace(/^"|"$/g, "")
-      .replace(/\\/g, "/"),
-  );
-const ignoredUntracked = new Set([
-  "Untitled",
-  "docs/LAUNCH_READINESS_ANALYSIS.md",
-  "pratiqo-legal-export-20260528-2221.zip",
-]);
-for (const file of changedFiles) {
-  if (ignoredUntracked.has(file)) continue;
-  for (const re of restrictedPathPatterns) {
-    if (re.test(file)) {
-      assert.fail(`restricted system touched by Module 4 deck PR: ${file}`);
-    }
-  }
+// This module test owns the page/content/deck boundary, not unrelated repository changes.
+for (const [label, source] of [["module-4 page", pageSrc], ["module-4 content", module4Src], ["deck", deckSrc]] as const) {
+  assertDeckServiceBoundary(label, source);
 }
-ok("15) no restricted system touched (Stripe / payments / tax / RLS / migrations / legal / Membre Pro / audio / SEO)");
+ok("15) module content and deck delegate service work without direct payment/database calls");
 
 console.log(`\n${pass} Module 4 lesson-deck assertions passed`);
