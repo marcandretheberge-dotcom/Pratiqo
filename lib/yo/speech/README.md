@@ -4,7 +4,7 @@ The browser sends a consented, mono PCM16 24 kHz recording (maximum 15 seconds) 
 
 ## Activation dependencies
 
-- Apply `supabase/migrations/20261125013336_yo_speech_bounded_practice.sql` with the normal reviewed migration workflow first.
+- Apply `supabase/migrations/20261125020143_yo_speech_bounded_practice.sql` with the normal reviewed migration workflow first.
 - Server environment: `OPENAI_API_KEY`, `YO_SPEECH_ENABLED=true`, `SUPABASE_SERVICE_ROLE_KEY`.
 - Existing Supabase environment: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - Node runtime dependency: `ws`. Outbound server WebSockets to `wss://api.openai.com/v1/realtime` must be permitted.
@@ -50,7 +50,7 @@ node --import tsx tests/yo/yopratiqoSpeechApi.test.ts
 node --import tsx tests/yo/yopratiqoSpeechClientLifecycle.test.tsx
 ```
 
-These exercise real PostgreSQL semantics via PGlite, event-level provider fixtures, route execution, and independent DOM lifecycle tests. They do not prove a live OpenAI round trip. The implementation session had no OpenAI key and did not apply a production migration. Before activation, verify a controlled turn in each of the eight target languages, model/events/audio/transcript, actual usage against its reservation, cancellation and account isolation. Do not label this gate as passed without that evidence. The full activation and eight-language QA record is in [the product runbook](../../../docs/product/yopratiqo-speech-practice.md).
+These exercise real PostgreSQL semantics via PGlite, event-level provider fixtures, route execution, and independent DOM lifecycle tests. They do not prove a live OpenAI round trip. The production migration `20261125020143` was applied on 2026-11-24 at 21:01 Toronto time; its service-only grants, RLS and zero-used USD 10 budget were verified. The implementation session had no OpenAI key and did not make a live provider call. Before activation, verify a controlled turn in each of the eight target languages, model/events/audio/transcript, actual usage against its reservation, cancellation and account isolation. Do not label this gate as passed without that evidence. The full activation and eight-language QA record is in [the product runbook](../../../docs/product/yopratiqo-speech-practice.md).
 
 ## Official sources checked on 2026-11-24
 

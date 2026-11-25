@@ -57,10 +57,11 @@ function flush() {
 }
 let clock = Date.now();
 Date.now = () => clock;
+let testNamespace = "";
 function click(node: HTMLElement) { clock += 500; fireEvent.click(node); flush(); }
 function mount(locale: "fr" | "en" | "es" = "en") {
   localStorage.setItem("yo.practice.auto-next.v1", "off");
-  const view = render(<GuidedItalianCourse locale={locale} unit={unit} catalog={italianCourseCatalog} audioPaths={paths}/>);
+  const view = render(<GuidedItalianCourse locale={locale} unit={unit} catalog={italianCourseCatalog} audioPaths={paths} storageNamespace={testNamespace}/>);
   flush();
   return view;
 }
@@ -109,7 +110,7 @@ const tests: [string, () => void][] = [
     assert.equal(document.querySelector("[data-yoppo-mission-window]"), null);
     assertNoFakeMastery();
   }],
-  ["tap city -> briefing -> mission sheet; closing returns to SAME map without losing draft", () => {
+  ["tap city -> briefing -> skippable film -> mission sheet; closing returns to SAME map without losing draft", () => {
     const view = mount();
     skipTour(view);
     const map = view.container.querySelector("[data-yoppo-world-map]");
@@ -126,6 +127,13 @@ const tests: [string, () => void][] = [
     assert.ok(within(panel).getByText(unit.lessons[0].goal.en));
     click(within(panel).getByRole("button", { name: "Start my mission" }));
     assert.equal(document.querySelector("[data-yoppo-mission-briefing]"), null);
+    const film = document.querySelector('[data-mission-film="mission-start"]') as HTMLElement;
+    assert.ok(film, "the optional introduction opens after the mission briefing");
+    assert.equal(within(panel).queryByRole("heading", { name: "Word notebook" }), null, "lesson controls stay inaccessible while the film is open");
+    assertNoFakeMastery();
+    click(within(film).getByRole("button", { name: "Skip", exact: true }));
+    assert.equal(document.querySelector("[data-mission-film]"), null);
+    assert.equal(map, view.container.querySelector("[data-yoppo-world-map]"), "skipping a film never remounts the map");
     assert.ok(within(panel).getByRole("heading", { name: "Word notebook" }));
     assert.equal(panel.querySelectorAll("[role=progressbar]").length, 1);
     assert.ok(within(panel).getByText(unit.lessons[0].vocabulary[0].it));
@@ -136,6 +144,7 @@ const tests: [string, () => void][] = [
     assert.equal(document.querySelector("[data-yoppo-mission-window]"), null);
     assert.equal(map, view.container.querySelector("[data-yoppo-world-map]"));
     click(view.getByRole("button", { name: "Continue my mission" }));
+    assert.equal(document.querySelector("[data-mission-film]"), null, "resuming the same lesson never forces the introduction again");
     assert.ok(document.querySelector("[data-yoppo-mission-window]"));
     assert.ok(view.getByRole("heading", { name: "Word notebook" }));
     assert.ok(view.getByText(unit.lessons[0].vocabulary[1].it), "the study cursor resumes without granting progress");
@@ -168,17 +177,21 @@ const tests: [string, () => void][] = [
     assert.equal(view.getByRole("switch",{name:"Gentle ambience"}).getAttribute("aria-checked"),"false","ambient sound starts off");
   }],
   ["Continue route opens and resumes the existing mission without granting access or mastery", () => {
-    const props={locale:"en" as const,unit,catalog:italianCourseCatalog,audioPaths:paths,resumeMission:true};
+    const props={locale:"en" as const,unit,catalog:italianCourseCatalog,audioPaths:paths,resumeMission:true,storageNamespace:testNamespace};
     let view=render(<GuidedItalianCourse {...props}/>);flush();
     let panel=document.querySelector("[data-yoppo-mission-window]") as HTMLElement;
     assert.ok(panel,"explicit Continue opens the mission directly");
     click(within(panel).getByRole("button",{name:"Start my mission"}));
+    const film=document.querySelector('[data-mission-film="mission-start"]') as HTMLElement;
+    assert.ok(film,"a fresh mission introduction does not depend on another test's seen ledger");
+    click(within(film).getByRole("button",{name:"Skip",exact:true}));
     click(within(panel).getByRole("button",{name:"Next expression"}));
     click(within(panel).getByRole("button",{name:"Leave and save my place"}));
     view.unmount();
     view=render(<GuidedItalianCourse {...props}/>);flush();
     panel=document.querySelector("[data-yoppo-mission-window]") as HTMLElement;
     assert.ok(panel);
+    assert.equal(document.querySelector("[data-mission-film]"),null,"the skipped introduction stays dismissed after remounting");
     assert.ok(within(panel).getByText(unit.lessons[0].vocabulary[1].it),"Continue restores the saved study cursor");
     click(within(panel).getByRole("button",{name:"Leave and save my place"}));
     flush();assert.equal(document.querySelector("[data-yoppo-mission-window]"),null,"closing never reopens from the query");
@@ -198,7 +211,7 @@ const tests: [string, () => void][] = [
   }],
   ["transport mission offers the approved taxi, immediate Skip and a failure-safe continuation", () => {
     const transport=italianCourseUnits[7];
-    const view=render(<GuidedItalianCourse locale="en" unit={transport} catalog={italianCourseCatalog} audioPaths={courseAudioPaths(unitSpeech(transport))} resumeMission/>);flush();
+    const view=render(<GuidedItalianCourse locale="en" unit={transport} catalog={italianCourseCatalog} audioPaths={courseAudioPaths(unitSpeech(transport))} resumeMission storageNamespace={testNamespace}/>);flush();
     const transition=view.container.ownerDocument.querySelector("[data-yoppo-taxi-transition]") as HTMLElement;
     assert.ok(transition,"the ordered first vocabulary step triggers the transport introduction");
     assert.ok(within(transition).getByText("Alla stazione, per favore."));
@@ -237,8 +250,10 @@ const tests: [string, () => void][] = [
   }],
 ];
 let failures = 0;
+let testIndex = 0;
 for (const [name, test] of tests) {
-  cleanup(); localStorage.clear(); frames.clear();
+  cleanup(); localStorage.clear(); window.sessionStorage.clear(); frames.clear();
+  testNamespace = `test.map-first.${testIndex++}`;
   try { test(); console.log("PASS " + name); }
   catch (error) { failures++; console.error("FAIL " + name, error); }
   finally { cleanup(); frames.clear(); }

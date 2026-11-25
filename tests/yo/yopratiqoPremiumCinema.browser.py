@@ -165,6 +165,9 @@ def verify(browser, engine, route, width):
             expect(briefing).to_be_visible()
             briefing.get_by_role("button", name="Commencer ma mission", exact=True).click()
             mission(page, name)
+            # The real route layout supplies its readable mobile spacing; missing it
+            # can otherwise leave functional buttons in a visually unstyled fixture.
+            assert page.locator(".yo-mission-window").evaluate("window => parseFloat(getComputedStyle(window).paddingLeft) >= 16"), "Italian route layout CSS is missing"
         else:
             seed(page, {})
             page.goto(base + "/yo/langues/espagnol/pays/republique-dominicaine/intro?lang=fr")

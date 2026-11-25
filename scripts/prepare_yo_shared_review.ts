@@ -16,7 +16,8 @@ async function main() {
   "package.json":JSON.stringify({name:"yo-shared-review",private:true}),
   "tsconfig.json":JSON.stringify({compilerOptions:{target:"ES2017",lib:["dom","dom.iterable","esnext"],skipLibCheck:true,strict:true,noEmit:true,esModuleInterop:true,module:"esnext",moduleResolution:"bundler",resolveJsonModule:true,isolatedModules:true,jsx:"react-jsx",paths:{"@/*":["../*"]},plugins:[{name:"next"}]},include:["**/*.ts","**/*.tsx",".next/types/**/*.ts"],exclude:["node_modules"]}),
  };
- for(const path of ["yo/langues/layout","yo/langues/[language]/demarrer/page","yo/langues/[language]/demarrer/vocabulaire/page","yo/langues/italien/parcours/page","yo/langues/italien/parcours/[unitId]/page","yo/langues/espagnol/pays/republique-dominicaine/intro/page","yo/langues/francais-quebec/module-1/lecon-3/page"])
+ // Keep route layouts too: the Italian layout owns the production course and map CSS.
+ for(const path of ["yo/langues/layout","yo/langues/[language]/demarrer/page","yo/langues/[language]/demarrer/vocabulaire/page","yo/langues/italien/parcours/layout","yo/langues/italien/parcours/page","yo/langues/italien/parcours/[unitId]/page","yo/langues/espagnol/pays/republique-dominicaine/intro/page","yo/langues/francais-quebec/module-1/lecon-3/page"])
   files[`app/${path}.tsx`]=`export {default} from '@/app/${path}';`;
  for(const [name,text]of Object.entries(files)){const target=join(dir,name);await mkdir(join(target,".."),{recursive:true});await writeFile(target,text);}
  try{await symlink(join(root,"public"),join(dir,"public"),"dir");}catch(e){if((e as NodeJS.ErrnoException).code!=="EEXIST")throw e;}

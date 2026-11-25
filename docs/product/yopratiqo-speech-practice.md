@@ -1,6 +1,6 @@
 # YoPratiqo — pratique vocale avec Yoppo
 
-État de préparation : **24 novembre 2026**. L’implémentation et ses tests locaux sont prêts. **Aucune migration de cette fonctionnalité n’a été appliquée en production par l’agent d’implémentation. Aucun appel vocal OpenAI réel n’a été effectué : la clé `OPENAI_API_KEY` était absente.** Le responsable de la mise en production doit consigner ci-dessous l’application effective de la migration et la QA en ligne; ces étapes ne sont pas réputées réussies par les tests simulés.
+État de préparation : **24 novembre 2026**. L’implémentation et ses tests locaux sont prêts. La migration `20261125020143_yo_speech_bounded_practice.sql` a été appliquée en production le **24 novembre à 21 h 01 (Toronto)**, puis ses permissions et son budget ont été vérifiés. **Aucun appel vocal OpenAI réel n’a été effectué : `OPENAI_API_KEY` est absente et la pratique reste désactivée.** La QA en ligne des huit langues reste à réaliser; les tests simulés ne remplacent pas cette étape.
 
 ## Expérience proposée
 
@@ -45,11 +45,11 @@ L’usage déclaré par OpenAI est également vérifié. Une sortie supplémenta
 
 ## Base de données et révisions
 
-Migration à appliquer : `supabase/migrations/20261125013336_yo_speech_bounded_practice.sql`, nom généré par `supabase migration new`.
+Migration à appliquer : `supabase/migrations/20261125020143_yo_speech_bounded_practice.sql`, nom généré par `supabase migration new`.
 
 Elle ajoute `yo_speech_budget`, `yo_speech_usage`, `yo_error_events` et `yo_speech_review_receipts`, avec RLS activée et aucun accès direct pour `anon` ou `authenticated`. Les RPC de réservation, finalisation et révision sont `SECURITY INVOKER`, avec `search_path` vide et exécution réservée à `service_role`.
 
-Le précontrôle en lecture seule de la production a confirmé que ces quatre tables n’existent pas encore et que les colonnes d’éligibilité de `profiles` et `auth.users` existent. Il a aussi confirmé que `service_role` peut lire `profiles` mais pas `auth.users`. Pour cette raison précise, **seul** `yo_speech_account_available(uuid)` est `SECURITY DEFINER`. Il retourne uniquement un booléen, lit des tables qualifiées, n’écrit rien, n’utilise aucun SQL dynamique et reste appelable seulement par `service_role`. La migration n’accorde pas un accès général à `auth.users`.
+Le précontrôle en lecture seule a confirmé l’absence initiale des quatre tables et la présence des colonnes d’éligibilité de `profiles` et `auth.users`. Après application, les quatre tables ont RLS activée, aucun droit direct pour `anon` ou `authenticated`, et les cinq fonctions ont une exécution réservée au rôle serveur. Le budget observé est de 0 USD réservé sur 10 USD, sans échange ni phrase enregistrés. Il a aussi confirmé que `service_role` peut lire `profiles` mais pas `auth.users`. Pour cette raison précise, **seul** `yo_speech_account_available(uuid)` est `SECURITY DEFINER`. Il retourne uniquement un booléen, lit des tables qualifiées, n’écrit rien, n’utilise aucun SQL dynamique et reste appelable seulement par `service_role`. La migration n’accorde pas un accès général à `auth.users`.
 
 L’identité provient toujours de `auth.getUser()` côté serveur; aucun identifiant utilisateur fourni dans le corps ne fait autorité. Les comptes anonymes, supprimés, en suppression, inactifs ou bannis ne sont pas éligibles. Les requêtes ne sont pas mises en cache publiquement.
 
@@ -98,7 +98,7 @@ Pour chaque cible, faire au moins un échange naturel, écouter la réponse, vé
 
 Vérifier également sur Chrome et Safari mobile : permission refusée, micro annulé, limite de quinze secondes, lecture audio avec contrôles manuels si le navigateur bloque l’automatique, passage à une autre étape, cinéma, navigation et changement de compte pendant un échange. Avec l’option de sauvegarde activée, contrôler une phrase puis sa suppression; sans cette option, vérifier qu’aucune phrase n’est écrite. La qualité de variante régionale doit être jugée à l’écoute, sans prétendre qu’un prompt la garantit.
 
-Journal de mise en service à remplir par le responsable de déploiement : migration appliquée (date/identifiant), environnement de QA, huit résultats linguistiques, navigateur mobile, usage maximal observé, nombre de réservations restantes et décision d’activation.
+Journal de mise en service : migration `20261125020143` appliquée le 24 novembre 2026 à 21 h 01 (Toronto); 0 réservation sur 50, aucun échange fournisseur et aucune phrase enregistrée. Restent à documenter l’environnement de QA, les huit résultats linguistiques, les essais mobiles, l’usage maximal observé, le solde après QA et la décision d’activation. Les avis Supabase `rls_enabled_no_policy` sur ces quatre tables sont informatifs et attendus pour cet accès exclusivement serveur; aucune politique publique ne doit être ajoutée pour les faire disparaître. [Description du contrôle RLS](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
 
 ## Références officielles vérifiées
 

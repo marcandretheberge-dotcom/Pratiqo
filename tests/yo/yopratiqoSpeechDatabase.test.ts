@@ -13,7 +13,7 @@ async function main() {
       CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
       GRANT USAGE ON SCHEMA public, auth TO service_role;
       GRANT SELECT ON public.profiles TO service_role;`);
-    const sql = await readFile("supabase/migrations/20261125013336_yo_speech_bounded_practice.sql", "utf8");
+    const sql = await readFile("supabase/migrations/20261125020143_yo_speech_bounded_practice.sql", "utf8");
     await db.exec(sql); await db.exec(sql);
     const users = Array.from({ length: 55 }, () => randomUUID());
     for (const id of users) {

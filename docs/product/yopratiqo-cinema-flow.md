@@ -52,7 +52,7 @@ The state tests cover duplicate and stale events, queue order, malformed/expired
 
 ### Browser evidence
 
-`scripts/prepare_yo_shared_review.ts` creates the existing backend-free Next shell by importing the real course routes and public assets. It includes the English/shared introductions, Italian course, Dominican introduction and Quebec lesson 3. It does not recreate the players or provide a fake video.
+`scripts/prepare_yo_shared_review.ts` creates the existing backend-free Next shell by importing the real course routes, their required layouts and public assets. It includes the English/shared introductions, Italian course, Dominican introduction and Quebec lesson 3. The Italian route layout imports the same course and map CSS as production; the browser runner checks that its mobile content spacing is present. It does not recreate the players or provide a fake video.
 
 With the shell running on `http://127.0.0.1:3246`, run these in the existing Chromium/WebKit journal job:
 
@@ -67,3 +67,5 @@ The premium runner uses `YO_JOURNAL_URL`, `YO_JOURNAL_QA_DIR` and `YO_JOURNAL_BR
 Each successful case writes travel, mission-poster and collapsed-speech PNGs to `YO_JOURNAL_QA_DIR`, plus an engine-specific JSON results file. Failures write a screenshot before exiting. Microphone calls are counted and rejected by the test, and speech/provider/auth endpoints are intercepted so a regression cannot create a paid call.
 
 Local execution on 2026-11-25 was blocked before the first page by Chromium's `socket() failed: Operation not permitted` startup error. Python syntax and fixture lint checks passed; this is not a passed visual review. The Chromium Ubuntu and WebKit macOS CI runs must produce the actual screenshots and browser results before claiming visual verification.
+
+CI run `45529860972` at `a27291b7de502dc70f64d19697b9d7fa41fc6a50` passed all three runners on Chromium and WebKit on 2026-11-25. Its twelve premium cases recorded zero speech/auth requests and zero microphone requests. Inspection of the downloaded screenshots confirmed the travel, mission poster and collapsed voice states, but exposed a missing Italian layout in the review fixture: the course content had lost its production spacing. The fixture now includes that layout and asserts its spacing. The next CI run must provide the corrected Italian screenshots before its full layout is considered visually verified.
