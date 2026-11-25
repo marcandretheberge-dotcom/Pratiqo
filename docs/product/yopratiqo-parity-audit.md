@@ -1,6 +1,7 @@
 # YoPratiqo: eight-language parity audit and local review release
 
-Audit date: 2026-11-25. Baseline: `5631295cd44fa9566776d622a6bcde412ce0fc4d` on `main`.
+Audit date: 2026-11-25. Original baseline: `5631295cd44fa9566776d622a6bcde412ce0fc4d`.
+First overnight release: PR #480, production main `8c60fa16457e604bd570c27ad6d50d89cb17b45d`.
 
 ## Decision
 
@@ -26,6 +27,9 @@ from an exercised production purchase or a delayed independent learning result.
 
 ## Baseline curriculum matrix
 
+This table preserves the original baseline. The second-lot changes are listed
+immediately after it; a historical gap must not be confused with current work.
+
 | Target | Authored course after the common entry | Progress and assessment | Largest remaining gap against Italian |
 | --- | --- | --- | --- |
 | Italian | 12 units, 36 lessons, 228 practice activities; 249 vocabulary references. Personalized first unit, placement and original three-world/twelve-city journey. | Local independent activity results, five-question unit quizzes with an 80% threshold, dated 1/3/7/14-day review, merge before writes and cross-tab repair. | The reference itself still lacks normal server restoration, established delayed transfer evidence, complete recordings and verified live voice activation. |
@@ -47,6 +51,43 @@ Sources: [personalized Italian catalog](../../lib/yo/personalized/courseData.ts)
 [shared intro catalog](../../lib/yo/shared/course.ts), and the routes under
 `app/yo/langues/`, including
 `app/yo/langues/espagnol/pays/republique-dominicaine/`.
+
+## Second overnight lot: authored, locally verified; deployment pending
+
+| Target | New course actually implemented | Independent checks and original dialogues |
+| --- | --- | --- |
+| English | `/yo/langues/anglais/parcours`: 12 units, 36 lessons, 252 activities and 252 distinct vocabulary phrases | 72 written unit questions, 24 cumulative final questions, 36 three-turn dialogues; Canadian everyday contexts, explicit spelling variants and negation preservation |
+| Spanish | `/yo/langues/espagnol/parcours`: 12 units, 36 lessons, 252 activities and 252 distinct vocabulary phrases | 72 written unit questions, 24 cumulative final questions, 36 two-turn dialogues; neutral Latin American foundation with explicit regional register, separate from existing Dominican material |
+| Québec French | `/yo/langues/francais-quebec/parcours`: 12 units, 36 lessons, 252 activities and 216 distinct vocabulary phrases | 72 written unit questions, 24 cumulative final questions, 36 four-turn dialogues; ordinary Québec contexts, standard/written versus colloquial register, explicit OQLF/Usito references |
+
+These are original course sequences with vocabulary, grammar, pronunciation
+notes, reading, recall, dialogue, writing and cumulative written checks. They
+are not outline cards or certified proficiency levels. Each language uses its
+own namespace and matcher; real intro continuation now reaches these courses.
+The older Québec workplace and Dominican routes remain separate products and
+are not relabelled complete by this addition.
+
+The full-course players for all eight targets now write actual practice
+mistakes/help to the separate dated review journal. Optional review uses the
+real course renderer/checker, including the original reading context. Italian,
+German and Portuguese retain their existing progress and review fields;
+Japanese and Mandarin gain dated practice review without migrating historical
+scores or counting self-ratings as answers. Final and placement items do not
+enter these adapters.
+
+The shared DE/PT/EN/ES/FR assessment player preserves first checked outcomes and
+help across reloads. Completed result restoration submits no new score, and
+changing UI language cannot erase help. The new unit cursor also preserves
+help and a checked activity result. Unfinished typed input is not yet restored
+by that cursor. Mandarin's legacy progress merge and shared intro cross-tab
+reset semantics still need their own implementation; this journal does not
+silently solve them.
+
+Reviewed sources and locale-specific original content live under
+`lib/yo/english/`, `lib/yo/spanish/` and `lib/yo/frenchQuebec/`. The remaining
+large gaps are voice recording coverage/listening approval, depth in DE/PT/JA/ZH,
+delayed unseen transfer, authenticated continuity and live speech activation.
+The parity gate remains open while those gaps are material.
 
 ## Shared surfaces: what exists and what does not
 
@@ -72,10 +113,10 @@ derived stamps are richer than a generic map partition. See
 [foundation journeys](../../lib/yo/foundationJourney.ts), and
 [Italian world rules](yoppo-worlds-v1.md).
 
-Italian, German and Portuguese already have local spaced review. Japanese and
-Mandarin have useful immediate error review but no dates. This release adds a
-new queue for the common introductions and interest missions; it does not
-silently rewrite, migrate or activate all five existing full-course stores.
+At the original baseline, Italian, German and Portuguese already had local
+spaced review; Japanese and Mandarin had immediate error review without dates.
+PR #480 added the intro/interest queue. The second lot connects actual course
+practice to that separate queue, without rewriting or migrating old scores.
 
 The baseline live-speech implementation has a bounded provider protocol,
 consent, server budget reservations and eight target languages. A missing key,
@@ -139,8 +180,9 @@ stable `interest:<interest>:<stage>` IDs. The interest renderer owns checking
 those authored answers; the queue supplies due IDs rather than inventing a
 second checker. The course adapters map 228 Italian, 148 German, 148 Portuguese,
 88 Japanese and 104 Mandarin practice objects to a universal authored item
-shape. These adapters are reusable integration points, **not an assertion that
-all full-course players now write to the new queue**.
+shape. PR #480 introduced the adapters; the second lot wires actual players and
+adds the three new 252-activity course catalogs. Repository adapters and actual
+production deployment remain separate verification steps.
 
 ## Server foundation and commercial boundaries
 
@@ -163,10 +205,10 @@ money. These controls remain independent of the review store. See
 
 | Work still needed | Concrete acceptance evidence |
 | --- | --- |
-| English and Québec curriculum breadth | Authored lesson sequences, vocabulary/grammar coverage, checked practice and independent assessments; real routes and continuation, not outline cards. |
-| Spanish course unification | Existing Dominican material indexed into a coherent assessed journey; explicit regional context; one resumable lesson/review contract. |
+| EN/ES/Québec foundation delivery | The second lot implements the coherent 12-unit sequences. Complete real mobile-browser and production verification, recordings and language-specific listening review; do not infer a certified level. |
+| Older regional course integration | The canonical Spanish foundation now exists. Older Dominican and Québec workplace routes still need their own progress/content reconciliation; they are not silently migrated. |
 | Delayed independent transfer | A new, equivalent task on a later day, without answer hints, measured separately from replaying a previously seen question. |
-| Full-course review parity | Wire and test the shared adapters in the remaining player surfaces, preserve old outcomes/bookmarks, and add safe dated review to JA/ZH. |
+| Full-course review delivery | Second-lot wiring passes real-renderer local tests in all eight targets. Verify the deployed routes and maintain separation from old outcomes/bookmarks. |
 | Cross-tab progress reliability | Add deterministic merge/reset handling to the existing Mandarin and shared intro progress stores independently of the new review journal. |
 | Cross-device continuity | Authenticated restoration, explicit ownership/consent for anonymous history, account isolation, reset semantics and durable offline retries. |
 | Recorded audio | Finish real recording gaps and perform language-specific listening QA. Successful HTTP/MP3 validation is availability evidence, not pronunciation approval. |

@@ -41,7 +41,7 @@ export function CourseJourneyGate({ locale, ready, href }: Pick<Props, "locale" 
     <CompanionAvatar visualId="travel" state="map" locale={locale} size="md" compact />
     <h1 className="mt-5 text-2xl font-bold">{ready ? c.lockedTitle : c.loading}</h1>
     {ready ? <p className="mt-4 text-base leading-7">{c.lockedBody}</p> : null}
-    <Link className={`${action} mt-6`} href={href}>{c.back}<ArrowRight size={17} aria-hidden /></Link>
+    <Link prefetch={false} className={`${action} mt-6`} href={href}>{c.back}<ArrowRight size={17} aria-hidden /></Link>
   </main>;
 }
 
@@ -54,6 +54,6 @@ export function CourseJourneyAdvance({ catalog, progress, locale, href, unitId }
   return <section className="my-6 border-y border-emerald-200 py-5" aria-label={c.next}>
     <div className="flex items-center gap-4"><CompanionAvatar visualId="travel" state="celebrating" locale={locale} size="sm" compact /><p className="font-bold text-emerald-900">{next?.unlocked ? c.unlocked : c.passed}</p></div>
     <p className="mt-3 text-sm leading-6 text-gray-700">{c.proof}</p>
-    <Link href={next?.unlocked ? href(next.unit.id) : href()} className={`${action} mt-4`}>{next?.unlocked ? `${c.next} · ${next.unit.title[locale]}` : c.map}<ArrowRight size={17} aria-hidden /></Link>
+    <Link prefetch={false} href={next?.unlocked ? href(next.unit.id) : href()} className={`${action} mt-4`}>{next?.unlocked ? `${c.next} · ${next.unit.title[locale]}` : c.map}<ArrowRight size={17} aria-hidden /></Link>
   </section>;
 }

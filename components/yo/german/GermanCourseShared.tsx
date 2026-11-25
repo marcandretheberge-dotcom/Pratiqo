@@ -103,14 +103,19 @@ export function GermanCourseShell({
   children: ReactNode;
 }) {
   const experience = useCourseExperience();
+  // Keep course/catalog navigation on demand, including interface-language tabs.
+  // This avoids discarded prefetches during a lesson reload on mobile WebKit.
   return (
     <div
       lang={locale}
+      data-course-unit={unit || "home"}
+      data-course-language={experience.language}
       className="min-h-screen bg-[#f5f8f7] pb-36 text-gray-900"
     >
       <header className="border-b border-emerald-100 bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-8">
           <Link
+            prefetch={false}
             href={
               unit ? experience.href(locale) : `/yo/langues?lang=${locale}`
             }
@@ -122,6 +127,7 @@ export function GermanCourseShell({
           <nav aria-label={copy[locale].language} className="flex gap-1">
             {(["fr", "en", "es"] as const).map((lang) => (
               <Link
+            prefetch={false}
                 key={lang}
                 href={experience.href(lang, unit)}
                 hrefLang={lang}
@@ -144,6 +150,7 @@ export function GermanCourseShell({
           )[locale]
         }
         <Link
+            prefetch={false}
           href={`/yo/langues?lang=${locale}`}
           className="ml-2 inline-flex min-h-11 items-center underline"
         >

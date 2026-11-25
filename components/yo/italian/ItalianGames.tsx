@@ -9,6 +9,10 @@ import { ItalianModuleAudio } from "./ItalianModuleAudio";
 import { useCourseLanguage } from "./ItalianAudioProvider";
 import { matchesPortugueseAnswer } from "@/lib/yo/portuguese/courseLogic";
 import { matchesGermanAnswer } from "@/lib/yo/german/courseLogic";
+import { matchesEnglishAnswer } from "@/lib/yo/english/courseLogic";
+import { matchesSpanishAnswer } from "@/lib/yo/spanish/courseLogic";
+import { matchesFrenchQuebecAnswer } from "@/lib/yo/frenchQuebec/courseLogic";
+import { courseKeyboard, courseMoney, type TextCourseLanguage } from "@/lib/yo/foundations/experience";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 
 const C = {
@@ -28,9 +32,31 @@ const portugueseCopy = {
   en: { correct: "Muito bem! You got it.", associate: "Choose a Portuguese phrase, then its meaning.", left: "Portuguese phrases", answer: "Your answer in Brazilian Portuguese", destination: "Square" },
   es: { correct: "¡Muito bem! Lo lograste.", associate: "Elige una expresión portuguesa y después su significado.", left: "Expresiones portuguesas", answer: "Tu respuesta en portugués de Brasil", destination: "Plaza" },
 };
+const foundationCopy = {
+  en: {
+    fr: { correct: "Bien joué !", associate: "Choisis une expression anglaise, puis son sens.", left: "Expressions anglaises", answer: "Ta réponse en anglais", destination: "Place", accent: "L’apostrophe permet d’écrire les contractions. Compare ensuite avec le modèle." },
+    en: { correct: "You got it!", associate: "Choose an English phrase, then its meaning.", left: "English phrases", answer: "Your answer in English", destination: "Square", accent: "Use the apostrophe for contractions, then compare with the model." },
+    es: { correct: "¡Muy bien!", associate: "Elige una expresión inglesa y después su significado.", left: "Expresiones inglesas", answer: "Tu respuesta en inglés", destination: "Plaza", accent: "Usa el apóstrofo para las contracciones y compara con el modelo." },
+  },
+  es: {
+    fr: { correct: "Bien joué !", associate: "Choisis une expression espagnole, puis son sens.", left: "Expressions espagnoles", answer: "Ta réponse en espagnol", destination: "Place" },
+    en: { correct: "You got it!", associate: "Choose a Spanish phrase, then its meaning.", left: "Spanish phrases", answer: "Your answer in Spanish", destination: "Square" },
+    es: { correct: "¡Muy bien!", associate: "Elige una expresión española y después su significado.", left: "Expresiones españolas", answer: "Tu respuesta en español", destination: "Plaza" },
+  },
+  "fr-CA": {
+    fr: { correct: "Bien joué !", associate: "Choisis une expression française, puis son sens.", left: "Expressions françaises", answer: "Ta réponse en français du Québec", destination: "Place" },
+    en: { correct: "You got it!", associate: "Choose a French phrase, then its meaning.", left: "French phrases", answer: "Your answer in Québec French", destination: "Square" },
+    es: { correct: "¡Muy bien!", associate: "Elige una expresión francesa y después su significado.", left: "Expresiones francesas", answer: "Tu respuesta en francés de Quebec", destination: "Plaza" },
+  },
+};
+const answerMatchers: Record<TextCourseLanguage, (value: string, accepted: readonly string[]) => boolean> = {
+  it: matchesItalianAnswer, de: matchesGermanAnswer, "pt-BR": matchesPortugueseAnswer,
+  en: matchesEnglishAnswer, es: matchesSpanishAnswer, "fr-CA": matchesFrenchQuebecAnswer,
+};
 function useGameLanguage(locale: YoLocale) {
   const language = useCourseLanguage();
-  return { language, copy: language === "de" ? { ...C[locale], ...germanCopy[locale] } : language === "pt-BR" ? { ...C[locale], ...portugueseCopy[locale] } : C[locale] };
+  const overrides = language === "de" ? germanCopy[locale] : language === "pt-BR" ? portugueseCopy[locale] : language === "it" ? {} : foundationCopy[language][locale];
+  return { language, copy: { ...C[locale], ...overrides } };
 }
 
 export const italianButton = "inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[#245a46] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#183e30] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#245a46]";
@@ -70,6 +96,7 @@ function ChoiceGame({ activity, locale, onAttempt, onHelp }: GameProps & { activ
   const canAnswer = !listening || heard || transcriptRead;
   function check() { if (!selected || !canAnswer || feedback === true) return; const correct = selected === activity.correctId; setFeedback(correct); onAttempt(correct, { optionId: selected }); }
   return <div>
+    {!listening && activity.stimulus ? <p lang={language} className="mb-5 whitespace-pre-line rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-lg leading-relaxed" data-written-stimulus>{activity.stimulus}</p> : null}
     {listening ? <div className="mb-6 rounded-3xl border border-[#dacdb9] bg-[#f8f2e8] p-5">
       <ItalianModuleAudio text={activity.stimulus ?? ""} locale={locale} label={copy.listen} onListen={() => setHeard(true)} />
       {heard ? <p className="mt-2 text-xs text-[#245a46]">✓ {copy.listened}</p> : null}
@@ -114,7 +141,7 @@ function OrderGame({ activity, locale, onAttempt }: GameProps & { activity: Ital
   const [feedback, setFeedback] = useState<boolean | null>(null);
   const selected = chosen.map((id) => pool.find((token) => token.id === id)!);
   const solved = feedback === true;
-  function check() { if (!chosen.length || solved) return; const correct = language !== "it" ? (language === "de" ? matchesGermanAnswer : matchesPortugueseAnswer)(selected.map((token) => token.text).join(" "), [activity.answer.join(" ")]) : checkItalianOrder(selected.map((token) => token.text), activity.answer); setFeedback(correct); onAttempt(correct); }
+  function check() { if (!chosen.length || solved) return; const correct = language !== "it" ? answerMatchers[language](selected.map((token) => token.text).join(" "), [activity.answer.join(" ")]) : checkItalianOrder(selected.map((token) => token.text), activity.answer); setFeedback(correct); onAttempt(correct); }
   return <div>
     <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#6c604e]">{copy.sentence}</p>
     <div role="group" aria-label={copy.sentence} className="flex min-h-28 flex-wrap content-start gap-2 rounded-3xl border-2 border-dashed border-[#cabaa2] bg-[#f8f4ec] p-4">
@@ -136,12 +163,12 @@ function TypeGame({ activity, locale, onAttempt, onHelp }: GameProps & { activit
   const unlocked = !activity.listeningText || heard || read;
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
-  function check() { if (!unlocked || !value.trim() || feedback === true) return; const correct = (language === "de" ? matchesGermanAnswer : language === "pt-BR" ? matchesPortugueseAnswer : matchesItalianAnswer)(value, activity.accepted); setFeedback(correct); onAttempt(correct); }
+  function check() { if (!unlocked || !value.trim() || feedback === true) return; const correct = answerMatchers[language](value, activity.accepted); setFeedback(correct); onAttempt(correct); }
   return <form onSubmit={(event) => { event.preventDefault(); check(); }}>
     {activity.listeningText ? <div className="mb-5"><ItalianModuleAudio text={activity.listeningText} locale={locale} label={copy.listen} onListen={() => setHeard(true)} /><p className="mt-2 text-xs">{read ? copy.written : heard ? copy.listened : copy.beforeListen}</p></div> : null}
     <label htmlFor={id} className="mb-2 block text-sm font-bold">{copy.answer}</label>
     <input ref={inputRef} id={id} lang={language} autoComplete="off" autoCorrect="off" spellCheck={false} maxLength={160} value={value} disabled={feedback === true} onChange={(event) => { setValue(event.target.value); setFeedback(null); }} className="min-h-16 w-full rounded-2xl border-2 border-[#d8cbb7] bg-white px-4 text-xl outline-none focus:border-[#245a46]" />
-    <div className="mt-3 flex flex-wrap gap-2">{(language === "de" ? ["ä", "ö", "ü", "ß", "Ä", "Ö", "Ü"] : language === "pt-BR" ? ["á", "â", "ã", "à", "é", "ê", "í", "ó", "ô", "õ", "ú", "ç"] : ["à", "è", "é", "ì", "ò", "ù", "’"]).map((character) => <button key={character} type="button" aria-label={`${copy.add} ${character}`} disabled={feedback === true} onClick={() => { const start = inputRef.current?.selectionStart ?? value.length; const end = inputRef.current?.selectionEnd ?? start; setValue((value.slice(0, start) + character + value.slice(end)).slice(0, 160)); setFeedback(null); requestAnimationFrame(() => { inputRef.current?.focus(); inputRef.current?.setSelectionRange(start + 1, start + 1); }); }} className="min-h-11 min-w-11 rounded-xl border border-[#e7dfd0] bg-white px-3 text-lg">{character}</button>)}</div>
+    <div className="mt-3 flex flex-wrap gap-2">{courseKeyboard[language].map((character) => <button key={character} type="button" aria-label={`${copy.add} ${character}`} disabled={feedback === true} onClick={() => { const start = inputRef.current?.selectionStart ?? value.length; const end = inputRef.current?.selectionEnd ?? start; setValue((value.slice(0, start) + character + value.slice(end)).slice(0, 160)); setFeedback(null); requestAnimationFrame(() => { inputRef.current?.focus(); inputRef.current?.setSelectionRange(start + 1, start + 1); }); }} className="min-h-11 min-w-11 rounded-xl border border-[#e7dfd0] bg-white px-3 text-lg">{character}</button>)}</div>
     <p className="mt-2 text-xs text-[#6c604e]">{copy.accent}</p>
     <div className="mt-5 flex flex-wrap items-center gap-3"><button className={italianButton} type="submit" disabled={!unlocked || !value.trim() || feedback === true}>{copy.check}</button><button type="button" className="min-h-11 rounded-xl px-3 text-sm underline" onClick={() => { if (!model) { onHelp(); setRead(true); } setModel(!model); }} aria-expanded={model}>{activity.listeningText ? copy.transcript : copy.model}</button></div>
     {model ? <p lang={language} className="mt-4 rounded-xl bg-[#f4efe5] p-4 font-semibold">{activity.model}</p> : null}
@@ -153,7 +180,7 @@ function CafeGame({ activity, locale, onAttempt }: GameProps & { activity: Itali
   const { language, copy } = useGameLanguage(locale);
   const [basket, setBasket] = useState<Record<string, number>>({});
   const [feedback, setFeedback] = useState<boolean | null>(null);
-  const money = (cents: number) => new Intl.NumberFormat(language === "de" ? "de-DE" : language === "pt-BR" ? "pt-BR" : "it-IT", { style: "currency", currency: language === "pt-BR" ? "BRL" : "EUR" }).format(cents / 100);
+  const money = (cents: number) => new Intl.NumberFormat(courseMoney[language].locale, { style: "currency", currency: courseMoney[language].currency }).format(cents / 100);
   const total = italianCafeTotal(activity, basket);
   function change(id: string, amount: number) { setBasket((current) => ({ ...current, [id]: Math.max(0, Math.min(9, (current[id] ?? 0) + amount)) })); setFeedback(null); }
   return <div>

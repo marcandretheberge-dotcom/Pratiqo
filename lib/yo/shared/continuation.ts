@@ -6,15 +6,15 @@ type Destination = { path: string; title: Text; description: Text };
 const destinations: Record<string, Omit<Destination, "path">> = {
   anglais: {
     title: L("L’anglais dans les situations du quotidien", "English for everyday situations", "Inglés para situaciones cotidianas"),
-    description: L("Continue avec les phrases de dépannage, les dialogues et la lecture de l’introduction complète.", "Continue with rescue phrases, dialogues and reading in the full introduction.", "Continúa con frases de ayuda, diálogos y lectura en la introducción completa."),
+    description: L("Poursuis dans 12 unités : rencontres, déplacements, travail et projets, avec 36 leçons et des bilans écrits.", "Continue through 12 units: meeting people, getting around, work and plans, with 36 lessons and written checkpoints.", "Continúa con 12 unidades: encuentros, desplazamientos, trabajo y planes, con 36 lecciones y evaluaciones escritas."),
   },
   "francais-quebec": {
     title: L("Le français du Québec au quotidien", "Everyday Quebec French", "Francés de Quebec para el día a día"),
-    description: L("Explore les expressions, l’écoute et les situations de vie de l’introduction québécoise.", "Explore expressions, listening and everyday situations in the Quebec introduction.", "Explora expresiones, escucha y situaciones cotidianas en la introducción quebequense."),
+    description: L("Poursuis dans 12 unités de vie quotidienne au Québec, avec 36 leçons, des échanges guidés et des bilans écrits.", "Continue through 12 units of everyday life in Québec, with 36 lessons, guided exchanges and written checkpoints.", "Continúa con 12 unidades de vida cotidiana en Quebec, con 36 lecciones, intercambios guiados y evaluaciones escritas."),
   },
   espagnol: {
     title: L("L’espagnol dans de nouvelles situations", "Spanish in new situations", "Español en situaciones nuevas"),
-    description: L("Poursuis avec les dialogues, les phrases utiles et la lecture de l’introduction espagnole.", "Continue with dialogues, useful phrases and reading in the Spanish introduction.", "Continúa con diálogos, frases útiles y lectura en la introducción de español."),
+    description: L("Continue avec 12 unités d’espagnol d’Amérique latine : 36 leçons, des dialogues et des bilans écrits.", "Continue with 12 Latin American Spanish units: 36 lessons, dialogues and written checkpoints.", "Continúa con 12 unidades de español de América Latina: 36 lecciones, diálogos y evaluaciones escritas."),
   },
   allemand: {
     title: L("Le parcours de fondations en allemand", "The German foundation course", "El curso de fundamentos de alemán"),
@@ -35,19 +35,12 @@ const destinations: Record<string, Omit<Destination, "path">> = {
 };
 
 /** Existing pages own their access checks and progress; an intro never grants either. */
-export function introContinuation(course: IntroCourse, goal: IntroProfile["goal"], locale: YoLocale): Destination & { href: string } {
+export function introContinuation(course: IntroCourse, _goal: IntroProfile["goal"], locale: YoLocale): Destination & { href: string } {
   let destination: Destination = { path: course.legacyPath, ...destinations[course.slug] };
   if (!destination.title) destination = { path: course.legacyPath, title: course.name, description: course.missions[0].goal };
-  if (course.slug === "francais-quebec" && goal === "work") destination = {
-    path: "/yo/langues/francais-quebec/module-1/lecon-3",
-    title: L("Poser une question polie au travail", "Ask a polite question at work", "Hacer una pregunta cortés en el trabajo"),
-    description: L("Entraîne-toi à ouvrir un échange avec un collègue et à poser une question courte.", "Practise starting an exchange with a colleague and asking a short question.", "Practica cómo iniciar un intercambio con un colega y hacer una pregunta breve."),
-  };
-  if (course.slug === "espagnol" && goal === "travel") destination = {
-    path: "/yo/langues/espagnol/pays/republique-dominicaine",
-    title: L("Découvrir l’espagnol en République dominicaine", "Explore Spanish in the Dominican Republic", "Descubrir el español en República Dominicana"),
-    description: L("Ouvre le parcours dominicain pour voir son introduction et les modules disponibles.", "Open the Dominican course to see its introduction and available modules.", "Abre el curso dominicano para ver su introducción y los módulos disponibles."),
-  };
+  if (["anglais", "francais-quebec", "espagnol"].includes(course.slug)) {
+    destination = { ...destination, path: `/yo/langues/${course.slug}/parcours` };
+  }
   return { ...destination, href: `${destination.path}?lang=${locale}` };
 }
 

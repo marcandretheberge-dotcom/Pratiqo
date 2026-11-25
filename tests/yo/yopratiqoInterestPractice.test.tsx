@@ -90,8 +90,13 @@ for (const language of interestLanguages) tests.push([`${language}: real selecte
   assert.equal(parseInterestProgress(localStorage.getItem(interestProgressKey(language)), language).session?.interest, "art");
   await click(view.getByRole("button", { name: "Turn right" }));
   await click(view.getByRole("button", { name: "Check" }));
-  await click(view.getByRole("button", { name: "Continue" }));
-  fireEvent.change(view.getByRole("textbox", { name: "Word from memory" }), { target: { value: interestCorpus[language].venues.art.noun } });
+  fireEvent.click(view.getByRole("button", { name: "Continue" }));
+  const input = view.getByRole("textbox", { name: "Word from memory" }) as HTMLInputElement;
+  input.focus();
+  fireEvent.change(input, { target: { value: interestCorpus[language].venues.art.noun } });
+  await flush();
+  assert.equal(document.activeElement, input, "a delayed heading focus cannot interrupt the learner's input");
+  assert.equal(input.value, interestCorpus[language].venues.art.noun);
   await click(view.getByRole("button", { name: "Check" }));
   await click(view.getByRole("button", { name: "Continue" }));
   assert.equal(document.querySelector("[data-interest-step]")?.getAttribute("data-interest-step"), "5");
@@ -102,6 +107,22 @@ for (const language of interestLanguages) tests.push([`${language}: real selecte
   assert.equal(parseInterestProgress(localStorage.getItem(interestProgressKey(language)), language).attempts.art, 1);
   assert.deepEqual(readReviewState(language).records, {});
   assert.equal(audioStarts, 0, "no automatic audio under reduced motion");
+}]);
+tests.push(["confirming an IME candidate cannot grade a partial Mandarin word", async () => {
+  const session = newInterestSession("zh-CN", "history", 0); session.step = 4;
+  localStorage.setItem(interestProgressKey("zh-CN"), JSON.stringify({ ...emptyInterestProgress(), session }));
+  const view = render(<InterestPracticeCard language="zh" locale="en"/>); await flush();
+  await click(view.getByRole("button", { name: "Resume my stop" })); await skipFilm(view);
+  const input = view.getByRole("textbox"); input.focus();
+  fireEvent.compositionStart(input);
+  fireEvent.change(input, { target: { value: "博" } });
+  fireEvent.keyDown(input, { key: "Enter", keyCode: 229, isComposing: true });
+  assert.equal(parseInterestProgress(localStorage.getItem(interestProgressKey("zh-CN")), "zh-CN").session?.assisted[2], false);
+  assert.deepEqual(readReviewState("zh").records, {});
+  fireEvent.change(input, { target: { value: interestCorpus["zh-CN"].venues.history.noun } });
+  fireEvent.compositionEnd(input);
+  fireEvent.keyDown(input, { key: "Enter", keyCode: 13, isComposing: false });
+  assert.equal(parseInterestProgress(localStorage.getItem(interestProgressKey("zh-CN")), "zh-CN").session?.correct[2], true);
 }]);
 tests.push(["wrong recall survives help/reload, schedules review and never becomes an independent result", async () => {
   const session = newInterestSession("fr-CA", "history", 0); session.step = 4;

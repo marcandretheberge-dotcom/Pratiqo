@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, type ReactNode } from "react";
+import { foundationSettings, foundationHref, isNewFoundationLanguage, type NewFoundationLanguage } from "@/lib/yo/foundations/experience";
 import {
   germanCourseHref,
   GERMAN_PROGRESS_KEY,
@@ -8,25 +9,31 @@ import {
   portugueseCourseHref,
   PORTUGUESE_PROGRESS_KEY,
 } from "@/lib/yo/portuguese/courseLogic";
-const languageContext = createContext<"de" | "pt-BR">("de");
+type CourseLanguage = "de" | "pt-BR" | NewFoundationLanguage;
+const languageContext = createContext<CourseLanguage>("de");
 export function CourseExperience({
   children,
   language,
 }: {
   children: ReactNode;
-  language: "de" | "pt-BR";
+  language: CourseLanguage;
 }) {
   return (
-    <languageContext.Provider value={language}>
+    <languageContext.Provider key={language} value={language}>
       {children}
     </languageContext.Provider>
   );
 }
 export function useCourseExperience() {
   const language = useContext(languageContext);
+  if (isNewFoundationLanguage(language)) return {
+    ...foundationSettings[language], language, hasCultureFinal: false,
+    href: (locale: string, unit = "") => foundationHref(language, locale, unit),
+  };
   return language === "pt-BR"
     ? {
         language,
+        hasCultureFinal: true,
         name: "Português do Brasil",
         progressKey: PORTUGUESE_PROGRESS_KEY,
         finalId: "ptbr1-final",
@@ -45,6 +52,7 @@ export function useCourseExperience() {
       }
     : {
         language,
+        hasCultureFinal: true,
         name: "Deutsch",
         progressKey: GERMAN_PROGRESS_KEY,
         finalId: "de1-final",

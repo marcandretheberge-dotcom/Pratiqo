@@ -9,6 +9,9 @@ import { useCourseLanguage, useItalianAudioPath } from "./ItalianAudioProvider";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 
 import { beginLessonAudio } from "@/lib/yo/audio/lessonAudioActivity";
+import { IntroAudio } from "../shared/IntroAudio";
+import { isNewFoundationLanguage } from "@/lib/yo/foundations/experience";
+import { learningLanguageId, learningLanguages } from "@/lib/yo/config/languages";
 
 const copy = {
   fr: { play: "Écouter", stop: "Arrêter", slow: "Ralentir", unavailable: "Cet enregistrement est indisponible. Utilise la transcription.", failed: "La lecture a été interrompue ou n’a pas démarré. Réessaie ou lis la transcription." },
@@ -31,7 +34,21 @@ export interface ItalianModuleAudioProps {
   autoPlay?: boolean;
 }
 
-export function ItalianModuleAudio({ text, locale, onListen, label, autoPlay = false }: ItalianModuleAudioProps) {
+export function ItalianModuleAudio(props: ItalianModuleAudioProps) {
+  const language = useCourseLanguage();
+  const path = useItalianAudioPath(props.text);
+  if (isNewFoundationLanguage(language) && !path) {
+    const id = learningLanguageId(language)!;
+    const preview = { fr: "Aperçu avec la voix de l’appareil", en: "Device voice preview", es: "Vista previa con la voz del dispositivo" }[props.locale];
+    return <span className="inline-flex max-w-full flex-col items-start gap-1" data-audio-source="device-preview">
+      <span className="text-xs text-slate-600">{preview}</span>
+      <IntroAudio text={props.text} speechLocale={learningLanguages[id].speechLocale} locale={props.locale} onListen={props.onListen} label={props.label ?? preview} autoPlay={false}/>
+    </span>;
+  }
+  return <RecordedModuleAudio {...props}/>;
+}
+
+function RecordedModuleAudio({ text, locale, onListen, label, autoPlay = false }: ItalianModuleAudioProps) {
   const coursePath = useItalianAudioPath(text);
   const language = useCourseLanguage();
   const [state, setState] = useState<PlaybackState>("idle");

@@ -31,6 +31,7 @@ function InterestPractice({ language, locale, interests, city }: Omit<Props, "la
   const [ready, setReady] = useState(false), [saved, setSaved] = useState(true), [editing, setEditing] = useState(false), [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(""), [feedback, setFeedback] = useState<boolean | null>(null), [showAnswer, setShowAnswer] = useState(false), [meanings, setMeanings] = useState(true);
   const heading = useRef<HTMLHeadingElement>(null), returnFocus = useRef<HTMLElement | null>(null);
+  const composing = useRef(false);
   const { scene, present, finish } = useMissionCinema(`interest:${language}`, { active: open });
   const review = useReviewQueue(language, reviewIds);
   useEffect(() => {
@@ -48,7 +49,14 @@ function InterestPractice({ language, locale, interests, city }: Omit<Props, "la
   useEffect(() => {
     // The uppermost cinema dialog owns focus until it has been dismissed.
     if (!open || scene || activeStep === undefined) return;
-    const frame = requestAnimationFrame(() => heading.current?.focus({ preventScroll: true }));
+    const frame = requestAnimationFrame(() => {
+      const active = document.activeElement;
+      // A learner can start typing before the scheduled heading focus runs.
+      // Preserve that input focus, including a Chinese/Japanese IME session.
+      if (active instanceof HTMLElement && active.matches("input, textarea, [contenteditable='true']")
+        && heading.current?.closest('[role="dialog"]')?.contains(active)) return;
+      heading.current?.focus({ preventScroll: true });
+    });
     return () => cancelAnimationFrame(frame);
   }, [open, scene, activeStep]);
   function save(next: InterestProgress) {
@@ -63,7 +71,7 @@ function InterestPractice({ language, locale, interests, city }: Omit<Props, "la
   const nextInterest = choices[total % choices.length];
   function start(interest: InterestId, resume = false) {
     if (!open) returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    stopLessonAudio(); setSelected(""); setFeedback(null); setShowAnswer(false);
+    stopLessonAudio(); composing.current = false; setSelected(""); setFeedback(null); setShowAnswer(false);
     const previous = latest.current.session;
     const next = resume && previous && previous.step < 6 ? previous : newInterestSession(language, interest, latest.current.attempts[interest] ?? 0);
     update(next); setOpen(true);
@@ -73,7 +81,7 @@ function InterestPractice({ language, locale, interests, city }: Omit<Props, "la
   function advance() {
     const current = latest.current.session; if (!current) return;
     if (current.step >= 2 && current.step <= 5 && feedback !== true) return;
-    stopLessonAudio(); setSelected(""); setFeedback(null); setShowAnswer(false);
+    stopLessonAudio(); composing.current = false; setSelected(""); setFeedback(null); setShowAnswer(false);
     const next = { ...current, step: Math.min(6, current.step + 1) };
     if (next.step === 6) {
       save({ ...latest.current, session: next, attempts: { ...latest.current.attempts, [next.interest]: Math.min(1000000, next.attempt + 1) } });
@@ -153,7 +161,9 @@ function InterestPractice({ language, locale, interests, city }: Omit<Props, "la
           {session.step === 2 && <div className="space-y-3">{practiceOptions(session.interest, session.attempt).map(id => <button type="button" key={id} lang={language} aria-pressed={selected === id} disabled={feedback !== null} className={choiceClass(id)} onClick={() => setSelected(id)}>{corpus.venues[id].question.text}</button>)}</div>}
           {(session.step === 3 || session.step === 5) && <>{session.step === 5 && <p lang={language} className="mb-4 text-lg font-semibold">{corpus.exit.text}</p>}
             {phrase(corpus.directions[session.step === 3 ? path.first : path.transfer].text, corpus.directions[session.step === 3 ? path.first : path.transfer].reading)}{directionChoices()}</>}
-          {session.step === 4 && <label className="block text-base leading-7">{nounMeaning}<input autoComplete="off" spellCheck={false} lang={language} aria-label={say("Le mot de mémoire", "Word from memory", "Palabra de memoria")} value={selected} disabled={feedback !== null} onChange={event => setSelected(event.target.value.slice(0, 160))} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); check(); } }} className="mt-3 min-h-14 w-full rounded-2xl border-2 border-stone-300 bg-white p-3 text-xl"/>
+          {session.step === 4 && <label className="block text-base leading-7">{nounMeaning}<input autoComplete="off" spellCheck={false} lang={language} aria-label={say("Le mot de mémoire", "Word from memory", "Palabra de memoria")} value={selected} disabled={feedback !== null} onChange={event => setSelected(event.target.value.slice(0, 160))}
+            onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }}
+            onKeyDown={event => { if (event.key === "Enter" && !composing.current && !event.nativeEvent.isComposing && event.keyCode !== 229) { event.preventDefault(); check(); } }} className="mt-3 min-h-14 w-full rounded-2xl border-2 border-stone-300 bg-white p-3 text-xl"/>
             <span className="mt-2 block text-xs text-stone-500">{say("Écris le nom sans article. Les accents comptent. Tu peux afficher le modèle.", "Write the noun without its article. Accents matter. You can reveal the model.", "Escribe el nombre sin artículo. Los acentos cuentan. Puedes ver el modelo.")}</span></label>}
           {session.step >= 2 && session.step <= 5 && <>
             {showAnswer && <p className="mt-4 rounded-xl bg-amber-50 p-4 text-base" data-interest-model>{session.step === 2 ? v.question.text : session.step === 4 ? v.noun : directionMeaning[session.step === 3 ? path.first : path.transfer][locale]}</p>}
