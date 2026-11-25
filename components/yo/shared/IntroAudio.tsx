@@ -69,7 +69,8 @@ export function IntroAudio({ text, speechLocale, path, locale, onListen, autoPla
       voiceCleanup = () => { synth.removeEventListener("voiceschanged", speak); if (utterance) { utterance.onstart = null; utterance.onend = null; utterance.onerror = null; try { synth.cancel(); } catch { /* cleanup */ } } };
       synth.addEventListener("voiceschanged", speak); arm(fail, 1800); speak();
     };
-    const url = path?.startsWith("/audio/yo/") ? path : path ? buildPublicAudioUrl(path) : null;
+    const legacyLocalPath = path?.startsWith("/audio/yo/") && !path.startsWith("/audio/yo/premium");
+    const url = legacyLocalPath ? path : path ? buildPublicAudioUrl(path) : null;
     if (!url) { deviceVoice(); return; }
     try {
       const audio = new window.Audio(url);

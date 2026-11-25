@@ -24,7 +24,7 @@ type PlaybackState = "idle" | "loading" | "playing";
 export const ITALIAN_MODULE_AUDIO_STOP_EVENT = "yo-italian-audio-stop";
 const BUFFER_TIMEOUT_MS = 15000;
 
-/** Learner-triggered OpenAI recordings from public Supabase Storage; no runtime TTS or secrets. */
+/** Learner-triggered published recordings from bundled files or Storage; no runtime TTS or secrets. */
 export interface ItalianModuleAudioProps {
   text: string;
   locale: YoLocale;
