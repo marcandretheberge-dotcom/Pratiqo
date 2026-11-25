@@ -275,3 +275,6 @@ The contract tested by `tests/analytics/postHogSentryInstrumentation.test.ts` su
 - `posthog-js` is **NOT** in `package.json` dependencies — adding it without applying the disabled-defaults above will fail the test.
 - `<PostHogPageView />` is mounted exactly once in `app/providers.tsx`.
 - The `$pageview` event is the only universal pageview emitter.
+### Italian test pilot
+
+`yopratiqo_pass_journey` uses the existing consent-aware event capture. All pilot events carry `environment=test` and must be excluded from live reporting. Transitions: offer_view, free_final, checkpoint_win, pass_redeemed, checkout_start, purchase_confirmed, covered_mission_started, covered_mission_completed. Client events describe observed transitions; for sales use reconciled server receipts, not clicks or return-page hits. No account identifiers, free text or receipt IDs are sent by this helper.
