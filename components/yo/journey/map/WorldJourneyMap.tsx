@@ -11,6 +11,7 @@ import { roadPath, roadPoint } from "./roadGeometry";
 import { worldRoads } from "./worldRoads";
 import { WorldScenery } from "./WorldScenery";
 import { worldMapStyles } from "./worldMapStyles";
+import { CourseStudyPlan } from "../CourseStudyPlan";
 
 const copy = {
   fr: { map: "Mon voyage avec Yoppo", continue: "Continuer", explore: "Explorer", chapter: "Étapes", previous: "Étapes précédentes", next: "Étapes suivantes", loading: "Yoppo prépare la carte…", locked: "Termine les étapes précédentes pour continuer." },
@@ -19,10 +20,10 @@ const copy = {
 };
 
 type Props = { model: WorldMapModel; locale: YoLocale; ready?: boolean; active?: boolean;
-  href?: (id: string) => string; onContinue?: (id: string) => void };
+  href?: (id: string) => string; onContinue?: (id: string) => void; studyLanguage?: string };
 
 /** Browsing is isolated from the course ledger. A city tap never runs a lesson action. */
-export function WorldJourneyMap({ model, locale, ready = true, active = true, href, onContinue }: Props) {
+export function WorldJourneyMap({ model, locale, ready = true, active = true, href, onContinue, studyLanguage }: Props) {
   const c = copy[locale], key = `yo.map-view.v2.${model.id}`, legacyKey = `yo.map-view.v1.${model.id}`;
   const [view, setView] = useState<MapBookmark | null>(null);
   const latestModel = useRef(model);
@@ -105,6 +106,7 @@ export function WorldJourneyMap({ model, locale, ready = true, active = true, hr
     </div>
     <div className="yo-shared-map-action">
       {selected ? <><p className="yo-shared-status">{adventureCopy[locale].states[selected.state]}</p><h3>{selected.title[locale]}</h3><p>{selected.goal[locale]}</p>
+        {studyLanguage && <CourseStudyPlan language={studyLanguage} locale={locale}/>}
         {onContinue ? <button type="button" className="yo-shared-continue" onClick={() => { if (selected.accessible) onContinue(selected.id); }}>{c.continue}<ArrowRight size={19} aria-hidden/></button>
           : target ? <Link prefetch={false} href={target} className="yo-shared-continue">{c.continue}<ArrowRight size={19} aria-hidden/></Link> : null}
       </> : <p>{c.locked}</p>}

@@ -18,19 +18,19 @@ const destinations: Record<string, Omit<Destination, "path">> = {
   },
   allemand: {
     title: L("Le parcours de fondations en allemand", "The German foundation course", "El curso de fundamentos de alemán"),
-    description: L("Retrouve les huit unités, leurs dialogues, leurs exercices et tes acquis enregistrés.", "Open the eight units, their dialogues, exercises and your saved achievements.", "Abre las ocho unidades, sus diálogos, ejercicios y tus logros guardados."),
+    description: L("Retrouve les douze unités, leurs dialogues, leurs exercices et tes acquis enregistrés.", "Open the twelve units, their dialogues, exercises and your saved achievements.", "Abre las doce unidades, sus diálogos, ejercicios y tus logros guardados."),
   },
   "portugais-bresil": {
     title: L("Le parcours de portugais du Brésil", "The Brazilian Portuguese course", "El curso de portugués de Brasil"),
-    description: L("Retrouve les huit unités pour faire connaissance, commander et te déplacer.", "Open the eight units for meeting people, ordering and getting around.", "Abre las ocho unidades para conocer gente, pedir y desplazarte."),
+    description: L("Retrouve les douze unités pour faire connaissance, commander, raconter et préparer tes projets.", "Open the twelve units for meeting people, ordering, telling stories and making plans.", "Abre las doce unidades para conocer gente, pedir, contar y preparar tus planes."),
   },
   japonais: {
     title: L("Les fondations du japonais", "Japanese foundations", "Fundamentos de japonés"),
-    description: L("Continue avec les dialogues, les kana, les kanji et les exercices des huit modules.", "Continue with dialogues, kana, kanji and exercises across the eight modules.", "Continúa con diálogos, kana, kanji y ejercicios en los ocho módulos."),
+    description: L("Continue avec les dialogues, les kana, les kanji et les exercices des douze modules.", "Continue with dialogues, kana, kanji and exercises across the twelve modules.", "Continúa con diálogos, kana, kanji y ejercicios en los doce módulos."),
   },
   mandarin: {
     title: L("Les fondations du mandarin", "Mandarin foundations", "Fundamentos de mandarín"),
-    description: L("Continue avec les dialogues, les tons, les caractères et les exercices des huit unités.", "Continue with dialogues, tones, characters and exercises across the eight units.", "Continúa con diálogos, tonos, caracteres y ejercicios en las ocho unidades."),
+    description: L("Continue avec les dialogues, les tons, les caractères et les exercices des douze unités.", "Continue with dialogues, tones, characters and exercises across the twelve units.", "Continúa con diálogos, tonos, caracteres y ejercicios en las doce unidades."),
   },
 };
 

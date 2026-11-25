@@ -1,7 +1,8 @@
 """Real EN/ES/Québec routes: written assessment, honest help, reload and unlocking.
 
-Only empty browser storage is seeded. All six checkpoint answers are entered
-through the rendered controls. No course success, score or entitlement is seeded.
+Starts with empty browser storage, then restores only a goal/pace preference.
+All six checkpoint answers are entered through the rendered controls.
+No course success, score or entitlement is seeded.
 Separate playback cases click four real study controls and await native ended.
 """
 import json
@@ -24,6 +25,11 @@ recording_copy = {
     "fr": {"words": "2. Les mots", "pattern": "3. Le déclic", "scene": "5. La scène", "turn": "Retourner la carte", "listen": "Écouter"},
     "en": {"words": "2. The words", "pattern": "3. The pattern", "scene": "5. The scene", "turn": "Turn the card", "listen": "Listen"},
     "es": {"words": "2. Las palabras", "pattern": "3. La pauta", "scene": "5. La escena", "turn": "Girar la tarjeta", "listen": "Escuchar"},
+}
+study_copy = {
+    "fr": ["Pour le travail ou les études : entraîne-toi à répondre clairement.", "Rythme proposé : 2 séances d’environ 30 min par semaine."],
+    "en": ["For work or study: practise giving a clear reply.", "Suggested pace: 2 sessions of about 30 minutes per week."],
+    "es": ["Para el trabajo o los estudios: practica una respuesta clara.", "Ritmo propuesto: 2 sesiones de unos 30 minutos por semana."],
 }
 
 
@@ -85,7 +91,26 @@ def verify(browser, engine, course, locale, width):
         expect(page.locator('[data-course-unit="home"]')).to_be_visible(timeout=60000)
         dismiss_films(page, locale)
         capture(page, name + "-map")
+        expect(page.locator("[data-course-study-plan]")).to_have_count(0)
+        before_preferences = page.evaluate("key=>localStorage.getItem(key)", course["progressKey"])
+        # This is a returning learner's optional profile, with no introductory
+        # answers, score, completed item or course unlock. The course owns access.
+        page.evaluate("""language=>localStorage.setItem('yo.shared-intro.v1.'+language, JSON.stringify({
+          version:2, language, profile:{experience:'new',goal:'work',minutes:60,entry:0},
+          view:'map',resume:null,step:0,finalIndex:0,
+          draft:{selected:null,tiles:[],checked:false,correct:false,assisted:false,heard:false,transcript:false},
+          completed:[],visited:[],answers:[],best:0
+        }))""", course["language"])
+        page.reload()
+        plan = page.locator("[data-course-study-plan]")
+        expect(plan).to_be_visible(timeout=45000)
+        for line in study_copy[locale]:
+            expect(plan).to_contain_text(line)
+        assert page.evaluate("key=>localStorage.getItem(key)", course["progressKey"]) == before_preferences
+        plan.scroll_into_view_if_needed()
+        capture(page, name + "-study-plan")
         continuation = page.locator("a.yo-shared-continue")
+        expect(continuation).to_have_count(1)
         expect(continuation).to_have_attribute("href", "/yo/langues/" + course["slug"] + "/parcours/" + unit["id"] + "?lang=" + locale)
         continuation.click()
         # The film intentionally makes the lesson underneath inert. Wait for the
@@ -180,7 +205,7 @@ def verify(browser, engine, course, locale, width):
         assert not errors, errors
         assert page.evaluate("window.__foundationAudio + window.__foundationVoice + window.__foundationMic") == 0
         return {"language": course["language"], "locale": locale, "width": width, "assisted": assisted,
-                "questionsAnswered": len(checkpoint["questions"]), "checkpointAttempts": 1, "unitDraftRestored": True, "assessmentDraftRestored": True, "inlineCoach": True, "passed": True}
+                "questionsAnswered": len(checkpoint["questions"]), "checkpointAttempts": 1, "unitDraftRestored": True, "assessmentDraftRestored": True, "studyPreferencesRestored": True, "inlineCoach": True, "passed": True}
     except Exception:
         page.screenshot(path=str(out / (name + "-failure.png")), full_page=False)
         (out / (name + "-failure.html")).write_text(page.content())

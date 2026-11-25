@@ -728,7 +728,7 @@ export default async function YoJapaneseIntroPage({ searchParams }: PageProps) {
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-700 px-5 py-3 text-sm font-bold text-white"
               >
                 <BookOpen className="size-4" aria-hidden />
-                {t(lstr("Continuer les 8 modules de japonais", "Continue the 8 Japanese modules", "Continuar los 8 módulos de japonés"), locale)}
+                {t(lstr("Continuer les 12 modules de japonais", "Continue the 12 Japanese modules", "Continuar los 12 módulos de japonés"), locale)}
               </Link>
               <Link
                 href={teacherHref}

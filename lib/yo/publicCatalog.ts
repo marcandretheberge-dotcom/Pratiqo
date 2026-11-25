@@ -38,8 +38,8 @@ export const yoPublicCatalog: readonly YoPublicLanguage[] = [
   },
   {
     slug: "japonais", badge: "ja", name: lstr("Japonais", "Japanese", "Japonés"),
-    detail: lstr("Premiers pas au Japon · 8 modules", "First steps in Japan · 8 modules", "Primeros pasos en Japón · 8 módulos"),
-    description: lstr("Huit modules avec Yoppo : dialogues guidés, kana, kanji en contexte, culture, écriture et révisions.", "Eight modules with Yoppo: guided dialogues, kana, kanji in context, culture, writing and review.", "Ocho módulos con Yoppo: diálogos guiados, kana, kanji en contexto, cultura, escritura y repaso."),
+    detail: lstr("Premiers pas au Japon · 12 modules", "First steps in Japan · 12 modules", "Primeros pasos en Japón · 12 módulos"),
+    description: lstr("Douze modules avec Yoppo : dialogues guidés, kana, kanji en contexte, culture, écriture et révisions.", "Twelve modules with Yoppo: guided dialogues, kana, kanji in context, culture, writing and review.", "Doce módulos con Yoppo: diálogos guiados, kana, kanji en contexto, cultura, escritura y repaso."),
     path: "/yo/langues/japonais/demarrer", landingRoute: "/yo/langues/japonais", inLanguage: "ja", presentationLocales: ["fr", "en", "es"],
   },
   {
@@ -50,20 +50,20 @@ export const yoPublicCatalog: readonly YoPublicLanguage[] = [
   },
   {
     slug: "allemand", badge: "de", name: lstr("Allemand", "German", "Alemán"),
-    detail: lstr("Premiers pas avec Yoppo · 8 étapes", "First steps with Yoppo · 8 stops", "Primeros pasos con Yoppo · 8 etapas"),
-    description: lstr("Pratique l’allemand avec Yoppo : huit étapes de dialogues, écoute, jeux, lectures, photos et un quiz culturel final.", "Practise German with Yoppo: eight stops with dialogues, listening, games, readings, photos and a final culture quiz.", "Practica alemán con Yoppo: ocho etapas de diálogos, escucha, juegos, lecturas, fotos y un quiz cultural final."),
+    detail: lstr("Premiers pas avec Yoppo · 12 unités", "First steps with Yoppo · 12 units", "Primeros pasos con Yoppo · 12 unidades"),
+    description: lstr("Pratique l’allemand avec Yoppo : douze unités de dialogues, écoute, jeux, lectures, photos et un quiz culturel final.", "Practise German with Yoppo: twelve units with dialogues, listening, games, readings, photos and a final culture quiz.", "Practica alemán con Yoppo: doce unidades de diálogos, escucha, juegos, lecturas, fotos y un quiz cultural final."),
     path: "/yo/langues/allemand/demarrer", landingRoute: "/yo/langues/allemand", inLanguage: "de", presentationLocales: ["fr", "en", "es"],
   },
   {
     slug: "portugais-bresil", badge: "pt-br", name: lstr("Portugais du Brésil", "Brazilian Portuguese", "Portugués de Brasil"),
-    detail: lstr("Premières rencontres au Brésil · 8 étapes", "First encounters in Brazil · 8 stops", "Primeros encuentros en Brasil · 8 etapas"),
-    description: lstr("Pratique le portugais du Brésil avec Yoppo : huit étapes de dialogues, écoute, jeux, photos et un quiz culturel final.", "Practise Brazilian Portuguese with Yoppo: eight stops with dialogues, listening, games, photos and a final culture quiz.", "Practica portugués de Brasil con Yoppo: ocho etapas con diálogos, escucha, juegos, fotos y un quiz cultural final."),
+    detail: lstr("Premières rencontres au Brésil · 12 unités", "First encounters in Brazil · 12 units", "Primeros encuentros en Brasil · 12 unidades"),
+    description: lstr("Pratique le portugais du Brésil avec Yoppo : douze unités de dialogues, écoute, jeux, photos et un quiz culturel final.", "Practise Brazilian Portuguese with Yoppo: twelve units with dialogues, listening, games, photos and a final culture quiz.", "Practica portugués de Brasil con Yoppo: doce unidades con diálogos, escucha, juegos, fotos y un quiz cultural final."),
     path: "/yo/langues/portugais-bresil/demarrer", landingRoute: "/yo/langues/portugais-bresil", inLanguage: "pt-BR", presentationLocales: ["fr", "en", "es"],
   },
   {
     slug: "mandarin", badge: "zh", name: lstr("Mandarin", "Mandarin", "Mandarín"),
-    detail: lstr("Premières conversations · 8 modules et une mission finale", "First conversations · 8 modules and a final mission", "Primeras conversaciones · 8 módulos y una misión final"),
-    description: lstr("Découvre le mandarin avec Yoppo : tons, pinyin, caractères simplifiés, dialogues, écoute et culture en huit modules et une mission finale.", "Explore Mandarin with Yoppo: tones, pinyin, simplified characters, dialogues, listening and culture in eight modules and a final mission.", "Descubre el mandarín con Yoppo: tonos, pinyin, caracteres simplificados, diálogos, escucha y cultura en ocho módulos y una misión final."),
+    detail: lstr("Premières conversations · 12 modules et une mission finale", "First conversations · 12 modules and a final mission", "Primeras conversaciones · 12 módulos y una misión final"),
+    description: lstr("Découvre le mandarin avec Yoppo : tons, pinyin, caractères simplifiés, dialogues, écoute et culture en douze modules et une mission finale.", "Explore Mandarin with Yoppo: tones, pinyin, simplified characters, dialogues, listening and culture in twelve modules and a final mission.", "Descubre el mandarín con Yoppo: tonos, pinyin, caracteres simplificados, diálogos, escucha y cultura en doce módulos y una misión final."),
     path: "/yo/langues/mandarin/demarrer", landingRoute: "/yo/langues/mandarin", inLanguage: "zh-Hans", presentationLocales: ["fr", "en", "es"],
   },
 ];

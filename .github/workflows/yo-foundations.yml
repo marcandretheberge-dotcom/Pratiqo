@@ -10,6 +10,9 @@ on:
       - 'components/yo/japanese/**'
       - 'components/yo/mandarin/**'
       - 'components/yo/review/**'
+      - 'components/yo/journey/CourseStudyPlan.tsx'
+      - 'components/yo/journey/CourseJourney.tsx'
+      - 'components/yo/journey/map/WorldJourneyMap.tsx'
       - 'lib/yo/foundations/**'
       - 'lib/yo/audio/premium*'
       - 'public/audio/yo/premium/**'
@@ -20,6 +23,8 @@ on:
       - 'lib/yo/portuguese/**'
       - 'lib/yo/review/**'
       - 'lib/yo/shared/continuation.ts'
+      - 'lib/yo/studyPlan.ts'
+      - 'tests/yo/*CourseStudyPlan*'
       - 'tests/yo/*Foundations*'
       - 'tests/yo/*FoundationRecordedCoverage*'
       - 'tests/yo/*FoundationIsolation*'
@@ -61,6 +66,7 @@ jobs:
           node --import tsx tests/yo/yopratiqoTypedDrafts.test.tsx
           node --import tsx tests/yo/yopratiqoFoundationIsolation.test.tsx
           node --import tsx tests/yo/yopratiqoIntroContinuation.test.ts
+          node --import tsx tests/yo/yopratiqoCourseStudyPlan.test.tsx
   browser:
     name: Foundation player (${{ matrix.browser }})
     strategy:

@@ -13,6 +13,7 @@ import { adventureWorld } from "@/lib/yo/adventure";
 import { journeyMap } from "@/lib/yo/worldMap";
 import { WorldJourneyMap } from "./map/WorldJourneyMap";
 import { CourseAdventure } from "./AdventureProgress";
+import { studyLanguageForWorld } from "@/lib/yo/studyPlan";
 
 type Props = { catalog: CourseCatalog; progress: CourseProgress; locale: YoLocale; ready: boolean; href: (unitId?: string) => string };
 const action = "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-800 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-700";
@@ -30,7 +31,7 @@ export function LearningJourney({ journey, locale, ready, href, copy }: {
   const world = adventureWorld(href());
   const model = journeyMap(journey, world, href().split("?")[0]);
   return <section aria-label={c.title} className="my-8 min-w-0">
-    <WorldJourneyMap model={model} locale={locale} ready={ready} href={id => href(id)}/>
+    <WorldJourneyMap model={model} locale={locale} ready={ready} href={id => href(id)} studyLanguage={studyLanguageForWorld[world]}/>
     <details className="mt-4 text-sm leading-6 text-gray-700"><summary className="min-h-11 cursor-pointer py-3">{c.goals}</summary><p>{c.rule}</p><p>{c.proof} {c.review}</p></details>
   </section>;
 }

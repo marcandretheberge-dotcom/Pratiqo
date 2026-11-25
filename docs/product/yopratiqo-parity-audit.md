@@ -27,7 +27,7 @@ establish equal difficulty, equivalent study time, CEFR certification or native
 audio quality. A reachable route and a passing unit test are different evidence
 from an exercised production purchase or a delayed independent learning result.
 
-## Current curriculum snapshot after PR #489
+## Current curriculum snapshot after PR #490
 
 The historical table below is retained for audit. The current authored catalogs
 have the following scope; equal unit counts do not imply equal difficulty,
@@ -54,9 +54,11 @@ All eight languages now connect actual wrong/helped practice to local dated
 review and authored explanations. All have opening travel films and earned
 mission celebrations; Japanese and Mandarin use the cinematic adventure-progress
 component for their latter events. The 48 interest variants are small authored
-missions across six themes, not 48 complete courses. The main-course goal/weekly
-pace recommendation and Japanese unfinished-answer continuity remain separate
-work; ordinary authenticated two-device restoration remains unfinished.
+missions across six themes, not 48 complete courses. PR #490 adds Japanese
+unfinished-answer and checked-attempt restoration across reloads and tabs, with
+sticky help and stale-check rejection. The main-course goal/weekly pace
+recommendation and onboarding/placement recovery remain separate work;
+ordinary authenticated two-device restoration remains unfinished.
 
 ### Recording release deployed
 
@@ -360,15 +362,15 @@ money. These controls remain independent of the review store. See
 
 | Work still needed | Concrete acceptance evidence |
 | --- | --- |
-| EN/ES/Québec foundation delivery | The second lot implements the coherent 12-unit sequences. Complete real mobile-browser and production verification, recordings and language-specific listening review; do not infer a certified level. |
+| EN/ES/Québec foundation depth | The 12-unit sequences, mobile Chromium/macOS WebKit gates, production routes and recorded-audio release are delivered. Complete the remaining exact-text recording gaps, language-specific listening review and deeper unseen transfer; do not infer a certified level. |
 | Older regional course integration | The canonical Spanish foundation now exists. Older Dominican and Québec workplace routes still need their own progress/content reconciliation; they are not silently migrated. |
 | Delayed independent transfer | A new, equivalent task on a later day, without answer hints, measured separately from replaying a previously seen question. |
-| Full-course review delivery | Second-lot wiring passes real-renderer local tests in all eight targets. Verify the deployed routes and maintain separation from old outcomes/bookmarks. |
-| Cross-tab progress reliability | Add deterministic merge/reset handling to the existing Mandarin and shared intro progress stores independently of the new review journal. |
+| Full-course review delivery | All eight targets have real practice writers, rendered checker tests and deployed contextual review routes. Authenticated delivery remains unfinished; preserve separation from old outcomes/bookmarks. |
+| Cross-tab progress reliability | Mandarin merge/reset handling (PR #484), shared-intro continuity (PR #488) and Japanese unfinished-activity recovery (PR #490) are delivered. Onboarding/placement drafts remain the next distinct gap; these browser-local stores are not account backup. |
 | Cross-device continuity | Authenticated restoration, explicit ownership/consent for anonymous history, account isolation, reset semantics and durable offline retries. |
 | Recorded audio | Finish real recording gaps and perform language-specific listening QA. Successful HTTP/MP3 validation is availability evidence, not pronunciation approval. |
 | Speech experience | Configure authorized credentials/budget, apply reviewed dependencies if approved, then exercise consent, all eight targets, failure/timeout/cancellation and feedback quality online. |
-| Premium media | Actual film assets, coherent language/context mapping, subtitles, interruption/reduced-motion and mobile browser QA. |
+| Premium media | Opening travel and three mission clips are actual deployed MP4s with interruption/reduced-motion/browser checks. Bespoke footage for each destination, mission and earned artifact remains incomplete. |
 | Offer and Pass | Sell only an identified complete product through a separately reviewed offer/payment flow; local cosmetic awards and test wallets do not constitute an offer. |
 | Learning and retention evidence | Track independent and delayed task success, return for useful practice and purchases separately; do not substitute clicks, views or attendance for learning. |
 

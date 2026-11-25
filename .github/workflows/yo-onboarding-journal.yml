@@ -6,10 +6,14 @@ on:
       - 'components/yo/onboarding/**'
       - 'components/yo/personalized/ItalianOnboarding.tsx'
       - 'components/yo/personalized/ItalianLearningEntry.tsx'
+      - 'components/yo/italian/guided/GuidedGame.tsx'
       - 'components/yo/shared/IntroWelcome.tsx'
       - 'components/yo/shared/SharedIntro.tsx'
       - 'components/yo/shared/IntroQuestion.tsx'
       - 'lib/yo/shared/**'
+      - 'lib/yo/onboarding/**'
+      - 'tests/yo/yopratiqoOnboardingResume.test.tsx'
+      - 'tests/yo/yopratiqoOnboardingResume.browser.py'
       - 'tests/yo/yopratiqoIntroSync.test.ts'
       - 'tests/yo/yopratiqoIntroSyncPlayer.test.tsx'
       - 'tests/yo/yopratiqoIntroSync.browser.py'
@@ -83,7 +87,9 @@ jobs:
           node --import tsx tests/yo/yopratiqoTravelFilmRoutes.test.ts
           node --import tsx tests/yo/yopratiqoIntroSync.test.ts
           node --import tsx tests/yo/yopratiqoIntroSyncPlayer.test.tsx
+          node --import tsx tests/yo/yopratiqoOnboardingResume.test.tsx
           python tests/yo/yopratiqoJournal.browser.py
+          python tests/yo/yopratiqoOnboardingResume.browser.py
           python tests/yo/yopratiqoTravelFilms.browser.py
           python tests/yo/yopratiqoPremiumCinema.browser.py
           python tests/yo/yopratiqoInterests.browser.py
