@@ -8,6 +8,9 @@ import { lessons05to08 } from "./lessons05to08";
 import { germanCultureFinal, germanCultureStops } from "./courseCulture";
 import { germanScenarios } from "./courseScenarios";
 import { t } from "./courseAuthoring";
+import { germanDepthUnits } from "./depthUnits";
+import { germanExtendedFinal } from "./extendedFinal";
+import { germanDepthSources } from "./depthSources";
 
 const titles = [
   t("Hallo, Berlin!", "Hallo, Berlin!", "Hallo, Berlin!"),
@@ -34,7 +37,8 @@ const lessons = [...lessons01to04, ...lessons05to08].map((lesson) => ({
     ...(germanScenarios[lesson.id] ? [germanScenarios[lesson.id]] : []),
   ],
 }));
-export const germanCourseUnits: CourseUnit[] = titles.map((title, i) => {
+/** Frozen original eight-unit curriculum: existing IDs, lessons and results keep their meaning. */
+export const germanLegacyUnits: CourseUnit[] = titles.map((title, i) => {
   const id = `u${String(i + 1).padStart(2, "0")}`,
     group = lessons.slice(i * 3, i * 3 + 3),
     stop = germanCultureStops[id];
@@ -111,9 +115,9 @@ export const germanFinal: CourseAssessment = {
     "A cumulative check of your expressions and listening. Not a certification.",
     "Un repaso acumulativo de expresiones y comprensión auditiva. No es una certificación.",
   ),
-  unitIds: germanCourseUnits.map((u) => u.id),
+  unitIds: germanLegacyUnits.map((u) => u.id),
   passPercent: 80,
-  questions: germanCourseUnits.flatMap((unit) =>
+  questions: germanLegacyUnits.flatMap((unit) =>
     unit.lessons.slice(0, 2).map((lesson, i) => {
       const activity = lesson.activities.find((a) =>
         i === 0 ? a.kind === "listen" : a.kind === "type" && !a.listeningText,
@@ -128,7 +132,9 @@ export const germanFinal: CourseAssessment = {
     }),
   ),
 };
-export { germanCultureFinal };
+export const germanCourseUnits: CourseUnit[] = [...germanLegacyUnits, ...germanDepthUnits];
+export { germanCultureFinal, germanExtendedFinal };
+export const germanSources = [...Object.values(germanCultureStops).map(stop => stop.source), ...germanDepthSources];
 export const germanCatalog: CourseCatalog = {
   units: germanCourseUnits.map((unit) => ({
     id: unit.id,
@@ -150,6 +156,7 @@ export const germanCatalog: CourseCatalog = {
   assessments: [
     ...germanCourseUnits.map((u) => u.quiz),
     germanFinal,
+    germanExtendedFinal,
     germanCultureFinal,
   ].map((a) => ({
     id: a.id,

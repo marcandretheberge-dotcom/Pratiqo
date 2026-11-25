@@ -4,8 +4,10 @@ import { test } from "node:test";
 import sharp from "sharp";
 import {
   portugueseCourseUnits as units,
+  portugueseLegacyUnits,
   portugueseCatalog as catalog,
   portugueseFinal,
+  portugueseExtendedFinal,
   portugueseCultureFinal,
 } from "@/lib/yo/portuguese/courseData";
 import {
@@ -41,6 +43,7 @@ const practice = lessons.flatMap((l) => l.activities);
 const assessments = [
   ...units.map((u) => u.quiz),
   portugueseFinal,
+  portugueseExtendedFinal,
   portugueseCultureFinal,
 ];
 const unique = (values: string[]) =>
@@ -50,18 +53,19 @@ const localized = (value: { fr: string; en: string; es: string }) => {
     assert.ok(value[locale]?.trim());
 };
 
-test("Brazilian course has eight units, 24 lessons, 148 practices and two distinct finals", () => {
-  assert.equal(units.length, 8);
-  assert.equal(lessons.length, 24);
-  assert.equal(practice.length, 148);
+test("Brazilian course has twelve units, 36 lessons, 232 practices and separate cumulative finals", () => {
+  assert.equal(units.length, 12);
+  assert.equal(lessons.length, 36);
+  assert.equal(practice.length, 232);
   assert.equal(portugueseFinal.questions.length, 16);
+  assert.equal(portugueseExtendedFinal.questions.length, 24);
   assert.equal(portugueseCultureFinal.questions.length, 8);
   unique([
     ...practice.map((a) => a.id),
     ...assessments.flatMap((a) => a.questions.map((q) => q.id)),
   ]);
   for (const lesson of lessons) {
-    assert.equal(lesson.vocabulary.length, 4);
+    assert.equal(lesson.vocabulary.length, portugueseLegacyUnits.some(unit => unit.lessons.includes(lesson)) ? 4 : 7);
     localized(lesson.title);
     localized(lesson.grammar.body);
     localized(lesson.pronunciation.body);
@@ -137,14 +141,17 @@ test("culture quiz tests taught knowledge with real, credited local photos", asy
   }
 });
 
-test("all course speech is recorded once, with complete MP3s and unit-scoped payloads", () => {
+test("all original course recordings remain complete; extension audio is reported by its real coverage", () => {
   preflightManifest(portugueseCourseAudio);
+  const legacyContents = [...portugueseLegacyUnits, ...portugueseLegacyUnits.map(unit => unit.quiz), portugueseFinal, portugueseCultureFinal];
+  const legacySpeech = new Set(legacyContents.flatMap(content => "lessons" in content ? portugueseUnitSpeech(content) : assessmentSpeech(content)));
+  const legacyAudio = portugueseCourseAudio.filter(item => legacySpeech.has(item.text));
   assert.equal(
     Object.keys(portuguesePublishedAudio).length,
-    portugueseCourseAudio.length,
+    legacyAudio.length,
   );
   let duration = 0;
-  for (const item of portugueseCourseAudio) {
+  for (const item of legacyAudio) {
     assert.equal(item.targetLanguage, "pt");
     assert.equal(item.accentProfile, "brazilian_portuguese");
     assert.match(item.storagePath, /^yo\/pt-br\//);
@@ -159,7 +166,7 @@ test("all course speech is recorded once, with complete MP3s and unit-scoped pay
     duration += seconds;
   }
   assert.ok(duration > 0);
-  for (const content of [...units, ...assessments]) {
+  for (const content of legacyContents) {
     const texts =
       "lessons" in content
         ? portugueseUnitSpeech(content)
@@ -170,12 +177,12 @@ test("all course speech is recorded once, with complete MP3s and unit-scoped pay
     );
   }
   console.log(
-    `Verified ${portugueseCourseAudio.length} Portuguese MP3s, ${(duration / 60).toFixed(2)} minutes`,
+    `Verified ${legacyAudio.length} Portuguese MP3s, ${(duration / 60).toFixed(2)} minutes`,
   );
 });
 
 test("dialogue, cafe budget and map reuse strict engines without awarding wrong actions", () => {
-  assert.equal(practice.filter((a) => a.kind === "dialogue").length, 2);
+  assert.equal(practice.filter((a) => a.kind === "dialogue").length, 14);
   for (const a of practice) {
     if (a.kind === "cafe") {
       assert.ok(

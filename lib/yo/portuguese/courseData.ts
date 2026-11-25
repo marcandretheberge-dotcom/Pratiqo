@@ -11,6 +11,8 @@ import {
 } from "./courseCulture";
 import { portugueseScenarios } from "./courseScenarios";
 import { t } from "./courseAuthoring";
+import { portugueseDepthUnits, portugueseExtendedFinal } from "./depthUnits";
+import { portugueseDepthSources } from "./depthSources";
 const titles = [
   t("Olá, Brasil!", "Olá, Brasil!", "Olá, Brasil!"),
   t(
@@ -32,7 +34,7 @@ const lessons = [...lessons01to04, ...lessons05to08].map((lesson) => ({
     ...(portugueseScenarios[lesson.id] ? [portugueseScenarios[lesson.id]] : []),
   ],
 }));
-export const portugueseCourseUnits: CourseUnit[] = titles.map((title, i) => {
+export const portugueseLegacyUnits: CourseUnit[] = titles.map((title, i) => {
   const id = `u${String(i + 1).padStart(2, "0")}`,
     group = lessons.slice(i * 3, i * 3 + 3),
     stop = portugueseCultureStops[id];
@@ -112,9 +114,9 @@ export const portugueseFinal: CourseAssessment = {
     "Use phrases from the whole course. This assessment is not a certification.",
     "Reutiliza las expresiones de todo el recorrido. Este repaso no es una certificación.",
   ),
-  unitIds: portugueseCourseUnits.map((u) => u.id),
+  unitIds: portugueseLegacyUnits.map((u) => u.id),
   passPercent: 80,
-  questions: portugueseCourseUnits.flatMap((unit) =>
+  questions: portugueseLegacyUnits.flatMap((unit) =>
     unit.lessons.slice(0, 2).map((lesson, i) => {
       const activity = lesson.activities.find((a) =>
         i === 0 ? a.kind === "listen" : a.kind === "type" && !a.listeningText,
@@ -130,6 +132,12 @@ export const portugueseFinal: CourseAssessment = {
   ),
 };
 export { portugueseCultureFinal };
+export { portugueseExtendedFinal };
+export const portugueseCourseUnits: CourseUnit[] = [...portugueseLegacyUnits, ...portugueseDepthUnits];
+export const portugueseSources = [
+  ...Object.values(portugueseCultureStops).map(stop => stop.source),
+  ...portugueseDepthSources,
+];
 export const portugueseCatalog: CourseCatalog = {
   units: portugueseCourseUnits.map((unit) => ({
     id: unit.id,
@@ -151,6 +159,7 @@ export const portugueseCatalog: CourseCatalog = {
   assessments: [
     ...portugueseCourseUnits.map((u) => u.quiz),
     portugueseFinal,
+    portugueseExtendedFinal,
     portugueseCultureFinal,
   ].map((a) => ({
     id: a.id,

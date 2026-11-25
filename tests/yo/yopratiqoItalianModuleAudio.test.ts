@@ -32,6 +32,7 @@ class FakeAudio extends dom.window.EventTarget {
   playbackRate = 1;
   preservesPitch = false;
   currentTime = 0;
+  ended = false;
   playCalls = 0;
   pauseCalls = 0;
   loadCalls = 0;
@@ -173,6 +174,22 @@ test("a browser media pause returns the control to Listen", () => {
   const view = render(node());
   fireEvent.click(view.getByRole("button", { name: `Listen : ${FIRST}` }));
   act(() => { audioCalls[0].emit("playing"); audioCalls[0].emit("pause"); });
+  assert.ok(view.getByRole("button", { name: `Listen : ${FIRST}` }));
+});
+
+test("natural completion preserves the native pause then ended sequence", () => {
+  const view = render(node());
+  fireEvent.click(view.getByRole("button", { name: `Listen : ${FIRST}` }));
+  const audio = audioCalls[0];
+  act(() => audio.emit("playing"));
+  audio.currentTime = 2.5;
+  audio.ended = true;
+  act(() => audio.emit("pause"));
+  assert.equal(audio.src, audio.initialSrc, "natural pause must not unload before ended");
+  assert.equal(audio.loadCalls, 0);
+  act(() => audio.emit("ended"));
+  assert.equal(audio.src, "");
+  assert.equal(audio.loadCalls, 1);
   assert.ok(view.getByRole("button", { name: `Listen : ${FIRST}` }));
 });
 

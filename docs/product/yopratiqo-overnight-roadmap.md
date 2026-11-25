@@ -56,7 +56,7 @@ availability varies by course, base language, platform and subscription.
 | Interests | Local Parma reason only | 48 authored mini-mission variants: dialogue, venue choice, directions, typed noun recall, changed exit route, later error review | Destination-specific cultural variants throughout the full curricula; these mini-missions are not complete replacement courses |
 | Cinema | Travel MP4s and three still-only mission slots | Three actual 5-second motion clips; opening/success/backpack slots use verified local MP4s | Bespoke destination/mission footage and each specific earned artifact; the generic backpack clip does not display an invented reward |
 | Speech | Bounded eight-language server implementation deployed but disabled | Kept bounded, no new live requests; locale aliases aligned | Server API credential, live audio QA in all eight languages, measured quotas/payment funding, then activation |
-| Recordings | 176 gaps in intro/current Italian inventory; 785 existing MP3 files verified | Prepared audio release adds 255 exact-text clips: all seven introductions and all eight interest corpora resolve actual recordings; Italian inventory reaches 821/836 phrases. Compact client index, exact-byte hashes and independent ASR/silence checks | Exact-head CI and production delivery for this audio lot; fifteen held Italian slash phrases; full EN/ES/FR recordings are being generated separately; native listening approval remains outstanding. Device voice is a disclosed preview for unresolved phrases |
+| Recordings | 176 gaps in intro/current Italian inventory; 785 existing MP3 files verified | PR #482 deployed 255 exact-text clips: all seven introductions and all eight interest corpora resolve actual recordings; Italian inventory reaches 821/836 phrases. Every new public MP3 matches its reviewed SHA-256 and has immutable cache headers | Fifteen Italian slash phrases remain missing in this deployed lot; the full EN/ES/FR and Italian correction recordings are a separate generation/QC batch. Native listening approval remains outstanding. Device voice is a disclosed preview for unresolved phrases |
 | Pass pilot | Local/test-only transaction rehearsal; production purchases off | Preserved; no live sale or price activation in this increment | Hosted account/Checkout/webhook/refund lifecycle, complete stage-depth audit, tax/access-channel verification and real authorized test evidence |
 | Daily loop | Italian preview foundation merged, gated | Public local review improves; gated server daily loop remains gated | Required ownership/import/reset, abuse controls, two-device and offline-delivery evidence before broad activation |
 | Teacher/Café | Existing links/invitation contracts | Existing destinations preserved, no transcript sharing | Consent-approved exact teacher brief, retention/expiry and real booking handoff validation |
@@ -103,6 +103,33 @@ The browser gates also caught and fixed a Mandarin recall focus race; input focu
 survives delayed heading focus, and an unfinished IME composition cannot be graded
 by Enter. Course navigation now requests pages on demand without speculative
 prefetches. The production record is listed below.
+
+## Fourth lot: deeper German and Brazilian Portuguese foundations
+
+Prepared after verified production PR #482. Each course now contains 12 units,
+36 lessons, 232 practice activities, 180 vocabulary references and 72 unit
+questions. German has 179 distinct vocabulary strings; Brazilian Portuguese has
+180. The four new units add 84 activities and twelve three-turn dialogues per
+language, with explicit grammar, contextual reading, recall, production and
+primary-source cultural notes rendered in the actual unit player.
+
+German adds shopping and quantities, home and location, past events, and reasons
+or changed plans. Brazilian Portuguese adds people and routines, shopping and
+comparisons, completed events versus background, and shared projects. Each has a
+new 24-question written final covering all twelve units. The original eight
+units, 16-question final and eight-question cultural final remain byte-identical.
+The old final stays at `/bilan-initial`; `/final` uses a separate new assessment ID.
+Old scores do not become new-final evidence, and earlier independent checkpoints
+remain valid. New written checks do not depend on missing recordings.
+
+Independent content and integration reviews, typecheck, lint, and all original
+content/player/audio regressions have passed. The new mobile browser gate is
+prepared to enter all 72 unit answers and 24 new-final answers through the actual
+controls, play all 24 required legacy recordings through their real `ended`
+events, verify the eight-/twelve-unit boundary, and restore the final without a
+second submission. Exact-head CI, browser results and production verification
+remain required before this lot is called deployed. New-unit audio coverage is
+still incomplete; the original published recording sets retain their full checks.
 
 ## Commercial decisions retained
 
@@ -153,5 +180,7 @@ release progresses; a prepared change is not yet a production release.
 - First production deployment: `dpl_GiL9SWg7bD59WSBbCGdGpETDZPoo`, READY and assigned to pratiqo.ca/www.pratiqo.ca. The 24 public smoke checks passed, including exact hashes for all three new MP4s. No runtime errors were returned in the first five-minute log window; this is a short observation window, not an uptime guarantee. Live speech remains disabled.
 - Second release: [PR #481](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/481), merged at `89e8bbe780a339f7472b7811d80bc0f611957453`. All 11 GitHub workflows and both Vercel builds passed on the exact final head, including the foundation and onboarding Chromium/macOS WebKit gates.
 - Second production deployment: `dpl_6k8oqubLzeE7PMWD6cfm1mfjxsqg`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 24 public checks passed: twelve course pages, six actual contextual review responses, five malformed/missing/final-item boundaries, and disabled live speech. No error/fatal runtime logs were returned in the first five-minute observation window. Review returns one public authored practice item, not learner records or a complete course bundle.
+- Third release: [PR #482](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/482), merged at `c1bbb66ea8ebb7488e4de2247271e1e1febcfad8` after all six triggered GitHub workflows and both Vercel builds passed. Independent review verified all 255 clip hashes and the compact-index boundary.
+- Third production deployment: `dpl_Ckd6mMQQSGmhXcBwAgy4h8AUXK81`, READY and assigned to pratiqo.ca/www.pratiqo.ca. All 255 public MP3s returned the reviewed bytes (6,559,441 total) with audio MIME and one-year immutable caching; disabled live speech remained unchanged. No error/fatal logs were returned in the first five-minute observation window.
 - Morning verification: scheduled for November 25 around 08:00 Toronto; it must
   read current GitHub/deployment state and this ledger, not repeat stale claims.

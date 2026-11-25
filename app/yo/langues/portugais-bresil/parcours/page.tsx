@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { GermanCourseDashboard } from "@/components/yo/german/GermanCourseDashboard";
 import {
   portugueseCatalog,
+  portugueseSources,
   portugueseCourseUnits,
   portugueseFinal,
   portugueseCultureFinal,
@@ -35,6 +36,7 @@ export default async function PortugueseCoursePage({
     <GermanCourseDashboard
       locale={getYoLocale((await searchParams).lang)}
       catalog={portugueseCatalog}
+      sources={portugueseSources}
       audioReady={[
         ...portugueseCourseUnits.flatMap(portugueseUnitSpeech),
         ...assessmentSpeech(portugueseFinal),

@@ -36,7 +36,8 @@ export function useCourseExperience() {
         hasCultureFinal: true,
         name: "Português do Brasil",
         progressKey: PORTUGUESE_PROGRESS_KEY,
-        finalId: "ptbr1-final",
+        finalId: "ptbr1-foundations-final",
+        legacyFinalId: "ptbr1-final",
         draftPrefix: "portuguese-br",
         href: portugueseCourseHref,
         title: {
@@ -55,7 +56,8 @@ export function useCourseExperience() {
         hasCultureFinal: true,
         name: "Deutsch",
         progressKey: GERMAN_PROGRESS_KEY,
-        finalId: "de1-final",
+        finalId: "de1-foundations-final",
+        legacyFinalId: "de1-final",
         draftPrefix: "german",
         href: germanCourseHref,
         title: {

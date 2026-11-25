@@ -135,7 +135,7 @@ function GermanAssessmentSession({ assessment, locale, onComplete, resultAction,
           <Link prefetch={false} className={outline} href={experience.href(locale)}>
             {c.course}
           </Link>
-          {experience.hasCultureFinal && assessment.id === experience.finalId ? (
+          {experience.hasCultureFinal && (assessment.id === experience.finalId || ("legacyFinalId" in experience && assessment.id === experience.legacyFinalId)) ? (
             <Link
             prefetch={false}
               className={outline}

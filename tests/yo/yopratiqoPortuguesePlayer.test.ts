@@ -141,12 +141,12 @@ for (const locale of ["fr", "en", "es"] as const)
       .getAllByRole("link")
       .filter((a) => /\/parcours\/u\d/.test(a.getAttribute("href") ?? ""));
     assert.equal(links.length, 1);
-    // The current eight-unit map is paged 3 + 3 + 2; only the first stop is open.
-    assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,2);
-    click(dashboard.getByRole('button',{name:{fr:'Étapes suivantes',en:'Next stops',es:'Etapas siguientes'}[locale]}));
+    // The twelve-unit map has three pages of four; only the first stop is open.
     assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,3);
     click(dashboard.getByRole('button',{name:{fr:'Étapes suivantes',en:'Next stops',es:'Etapas siguientes'}[locale]}));
-    assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,catalog.units.length-6);
+    assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,4);
+    click(dashboard.getByRole('button',{name:{fr:'Étapes suivantes',en:'Next stops',es:'Etapas siguientes'}[locale]}));
+    assert.equal(dashboard.container.querySelectorAll('[data-unlocked="false"]').length,catalog.units.length-8);
     assert.equal(dashboard.container.querySelector('.yo-shared-continue'),null);
     assert.equal(
       dashboard
