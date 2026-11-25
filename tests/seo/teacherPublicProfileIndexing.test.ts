@@ -190,7 +190,7 @@ test("French SEO title and description match product copy", () => {
 
 test("legacy teacher profile route redirects indexable teachers to /professeurs slug", () => {
   const pageSrc = read("app/teacher/profile/[id]/page.tsx");
-  assert.match(pageSrc, /redirect\(`\/professeurs\//);
+  assert.match(pageSrc, /permanentRedirect\(`\/professeurs\//);
   assert.match(pageSrc, /teacherPublicProfileRobots/);
 });
 

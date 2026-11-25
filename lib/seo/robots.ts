@@ -28,7 +28,9 @@ export function getRobotsTxtRules() {
   return [
     {
       userAgent: "*",
-      allow: "/",
+      // Crawlers need public legacy details to read their canonical redirect or
+      // noindex. The trailing slash keeps the listing and private teacher routes blocked.
+      allow: ["/", "/teacher/profile/"],
       disallow: [...ROBOTS_DISALLOW_PATHS],
     },
   ];

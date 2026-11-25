@@ -28,5 +28,5 @@ assert.deepEqual(filterPublicTeachers([teacher,remote],publicSearchFilters({ q:"
 assert.equal(filterPublicTeachers([teacher,remote],publicSearchFilters({q:"guitarra",format:"online"})).length,2);
 assert.equal(filterPublicTeachers([teacher],publicSearchFilters({place:"Montréal, QC",format:"hybrid"})).length,0);
 const idPage = readFileSync("app/teacher/profile/[id]/page.tsx","utf8");
-assert.match(idPage,/redirect\(`\/professeurs\/.+\$\{suffix\}/);
+assert.match(idPage,/permanentRedirect\(`\/professeurs\/.+\$\{suffix\}/);
 console.log("Anonymous filters, selected lesson, canonical return and onboarding continuation passed.");

@@ -74,7 +74,7 @@ test("Googlebot and OAI-SearchBot inherit public access without overriding priva
   const rules = getRobotsTxtRules();
   assert.equal(rules.length, 1);
   assert.equal(rules[0].userAgent, "*");
-  assert.equal(rules[0].allow, "/");
+  assert.deepEqual(rules[0].allow, ["/", "/teacher/profile/"]);
   for (const path of ["/admin", "/student", "/teacher", "/api/", "/checkout"]) {
     assert.ok(rules[0].disallow.some(prefix => path.startsWith(prefix) || prefix === `${path}/`), path);
   }
