@@ -53,16 +53,15 @@ def verify(browser, engine, course, locale, width):
       HTMLMediaElement.prototype.play = function(){if(this.tagName==='AUDIO')window.__foundationAudio++;return play.call(this);};""")
     requests, errors, failed_requests = [], [], []
 
-    def route_request(route):
-        url = urlsplit(route.request.url)
-        requests.append(url.path)
-        route.fulfill(status=503, content_type="application/json", body='{"available":false}')
+    def observe_request(request):
+        url = urlsplit(request.url)
+        if "/api/yo/speech/" in url.path or "/auth/v1/" in url.path or url.hostname == "api.openai.com":
+            requests.append(url.path)
 
-    # Observe the real page's ordinary network directly. Intercept only services
-    # that this backend-free journey must never call, including during teardown.
-    context.route("**/api/yo/speech/**", route_request)
-    context.route("**/auth/v1/**", route_request)
-    context.route("https://api.openai.com/**", route_request)
+    # No interception: even unmatched WebKit routes change navigation/cache
+    # behavior. This shell has no speech backend or real account credentials.
+    # Assert every forbidden request and page error instead of hiding failures.
+    context.on("request", observe_request)
     page = context.new_page()
     page.set_default_timeout(15000)
     page.set_default_navigation_timeout(90000)
