@@ -232,7 +232,12 @@ test("routes preserve locale, isolate client data and expose the Brazilian cours
   );
   assert.match(
     readFileSync("lib/yo/publicCatalog.ts", "utf8"),
-    /portugais-bresil\/parcours/,
+    /portugais-bresil\/demarrer/,
+  );
+  assert.equal(
+    JSON.parse(readFileSync("lib/yo/shared/content/portugais-bresil.json", "utf8")).legacyPath,
+    "/yo/langues/portugais-bresil/parcours",
+    "the public introduction retains access to the existing extended course",
   );
   for (const name of [
     "GermanCourseDashboard",

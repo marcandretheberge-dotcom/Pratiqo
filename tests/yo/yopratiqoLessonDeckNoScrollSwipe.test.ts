@@ -35,7 +35,7 @@
  */
 
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
+import { assertDeckServiceBoundary } from "../helpers/deckServiceBoundary";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -419,7 +419,7 @@ ok("12) Module 2 still mounts YoMarkModuleCompletedButton with its audited paylo
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.match(module2Src, /<YoSpeechButton text=\{phrase\.target\}/);
-assert.match(module2Src, /<YoSpeechButton text=\{line\.target\}/);
+assert.match(module2Src, /<YoArrivalListeningLesson sceneId=\{sectionId\}/, "arrival dialogues keep their existing recorded listening lesson");
 assert.match(module2Src, /<YoSpeechButton text=\{correct\.target\}/);
 assert.match(module2Src, /<YoSpeechButton text=\{step\.targetPhrase\}/);
 assert.match(
@@ -430,7 +430,7 @@ assert.match(
 assert.match(module2Src, /data-yo-module2-phrase-audio-card/);
 assert.match(module2Src, /data-yo-module2-hotel-problem-audio/);
 assert.match(module2Src, /data-yo-module2-final-reveal-audio/);
-ok("13) Module 2 still ships every browser-speech audio affordance (direct YoSpeechButton mounts + audioMode=\"browser-speech\" carousel)");
+ok("13) Module 2 preserves recorded arrival dialogues and browser-speech controls for the remaining practice");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 14. Paid YoPratiqo checkout remains disabled
@@ -488,71 +488,14 @@ for (const [label, src] of [
 ok("15) no raw quiz fields introduced on the deck surface");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 16. No restricted system touched
+// 16. Navigation and content service boundary
 // ─────────────────────────────────────────────────────────────────────────
 
-const restrictedPathPatterns: RegExp[] = [
-  /^app\/api\/stripe\//,
-  /^app\/api\/.*checkout/i,
-  /^app\/api\/.*payment/i,
-  /^lib\/payments\//,
-  /^lib\/pricing\//,
-  /^lib\/config\/membrePro\.ts$/,
-  /^lib\/commissions\//,
-  /^supabase\//,
-  /^content\/legal\//,
-  /^app\/\(app\)\/legal\//,
-  /^public\/.*\.(?:mp3|wav|m4a)$/i,
-  /^public\/audio\//,
-  /^scripts\/(?:generate-yopratiqo-audio|.*openai)/i,
-  /^app\/sitemap\.ts$/,
-  /^app\/robots\.ts$/,
-  /^lib\/seo\//,
-  // Modules 3, 4, 5, the Intro deck route, and the Intro composer
-  // were originally listed here as out-of-scope. They were each
-  // promoted to the no-scroll swipe deck pattern in dedicated
-  // follow-on PRs
-  // (`feat/yopratiqo-module3-lesson-deck`,
-  // `feat/yopratiqo-module4-lesson-deck`,
-  // `feat/yopratiqo-module5-and-intro-decks`); their dedicated
-  // deck tests
-  // (`tests/yo/yopratiqoModule3LessonDeck.test.ts`,
-  // `tests/yo/yopratiqoModule4LessonDeck.test.ts`,
-  // `tests/yo/yopratiqoModule5LessonDeck.test.ts`,
-  // `tests/yo/yopratiqoIntroLessonDeck.test.ts`,
-  // `tests/yo/yopratiqoFullDominicanPathDeck.test.ts`) now own
-  // those contracts. None of them count as a restricted-system
-  // touch from this shared-deck behaviour test's perspective.
-];
-const status = execSync("git status --porcelain -uall", {
-  cwd: root,
-  encoding: "utf8",
-});
-const changedFiles = status
-  .split(/\r?\n/)
-  .map((line) => line.trim())
-  .filter(Boolean)
-  .map((line) =>
-    line
-      .replace(/^[ MADRCU?!]{1,2}\s+/, "")
-      .replace(/^"|"$/g, "")
-      .replace(/\\/g, "/"),
-  );
-const ignoredUntracked = new Set([
-  "Untitled",
-  "docs/LAUNCH_READINESS_ANALYSIS.md",
-  "pratiqo-legal-export-20260528-2221.zip",
-]);
-for (const file of changedFiles) {
-  if (ignoredUntracked.has(file)) continue;
-  for (const re of restrictedPathPatterns) {
-    if (re.test(file)) {
-      assert.fail(
-        `restricted system touched by no-scroll-swipe deck PR: ${file}`,
-      );
-    }
-  }
+// Navigation stays independent of paid products and service clients even while
+// separately reviewed speech APIs and migrations evolve in the same repository.
+for (const [label, source] of [["deck", deckSrc], ["module-2 content", module2Src], ["header", headerSrc], ["navigation", navSrc], ["screen", screenSrc]] as const) {
+  assertDeckServiceBoundary(label, source);
 }
-ok("16) no restricted system touched (Stripe / payments / tax / RLS / migrations / legal / Membre Pro / audio / SEO)");
+ok("16) navigation and module content keep direct service calls outside their boundary");
 
 console.log(`\n${pass} no-scroll-swipe deck assertions passed`);

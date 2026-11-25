@@ -898,6 +898,8 @@ export function DominicanRepublicIntroContent({
       <YoLessonDeck
         locale={locale}
         moduleLabel={t(DECK_MODULE_LABEL, locale)}
+        speechPractice={{ language: "es", scenarioId: "introduction" }}
+        travelDestination={{ country: "DO", city: "Santo Domingo" }}
         backHref={backHref}
         toggleHref={toggleHref}
         screens={screens}

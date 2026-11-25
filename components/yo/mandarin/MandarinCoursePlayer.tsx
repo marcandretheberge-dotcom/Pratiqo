@@ -4,7 +4,7 @@ import type { JourneyUnit } from "@/lib/yo/learningJourney";
 import { mandarinJourney, canEnterFoundationStep } from "@/lib/yo/foundationJourney";
 import { CourseJourneyGate } from "../journey/CourseJourney";
 import { FoundationJourneyAdvance } from "../journey/FoundationJourneyAdvance";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -37,6 +37,10 @@ import {
   toneExercise,
 } from "@/lib/yo/mandarin/activities";
 import { useMandarinProgress } from "./useMandarinProgress";
+import { MissionFilm } from "../travel/MissionFilm";
+import { useMissionCinema } from "../travel/useMissionCinema";
+import { YoSpeechPractice } from "../speech/YoSpeechPractice";
+import { courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
 
 export function mandarinStages(unit: Unit) {
   return unit.id === "bilan"
@@ -95,6 +99,11 @@ export function MandarinCoursePlayer({
     finalIds.some(id => Boolean(progress.results[id] || progress.drafts[id]));
   const allowed = canEnterFoundationStep(journey, unit.id, finalStarted);
   const finalOpen = canEnterFoundationStep(journey, "bilan", finalStarted);
+  const { scene, present, finish: finishMission } = useMissionCinema("zh:foundations", { active: ready && allowed });
+  useEffect(() => {
+    if (!ready || !allowed) return;
+    present({ id: `${unit.id}:start`, kind: "mission-start", title: unit.title[locale], detail: unit.setting[locale] });
+  }, [ready, allowed, unit, locale, present]);
   const href = (id?: string) => buildYoLocaleHref(MANDARIN_PATH + (id ? "/" + id : ""), locale);
   const stages = mandarinStages(unit);
   const step = Math.min(progress.steps[unit.id] ?? 0, stages.length - 1);
@@ -224,7 +233,7 @@ export function MandarinCoursePlayer({
             }
           </p>
         )}
-        <AdventureProgress journey={journey} world="mandarin" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} />
+        <AdventureProgress journey={journey} world="mandarin" locale={locale} ready={ready} finalPassed={finalIds.length > 0 && finalIds.every(id => progress.results[id]?.passed && progress.results[id]?.independent)} cinematic />
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <label className="min-w-0 flex-1">
             <span className="sr-only">
@@ -533,6 +542,7 @@ export function MandarinCoursePlayer({
               {unit.id === "bilan" ? <Link href={href()} className="inline-flex min-h-11 items-center gap-2 text-teal-900 underline"><BookOpen size={18} />{L("Voir le parcours", "View the journey", "Ver el recorrido")[locale]}</Link> : <FoundationJourneyAdvance journey={journey} unitId={unit.id} locale={locale} href={href} finalOpen={finalOpen} />}
             </section>
           )}
+          {!currentExercise && unit.id !== "bilan" && !scene && <div className="mt-6"><YoSpeechPractice key={unit.id} language="zh" locale={locale} scenarioId={courseSpeechScenario("zh", unit.number)}/></div>}
         </div>
       </div>
       <div className="h-44 shrink-0" aria-hidden />
@@ -659,6 +669,7 @@ export function MandarinCoursePlayer({
           }}
         />
       )}
+      {scene && <MissionFilm scene={scene} locale={locale} onContinue={finishMission}/>}
     </div>
   );
 }

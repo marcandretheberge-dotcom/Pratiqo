@@ -11,9 +11,14 @@ on:
       - 'public/companion/travel/journal/**'
       - 'tests/yo/yopratiqoJournal.browser.py'
       - 'tests/yo/yopratiqoTravelFilms.browser.py'
+      - 'tests/yo/yopratiqoPremiumCinema.browser.py'
       - 'tests/yo/yopratiqoTravelFilmRoutes.test.ts'
       - 'components/yo/travel/**'
       - 'lib/yo/travelCinema.ts'
+      - 'components/yo/learning/YoLessonPractice.tsx'
+      - 'components/yo/speech/**'
+      - 'lib/yo/speech/**'
+      - 'lib/yo/shared/speechLanguage.ts'
       - 'components/yo/italian/travel/ItalianTravelNavigator.tsx'
       - 'public/companion/travel/films/**'
       - 'app/yo/langues/espagnol/pays/republique-dominicaine/intro/page.tsx'
@@ -69,6 +74,7 @@ jobs:
           node --import tsx tests/yo/yopratiqoTravelFilmRoutes.test.ts
           python tests/yo/yopratiqoJournal.browser.py
           python tests/yo/yopratiqoTravelFilms.browser.py
+          python tests/yo/yopratiqoPremiumCinema.browser.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

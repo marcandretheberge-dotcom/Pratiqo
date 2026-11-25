@@ -6,6 +6,7 @@ import {
   orderCafeHeaderRules,
 } from "./lib/security/cafeRoomHeaders";
 import { localDiscoveryRedirects } from "./lib/seo/localDiscoveryRedirects";
+import { yoSpeechHeaderRules } from "./lib/security/yoSpeechHeaders";
 
 /** Base connect-src (production-safe). Optional local sandbox origin appended only via CAFE_LOCAL_SUPABASE_CONNECT_ORIGIN. */
 function buildConnectSrcDirective(env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env): string {
@@ -172,7 +173,8 @@ const nextConfig: NextConfig = {
   async headers() {
     // Permissions-Policy: site-wide deny by default. Café room routes override
     // afterward (last matching source wins) and may delegate camera/mic to the
-    // configured Daily origin only. Screen capture stays disabled.
+    // configured Daily origin only. Yo speaking lessons permit the same-origin
+    // microphone after explicit learner consent. Screen capture stays disabled.
     const routeHeaders: { key: string; value: string }[] = [
       { key: "Content-Security-Policy", value: buildCspValue() },
       { key: "X-Frame-Options", value: "SAMEORIGIN" },
@@ -193,10 +195,13 @@ const nextConfig: NextConfig = {
       });
     }
 
-    return orderCafeHeaderRules({
-      defaultHeaders: routeHeaders,
-      cafeRoomPermissionsPolicy: buildCafeRoomPermissionsPolicy(),
-    });
+    return [
+      ...orderCafeHeaderRules({
+        defaultHeaders: routeHeaders,
+        cafeRoomPermissionsPolicy: buildCafeRoomPermissionsPolicy(),
+      }),
+      ...yoSpeechHeaderRules(),
+    ];
   },
 };
 

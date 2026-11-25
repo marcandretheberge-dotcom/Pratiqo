@@ -37,6 +37,8 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { getSupabaseClient } from "@/lib/supabase";
+import { MissionFilm } from "./travel/MissionFilm";
+import { useMissionCinema } from "./travel/useMissionCinema";
 import type { YoLocale } from "@/lib/yo/types";
 import type {
   ProgressState,
@@ -118,6 +120,7 @@ export function YoMarkModuleCompletedButton({
   const l = safeLocale(locale);
   const copy = COPY[l];
   const [state, setState] = useState<ButtonState>({ phase: "idle" });
+  const { scene, present, finish } = useMissionCinema(`saved:${payload.course_id}:${payload.module_id}`, { active: state.phase === "saved" && (payload.progress_state ?? "completed") === "completed" });
 
   const handleClick = useCallback(async () => {
     setState({ phase: "saving" });
@@ -150,11 +153,12 @@ export function YoMarkModuleCompletedButton({
         return;
       }
       setState({ phase: "saved" });
+      if ((payload.progress_state ?? "completed") === "completed") present({ id: `${payload.module_id}:saved`, kind: "mission-success", title: payload.module_title, detail: copy.saved });
     } catch {
       // Never block lesson content on a transient failure.
       setState({ phase: "failed" });
     }
-  }, [payload]);
+  }, [payload, present, copy.saved]);
 
   const isBusy = state.phase === "saving";
   const isDone = state.phase === "saved";
@@ -200,6 +204,7 @@ export function YoMarkModuleCompletedButton({
           {statusLine}
         </p>
       ) : null}
+      {scene && <MissionFilm scene={scene} locale={l} onContinue={finish}/>}
       <p className="text-[11px] leading-relaxed text-[#0F6E56]/65">
         {copy.privacy}
       </p>

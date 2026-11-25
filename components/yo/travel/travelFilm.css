@@ -3,7 +3,8 @@
 .yo-film-screen { aspect-ratio: 3 / 2; position: relative; overflow: hidden; background: #203136; }
 .yo-film-screen video { width: 100%; height: 100%; object-fit: contain; display: block; }
 .yo-film-skip { position: absolute; top: 8px; right: 9px; min-height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 13px; border-radius: 25px; font-size: .88rem; font-weight: 650; background: rgb(15 31 36 / 83%); color: white; }
-.yo-film-caption { padding: 12px 17px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.yo-film-caption { padding: 12px 17px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.yo-film-heading { flex: 1 1 12rem; min-width: 0; overflow-wrap: anywhere; }
 .yo-film-caption p { margin: 0 0 2px; color: #c1d9ce; font-size: .79rem; }
 .yo-film-caption h2 { margin: 0; color: #fffaf0; font-size: clamp(1.15rem, 4.6vw, 1.6rem); font-weight: 680; line-height: 1.2; outline: none; }
 .yo-film-caption h2 span[aria-hidden] { color: #a7c3b5; }
@@ -12,3 +13,7 @@
 .yo-film-continue { padding: 0 12px; }
 .yo-film button:focus-visible { outline: 3px solid #ffd38d; outline-offset: -3px; }
 .yo-film-error { margin: 0; padding: 0 17px 13px; font-size: .9rem; color: #dbe6de; }
+.yo-film-subtitles { position: absolute; inset-inline: 12px; bottom: 10px; width: fit-content; max-width: calc(100% - 24px); margin: 0 auto; padding: 7px 11px; border-radius: 8px; background: rgb(9 24 29 / 88%); color: #fffaf0; text-align: center; font-size: clamp(.85rem, 2.8vw, 1rem); line-height: 1.45; pointer-events: none; }
+.yo-film-footer { padding: 0 17px 15px; display: flex; justify-content: flex-end; }
+.yo-film-footer .yo-film-continue { display: flex; gap: 8px; background: #dceadd; color: #14262c; border-color: #dceadd; }
+.yo-film-control[aria-pressed="true"] { background: #29483d; }

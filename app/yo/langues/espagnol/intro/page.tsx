@@ -656,6 +656,7 @@ export default async function YoEspagnolIntroPage({ searchParams }: PageProps) {
     <YoLessonDeck
       locale={locale}
       moduleLabel={t(meta.moduleLabel, locale)}
+      speechPractice={{ language: "es", scenarioId: "introduction" }}
       backHref={backHref}
       toggleHref={toggleHref}
       screens={screens}

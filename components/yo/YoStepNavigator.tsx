@@ -215,7 +215,7 @@ export function YoStepNavigator({
   // Keyboard arrow navigation. Doesn't hijack typing in form fields.
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.defaultPrevented || document.querySelector("dialog[open]")) return;
+      if (event.defaultPrevented || document.querySelector('dialog[open], [role="dialog"][data-state="open"]')) return;
       const target = event.target as HTMLElement | null;
       if (target) {
         const tag = target.tagName?.toLowerCase();

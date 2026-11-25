@@ -55,8 +55,9 @@
  *
  * Privacy / safety profile
  * ------------------------
- *   • No API calls, payment library, Supabase write,
- *     quiz storage, no AI summary, no analytics.
+ *   • Navigation never submits answers or writes assessed progress.
+ *     Optional speaking practice is isolated in its own consent-gated
+ *     client component; payment and completion remain outside the deck.
  */
 
 import {
@@ -93,6 +94,13 @@ import {
   DECK_STAGE_CLASSES,
 } from "@/lib/yo/lessonDeckVisualContract";
 import type { YoLocale } from "@/lib/yo/types";
+import type { SpeechLanguage, SpeechScenarioId } from "@/lib/yo/speech/catalog";
+import { YoSpeechPractice } from "./speech/YoSpeechPractice";
+import { MissionFilm } from "./travel/MissionFilm";
+import { useMissionCinema } from "./travel/useMissionCinema";
+import { useTravelCinema } from "./travel/useTravelCinema";
+import { TravelFilm } from "./travel/TravelFilm";
+import type { TravelPlace } from "@/lib/yo/travelCinema";
 
 export type YoLessonDeckProps = {
   locale: YoLocale;
@@ -111,6 +119,10 @@ export type YoLessonDeckProps = {
   initialIndex?: number;
   /** Free introductions only. Saves navigation bookmarks, never assessed progress. */
   explorationJourney?: IntroJourneyId;
+  /** Optional oral roleplay, separate from this deck's assessed completion. */
+  speechPractice?: { language: SpeechLanguage; scenarioId: SpeechScenarioId };
+  /** Coordinate the arrival before the first mission film. */
+  travelDestination?: TravelPlace;
   /**
    * Opt-in tap-zone navigation. When enabled, a clean tap on
    * the left ~30 % of the stage area is treated as Back and a
@@ -226,6 +238,8 @@ export function YoLessonDeck({
   screens,
   initialIndex = 0,
   explorationJourney,
+  speechPractice,
+  travelDestination,
   enableTapNavigation = false,
   allowScreenScroll = true,
   variant = "standard",
@@ -242,6 +256,19 @@ export function YoLessonDeck({
 
   const screenIds = useMemo(() => screens.map(screen => screen.id), [screens]);
   const exploration = useExplorationJourney(explorationJourney, screenIds, safeInitial);
+  const { leg, depart, finish: finishTravel } = useTravelCinema();
+  const [arrived, setArrived] = useState(false);
+  const country = travelDestination?.country, city = travelDestination?.city;
+  useEffect(() => {
+    if (country && city) depart({ country, city }, () => setArrived(true));
+  }, [country, city, depart]);
+  const cinemaScope = `deck:${toggleHref.split("?")[0]}`;
+  const { scene, present, finish: finishMission } = useMissionCinema(cinemaScope, { active: Boolean(speechPractice) && exploration.ready && (!travelDestination || arrived) && !leg });
+  const hasSpeechPractice = Boolean(speechPractice);
+  useEffect(() => {
+    if (!hasSpeechPractice || !exploration.ready || total === 0) return;
+    present({ id: `${cinemaScope}:start`, kind: "mission-start", title: moduleLabel });
+  }, [hasSpeechPractice, exploration.ready, total, cinemaScope, moduleLabel, present]);
   const currentIndex = exploration.index;
   const setCurrentIndex = exploration.move;
   const [referenceStepGate, setReferenceStepGate] =
@@ -280,7 +307,7 @@ export function YoLessonDeck({
   // working.
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.defaultPrevented || document.querySelector("dialog[open]")) return;
+      if (event.defaultPrevented || document.querySelector('dialog[open], [role="dialog"][data-state="open"]')) return;
       // Don't hijack typing in form fields (none today, but
       // kept as a guard so future per-screen inputs stay safe).
       const target = event.target as HTMLElement | null;
@@ -493,6 +520,7 @@ export function YoLessonDeck({
             <YoLessonDeckStepGateContext.Provider value={referenceStepGateContext}>
               <ReferenceLessonScreen screen={activeScreen} />
             </YoLessonDeckStepGateContext.Provider>
+            {speechPractice && !scene && !leg && ["mission", "dialogue", "culture", "summary", "completion"].includes(activeScreen.kind) && <div data-no-deck-swipe data-no-deck-tap><YoSpeechPractice key={activeScreen.id} {...speechPractice} locale={locale}/></div>}
           </main>
 
           <DeckYoppoCoach locale={locale} screen={activeScreen} />
@@ -523,6 +551,8 @@ export function YoLessonDeck({
               </button>
             </div>
           </footer>
+          {scene && <MissionFilm scene={scene} locale={locale} onContinue={finishMission}/>}
+          {leg && <TravelFilm leg={leg} locale={locale} onArrival={finishTravel}/>}
         </div>
       </div>
     );
@@ -637,6 +667,7 @@ export function YoLessonDeck({
                 locale={locale}
                 viewportLocked={!allowScreenScroll}
               />
+              {isActive && speechPractice && !scene && !leg && ["mission", "dialogue", "culture", "summary", "completion"].includes(screen.kind) && <div data-no-deck-swipe data-no-deck-tap><YoSpeechPractice key={screen.id} {...speechPractice} locale={locale}/></div>}
             </div>
           );
         })}
@@ -650,6 +681,8 @@ export function YoLessonDeck({
         onPrev={goPrev}
         onNext={goNext}
       />
+      {scene && <MissionFilm scene={scene} locale={locale} onContinue={finishMission}/>}
+      {leg && <TravelFilm leg={leg} locale={locale} onArrival={finishTravel}/>}
     </div>
   );
 }

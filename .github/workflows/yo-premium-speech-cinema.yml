@@ -1,0 +1,48 @@
+name: Yo speech and cinema
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/yo-premium-speech-cinema.yml'
+      - 'app/api/yo/speech/**'
+      - 'app/yo/langues/**'
+      - 'components/yo/**'
+      - 'lib/yo/**'
+      - 'lib/security/yoSpeechHeaders.ts'
+      - 'next.config.ts'
+      - 'public/companion/travel/**'
+      - 'scripts/generate-yopratiqo-premium-recordings.ts'
+      - 'scripts/lib/**'
+      - 'supabase/migrations/*yo_speech*'
+      - 'tests/yo/**'
+      - 'tests/helpers/**'
+      - 'tests/security/yoSpeechHeaders.test.ts'
+      - 'package*.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Server authorization, budget, microphone lifecycle and route permissions
+        run: npm run test:yo-speech
+      - name: Film playback, fallback, progression and audio ownership
+        run: npm run test:yo-cinema
+      - name: Offline recording plan, provider protocol and verified publication
+        run: npm run test:yo-premium-recordings
+      - name: Recording plan performs no network calls
+        run: npm run generate:yo-premium-recordings -- --dry-run
