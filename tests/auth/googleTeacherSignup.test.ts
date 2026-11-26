@@ -93,7 +93,7 @@ test("login page renders Google login plus explicit account switching", () => {
   assert.match(page, /onClick=\{\(\) => void handleGoogleLogin\(\)\}/);
   assert.match(page, /forceAccountSelection:\s*options\?\.forceAccountSelection === true/);
   assert.match(page, /intent:\s*preAuthIntent/);
-  assert.match(page, /intentQuery:\s*intentParam === "student" \? "student" : preAuthIntent/);
+  assert.match(page, /intentQuery:\s*intentParam === "student" && preAuthIntent === "learner" \? "student" : preAuthIntent/);
   assert.match(page, /referralCode:\s*refCode/);
   assert.match(page, /disabled=\{!legalAccepted \|\| busy\}/);
 });

@@ -25,10 +25,10 @@
  *     booking time inside the booking modal — not here.
  *   • Surfaces honest auth-aware CTAs:
  *       - signed out → "Sign in to save my progress" (deep-links to
- *         `/login?next=/student/yopratiqo` so the user lands on their
+ *         `/login?next=/yo/mon-parcours` so the user lands on their
  *         own YoPratiqo hub right after OAuth);
  *       - signed in  → "See my YoPratiqo companion" (deep-links to
- *         `/student/yopratiqo`).
+ *         `/yo/mon-parcours`).
  *   • Always shows secondary "Start Dominican Republic" + tertiary
  *     "Find a teacher" CTAs, plus a footer link to the full Pratiqo
  *     progression at `/student/progress` so the cross-product bridge
@@ -117,7 +117,7 @@ function safeLocale(locale: YoLocale | undefined): YoLocale {
 // `sanitizeRelativeRedirectPath`, so deep-linking the post-OAuth
 // destination is safe.
 //
-// Sign-in deep-links to `/student/yopratiqo` so a learner who entered
+// Sign-in deep-links to `/yo/mon-parcours` so a learner who entered
 // through YoPratiqo lands back on the YoPratiqo hub (with their
 // companion + course path) right after OAuth, instead of being dumped
 // on the generic Pratiqo dashboard. The full Pratiqo progression at
@@ -125,8 +125,8 @@ function safeLocale(locale: YoLocale | undefined): YoLocale {
 // Pratiqo progress" affordance so the YoPratiqo ↔ Pratiqo bridge is
 // always one click away in both directions.
 const HREFS = {
-  signIn: "/login?next=/student/yopratiqo",
-  yopratiqoHub: "/student/yopratiqo",
+  signIn: "/login?next=/yo/mon-parcours",
+  yopratiqoHub: "/yo/mon-parcours",
   fullPratiqoProgress: "/student/progress",
   dominicanRepublic: "/yo/langues/espagnol/pays/republique-dominicaine",
   findTeacher: "/trouver-un-prof",

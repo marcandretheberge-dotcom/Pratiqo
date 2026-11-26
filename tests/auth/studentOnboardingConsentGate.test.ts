@@ -191,7 +191,7 @@ test("consent API authenticates before rate limiting and fails open when limiter
 
 test("unauthorized consent request still returns 401", () => {
   const route = read("app/api/student/onboarding-consent/route.ts");
-  assert.match(route, /if \(authError \|\| !user\)/);
+  assert.match(route, /if \(authError \|\| !user \|\| user\.is_anonymous\)/);
   assert.match(route, /error: "unauthorized"/);
 });
 

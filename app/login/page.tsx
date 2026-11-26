@@ -29,6 +29,8 @@ import { SkeletonBar } from "@/components/loading/AppSkeletons";
 import { useLocale } from "../../lib/locale-context";
 import { cn } from "../../lib/utils";
 
+import { productForPath, productLoginHref, productReturnPath } from "@/lib/auth/productReturn";
+
 function LoginForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -43,22 +45,24 @@ function LoginForm() {
   const nextParam = searchParams.get("next");
   const refCode = searchParams.get("ref") ?? undefined;
   const authError = searchParams.get("auth_error");
-  const preAuthIntent = resolvePreAuthIntent(intentParam, roleParam, nextParam);
-  const oauthNext = preAuthIntent
+  const product = productReturnPath(nextParam);
+  const productLabel = product && (productForPath(product) === "cafe" ? t("productCafeName") : "YoPratiqo");
+  const preAuthIntent = product ? null : resolvePreAuthIntent(intentParam, roleParam, nextParam);
+  const oauthNext = product ?? (preAuthIntent
     ? resolveLoginOAuthNextPath(roleParam, nextParam, intentParam ?? preAuthIntent)
-    : null;
+    : null);
 
   useEffect(() => {
-    if (loading || user || authError || preAuthIntent) return;
+    if (loading || user || authError || preAuthIntent || product) return;
     const params = new URLSearchParams();
     if (nextParam) params.set("next", nextParam);
     if (refCode) params.set("ref", refCode);
     const qs = params.toString();
     router.replace(qs ? `${CONNEXION_PATH}?${qs}` : CONNEXION_PATH);
-  }, [loading, user, authError, preAuthIntent, nextParam, refCode, router]);
+  }, [loading, user, authError, preAuthIntent, product, nextParam, refCode, router]);
 
   useEffect(() => {
-    if (loading || !user || !profileHydrated || authError) return;
+    if (loading || !user || (!product && !profileHydrated) || authError) return;
     if (!preAuthIntent && !nextParam) return;
 
     const destination = resolvePostLoginDestination({
@@ -72,8 +76,10 @@ function LoginForm() {
       return;
     }
 
-    clearPendingOnboardingIntentCookie();
-    clearPendingTeacherOnboardingCookie();
+    if (!product) {
+      clearPendingOnboardingIntentCookie();
+      clearPendingTeacherOnboardingCookie();
+    }
     clearOAuthReturnPending();
     router.replace(destination);
   }, [
@@ -84,6 +90,7 @@ function LoginForm() {
     preAuthIntent,
     nextParam,
     oauthNext,
+    product,
     profile,
     router,
   ]);
@@ -97,13 +104,13 @@ function LoginForm() {
   }, [loading, user, preAuthIntent, oauthNext]);
 
   const handleGoogleLogin = async (options?: { forceAccountSelection?: boolean }) => {
-    if (!preAuthIntent || !legalAccepted || busy || !oauthNext) return;
+    if (!legalAccepted || busy || !oauthNext) return;
     setBusy(true);
     setFormError(null);
     try {
       await loginWithGoogle(oauthNext, {
-        intent: preAuthIntent,
-        intentQuery: intentParam === "student" ? "student" : preAuthIntent,
+        intent: preAuthIntent ?? undefined,
+        intentQuery: intentParam === "student" && preAuthIntent === "learner" ? "student" : preAuthIntent ?? undefined,
         referralCode: refCode,
         forceAccountSelection: options?.forceAccountSelection === true,
       });
@@ -127,8 +134,10 @@ function LoginForm() {
       setFormError(t("loginGenericAuthError"));
       return;
     }
-    clearPendingOnboardingIntentCookie();
-    clearPendingTeacherOnboardingCookie();
+    if (!product) {
+      clearPendingOnboardingIntentCookie();
+      clearPendingTeacherOnboardingCookie();
+    }
     clearOAuthReturnPending();
     router.replace(destination);
   };
@@ -137,7 +146,7 @@ function LoginForm() {
     if (busy) return;
     setBusy(true);
     try {
-      await logout();
+      await logout(product ? { redirectTo: productLoginHref(product) } : undefined);
     } catch (e) {
       console.error("[login] sign out failed", e);
       alert(t("loginSignOutError"));
@@ -145,11 +154,11 @@ function LoginForm() {
     }
   };
 
-  if (!loading && user && profileSyncError && !profileHydrated) {
+  if (!product && !loading && user && profileSyncError && !profileHydrated) {
     return (
       <div className="min-h-[100dvh] bg-[#FAFCFB]">
         <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-[#D3D1C7] bg-white px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href={product ? "/" + productForPath(product) : "/"} className="flex items-center gap-2">
             <PratiqoLogo variant="full" size="md" />
           </Link>
           <LocaleSwitcher variant="light" />
@@ -162,7 +171,7 @@ function LoginForm() {
   return (
     <div className="min-h-[100dvh] bg-[#FAFCFB]">
       <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-[#D3D1C7] bg-white px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href={product ? "/" + productForPath(product) : "/"} className="flex items-center gap-2">
           <PratiqoLogo variant="full" size="md" />
         </Link>
         <LocaleSwitcher variant="light" />
@@ -180,7 +189,7 @@ function LoginForm() {
             </p>
           ) : null}
 
-          {loading || (user && !profileHydrated) ? (
+          {loading || (user && !product && !profileHydrated) ? (
             <div className="space-y-3 py-2" role="status" aria-busy="true">
               <SkeletonBar className="mx-auto h-4 w-40" />
               <SkeletonBar className="h-12 w-full rounded-2xl" />
@@ -199,7 +208,7 @@ function LoginForm() {
                   onClick={handleContinue}
                   className="h-12 rounded-2xl bg-teal-700 px-4 text-sm font-bold text-white transition hover:brightness-[0.98]"
                 >
-                  {t("loginContinueDashboard")}
+                  {productLabel ?? t("loginContinueDashboard")}
                 </button>
                 <button
                   type="button"
@@ -212,12 +221,12 @@ function LoginForm() {
               </div>
 
               <p className="mt-5 text-sm text-[var(--p-text-muted)]">
-                <Link href="/" className="font-semibold text-teal-700 hover:underline">
+                <Link href={product ? "/" + productForPath(product) : "/"} className="font-semibold text-teal-700 hover:underline">
                   ← {t("loginReturnHome")}
                 </Link>
               </p>
             </div>
-          ) : !preAuthIntent ? (
+          ) : !oauthNext ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm font-semibold text-[var(--p-text-muted)]">
               {t("loginRedirectRoleChoice")}
             </div>
@@ -225,7 +234,7 @@ function LoginForm() {
             <>
               <div className="mb-5 text-center">
                 <h1 className="text-2xl font-black text-[var(--p-text)] sm:text-[1.65rem]">
-                  {t("loginAccountTitle")}
+                  {productLabel ?? t("loginAccountTitle")}
                 </h1>
               </div>
 
@@ -316,7 +325,7 @@ function LoginForm() {
               ) : null}
 
               <p className="mt-4 text-center text-sm text-[var(--p-text-muted)]">
-                <Link href="/" className="font-semibold text-teal-700 hover:underline">
+                <Link href={product ? "/" + productForPath(product) : "/"} className="font-semibold text-teal-700 hover:underline">
                   ← {t("loginReturnHome")}
                 </Link>
               </p>

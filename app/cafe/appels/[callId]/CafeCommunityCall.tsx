@@ -1,4 +1,6 @@
 "use client";
+
+import { productLoginHref } from "@/lib/auth/productReturn";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CafeIdentity } from "@/lib/cafe/communityClient";
 import { cafeCommunityCallTransport, type CafeCommunityCallTransport } from "@/lib/cafe/communityCallClient";
@@ -235,7 +237,7 @@ export function CafeCommunityCall({ callId, courseReturnHref, identity, locale =
   if (roomId) backQuery.set("salon", roomId);
   if (courseReturnHref) backQuery.set("yoReturn", courseReturnHref);
   const back = `/cafe${backQuery.size ? `?${backQuery}` : ""}`;
-  const signIn = `/connexion?next=${encodeURIComponent(`/cafe/appels/${callId}${courseReturnHref ? `?yoReturn=${encodeURIComponent(courseReturnHref)}` : ""}`)}`;
+  const signIn = productLoginHref(`/cafe/appels/${callId}${courseReturnHref ? `?yoReturn=${encodeURIComponent(courseReturnHref)}` : ""}`);
   return <main className={styles.shell} lang={locale} data-cafe-community-call={phase}>
     <header className={styles.header}><a href={back} onClick={() => { void end("ended", true); }}>{t.heading}</a><span>18+</span></header>
     <section className={styles.card}>

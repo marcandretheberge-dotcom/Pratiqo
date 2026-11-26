@@ -58,7 +58,7 @@ export function proxy(req: NextRequest) {
       stage: "apex-canonicalize",
       path: pathname,
       host: req.nextUrl.hostname,
-      redirect: canonicalUrl.pathname + canonicalUrl.search,
+      redirect: canonicalUrl.pathname,
     });
     return NextResponse.redirect(canonicalUrl, 308);
   }
@@ -69,7 +69,7 @@ export function proxy(req: NextRequest) {
 
   // Supabase may deliver the PKCE ?code= on Site URL (/) when redirect_to is not matched.
   // Forward any stray OAuth codes to the server callback route before other routing.
-  if (!pathname.startsWith("/auth/callback") && req.nextUrl.searchParams.has("code")) {
+  if (!pathname.startsWith("/auth/callback") && (req.nextUrl.searchParams.has("code") || (pathname === "/" && req.nextUrl.searchParams.has("error")))) {
     const callbackUrl = new URL("/auth/callback", req.url);
     req.nextUrl.searchParams.forEach((value, key) => {
       callbackUrl.searchParams.set(key, value);
@@ -77,10 +77,10 @@ export function proxy(req: NextRequest) {
     logAuthFlowDecision("proxy", {
       stage: "oauth-code-forward",
       path: pathname,
-      hasCode: true,
+      hasCode: req.nextUrl.searchParams.has("code"),
       intent: req.nextUrl.searchParams.get("intent") ?? "none",
-      next: req.nextUrl.searchParams.get("next") ?? "none",
-      redirect: callbackUrl.pathname + callbackUrl.search,
+      hasNext: req.nextUrl.searchParams.has("next"),
+      redirect: callbackUrl.pathname,
     });
     return NextResponse.redirect(callbackUrl);
   }

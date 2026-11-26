@@ -27,7 +27,7 @@ const pathOff = { reservationPathAvailable: false as const };
     assert.equal(invitation.session.slug, "demo-fr-introductions-a1");
     assert.equal(invitation.participation.masteryUnchanged, true);
     assert.match(invitation.reserveHref, /^\/login\?/);
-    assert.match(invitation.reserveHref, /intent=student/);
+    assert.equal(new URL(invitation.reserveHref, "https://pratiqo.ca").searchParams.has("intent"), false);
     assert.match(decodeURIComponent(invitation.reserveHref), /yoReturn=/);
     assert.match(decodeURIComponent(invitation.reserveHref), /yoExpression=/);
   }
@@ -118,14 +118,14 @@ const pathOff = { reservationPathAvailable: false as const };
     reviewExpression: "Bonjour",
     themeId: "introductions",
   });
-  assert.match(href, /intent=student/);
+  assert.equal(new URL(href, "https://pratiqo.ca").searchParams.has("intent"), false);
   assert.match(href, /next=%2Fcafe%2Fdemo-fr-introductions-a1/);
-  assert.match(decodeURIComponent(href), /yoReturn=%2Fstudent%2Fyopratiqo/);
+  assert.match(decodeURIComponent(href), /yoReturn=%2Fyo%2Fmon-parcours/);
   assert.doesNotMatch(decodeURIComponent(href), /evil\.example/);
 }
 
 async function assertInviteToConfirmedReturnJourney() {
-  const savedCourse = "/student/yopratiqo?demo=introductions-complete&step=12";
+  const savedCourse = "/yo/mon-parcours?demo=introductions-complete&step=12";
   const invitation = resolveCafePracticeInvitation(
     {
       ...CAFE_INVITATION_DEMO.mission,

@@ -1,3 +1,4 @@
+import { productReturnPath } from "@/lib/auth/productReturn";
 import {
   parsePublicPreAuthIntent,
   type PreAuthOnboardingIntent,
@@ -90,6 +91,8 @@ export function resolveAuthCallbackParams(
   let role = requestUrl.searchParams.get("role");
   let next = requestUrl.searchParams.get("next");
   const ref = requestUrl.searchParams.get("ref");
+  const product = productReturnPath(next);
+  if (product) return { role: null, next: product, ref, intent: null };
 
   const intent = resolvePreAuthIntentFromCallback({
     intentParam,

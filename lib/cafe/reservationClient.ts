@@ -1,3 +1,4 @@
+import { productLoginHref } from "@/lib/auth/productReturn";
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
 
 /**
@@ -70,12 +71,7 @@ export function buildCafeSessionPath(input: {
 
 /** Learner login handoff that preserves the Café deep-link (and Yo return context). */
 export function buildCafeReservationLoginHref(cafePathWithQuery: string): string {
-  const safe = sanitizeRelativeRedirectPath(cafePathWithQuery) ?? "/cafe";
-  const params = new URLSearchParams({
-    intent: "student",
-    next: safe,
-  });
-  return `/login?${params.toString()}`;
+  return productLoginHref(cafePathWithQuery);
 }
 
 export function parseYoCafeContext(searchParams: {

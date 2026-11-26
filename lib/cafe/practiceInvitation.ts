@@ -165,7 +165,7 @@ export function buildCafeReserveHref(input: {
   reviewExpression: string;
   themeId: CafeMissionThemeId;
 }): string {
-  const safeReturn = sanitizeRelativeRedirectPath(input.courseReturnPath) ?? "/student/yopratiqo";
+  const safeReturn = sanitizeRelativeRedirectPath(input.courseReturnPath) ?? "/yo/mon-parcours";
   const cafePath = buildCafeSessionPath({
     slug: input.slug,
     fromYo: true,
@@ -189,7 +189,7 @@ export function resolveCafePracticeInvitation(
   const reservationPathAvailable =
     options?.reservationPathAvailable ?? isCafeReservationPathAvailable();
   const courseReturnPath =
-    sanitizeRelativeRedirectPath(mission.courseReturnPath) ?? "/student/yopratiqo";
+    sanitizeRelativeRedirectPath(mission.courseReturnPath) ?? "/yo/mon-parcours";
   const normalizedMission: CafeMissionContext = {
     ...mission,
     level: mission.level.trim(),
@@ -276,7 +276,7 @@ export const CAFE_INVITATION_DEMO = {
     language: "fr",
     themeId: "introductions",
     level: "A1",
-    courseReturnPath: "/student/yopratiqo?demo=introductions-complete",
+    courseReturnPath: "/yo/mon-parcours?demo=introductions-complete",
     reviewExpression: "Bonjour, je m’appelle…",
   } satisfies CafeMissionContext,
   matchingSession: {

@@ -196,7 +196,7 @@ async function main() {
   const learnerPassword = `CafeLive-${stamp}-Aa1!`;
   const adminEmail = `cafe.live.admin+${stamp}@example.test`;
   const adminPassword = `CafeAdmin-${stamp}-Aa1!`;
-  const courseReturn = `/student/yopratiqo?demo=introductions-complete&live=${stamp}`;
+  const courseReturn = `/yo/mon-parcours?demo=introductions-complete&liveSlug=${stamp}`;
 
   const createdAdmin = await admin.auth.admin.createUser({
     email: adminEmail,

@@ -4,11 +4,11 @@
  * Static contract test for the YoPratiqo product shell consistency
  * pass. Locks in that:
  *
- *   • the authenticated YoPratiqo hub (`/student/yopratiqo`) exists
+ *   • the authenticated YoPratiqo hub (`/yo/mon-parcours`) exists
  *     and renders the YoPratiqo logo + companion + course links
  *     above the fold,
  *   • every YoPratiqo-originating login CTA deep-links to
- *     `/login?next=/student/yopratiqo` so the OAuth round-trip
+ *     `/login?next=/yo/mon-parcours` so the OAuth round-trip
  *     preserves the YoPratiqo product context,
  *   • the auth callback / login forwarding helper still respects a
  *     sanitized `next=` param,
@@ -60,7 +60,7 @@ function stripJsComments(source: string): string {
 // Paths under contract
 // ─────────────────────────────────────────────────────────────────────────
 
-const HUB_ROUTE_PATH = "app/(app)/student/yopratiqo/page.tsx";
+const HUB_ROUTE_PATH = "app/yo/mon-parcours/page.tsx";
 const HUB_CONTENT_PATH = "components/yo/YoStudentHubContent.tsx";
 const YO_NAV_BUTTON_PATH = "components/yo/YoNavButton.tsx";
 const APP_SHELL_PATH = "components/AppShell.tsx";
@@ -83,17 +83,17 @@ const DECK_ROUTES: readonly string[] = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────
-// 1. /student/yopratiqo route exists
+// 1. /yo/mon-parcours route exists
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.ok(
   existsSync(path.join(root, HUB_ROUTE_PATH)),
-  "the new YoPratiqo hub route must exist at app/(app)/student/yopratiqo/page.tsx",
+  "the new YoPratiqo hub route must exist at app/yo/mon-parcours/page.tsx",
 );
 const hubRouteSrc = read(HUB_ROUTE_PATH);
 assert.match(
   hubRouteSrc,
-  /export\s+default\s+function\s+\w+/,
+  /export\s+default\s+(?:async\s+)?function\s+\w+/,
   "hub route must export a default page component",
 );
 // The route is authenticated — make sure we don't accidentally let
@@ -103,10 +103,10 @@ assert.match(
   /robots\s*:\s*\{\s*index\s*:\s*false/,
   "hub route metadata must set robots: { index: false } (it's an authenticated page)",
 );
-ok("1) /student/yopratiqo route exists with default export + noindex metadata");
+ok("1) /yo/mon-parcours route exists with default export + noindex metadata");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 2. /student/yopratiqo uses YoPratiqo branding/logo
+// 2. /yo/mon-parcours uses YoPratiqo branding/logo
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.ok(
@@ -140,10 +140,10 @@ assert.match(
   /import\s*\{\s*YoStudentHubContent\s*\}\s*from\s*["']@\/components\/yo\/YoStudentHubContent["']/,
   "hub route must mount the YoStudentHubContent body",
 );
-ok("2) /student/yopratiqo renders YoPratiqo branding via route metadata + companion card");
+ok("2) /yo/mon-parcours renders YoPratiqo branding via route metadata + companion card");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 3. /student/yopratiqo renders the YoPratiqo companion above the fold
+// 3. /yo/mon-parcours renders the YoPratiqo companion above the fold
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.match(
@@ -164,10 +164,10 @@ assert.ok(
   companionIdx > 0 && pathSectionIdx > companionIdx,
   `companion card must render before the lesson-path section (got companion=${companionIdx}, path=${pathSectionIdx})`,
 );
-ok("3) /student/yopratiqo renders the YoPratiqo companion above the lesson path");
+ok("3) /yo/mon-parcours renders the YoPratiqo companion above the lesson path");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 4. /student/yopratiqo links to the Dominican Republic Course Home
+// 4. /yo/mon-parcours links to the Dominican Republic Course Home
 // ─────────────────────────────────────────────────────────────────────────
 
 const DR_COURSE_HOME = "/yo/langues/espagnol/pays/republique-dominicaine";
@@ -176,10 +176,10 @@ assert.ok(
     hubContentSrc.includes("DOMINICAN_RD_ROUTES.courseHome"),
   "hub must link to the Dominican Republic Course Home",
 );
-ok("4) /student/yopratiqo links to the Dominican Republic Course Home");
+ok("4) /yo/mon-parcours links to the Dominican Republic Course Home");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 5. /student/yopratiqo links to continue learning (Intro / Modules)
+// 5. /yo/mon-parcours links to continue learning (Intro / Modules)
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.match(
@@ -199,10 +199,10 @@ for (const hrefKey of ["intro", "module2", "module3", "module4", "module5"] as c
     `hub lesson path must reference HREFS.${hrefKey}`,
   );
 }
-ok("5) /student/yopratiqo links to Intro + Modules 2–5 deck routes for continue-learning");
+ok("5) /yo/mon-parcours links to Intro + Modules 2–5 deck routes for continue-learning");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 6. YoPratiqo login CTAs point to /login?next=/student/yopratiqo
+// 6. YoPratiqo login CTAs point to /login?next=/yo/mon-parcours
 // ─────────────────────────────────────────────────────────────────────────
 
 const appHeroSrc = read(APP_HERO_PATH);
@@ -212,15 +212,15 @@ const courseCompanionSrc = read(COURSE_COMPANION_PATH);
 for (const [label, src] of [
   ["YoAppHeroCard", appHeroSrc],
   ["YoPublicCompanionOnboardingCard", publicCardSrc],
-  ["YoCourseCompanionPanel", courseCompanionSrc],
 ] as const) {
   assert.match(
     src,
-    /["']\/login\?next=\/student\/yopratiqo["']/,
-    `${label} must wire its login CTA to /login?next=/student/yopratiqo`,
+    /["']\/login\?next=\/yo\/mon-parcours["']/,
+    `${label} must wire its login CTA to /login?next=/yo/mon-parcours`,
   );
 }
-ok("6) all YoPratiqo-originating login CTAs deep-link to /login?next=/student/yopratiqo");
+assert.match(courseCompanionSrc, /<YoCourseSignInLink/);
+ok("6) hub sign-in opens the private hub and course sign-in resumes the lesson");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 7. Auth next= redirect behavior is preserved
@@ -257,7 +257,7 @@ assert.match(
 assert.match(
   callbackSrc,
   /resolveOAuthCallbackRedirect\(/,
-  "auth callback must call resolveOAuthCallbackRedirect(...) so /student/yopratiqo is honored after OAuth",
+  "auth callback must call resolveOAuthCallbackRedirect(...) so /yo/mon-parcours is honored after OAuth",
 );
 // resolvePostAuthRedirect must accept a nextPath argument.
 const postAuthRedirectSrc = read("lib/auth/postAuthRedirect.ts");
@@ -300,11 +300,11 @@ assert.match(
 ok("8) main + AppShell headers expose a YoPratiqo entry using the official wordmark");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 9. Student header/nav exposes a YoPratiqo entry linking to /student/yopratiqo
+// 9. Student header/nav exposes a YoPratiqo entry linking to /yo/mon-parcours
 // ─────────────────────────────────────────────────────────────────────────
 
 // Both the desktop tab strip and YoNavButton expose a YoPratiqo entry
-// linking to /student/yopratiqo. Mobile bottom nav keeps five primary tabs
+// linking to /yo/mon-parcours. Mobile bottom nav keeps five primary tabs
 // and defers YoPratiqo to YoNavButton + desktop nav to avoid overcrowding.
 assert.match(
   appShellSrc,
@@ -312,25 +312,25 @@ assert.match(
   "AppShell must mark the desktop YoPratiqo entry with data-testid='student-nav-yopratiqo'",
 );
 const yopratiqoHrefCount = (
-  appShellSrc.match(/["']\/student\/yopratiqo["']/g) ?? []
+  appShellSrc.match(/["']\/yo\/mon-parcours["']/g) ?? []
 ).length;
 assert.ok(
   yopratiqoHrefCount >= 1,
-  `AppShell must reference /student/yopratiqo in the desktop tab strip (got ${yopratiqoHrefCount} occurrence(s))`,
+  `AppShell must reference /yo/mon-parcours in the desktop tab strip (got ${yopratiqoHrefCount} occurrence(s))`,
 );
 // YoNavButton auth-aware destination: for an authenticated student
-// it must route to /student/yopratiqo, for everyone else to /yo.
+// it must route to /yo/mon-parcours, for everyone else to /yo.
 assert.match(
   yoNavSrc,
-  /["']\/student\/yopratiqo["']/,
-  "YoNavButton must route authenticated students to /student/yopratiqo",
+  /["']\/yo\/mon-parcours["']/,
+  "YoNavButton must route authenticated students to /yo/mon-parcours",
 );
 assert.match(
   yoNavSrc,
   /["']\/yo["']/,
   "YoNavButton must keep /yo as the default destination for anonymous visitors",
 );
-ok("9) student nav (desktop + YoNavButton) expose a YoPratiqo entry linking to /student/yopratiqo");
+ok("9) student nav (desktop + YoNavButton) expose a YoPratiqo entry linking to /yo/mon-parcours");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 10. No "Yo" standalone product label is introduced

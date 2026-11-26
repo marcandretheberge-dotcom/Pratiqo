@@ -48,7 +48,7 @@
  *     chrome (e.g. the global `(app)` AppShell's student tab
  *     bar). Renders the bottom chrome inline above the parent
  *     bar (no `position: fixed`, no safe-area inset). Used by
- *     `/student/yopratiqo` and `/student/progress`.
+ *     `/yo/mon-parcours` and `/student/progress`.
  *
  * Desktop
  * -------

@@ -23,6 +23,8 @@ import { AppLoadingFallback } from "@/components/AppLoadingFallback";
 import { AppCardSkeleton } from "@/components/loading/AppSkeletons";
 import { cn } from "@/lib/utils";
 
+import { productLoginHref, productReturnPath } from "@/lib/auth/productReturn";
+
 function buildLoginHrefFromConnexion(
   intent: PreAuthOnboardingIntent,
   safeNext: string | null,
@@ -47,6 +49,7 @@ function ConnexionInner() {
 
   const safeNext = useMemo(() => sanitizeRelativeRedirectPath(searchParams.get("next")), [searchParams]);
   const ref = searchParams.get("ref");
+  const product = productReturnPath(safeNext);
   const authenticatedDestination = resolvePostLoginDestination({
     profile,
     preAuthIntent: highlightIntent,
@@ -54,9 +57,13 @@ function ConnexionInner() {
   });
 
   useEffect(() => {
+    if (product) {
+      router.replace(productLoginHref(product) + (ref ? "&ref=" + encodeURIComponent(ref) : ""));
+      return;
+    }
     if (!highlightIntent || user) return;
     router.replace(buildLoginHrefFromConnexion(highlightIntent, safeNext, ref));
-  }, [highlightIntent, safeNext, ref, router, user]);
+  }, [highlightIntent, product, safeNext, ref, router, user]);
 
   const handleContinue = () => {
     clearPendingOnboardingIntentCookie();
@@ -108,7 +115,7 @@ function ConnexionInner() {
     );
   }
 
-  if (highlightIntent && !user) {
+  if (product || (highlightIntent && !user)) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-sm text-[var(--p-text-muted)]">
         Redirection…

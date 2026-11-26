@@ -16,7 +16,7 @@
  *   • YoStudentCompanionCard
  *   • YoCourseCompanionPanel
  *   • YoPublicCompanionOnboardingCard
- *   • YoStudentHubContent  (the /student/yopratiqo hub)
+ *   • YoStudentHubContent  (the /yo/mon-parcours hub)
  *   • /student/progress YoPratiqo companion section
  *   • CompanionBridgeCard (consent-side, student-facing)
  *
@@ -130,7 +130,7 @@ const YOPPO_CTA_SURFACES: Array<keyof typeof STUDENT_FACING_FILES> = [
 test("Yoppo never replaces YoPratiqo as the product name on student-facing surfaces", () => {
   // Most surfaces must still mention YoPratiqo in copy. Course/public
   // companion cards may keep shorter Yoppo-first headlines when their
-  // primary CTA deep-links to `/student/yopratiqo` (the product hub).
+  // primary CTA deep-links to `/yo/mon-parcours` (the product hub).
   for (const [key, code] of Object.entries(studentCodes)) {
     if (YOPPO_CTA_SURFACES.includes(key as keyof typeof STUDENT_FACING_FILES)) {
       assert.ok(/\bYoppo\b/.test(code), `${key} must name the Yoppo mascot`);
@@ -141,8 +141,8 @@ test("Yoppo never replaces YoPratiqo as the product name on student-facing surfa
         );
       } else {
         assert.ok(
-          /\/student\/yopratiqo/.test(code),
-          `${key} must route learners to the YoPratiqo hub at /student/yopratiqo`,
+          /\/yo\/mon-parcours/.test(code),
+          `${key} must route learners to the YoPratiqo hub at /yo/mon-parcours`,
         );
       }
       continue;

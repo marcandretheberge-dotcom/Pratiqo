@@ -1,5 +1,7 @@
 "use client";
 
+import { YoCourseSignInLink } from "@/components/yo/YoCourseSignInLink";
+
 import { useEffect, useId, useRef, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase";
 import type { YoLocale } from "@/lib/yo/types";
@@ -190,7 +192,7 @@ function Practice({ language, locale, scenarioId = "cafe" }: Props) {
   const unavailable = status?.reason === "trial_complete" ? copy.trialComplete : status?.reason === "pilot_complete" ? copy.pilotComplete : copy.unavailable;
   return <section ref={root} className="mt-4 space-y-4 text-sm text-slate-700" aria-label={copy.title} data-no-deck-swipe data-no-deck-tap>
     <p className="text-xs font-medium text-indigo-700">{copy.ai}</p>
-    {signedOut ? <p role="status">{copy.signIn}</p> : !status ? <p role="status">{copy.loading}</p> : !status.available ? <p role="status">{unavailable}</p> : <>
+    {signedOut ? <p role="status"><YoCourseSignInLink className="font-semibold underline">{copy.signIn}</YoCourseSignInLink></p> : !status ? <p role="status">{copy.loading}</p> : !status.available ? <p role="status">{unavailable}</p> : <>
       <label className="block font-semibold">{copy.scenario}
         <select className="mt-1 block w-full rounded-xl border border-slate-300 bg-white p-3" value={scenario} disabled={busy} onChange={(event) => { setScenario(event.target.value as SpeechScenarioId); history.current = []; setResult(null); setError(""); }}>
           {Object.entries(SPEECH_SCENARIOS).map(([id, value]) => <option key={id} value={id}>{value.title[locale]}</option>)}

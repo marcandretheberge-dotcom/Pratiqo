@@ -4,7 +4,7 @@ import { YoLanguageQuickStart } from "./YoLanguageQuickStart";
 /**
  * YoStudentHubContent
  *
- * Client body of the `/student/yopratiqo` route. Kept as a small
+ * Client body of the `/yo/mon-parcours` route. Kept as a small
  * composition layer so the route file stays a thin server shell with
  * metadata only.
  *

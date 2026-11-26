@@ -1,3 +1,5 @@
+import { productForPath, productReturnPath } from "@/lib/auth/productReturn";
+import { clearProductAttempt, rememberProductAttempt } from "@/lib/auth/productOAuthAttempt";
 import { getSupabaseClient } from "./supabase";
 import { buildOAuthCallbackUrl, resolveOAuthRedirectOrigin } from "@/lib/auth/oauthCallback";
 import { markOAuthReturnPending, clearOAuthReturnPending, notifyOAuthReturnChanged } from "@/lib/auth/oauthReturnHandoff";
@@ -36,15 +38,28 @@ export async function loginWithGoogle(
   const supabase = getSupabaseClient();
   const origin = resolveOAuthRedirectOrigin();
   const callbackIntent = options?.intentQuery ?? options?.intent;
-  const redirectTo = buildOAuthCallbackUrl(origin, {
+  const target = productReturnPath(redirectPath);
+  let redirectTo = buildOAuthCallbackUrl(origin, {
     intent: callbackIntent,
     role: options?.role ?? (options?.intent === "teacher" ? "teacher" : undefined),
     next: redirectPath,
     ref: options?.referralCode,
   });
 
-  setPendingIntentCookiesForAuth(redirectPath, options?.intent, options?.role);
-  markOAuthReturnPending(options?.intent ?? null);
+  if (target) {
+    clearOAuthReturnPending();
+    const attempt = rememberProductAttempt(target, options?.referralCode);
+    if (attempt) {
+      const params = new URLSearchParams({ product: productForPath(target), attempt });
+      redirectTo = origin + "/auth/callback?" + params;
+    } else {
+      redirectTo = buildOAuthCallbackUrl(origin, { next: target, ref: options?.referralCode });
+    }
+  } else {
+    clearProductAttempt();
+    setPendingIntentCookiesForAuth(redirectPath, options?.intent, options?.role);
+    markOAuthReturnPending(options?.intent ?? null);
+  }
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -65,6 +80,7 @@ export async function loginWithGoogle(
 }
 
 export async function logout(options?: { redirectTo?: string }) {
+  clearProductAttempt();
   clearPendingOnboardingIntentCookie();
   clearPendingTeacherOnboardingCookie();
   clearOAuthReturnPending();
