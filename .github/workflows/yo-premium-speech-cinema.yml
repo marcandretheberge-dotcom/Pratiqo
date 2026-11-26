@@ -15,6 +15,7 @@ on:
       - 'scripts/generate-yopratiqo-premium-recordings.ts'
       - 'scripts/probe-yo-speech-gateway.ts'
       - 'scripts/sync-yopratiqo-audio-index.ts'
+      - 'scripts/plan-yo-foundation-recording-gaps.ts'
       - 'scripts/lib/**'
       - 'supabase/migrations/*yo_speech*'
       - 'tests/yo/**'
@@ -52,6 +53,7 @@ jobs:
       - name: Offline recording plan, provider protocol and verified publication
         run: |
           npm run test:yo-premium-recordings
+          node --import tsx tests/yo/yopratiqoFoundationRecordingGaps.test.ts
           node --import tsx tests/yo/yopratiqoPremiumPublishedAudio.test.ts
           node --import tsx tests/yo/yopratiqoPremiumAudioPlayback.test.tsx
       - name: Recording plan performs no network calls
