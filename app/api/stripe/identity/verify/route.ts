@@ -1,3 +1,4 @@
+import { blockUnsupportedNativePurchase } from "@/lib/mobile/server";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { stripe } from "@/lib/stripe";
@@ -15,6 +16,8 @@ function publicBase(): string {
 }
 
 export async function POST(req: Request) {
+  const nativeBlock = blockUnsupportedNativePurchase(req);
+  if (nativeBlock) return nativeBlock;
   try {
     const authHeader = req.headers.get("authorization");
     const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -108,3 +111,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
+

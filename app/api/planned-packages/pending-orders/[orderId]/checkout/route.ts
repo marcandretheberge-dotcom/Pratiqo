@@ -1,3 +1,4 @@
+import { blockUnsupportedNativePurchase } from "@/lib/mobile/server";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createPlannedPackageStripeCheckoutSession } from "@/lib/offers/createPlannedPackageStripeCheckoutSession";
@@ -37,6 +38,8 @@ async function requireStudentUser(req: Request): Promise<
  * No transfer, payout, entitlement, or booking at creation time.
  */
 export async function POST(req: Request, ctx: Params) {
+  const nativeBlock = blockUnsupportedNativePurchase(req);
+  if (nativeBlock) return nativeBlock;
   if (!canUsePlannedPackageStripeCheckout()) {
     return NextResponse.json({ error: "planned_package_checkout_disabled" }, { status: 403 });
   }
