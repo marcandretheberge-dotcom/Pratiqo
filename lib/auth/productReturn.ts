@@ -3,7 +3,7 @@ export type Product = "cafe" | "yo";
 
 const navigationKeys = new Set([
   "lang", "language", "salon", "roomId", "from", "yoReturn", "yoExpression", "yoMission",
-  "lecon", "activite", "city", "today", "title", "demo", "step", "unit", "lesson", "mission", "liveSlug",
+  "lecon", "activite", "city", "today", "title", "demo", "step", "unit", "lesson", "activity", "mission", "liveSlug",
 ]);
 
 export function productHome(value: string | null): string | null {

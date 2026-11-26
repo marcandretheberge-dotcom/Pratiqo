@@ -28,6 +28,14 @@ for (const path of [invite, lesson, "/cafe/appels/abc", "/yo/mon-parcours?demo=c
   }
 }
 
+test("courses using English lesson and activity keys resume the selected exercise", () => {
+  const path = "/yo/langues/allemand/parcours/u01?lang=fr&lesson=lesson-2&activity=listen-3";
+  const next = new URL(productLoginHref(path), origin).searchParams.get("next");
+  assert.equal(next, path);
+  const destination = resolvePostLoginDestination({ nextPath: next, profile: { role: "teacher" } });
+  assert.equal(new URL(destination, origin).searchParams.get("reprendre"), path);
+});
+
 test("old personal hub bookmarks keep their state outside the marketplace", () => {
   assert.equal(productReturnPath("/student/yopratiqo/?step=2"), YO_ACCOUNT_PATH + "?step=2");
   assert.equal(productArrivalPath(YO_ACCOUNT_PATH + "?step=2"), YO_ACCOUNT_PATH + "?step=2");
