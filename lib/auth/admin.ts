@@ -65,7 +65,7 @@ export function resolveProfileRoleOnAuth(input: {
   return "student";
 }
 
-export async function createServerSupabaseClient() {
+export async function createServerSupabaseClient(options?: { readOnly?: boolean }) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anonKey) return null;
@@ -77,6 +77,7 @@ export async function createServerSupabaseClient() {
         return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
+        if (options?.readOnly) return;
         for (const c of cookiesToSet) {
           cookieStore.set(c.name, c.value, c.options);
         }

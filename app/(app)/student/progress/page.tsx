@@ -18,7 +18,7 @@ import { COMPLETED_LESSON_FOR_COMPANION_FILTER } from "@/lib/companion/rewards";
  * Localized copy for the YoPratiqo bridge section on /student/progress.
  * Kept inline so /student/progress does not import anything from the
  * YoPratiqo product config — it just renders a small heading + CTA
- * back to the YoPratiqo hub at `/student/yopratiqo`.
+ * back to the YoPratiqo hub at `/yo/mon-parcours`.
  *
  * The YoStudentCompanionCard itself remains unchanged; this wrapper
  * only adds visible "this is the YoPratiqo zone" framing so a learner
@@ -183,7 +183,7 @@ export default function StudentProgressPage() {
    * Promoted ABOVE the legacy Pratiqo companion so a learner who
    * came in through the YoPratiqo product immediately sees their
    * companion + has a one-click path back to the dedicated
-   * YoPratiqo hub (`/student/yopratiqo`). The legacy Pratiqo
+   * YoPratiqo hub (`/yo/mon-parcours`). The legacy Pratiqo
    * companion card stays mounted right below — both are visible
    * on the same page so the cross-product story
    * (Pratiqo progress ↔ YoPratiqo path) is unambiguous.
@@ -206,7 +206,7 @@ export default function StudentProgressPage() {
         </h2>
         <Link
           data-testid="yo-progress-bridge-cta"
-          href="/student/yopratiqo"
+          href="/yo/mon-parcours"
           className="inline-flex items-center gap-1.5 rounded-full border border-[#0F6E56]/20 bg-white px-3 py-1.5 text-xs font-bold text-[#0F6E56] transition hover:bg-[#FFF4D6]"
         >
           {YOPRATIQO_SECTION_COPY[yoLocale].cta}

@@ -1,5 +1,7 @@
 "use client";
 
+import { YoCourseSignInLink } from "@/components/yo/YoCourseSignInLink";
+
 /**
  * YoMarkModuleCompletedButton
  *
@@ -201,7 +203,7 @@ export function YoMarkModuleCompletedButton({
           aria-live="polite"
           className="text-xs font-semibold text-[#0F6E56]/85"
         >
-          {statusLine}
+          {state.phase === "signedOut" ? <YoCourseSignInLink className="underline">{statusLine}</YoCourseSignInLink> : statusLine}
         </p>
       ) : null}
       {scene && <MissionFilm scene={scene} locale={l} onContinue={finish}/>}

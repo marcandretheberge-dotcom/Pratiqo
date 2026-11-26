@@ -187,7 +187,7 @@ test("connexion skips role chooser when intent is already in the URL", () => {
   const src = read("app/connexion/page.tsx");
   assert.match(src, /if \(!highlightIntent \|\| user\) return/);
   assert.match(src, /router\.replace\(buildLoginHrefFromConnexion/);
-  assert.match(src, /if \(highlightIntent && !user\)[\s\S]*?Redirection/);
+  assert.match(src, /if \(product \|\| \(highlightIntent && !user\)\)[\s\S]*?Redirection/);
 });
 
 test("login page does not render the full Apprenant/Professeur chooser", () => {
@@ -266,7 +266,7 @@ test("login page redirects missing intent to connexion instead of defaulting lea
   assert.doesNotMatch(src, /loginIntent.*learner/);
   assert.match(src, /router\.replace\(qs \? `\$\{CONNEXION_PATH\}/);
   assert.match(src, /setPendingOnboardingIntentCookie/);
-  assert.match(src, /!preAuthIntent \?/);
+  assert.match(src, /!oauthNext \?/);
 });
 
 test("auth callback applies pre-auth intent patch and clears pending cookies on direct redirects", () => {
@@ -403,7 +403,7 @@ test("profile page sign-out uses centralized logout helper", () => {
 test("login and connexion sign-out do not double-navigate after logout", () => {
   const login = read("app/login/page.tsx");
   const connexion = read("app/connexion/page.tsx");
-  assert.match(login, /await logout\(\)/);
+  assert.match(login, /await logout\(product \? \{ redirectTo: productLoginHref\(product\) \} : undefined\)/);
   assert.match(connexion, /await logout\(\)/);
   assert.doesNotMatch(login, /await logout\(\)[\s\S]{0,120}router\.replace\("\/"\)/);
   assert.doesNotMatch(connexion, /await logout\(\)[\s\S]{0,120}router\.replace\("\/"\)/);

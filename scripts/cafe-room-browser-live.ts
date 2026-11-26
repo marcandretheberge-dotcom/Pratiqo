@@ -222,7 +222,7 @@ async function main() {
     const buildFd = openSync(join(sandboxDir, "build.log"), "w", 0o600);
     const buildPaths = [
       "app/cafe/**/page.tsx",
-      "app/(app)/student/yopratiqo/page.tsx",
+      "app/yo/mon-parcours/page.tsx",
       "app/api/**/route.ts",
     ].join(",");
     const built = spawnSync(process.execPath, ["node_modules/next/dist/bin/next", "build", `--debug-build-paths=${buildPaths}`], {
@@ -299,7 +299,7 @@ async function main() {
     }
     const hostPage = await hostContext.newPage();
     const learnerPage = await learnerContext.newPage();
-    const courseReturn = `/student/yopratiqo?cafeBrowser=${stamp}`;
+    const courseReturn = `/yo/mon-parcours?demo=${stamp}`;
     const roomPath = `/cafe/${slug}/salle?title=Browser%20validation&yoReturn=${encodeURIComponent(courseReturn)}`;
     const joinedUrls: string[] = [];
     for (const [index, page] of [hostPage, learnerPage].entries()) {

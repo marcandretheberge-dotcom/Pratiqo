@@ -24,14 +24,14 @@ export function hasOAuthReturnPending(): boolean {
 }
 
 export function readOAuthReturnIntent(): PreAuthOnboardingIntent | null {
-  if (typeof sessionStorage === "undefined") return null;
-  return readIntent(sessionStorage.getItem(OAUTH_INTENT_KEY));
+  try { return readIntent(sessionStorage.getItem(OAUTH_INTENT_KEY)); } catch { return null; }
 }
 
 export function clearOAuthReturnPending(): void {
-  if (typeof sessionStorage === "undefined") return;
-  sessionStorage.removeItem(OAUTH_RETURN_KEY);
-  sessionStorage.removeItem(OAUTH_INTENT_KEY);
+  try {
+    sessionStorage.removeItem(OAUTH_RETURN_KEY);
+    sessionStorage.removeItem(OAUTH_INTENT_KEY);
+  } catch { /* Browser storage is optional for product sign-in. */ }
 }
 
 export function subscribeToOAuthReturn(onStoreChange: () => void): () => void {

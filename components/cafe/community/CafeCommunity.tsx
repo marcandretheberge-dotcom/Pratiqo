@@ -1,5 +1,6 @@
 "use client";
 
+import { productLoginHref } from "@/lib/auth/productReturn";
 import { useSearchParams } from "next/navigation";
 import { useLocale } from "@/lib/locale-context";
 import { canonicalCafeLanguage } from "@/lib/cafe/communityLanguages";
@@ -27,9 +28,9 @@ export function CafeCommunity({ videoEnabled, heroVideoSrc = null, peopleEnabled
   const cafeHref = `/cafe${returnQuery.size ? `?${returnQuery.toString()}` : ""}`;
   if (!identity) return <CommunityFrame locale={locale} courseReturnHref={courseReturnHref} cinematic>
     {identity === undefined ? <p className={styles.loading} role="status">{t("Ouverture du Café…", "Opening the Café…", "Abriendo el Café…")}</p> : <>
-      <CafeEntranceScreen locale={locale} heroVideoSrc={heroVideoSrc} enterHref={`/connexion?next=${encodeURIComponent(cafeHref)}`} enterLabel={t("Entrer", "Enter", "Entrar")} />
+      <CafeEntranceScreen locale={locale} heroVideoSrc={heroVideoSrc} enterHref={productLoginHref(cafeHref)} enterLabel={t("Entrer", "Enter", "Entrar")} />
       {authError && <p className={styles.error} role="alert">{t("Impossible de vérifier votre session pour le moment.", "We could not verify your session right now.", "No se pudo comprobar tu sesión por el momento.")}</p>}
     </>}
   </CommunityFrame>;
-  return <CafeCommunityApp key={identity.userId} identity={identity} locale={locale} videoEnabled={videoEnabled} initialRoomId={initialRoomId} languageHint={languageHint} courseReturnHref={courseReturnHref} heroVideoSrc={heroVideoSrc} peopleEnabled={peopleEnabled} />;
+  return <CafeCommunityApp key={identity.userId} cafeHref={cafeHref} identity={identity} locale={locale} videoEnabled={videoEnabled} initialRoomId={initialRoomId} languageHint={languageHint} courseReturnHref={courseReturnHref} heroVideoSrc={heroVideoSrc} peopleEnabled={peopleEnabled} />;
 }

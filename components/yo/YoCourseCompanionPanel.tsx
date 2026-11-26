@@ -18,10 +18,10 @@
  *     the learner's progress and that progress sharing happens
  *     at booking time inside the booking modal, not here.
  *   • Surfaces an auth-aware CTA:
- *       signed in  → "Voir mon compagnon" → /student/yopratiqo
+ *       signed in  → "Voir mon compagnon" → /yo/mon-parcours
  *                    (the authenticated YoPratiqo hub)
  *       signed out → "Connecte-toi pour sauvegarder tes progrès"
- *                     → /login?next=/student/yopratiqo
+ *                     → sign in and resume the current course
  *   • Surfaces a small secondary "Voir toute ma progression Pratiqo"
  *     link to /student/progress so the YoPratiqo ↔ Pratiqo bridge is
  *     always reachable in both directions (YoPratiqo is the self-paced
@@ -40,6 +40,7 @@
  */
 
 import Link from "next/link";
+import { YoCourseSignInLink } from "./YoCourseSignInLink";
 import { ArrowRight, LogIn, ShieldCheck, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -95,22 +96,8 @@ function safeLocale(locale: YoLocale | undefined): YoLocale {
   return "fr";
 }
 
-/**
- * Centralized hrefs so the static smoke test can grep for them.
- * `/login` accepts a `next=` param the login page sanitizes via
- * `sanitizeRelativeRedirectPath`, so deep-linking the post-OAuth
- * destination is safe.
- *
- * The primary CTA targets `/student/yopratiqo` (the authenticated
- * YoPratiqo hub) so a learner coming from the Course Home lands in
- * the YoPratiqo product context after login, not on a generic
- * dashboard. The full Pratiqo progression page (`/student/progress`)
- * stays one click away through the secondary "View my full Pratiqo
- * progress" link below.
- */
 const HREFS = {
-  signIn: "/login?next=/student/yopratiqo",
-  yopratiqoHub: "/student/yopratiqo",
+  yopratiqoHub: "/yo/mon-parcours",
   fullPratiqoProgress: "/student/progress",
 } as const;
 
@@ -130,10 +117,7 @@ export function YoCourseCompanionPanel({
   // first-time visitor is never shown an empty CTA slot.
   const isAuthenticated = !loading && Boolean(user);
 
-  const primary = isAuthenticated
-    ? { label: copy.ctaProgress, href: HREFS.yopratiqoHub, Icon: ArrowRight }
-    : { label: copy.ctaSignIn, href: HREFS.signIn, Icon: LogIn };
-
+  const ctaClass = "inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#172642] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#0f1c33] sm:w-fit";
   return (
     <section
       data-testid="yo-course-companion-panel"
@@ -177,14 +161,15 @@ export function YoCourseCompanionPanel({
           </p>
         </div>
 
-        <Link
-          data-testid="yo-course-companion-panel-cta"
-          href={primary.href}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#172642] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#0f1c33] sm:w-fit"
-        >
-          <primary.Icon className="size-4" aria-hidden />
-          {primary.label}
-        </Link>
+        {isAuthenticated ? (
+          <Link data-testid="yo-course-companion-panel-cta" href={HREFS.yopratiqoHub} className={ctaClass}>
+            <ArrowRight className="size-4" aria-hidden />{copy.ctaProgress}
+          </Link>
+        ) : (
+          <YoCourseSignInLink data-testid="yo-course-companion-panel-cta" className={ctaClass}>
+            <LogIn className="size-4" aria-hidden />{copy.ctaSignIn}
+          </YoCourseSignInLink>
+        )}
 
         {/* Secondary bridge to the full Pratiqo progression. Renders
             as a quiet text link beneath the primary CTA so the

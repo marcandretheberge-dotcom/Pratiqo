@@ -98,7 +98,7 @@ function test(name: string, fn: TestFn): void {
 const YO_COMPONENT_DIR = "components/yo";
 const YO_ROUTE_DIR = "app/yo";
 const YO_AUTH_ROUTES = [
-  "app/(app)/student/yopratiqo/page.tsx",
+  "app/yo/mon-parcours/page.tsx",
   "app/(app)/student/progress/page.tsx",
 ];
 

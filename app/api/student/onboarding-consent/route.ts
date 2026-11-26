@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { mergeOnboardingRoleConfirmedDashboard } from "@/lib/auth/onboardingRoleChoice";
 import {
@@ -6,6 +7,7 @@ import {
 } from "@/lib/auth/profileEnsure";
 import {
   isStudentOnboardingConsentActorType,
+  YO_PROGRESS_CONSENT_VERSION,
   STUDENT_ONBOARDING_CONSENT_VERSION,
 } from "@/lib/auth/studentOnboardingConsent";
 import { getSupabaseForRequest } from "@/lib/auth/supabaseRouteClient";
@@ -16,6 +18,7 @@ import { rateLimitByIp, rateLimitGuardResponse } from "@/lib/rateLimit";
 export const runtime = "nodejs";
 
 type ConsentBody = {
+  product?: unknown;
   actorType?: unknown;
   acceptedTerms?: unknown;
   acceptedPrivacy?: unknown;
@@ -130,7 +133,7 @@ export async function POST(request: Request) {
     error: authError,
   } = await supabaseUser.auth.getUser();
 
-  if (authError || !user) {
+  if (authError || !user || user.is_anonymous) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -157,7 +160,7 @@ export async function POST(request: Request) {
     body.acceptedTerms !== true ||
     body.acceptedPrivacy !== true ||
     body.acceptedLearningData !== true ||
-    body.acknowledgedMinorLessons !== true
+    (body.product !== "yo" && body.acknowledgedMinorLessons !== true)
   ) {
     return NextResponse.json({ error: "student_consent_required" }, { status: 400 });
   }
@@ -172,6 +175,30 @@ export async function POST(request: Request) {
   } catch (err) {
     logConsentStorageFailure("admin_client", err);
     return consentSaveFailed("admin_client");
+  }
+
+  if (body.product === "yo") {
+    // This receipt applies only to saved Yo progress. It does not confirm a marketplace role.
+    // A stable receipt ID makes repeated clicks and simultaneous submissions idempotent.
+    const digest = createHash("sha256").update(YO_PROGRESS_CONSENT_VERSION + ":" + user.id).digest("hex");
+    const receiptId = [digest.slice(0, 8), digest.slice(8, 12), "8" + digest.slice(13, 16),
+      "8" + digest.slice(17, 20), digest.slice(20, 32)].join("-");
+    const { error } = await admin.from("student_onboarding_consents").upsert({
+      id: receiptId,
+      user_id: user.id,
+      consent_version: YO_PROGRESS_CONSENT_VERSION,
+      actor_type: body.actorType,
+      accepted_terms: true,
+      accepted_privacy: true,
+      accepted_learning_data: true,
+      acknowledged_minor_lessons: false,
+      locale: normalizeLocale(body.locale),
+    }, { onConflict: "id", ignoreDuplicates: true });
+    if (error) {
+      logConsentStorageFailure("yo_receipt_write", error);
+      return consentSaveFailed("yo_receipt_write");
+    }
+    return NextResponse.json({ ok: true });
   }
 
   const profileRead = await readStudentProfile(admin, user.id);

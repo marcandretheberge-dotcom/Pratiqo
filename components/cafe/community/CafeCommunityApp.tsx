@@ -1,5 +1,7 @@
 "use client";
 
+import { productLoginHref } from "@/lib/auth/productReturn";
+
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import type { CafeCommunityTransport, CafeIdentity } from "@/lib/cafe/communityClient";
 import type { CafeCallInvitation, CafeChatMessage, CafeCommunityCommand, CafeCommunityCommandResult, CafeCommunityRoom, CafeCommunityRoomView, CafeMember, CafeReportReason } from "@/lib/cafe/communityTypes";
@@ -271,15 +273,15 @@ function ReportForm({ draft, locale, execute, onClose }: { draft: ReportDraft; l
 }
 
 /** The production view also accepts an explicit transport for deterministic component tests. */
-export function CafeCommunityApp({ identity, locale, transport, initialRoomId = null, languageHint, courseReturnHref, videoEnabled = false, heroVideoSrc = null, peopleEnabled = false }: {
-  identity: CafeIdentity; locale: CommunityLocale; transport?: CafeCommunityTransport; initialRoomId?: string | null;
+export function CafeCommunityApp({ identity, locale, transport, cafeHref = "/cafe", initialRoomId = null, languageHint, courseReturnHref, videoEnabled = false, heroVideoSrc = null, peopleEnabled = false }: {
+  identity: CafeIdentity; locale: CommunityLocale; transport?: CafeCommunityTransport; cafeHref?: string; initialRoomId?: string | null;
   languageHint?: string | null; courseReturnHref?: string | null; videoEnabled?: boolean; heroVideoSrc?: string | null; peopleEnabled?: boolean;
 }) {
   const t = (fr: string, en: string, es: string) => cafeText(locale, fr, en, es);
   const community = useCafeCommunity(identity, transport, initialRoomId);
   const { snapshot, execute } = community;
   const [requestedScreen, setScreen] = useState<CafeScreen>(peopleEnabled || initialRoomId ? "lobby" : "entrance");
-  const screen: CafeScreen = snapshot?.room ? "chat" : peopleEnabled && snapshot && !snapshot.me ? "language" : requestedScreen;
+  const screen: CafeScreen = snapshot?.room ? "chat" : (peopleEnabled || initialRoomId) && snapshot && !snapshot.me ? "language" : requestedScreen;
   const [peopleTab, setPeopleTab] = useState<CafePeopleTab>("people");
   const [practiceMode, setPracticeMode] = useState<PracticeMode>("group");
   const [filter, setFilter] = useState(languageHint ?? "");
@@ -301,7 +303,9 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
 
   const practiceLanguage = filter || snapshot?.me?.learningLanguages[0] || "";
   const onlinePeople = snapshot?.people.filter((person) => person.online) ?? [];
+  const invitedRoom = snapshot?.rooms.find(room => room.id === initialRoomId);
   const matchingRooms = (snapshot?.rooms ?? []).filter((room) => {
+    if (room.id === initialRoomId) return false;
     if (practiceMode === "pair" && room.capacity > 2) return false;
     if (practiceMode === "group" && room.capacity <= 2) return false;
     // Explicit filter only — practice language is a preference, never a dead end.
@@ -331,7 +335,7 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
 
   const cinematic = screen === "entrance";
   return <CafePhotoProvider identity={identity} transport={transport}><CommunityFrame locale={locale} courseReturnHref={courseReturnHref} compact={screen === "chat"} cinematic={cinematic} people={peopleEnabled}>
-    {community.error && <div className={styles.error} role="alert"><p>{communityError(community.error, locale)}</p><div className={styles.row}><button className={styles.button} onClick={() => void community.refresh()}>{t("Actualiser", "Refresh", "Actualizar")}</button>{community.error === "unauthenticated" && <a className={styles.button} href="/connexion?next=%2Fcafe">{t("Me reconnecter", "Sign in again", "Volver a entrar")}</a>}</div></div>}
+    {community.error && !(initialRoomId && community.error === "not_room_member" && snapshot) && <div className={styles.error} role="alert"><p>{communityError(community.error, locale)}</p><div className={styles.row}><button className={styles.button} onClick={() => void community.refresh()}>{t("Actualiser", "Refresh", "Actualizar")}</button>{community.error === "unauthenticated" && <a className={styles.button} href={productLoginHref(cafeHref)}>{t("Me reconnecter", "Sign in again", "Volver a entrar")}</a>}</div></div>}
     {community.connection === "stale" && snapshot && <p className={styles.notice}>{t("Connexion à rétablir.", "Connection needs refreshing.", "Hay que restablecer la conexión.")}</p>}
     {notice && <div className={failedBlock ? styles.error : styles.notice} role="status">{notice}{failedBlock && <button className={styles.button} onClick={() => void blockMember(failedBlock)}>{t("Réessayer", "Retry", "Reintentar")}</button>}</div>}
     {!snapshot && <p className={styles.loading} role="status">{community.connection === "loading" ? t("Ouverture du Café…", "Opening the Café…", "Abriendo el Café…") : t("Le Café ne peut pas être chargé pour le moment.", "The Café cannot be loaded right now.", "No se puede cargar el Café en este momento.")}</p>}
@@ -357,6 +361,9 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
           <button className={styles.button} type="button" onClick={() => setSettings(true)}>{t("Mon profil", "My profile", "Mi perfil")}{!peopleEnabled && <> · {snapshot.me.displayName}</>}</button>
         </div>
       </div>
+      {initialRoomId && (invitedRoom
+        ? <div aria-label={t("Salon invité", "Invited room", "Sala invitada")}><RoomCard room={invitedRoom} me={snapshot.me} locale={locale} disabled={!community.canWrite} execute={execute} serverTime={snapshot.serverTime} /></div>
+        : <p className={styles.note}>{t("Ce salon est indisponible. Tu peux en choisir un autre.", "This room is unavailable. You can choose another.", "Esta sala no está disponible. Puedes elegir otra.")}</p>)}
       {peopleEnabled && <CafePeopleNav tab={peopleTab} onChange={setPeopleTab} incoming={snapshot.friends?.filter(friend => friend.status === "pending" && friend.direction === "incoming").length ?? 0} locale={locale} />}
       {peopleEnabled && peopleTab !== "rooms" && <CafePeople snapshot={snapshot} tab={peopleTab} locale={locale} execute={async command => {
         if (command.action === "room.join") setPeopleTab("messages");

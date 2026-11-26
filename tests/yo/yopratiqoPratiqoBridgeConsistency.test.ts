@@ -8,10 +8,10 @@
  *   • Pratiqo → YoPratiqo
  *       - `/student/progress` still mounts <YoStudentCompanionCard />,
  *       - the YoPratiqo companion section has its own clear heading,
- *       - the page exposes a CTA back to `/student/yopratiqo`.
+ *       - the page exposes a CTA back to `/yo/mon-parcours`.
  *
  *   • YoPratiqo → Pratiqo
- *       - `/student/yopratiqo` (the new hub) keeps `/student/progress`
+ *       - `/yo/mon-parcours` (the new hub) keeps `/student/progress`
  *         reachable as the "full Pratiqo progress" link.
  *
  *   • Teacher bridge (privacy-safe)
@@ -137,7 +137,7 @@ assert.ok(
 ok("2) /student/progress includes a clear, localized Yoppo · YoPratiqo companion section");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 3. /student/progress links to /student/yopratiqo
+// 3. /student/progress links to /yo/mon-parcours
 // ─────────────────────────────────────────────────────────────────────────
 
 assert.match(
@@ -147,35 +147,35 @@ assert.match(
 );
 assert.match(
   progressSrc,
-  /href=["']\/student\/yopratiqo["']/,
-  "/student/progress must link to /student/yopratiqo so YoPratiqo is one click away",
+  /href=["']\/yo\/mon-parcours["']/,
+  "/student/progress must link to /yo/mon-parcours so YoPratiqo is one click away",
 );
 // CTA label, FR / EN / ES — verbatim from the brief.
 assert.ok(progressSrc.includes("Ouvrir YoPratiqo"));
 assert.ok(progressSrc.includes("Open YoPratiqo"));
 assert.ok(progressSrc.includes("Abrir YoPratiqo"));
-ok("3) /student/progress links to /student/yopratiqo with localized 'Open YoPratiqo' CTA");
+ok("3) /student/progress links to /yo/mon-parcours with localized 'Open YoPratiqo' CTA");
 
 // ─────────────────────────────────────────────────────────────────────────
-// 4. /student/yopratiqo links back to /student/progress
+// 4. /yo/mon-parcours links back to /student/progress
 // ─────────────────────────────────────────────────────────────────────────
 
 const hubSrc = read(HUB_CONTENT_PATH);
 assert.match(
   hubSrc,
   /["']\/student\/progress["']/,
-  "/student/yopratiqo must link back to /student/progress (the full-Pratiqo-progress bridge)",
+  "/yo/mon-parcours must link back to /student/progress (the full-Pratiqo-progress bridge)",
 );
 assert.match(
   hubSrc,
   /data-testid=["']yo-student-hub-full-progress-link["']/,
-  "/student/yopratiqo must expose the full-Pratiqo-progress link via data-testid",
+  "/yo/mon-parcours must expose the full-Pratiqo-progress link via data-testid",
 );
 // Localized CTA text — verbatim from the brief.
 assert.ok(hubSrc.includes("Voir toute ma progression Pratiqo"));
 assert.ok(hubSrc.includes("View my full Pratiqo progress"));
 assert.ok(hubSrc.includes("Ver todo mi progreso Pratiqo"));
-ok("4) /student/yopratiqo links back to /student/progress as 'View my full Pratiqo progress'");
+ok("4) /yo/mon-parcours links back to /student/progress as 'View my full Pratiqo progress'");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 5. TeacherLearningInsightCard still exists

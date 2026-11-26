@@ -1,3 +1,4 @@
+import { productArrivalPath, productReturnPath } from "@/lib/auth/productReturn";
 import { CONNEXION_PATH } from "@/lib/auth/preAuthOnboardingIntent";
 import { guardAuthRedirectPath } from "@/lib/auth/oauthCallbackRedirect";
 import { resolvePostAuthRedirect, type ProfileRole } from "@/lib/auth/postAuthRedirect";
@@ -6,6 +7,7 @@ import {
   type PreAuthOnboardingIntent,
 } from "@/lib/auth/preAuthOnboardingIntent";
 import { sanitizeRelativeRedirectPath } from "@/lib/auth/redirects";
+import { coerceTeacherNextToRoleChoicePath, needsOnboardingRoleChoice, resolveProfileDashboardFromAuth } from "./onboardingRoleChoice";
 import { hasStudentOnboardingConsent } from "@/lib/auth/studentOnboardingConsent";
 
 export type AuthenticatedLoginProfile = {
@@ -83,8 +85,14 @@ export function resolvePostLoginDestination(input: {
   nextPath?: string | null;
   oauthNextPath?: string | null;
 }): string {
+  const product = productReturnPath(input.nextPath);
+  if (product) return productArrivalPath(product);
   const role = normalizeAuthenticatedRole(input.profile?.role);
   const profileSnapshot = profileForPostAuthRedirect(input.profile);
+  if (input.preAuthIntent === "teacher" && role === "student" &&
+      needsOnboardingRoleChoice({ ...profileSnapshot, role, dashboard: resolveProfileDashboardFromAuth(input.profile) })) {
+    return coerceTeacherNextToRoleChoicePath(input.nextPath ?? "/onboarding/teacher");
+  }
   const safeNext = resolveSafeNextForPostLogin({ ...input, role });
 
   if (input.preAuthIntent && role) {
