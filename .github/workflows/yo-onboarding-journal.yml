@@ -19,6 +19,7 @@ on:
       - 'tests/yo/yopratiqoIntroSync.browser.py'
       - 'public/companion/travel/journal/**'
       - 'tests/yo/yopratiqoJournal.browser.py'
+      - 'tests/yo/yopratiqoFirstMission.browser.py'
       - 'tests/yo/yopratiqoTravelFilms.browser.py'
       - 'tests/yo/yopratiqoPremiumCinema.browser.py'
       - 'tests/yo/yopratiqoInterests.browser.py'
@@ -89,6 +90,7 @@ jobs:
           node --import tsx tests/yo/yopratiqoIntroSyncPlayer.test.tsx
           node --import tsx tests/yo/yopratiqoOnboardingResume.test.tsx
           python tests/yo/yopratiqoJournal.browser.py
+          python tests/yo/yopratiqoFirstMission.browser.py
           python tests/yo/yopratiqoOnboardingResume.browser.py
           python tests/yo/yopratiqoTravelFilms.browser.py
           python tests/yo/yopratiqoPremiumCinema.browser.py
