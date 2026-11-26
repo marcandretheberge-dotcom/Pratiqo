@@ -350,7 +350,7 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
         <div>
           {(!peopleEnabled || peopleTab === "rooms") && <p className={styles.eyebrow}>{practiceLanguage ? cafeLanguageLabel(practiceLanguage, locale) : t("Toutes les langues", "All languages", "Todos los idiomas")}</p>}
           <h1 id="cafe-lobby-title" className={styles.screenTitle}>{t("Au Café", "Inside the Café", "En el Café")}</h1>
-          <p className={styles.onlineCount}>{onlinePeople.length === 1 ? t("1 personne en ligne", "1 person online", "1 persona en línea") : t(`${onlinePeople.length} personnes en ligne`, `${onlinePeople.length} people online`, `${onlinePeople.length} personas en línea`)}</p>
+          {onlinePeople.length > 0 && community.connection === "ready" && <p className={styles.onlineCount}>{onlinePeople.length === 1 ? t("1 personne en ligne", "1 person online", "1 persona en línea") : t(`${onlinePeople.length} personnes en ligne`, `${onlinePeople.length} people online`, `${onlinePeople.length} personas en línea`)}</p>}
         </div>
         <div className={styles.row}>
           {!peopleEnabled && <button className={styles.button} type="button" onClick={() => setScreen("language")}>{t("Langues", "Languages", "Idiomas")}</button>}
@@ -361,7 +361,7 @@ export function CafeCommunityApp({ identity, locale, transport, initialRoomId = 
       {peopleEnabled && peopleTab !== "rooms" && <CafePeople snapshot={snapshot} tab={peopleTab} locale={locale} execute={async command => {
         if (command.action === "room.join") setPeopleTab("messages");
         return execute(command);
-      }} disabled={!community.canWrite} onBlock={member => void blockMember(member)} onReport={beginReport} languageHint={languageHint} />}
+      }} disabled={!community.canWrite} onBlock={member => void blockMember(member)} onReport={beginReport} onShowRooms={() => setPeopleTab("rooms")} languageHint={languageHint} />}
       {(!peopleEnabled || peopleTab === "rooms") && <>
       <div className={styles.modeTabs} role="group" aria-label={t("Mode", "Mode", "Modo")}>
         <button type="button" className={styles.tab} aria-pressed={practiceMode === "group"} onClick={() => setPracticeMode("group")}>{t("En groupe", "In a group", "En grupo")}</button>
