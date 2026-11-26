@@ -1,0 +1,45 @@
+name: Language Café pilot review
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/language-cafe-pilot-review.yml"
+      - "app/cafe-des-langues/**"
+      - "components/cafe/**"
+      - "docs/product/cafe-des-langues/**"
+      - "tests/yo/pratiqoLanguageCafePilot.test.tsx"
+  push:
+    branches: ["feat/cafe-des-langues-pilot-kit-20261109"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: language-cafe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pilot-review:
+    name: Localized pilot preview, privacy and safety
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: TypeScript and focused lint
+        run: |
+          set -euo pipefail
+          npx tsc --noEmit
+          npx eslint app/cafe-des-langues/page.tsx components/cafe/CafePilotInterest.tsx tests/yo/pratiqoLanguageCafePilot.test.tsx
+          git diff --check
+      - name: Pilot copy, locale, code-of-conduct and zero-collection tests
+        run: node --import tsx tests/yo/pratiqoLanguageCafePilot.test.tsx
+      - name: Existing YoPratiqo locale navigation regression
+        run: npm run test:yo-course-navigation
