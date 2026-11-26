@@ -79,7 +79,7 @@ assert.match(prompt, /isSensitivePath/);
 assert.match(prompt, /env\(safe-area-inset-bottom/);
 assert.match(prompt, /return null/);
 assert.match(prompt, /href="\/app"/);
-for (const sensitive of ["/api", "/booking", "/checkout", "/login", "/student", "/teacher", "/yo/checkout", "/yo/langues/allemand/parcours"]) {
+for (const sensitive of ["/api", "/auth", "/yo/mon-parcours", "/booking", "/checkout", "/login", "/student", "/teacher", "/yo/checkout", "/yo/langues/allemand/parcours"]) {
   assert.match(prompt, new RegExp(`"${sensitive.replace("/", "\\/")}"`), `install prompt must hide on ${sensitive}`);
 }
 ok("install prompt is mobile-only, dismissible, SSR-safe, and hidden on sensitive routes");
@@ -107,7 +107,7 @@ const precache = sw.slice(sw.indexOf("const PRECACHE_URLS"), sw.indexOf("const A
 for (const safe of ["/offline", "/manifest.json", "/apple-touch-icon.png", "/icons/icon-192-maskable.png"]) {
   assert.match(precache, new RegExp(safe.replace(/[/.]/g, "\\$&")));
 }
-for (const forbidden of ["/api", "/booking", "/checkout", "/messages", "/student", "/teacher", "/upgrade", "/yo/checkout"]) {
+for (const forbidden of ["/api", "/auth", "/yo/mon-parcours", "/booking", "/checkout", "/messages", "/student", "/teacher", "/upgrade", "/yo/checkout"]) {
   assert.match(sw, new RegExp(`"${forbidden.replace("/", "\\/")}"`), `SW must bypass ${forbidden}`);
   assert.doesNotMatch(precache, new RegExp(forbidden.replace("/", "\\/")), `SW must not precache ${forbidden}`);
 }
