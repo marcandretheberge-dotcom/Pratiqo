@@ -46,11 +46,18 @@ def verify(browser, engine):
         departure = film(page, "flight")
         expect(departure.get_by_role("heading")).to_have_text("Bologna")
         assert location(page) is None
+        page.wait_for_function("""() => {
+          const film = document.querySelector('[data-travel-film]');
+          return film?.querySelector('video')?.currentTime > 0.18
+            || film?.querySelector('[role="status"]')?.textContent.includes('Touche Lecture');
+        }""", timeout=15000)
+        if departure.locator("video").evaluate("v=>v.paused"):
+            departure.get_by_role("button", name="Lire le film").click()
         page.wait_for_function("document.querySelector('[data-travel-film] video')?.currentTime > 0.18", timeout=15000)
-        assert departure.locator("video").evaluate("v=>v.muted")
-        departure.get_by_role("button", name="Activer le son du film").click()
         assert departure.locator("video").evaluate("v=>!v.muted")
         departure.get_by_role("button", name="Couper le son du film").click()
+        assert departure.locator("video").evaluate("v=>v.muted")
+        departure.get_by_role("button", name="Activer le son du film").click()
         page.screenshot(path=str(photos / (engine + "-embarquement.png")))
         departure.get_by_role("button", name="Mettre en pause").click()
         assert departure.locator("video").evaluate("v=>v.paused && v.playsInline && v.videoWidth===768")

@@ -6,7 +6,7 @@ import type { YoLocale } from "@/lib/yo/types";
 import type { CinemaFilmAsset, MissionCinemaKind, TravelMode } from "@/lib/yo/travelCinema";
 import { stopLessonAudio } from "@/lib/yo/audio/stopLessonAudio";
 import { useMapReducedMotion } from "../journey/map/useMapReducedMotion";
-import { useLearningFeedback } from "../feedback/LearningFeedback";
+import { useCinemaSound } from "./useCinemaSound";
 import { clearCinemaPlayback, readCinemaPlayback, saveCinemaPlayback } from "./cinemaPlayback";
 
 const labels = {
@@ -34,11 +34,11 @@ export function CinemaPlayer({ id, film, locale, eyebrow, title, caption, travel
   const [player, setPlayer] = useState<HTMLVideoElement | null>(null);
   const [phase, setPhase] = useState<"idle" | "loading" | "playing" | "paused">("idle");
   const [failure, setFailure] = useState<"unavailable" | "slow" | null>(null);
-  const [tapRequired, setTapRequired] = useState(false), [audible, setAudible] = useState(false), [captions, setCaptions] = useState(true);
+  const [tapRequired, setTapRequired] = useState(false), [audible, setAudible] = useState(true), [captions, setCaptions] = useState(true);
   const heading = useRef<HTMLHeadingElement>(null), returnFocus = useRef<HTMLElement | null>(null), media = useRef<HTMLVideoElement | null>(null), done = useRef(false), attempted = useRef(false), savedSecond = useRef(-1);
   const reduce = useMapReducedMotion(), network = useSyncExternalStore(subscribeNetwork, networkSnapshot, () => "online");
-  const { sound, volume } = useLearningFeedback();
-  const copy = labels[locale], offline = network === "offline", canUseSound = sound && volume > 0;
+  const { ready: soundReady, sound, volume } = useCinemaSound();
+  const copy = labels[locale], offline = network === "offline", canUseSound = soundReady && sound && volume > 0;
   const muted = !canUseSound || !audible, playable = Boolean(film.src) && !offline;
   const attachPlayer = useCallback((element: HTMLVideoElement | null) => { media.current = element; setPlayer(element); }, []);
 
@@ -51,7 +51,7 @@ export function CinemaPlayer({ id, film, locale, eyebrow, title, caption, travel
   }, [id, player, onFinish]);
 
   const play = useCallback(() => {
-    if (!player || !film.src || network === "offline" || done.current) return;
+    if (!player || !film.src || !soundReady || network === "offline" || done.current) return;
     attempted.current = true;
     stopLessonAudio();
     setFailure(null); setTapRequired(false); setPhase("loading");
@@ -62,7 +62,7 @@ export function CinemaPlayer({ id, film, locale, eyebrow, title, caption, travel
         if (player.error) setFailure("unavailable"); else setTapRequired(true);
       });
     } catch { setPhase("paused"); setTapRequired(true); }
-  }, [player, film.src, network]);
+  }, [player, film.src, network, soundReady]);
 
   useEffect(() => {
     stopLessonAudio();
@@ -73,7 +73,7 @@ export function CinemaPlayer({ id, film, locale, eyebrow, title, caption, travel
   useEffect(() => {
     if (!player) return;
     let cancelled = false;
-    if (reduce || network !== "online" || document.hidden) player.pause();
+    if (!soundReady || reduce || network !== "online" || document.hidden) player.pause();
     else queueMicrotask(() => { if (!cancelled && !attempted.current) play(); });
     const pause = () => player.pause();
     const onVisibility = () => { if (document.hidden) pause(); };
@@ -84,7 +84,7 @@ export function CinemaPlayer({ id, film, locale, eyebrow, title, caption, travel
       if (!done.current && film.src) saveCinemaPlayback(id, film.src, player.currentTime);
       pause();
     };
-  }, [id, player, film.src, reduce, network, play]);
+  }, [id, player, film.src, reduce, network, play, soundReady]);
   useEffect(() => {
     if (phase !== "loading") return;
     const timeout = window.setTimeout(() => { setFailure("slow"); setPhase("paused"); player?.pause(); }, 8000);

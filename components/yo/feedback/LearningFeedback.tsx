@@ -12,11 +12,11 @@ export const EFFECTS_VOLUME_KEY = "yopratiqo.audio.effects-volume.v1";
 type Options = { sound: boolean; haptics: boolean; volume: number };
 type Feedback = Options & {
   postcard?: boolean;
-  present: boolean; supported: boolean; stored: boolean;
+  present: boolean; ready: boolean; supported: boolean; stored: boolean;
   emit: (id: string, kind?: FeedbackCue) => void;
   set: (patch: Partial<Options>) => void; sample: (kind?: FeedbackCue) => void; step: () => void;
 };
-const Context = createContext<Feedback>({ present: false, sound: false, haptics: false, volume: 1, supported: false, stored: true, emit: () => {}, set: () => {}, sample: () => {}, step: () => {} });
+const Context = createContext<Feedback>({ present: false, ready: false, sound: false, haptics: false, volume: 1, supported: false, stored: true, emit: () => {}, set: () => {}, sample: () => {}, step: () => {} });
 export const useLearningFeedback = () => useContext(Context);
 
 /** Cosmetic feedback only. Never writes learning results, credits, access or personal information. */
@@ -25,6 +25,7 @@ export function LearningFeedbackProvider({ children, storageNamespace, consisten
   const hapticsKey = storageNamespace ? `${storageNamespace}.haptics` : HAPTICS_KEY;
   const volumeKey = storageNamespace ? `${storageNamespace}.volume` : EFFECTS_VOLUME_KEY;
   const [options, setOptions] = useState<Options>({ sound: true, haptics: false, volume: 1 });
+  const [ready, setReady] = useState(false);
   const [supported, setSupported] = useState(false), [stored, setStored] = useState(true);
   const navigation = useRef(0);
   const latest = useRef(options), engine = useRef<FeedbackPlayer | null>(null), seen = useRef(new Set<string>());
@@ -36,7 +37,7 @@ export function LearningFeedbackProvider({ children, storageNamespace, consisten
         const volume = savedVolume === null ? 1 : Number(savedVolume);
         next = { sound: (localStorage.getItem(effectsKey) ?? localStorage.getItem(EFFECTS_KEY)) !== "true", haptics: (localStorage.getItem(hapticsKey) ?? localStorage.getItem(HAPTICS_KEY)) === "true", volume: Number.isFinite(volume) && volume >= 0 && volume <= 1 ? volume : 1 }; setStored(true); }
       catch { setStored(false); }
-      latest.current = next; setOptions(next); player.setVolume(next.volume);
+      latest.current = next; setOptions(next); setReady(true); player.setVolume(next.volume);
       if (!next.sound) player.cancel();
       setSupported(typeof navigator.vibrate === "function");
     };
@@ -67,7 +68,7 @@ export function LearningFeedbackProvider({ children, storageNamespace, consisten
   }, []);
   const sample = useCallback((kind: FeedbackCue = "correct") => { if (latest.current.sound) void engine.current?.play(kind); }, []);
   const step = useCallback(() => { emit(`navigation:${++navigation.current}`, "step"); }, [emit]);
-  return <Context.Provider value={{ ...options, postcard: consistent, present: true, supported, stored, set, emit, sample, step }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ ...options, postcard: consistent, present: true, ready, supported, stored, set, emit, sample, step }}>{children}</Context.Provider>;
 }
 
 /** An event is accepted only once per checked item/turn; rendering/restoring drafts is silent. */

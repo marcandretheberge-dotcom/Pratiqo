@@ -46,7 +46,7 @@ const tests: Array<[string, () => Promise<void>]> = [];
 tests.push(["reduced motion, readable captions and immediate skip never require playback", async () => {
   let exits = 0;
   const view = render(<CinemaPlayer {...base} id="reduced" onFinish={() => exits++}/>); await flush();
-  assert.equal(plays, 0); assert.equal(video().preload, "none"); assert.equal(video().muted, true);
+  assert.equal(plays, 0); assert.equal(video().preload, "none"); assert.equal(video().muted, false);
   assert.equal(view.getByRole("button", { name: "Descriptive captions" }).getAttribute("aria-pressed"), "true");
   fireEvent.click(view.getByRole("button", { name: "Descriptive captions" }));
   assert.ok(document.querySelector("[data-cinema-caption]")?.classList.contains("sr-only"));
