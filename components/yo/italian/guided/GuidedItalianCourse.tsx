@@ -6,7 +6,7 @@ import type { CourseProgress } from "@/lib/yo/italian/course/courseProgress";
 import type { LearningJourney } from "@/lib/yo/learningJourney";
 import { motion, useReducedMotion } from "motion/react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowRight, BookOpen, MoreHorizontal, Printer, Stamp, X } from "lucide-react";
+import { ArrowRight, BookOpen, MoreHorizontal, Printer, X } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import type { YoLocale } from "@/lib/yo/types";
 import type { CourseCatalog, CourseUnit } from "@/lib/yo/italian/course/courseTypes";
@@ -33,7 +33,7 @@ import { ItalianPrintableMenu } from "./ItalianPrintableMenu";
 import { useItalianCourseProgress } from "../course/useItalianCourseProgress";
 import { ItalianAudioProvider } from "../ItalianAudioProvider";
 import { canPlayItalianTrivia } from "@/lib/yo/italian/trivia";
-import { ItalianCityBossGate } from "./ItalianCityBossGate";
+import { FinalChallengeIntro, FinalChallengeResult } from "../../challenge/FinalChallengeStage";
 import { ItalianBossBattleHud } from "./ItalianBossBattleHud";
 import { GuidedGame } from "./GuidedGame";
 import { t } from "@/lib/yo/italian/course/courseAuthoring";
@@ -97,6 +97,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   const [translation, setTranslation] = useState(false), [hint, setHint] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const missionContent = useRef<HTMLDivElement>(null);
+  const challengeContent = useRef<HTMLElement>(null);
   const routeRequest = useRef("");
   const step = steps[ui.step], lesson = unit.lessons[step.lesson], exercise = step.activity;
   const passed = guidedPassed(unit, progress);
@@ -127,7 +128,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     try { localStorage.setItem(uiKey, raw); setStorageAvailable(true); }
     catch { setStorageAvailable(false); }
   }
-  function focus() { requestAnimationFrame(() => { heading.current?.focus({ preventScroll: true }); if (missionContent.current) missionContent.current.scrollTop = 0; }); }
+  function focus() { requestAnimationFrame(() => { heading.current?.focus({ preventScroll: true }); if (missionContent.current) missionContent.current.scrollTop = 0; if (challengeContent.current) challengeContent.current.scrollTop = 0; }); }
   function stop() { stopLessonAudio(); setTranslation(false); setHint(false); }
   function move(index: number, withBriefing = false) {
     if (index < 0 || index >= steps.length) return;
@@ -295,7 +296,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
       <Dialog.Portal>
         <Dialog.Overlay data-yoppo-mission-backdrop className="fixed inset-0 z-40 bg-[#16382f]/36 backdrop-blur-[1px]"/>
         <Dialog.Content asChild>
-          <motion.div ref={missionContent} data-yoppo-mission-window aria-describedby={undefined}
+          <motion.div ref={missionContent} data-yoppo-mission-window data-final-challenge={ui.view !== "mission" ? ui.view : undefined} aria-describedby={undefined}
             initial={reduceMotion ? false : { y: 54, opacity: .94, scale: .995 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 430, damping: 34, mass: .78 }}
@@ -346,14 +347,36 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
           {!exercise && !lesson.discovery && step.stage !== "prepare" && !scene && overlay === null && <div className="mt-6"><YoSpeechPractice key={lesson.id} language="it" locale={locale} scenarioId={courseSpeechScenario("it", unit.number)}/></div>}
         </div>
       </div> : null}
-      {ui.view === "challenge-intro" ? <section className="mx-auto max-w-xl rounded-3xl border border-stone-200 bg-white p-6 sm:p-8"><CompanionAvatar visualId="travel" state="teacher_ready" size="sm" locale={locale} compact /><div className="mt-5"><ItalianCityBossGate unitId={unit.id} locale={locale} variant="challenge"/></div><h1 ref={heading} tabIndex={-1} className="mt-5 text-3xl font-bold outline-none">{c.challenge}</h1><p className="mt-4 text-lg font-semibold">{c.stampRule}</p><p className="mt-4 text-sm leading-7">{unit.quiz.mission?.briefing[locale] ?? unit.quiz.description[locale]}</p><p className="mt-5 rounded-2xl bg-emerald-50 p-4 text-sm leading-7">{c.finalRule}</p><button type="button" className={`${primary} mt-6 w-full`} onClick={startChallenge}>{c.begin}</button><button type="button" className={`${secondary} mt-3 w-full`} onClick={() => move(next >= 0 ? next : 0)}>{c.practice}</button></section> : null}
-      {challengeMode ? <section className="mx-auto max-w-2xl"><p className="mb-3 text-sm font-bold text-emerald-800">{c.challenge} · {ui.quizIndex + 1}/{unit.quiz.questions.length}</p><h1 ref={heading} tabIndex={-1} className="mb-5 text-2xl font-bold outline-none">{unit.quiz.mission?.scenes[question.id]?.title[locale] ?? c.challenge}</h1><ItalianBossBattleHud locale={locale} correct={ui.answers.filter(answer=>answer.correct).length} answered={ui.answers.length} total={unit.quiz.questions.length} assisted={ui.answers.some(answer=>answer.assisted)} passPercent={unit.quiz.passPercent}/><div className="yo-mission-content">{unit.quiz.mission?.scenes[question.id] ? <p className="mb-6 rounded-2xl bg-emerald-50 p-4 text-sm leading-7">{unit.quiz.mission.scenes[question.id].setting[locale].replace("Écris une demande polie", "Construis une demande polie avec les mots").replace("Write a polite request", "Build a polite request with the words").replace("Escribe una petición cortés", "Construye una petición cortés con las palabras")}</p> : null}<GuidedGame key={`${ui.runStartedAt}:${question.id}`} activity={question} locale={locale} paused={overlay!==null || Boolean(scene)} value={ui.game} onChange={updateGame} onAttempt={() => {}} onContinue={nextQuestion} assessment continueLabel={ui.quizIndex === unit.quiz.questions.length - 1 ? c.result : c.next} /></div><p className="mt-3 text-xs text-stone-600">{c.noHints}</p></section> : null}
-      {ui.view === "result" ? <section className="mx-auto max-w-xl rounded-3xl border border-stone-200 bg-white p-6 text-center sm:p-8"><div className="flex justify-center"><CompanionAvatar visualId="travel" state={resultPassed ? "celebrating" : "teacher_ready"} size="md" locale={locale} compact /></div>{resultPassed && passed?<div className="mt-5"><ItalianCityBossGate unitId={unit.id} locale={locale} variant="victory"/></div>:null}<h1 ref={heading} tabIndex={-1} className="mt-5 text-2xl font-bold outline-none">{resultPassed ? c.passed : resultHelp ? c.helped : c.missed}</h1><p className="mt-5 text-4xl font-black text-emerald-800">{completedAnswers}/{unit.quiz.questions.length}</p>{resultPassed ? <p className="mx-auto mt-5 inline-flex items-center gap-2 rounded-2xl border-2 border-emerald-700 p-4 font-bold motion-safe:animate-[fadeIn_300ms_ease-out]"><Stamp aria-hidden />{c.stamp}</p> : null}{resultPassed ? <section className="mt-6 rounded-2xl bg-emerald-50 p-5 text-left" data-yoppo-city-achievements>
-        <h2 className="text-lg font-bold text-emerald-950">{say("Ce que tu sais maintenant pratiquer", "What you can now practise", "Lo que ya puedes practicar")}</h2>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6">{unit.objectives.map((goal,index) => <li key={index}>{goal[locale]}</li>)}</ul>
-        <p className="mt-4 text-sm text-stone-700">{say("Continue d'étudier ces expressions et révise-les dans ton carnet pour les retenir longtemps.", "Keep studying these expressions and review them in your notebook for long-term memory.", "Sigue estudiando estas expresiones y repásalas en tu cuaderno para recordarlas.")}</p>
-        <div className="mt-3 flex flex-wrap gap-2"><Link href={reportHref} target="_blank" rel="noopener" className={`${secondary} underline`}>{say("Imprimer mon bilan", "Print my achievements", "Imprimir mis logros")}</Link><Link href={bankHref} target="_blank" rel="noopener" className={`${secondary} underline`}>{say("Imprimer mes mots", "Print my vocabulary", "Imprimir mis palabras")}</Link></div>
-      </section> : null}<p className="mt-5 text-sm leading-6 text-stone-600">{c.finishNotice}</p>{resultPassed ? <button type="button" className={`${primary} mt-6 w-full`} onClick={leave}>{c.map}<ArrowRight size={18} aria-hidden /></button> : <><button type="button" className={`${primary} mt-6 w-full`} onClick={() => move(0)}>{c.practice}</button><button type="button" className={`${secondary} mt-3 w-full`} onClick={startChallenge}>{c.retry}</button></>}</section> : null}
+      {ui.view === "challenge-intro" ? <FinalChallengeIntro
+        stampEarned={passed}
+        locale={locale} city={city ?? unit.title[locale]} total={unit.quiz.questions.length} required={minimumScore}
+        briefing={unit.quiz.mission?.briefing[locale] ?? unit.quiz.description[locale]} rules={c.finalRule}
+        headingRef={heading} onStart={startChallenge} onReview={() => move(next >= 0 ? next : 0)}/>: null}
+      {challengeMode ? <section ref={challengeContent} className="yo-challenge-question">
+        <ItalianBossBattleHud locale={locale} correct={completedAnswers} answered={ui.answers.length}
+          total={unit.quiz.questions.length} assisted={resultHelp || ui.game.assisted}
+          passPercent={unit.quiz.passPercent} answers={ui.answers}/>
+        <h1 ref={heading} tabIndex={-1} className="yo-challenge-scene-title">{unit.quiz.mission?.scenes[question.id]?.title[locale] ?? c.challenge}</h1>
+        {unit.quiz.mission?.scenes[question.id] ? <p className="yo-challenge-scene-setting">{unit.quiz.mission.scenes[question.id].setting[locale].replace("Écris une demande polie", "Construis une demande polie avec les mots").replace("Write a polite request", "Build a polite request with the words").replace("Escribe una petición cortés", "Construye una petición cortés con las palabras")}</p> : null}
+        <GuidedGame key={`${ui.runStartedAt}:${question.id}`} activity={question} locale={locale}
+          paused={overlay !== null || Boolean(scene)} value={ui.game} onChange={updateGame} onAttempt={() => {}}
+          onContinue={nextQuestion} assessment presentation="challenge"
+          continueLabel={ui.quizIndex === unit.quiz.questions.length - 1 ? c.result : c.next}/>
+      </section> : null}
+      {ui.view === "result" ? <FinalChallengeResult
+        locale={locale} city={city ?? unit.title[locale]} correct={completedAnswers} total={unit.quiz.questions.length}
+        required={minimumScore} passed={resultPassed} assisted={resultHelp} stampEarned={passed}
+        headingRef={heading} onContinue={leave} onRetry={startChallenge} onReview={() => move(0)}>
+        {resultPassed ? <section data-yoppo-city-achievements>
+          <h2>{say("Ce que tu sais maintenant pratiquer", "What you can now practise", "Lo que ya puedes practicar")}</h2>
+          <ul>{unit.objectives.map((goal,index) => <li key={index}>{goal[locale]}</li>)}</ul>
+          <div className="yo-challenge-report-links">
+            <Link href={reportHref} target="_blank" rel="noopener">{say("Imprimer mon bilan", "Print my achievements", "Imprimir mis logros")}</Link>
+            <Link href={bankHref} target="_blank" rel="noopener">{say("Imprimer mes mots", "Print my vocabulary", "Imprimir mis palabras")}</Link>
+          </div>
+        </section> : null}
+        <p>{c.finishNotice}</p>
+      </FinalChallengeResult> : null}
 
           </motion.div>
         </Dialog.Content>

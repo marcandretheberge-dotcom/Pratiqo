@@ -42,7 +42,7 @@ with sync_playwright() as pw:
   click('Yoppo and my tools');assert page.get_by_role('switch',name='Success sounds').get_attribute('aria-checked')=='false';assert page.get_by_role('switch',name='Vibrations').get_attribute('aria-checked')=='true'
   page.get_by_role('switch',name='Success sounds').click();page.get_by_role('switch',name='Vibrations').click();click('Preview the soft wood sound');page.wait_for_function('window.__cues.length===1');page.keyboard.press('Escape')
   # A correct final answer has its own cue, independent from the old aggregate callback.
-  click('Already confident? Try the final challenge');click('Start the final challenge');click('Mi chiamo Nina.');click('Check');page.wait_for_function('window.__cues.length===2')
+  click('Already confident? Try the final challenge');click('Start the challenge');click('Mi chiamo Nina.');click('Check');page.wait_for_function('window.__cues.length===2')
   for width in [320,390,1280]:
    page.set_viewport_size({'width':width,'height':900});assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
   page.screenshot(path=str(root/'correct-final-desktop.png'),full_page=True)

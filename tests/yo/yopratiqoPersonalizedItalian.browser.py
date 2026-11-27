@@ -68,9 +68,9 @@ with sync_playwright() as pw:
     if step.get('activity'):solve(page,step['activity'])
     click(page,'Continue')
   log('Three visual preparations and all 19 first-meeting exercises completed; incorrect images never unlock a mission.')
-  click(page,'Start the final challenge')
+  click(page,'Start the challenge')
   for i,a in enumerate(unit['quiz']['questions']):solve(page,a);click(page,'See my result' if i==4 else 'Continue')
-  page.get_by_role('heading',name='Your stamp is in your passport!',exact=True).wait_for()
+  page.get_by_role('heading',name='Perfect!',exact=True).wait_for()
   click(page,'Back to the map');assert page.get_by_text('290 learning points',exact=True).count()==1
   page.reload();page.locator('[data-guided-italian]').wait_for();assert page.get_by_text('290 learning points',exact=True).count()==1
   assert page.locator('[data-yoppo-onboarding]').count()==0

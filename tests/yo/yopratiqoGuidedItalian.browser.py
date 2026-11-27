@@ -46,10 +46,10 @@ with sync_playwright() as pw:
   if step['id']=='it1-u01-l1-read':page.screenshot(path=str(root/'exercise-mobile.png'),full_page=True)
   main_button(page,'Continue').click()
  log('All 31 guided steps / 19 exercises completed, including 6 keyboard-free replacements; zero typing/self-rating controls.')
- main_button(page,'Start the final challenge').click()
+ main_button(page,'Start the challenge').click()
  for i,a in enumerate(unit['quiz']['questions']):
   solve(page,a,wrong=(i==4));main_button(page,'See my result' if i==4 else 'Continue').click()
- page.get_by_role('heading',name='Your stamp is in your passport!',exact=True).wait_for()
+ page.get_by_role('heading',name='Challenge complete!',exact=True).wait_for()
  assert page.get_by_text('4/5',exact=True).count()==1
  page.screenshot(path=str(root/'result-mobile.png'),full_page=True)
  main_button(page,'Back to the map').click()
@@ -74,7 +74,7 @@ with sync_playwright() as pw:
  log('Notebook preserves the unfinished selection; focus remains inside its dialog, Escape closes it; exact deep-link reload keeps the selection.')
  # Fresh learner: resume a partly answered final challenge without resetting or awarding.
  page.goto('http://127.0.0.1:3129/?lang=en');page.evaluate('localStorage.clear()');page.reload();page.get_by_role('button',name='Skip the tour',exact=True).click()
- main_button(page,'Already confident? Try the final challenge').click();main_button(page,'Start the final challenge').click()
+ main_button(page,'Already confident? Try the final challenge').click();main_button(page,'Start the challenge').click()
  solve(page,unit['quiz']['questions'][0]);main_button(page,'Continue').click()
  game=page.locator('[data-guided-game]');game.get_by_role('button',name='Leggi.',exact=True).click()
  page.get_by_role('button',name='Leave and save my place',exact=True).click();page.reload()
@@ -85,8 +85,9 @@ with sync_playwright() as pw:
  # Written accessibility alternative is explicitly assisted, not an independent pass.
  page.get_by_role('button',name='Read instead of listen (with help)',exact=True).click();page.get_by_role('button',name='Check',exact=True).click();main_button(page,'Continue').click()
  for i in range(2,5):solve(page,unit['quiz']['questions'][i]);main_button(page,'See my result' if i==4 else 'Continue').click()
- page.get_by_role('heading',name='Good practice with help. Retake the challenge without hints to earn the stamp.',exact=True).wait_for()
- assert page.get_by_text('Bologna stamp',exact=True).count()==0
+ page.get_by_role('heading',name='Ready to try again?',exact=True).wait_for()
+ page.get_by_text('You used some help. Try again without hints to earn the stamp.',exact=True).wait_for()
+ assert page.locator('[data-challenge-stage=retry] [data-earned=true]').count()==0
  log('5/5 with a transcript remains practice with help; no false independent stamp.')
  # Locale walkthrough and full-course tools.
  for lang,skip,start,notebook,helpname in [('fr','Passer la visite','Commencer ma mission','Carnet de mots','Yoppo et mes outils'),('es','Omitir la visita','Empezar mi misión','Cuaderno de palabras','Yoppo y mis herramientas')]:
