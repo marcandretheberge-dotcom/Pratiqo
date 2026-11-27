@@ -28,15 +28,10 @@ function asCatalog(catalog: unknown): CourseCatalog | null {
   return Array.isArray(candidate.units) ? candidate : null;
 }
 
-/** Every exact reviewable identity, including retained authored editions.
- * Retention validates saved history; it does not add visible course units.
- */
-export function italianCatalogAdapter(catalog: unknown): SrsItemIdentity[] {
-  const parsed = asCatalog(catalog);
-  if (!parsed) return [];
+function itemsForUnits(units: CourseCatalog["units"]): SrsItemIdentity[] {
   const items: SrsItemIdentity[] = [];
   const seen = new Set<string>();
-  for (const unit of [...parsed.units, ...(Array.isArray(parsed.retainedUnits) ? parsed.retainedUnits : [])]) {
+  for (const unit of units) {
     for (const lesson of unit.lessons) {
       for (const activityId of lesson.activityIds) {
         if (seen.has(activityId)) continue;
@@ -58,9 +53,25 @@ export function italianCatalogAdapter(catalog: unknown): SrsItemIdentity[] {
   return items;
 }
 
-/** The catalog's activity-id set — the server's authority for /record and /import. */
+/** Only the active learning plan; retained editions are not additional tasks. */
+export function italianCatalogAdapter(catalog: unknown): SrsItemIdentity[] {
+  const parsed = asCatalog(catalog);
+  return parsed ? itemsForUnits(parsed.units) : [];
+}
+
+/** Activity ids in the active learning plan. */
 export function italianCatalogItemIds(catalog: unknown): Set<string> {
   return new Set(italianCatalogAdapter(catalog).map((item) => item.id));
+}
+
+/** Every exact identity accepted for review, including retained authored editions.
+ * This validation set does not add unseen themes to the active learning plan.
+ */
+export function italianReviewableItemIds(catalog: unknown): Set<string> {
+  const parsed = asCatalog(catalog);
+  if (!parsed) return new Set();
+  const units = [...parsed.units, ...(Array.isArray(parsed.retainedUnits) ? parsed.retainedUnits : [])];
+  return new Set(itemsForUnits(units).map((item) => item.id));
 }
 
 export const italianLanguageConfig: YoLanguageConfig = {

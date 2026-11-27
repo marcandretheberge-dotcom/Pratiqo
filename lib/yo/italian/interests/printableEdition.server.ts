@@ -1,4 +1,5 @@
-import "server-only";
+// Pure content projection shared by server routes and the printable renderer.
+// No credentials, network clients or server runtime dependencies are imported.
 import type { CourseCatalog, CourseUnit, CourseUnitSummary } from "../course/courseTypes";
 import { italianInterestAllUnits, italianInterestLessons } from "./unitOne";
 import { firstMeetingUnit } from "../../personalized/firstMeeting";
