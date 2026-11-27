@@ -44,6 +44,26 @@ export function introContinuation(course: IntroCourse, _goal: IntroProfile["goal
   return { ...destination, href: `${destination.path}?lang=${locale}` };
 }
 
+export type IntroContinuationOutline = { language: string; finalCount: number };
+
+/** Small read-only routing hint for the shared home. The intro player still owns
+ * complete draft validation; this hint never awards progress, XP or access.
+ * An unfinished lesson or final always takes priority over an earlier result.
+ */
+export function introReadyToContinue(raw: string | null, outline: IntroContinuationOutline): boolean {
+  if (!raw || raw.length > 30000) return false;
+  try {
+    const value: unknown = JSON.parse(raw);
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    const state = value as Record<string, unknown>;
+    return (state.version === 1 || state.version === 2) && state.language === outline.language
+      && state.resume === null && (state.view === "map" || state.view === "result")
+      && state.profile !== null && typeof state.profile === "object" && !Array.isArray(state.profile)
+      && Number.isInteger(state.best) && Number(state.best) <= outline.finalCount
+      && Number(state.best) >= Math.ceil(outline.finalCount * .8);
+  } catch { return false; }
+}
+
 export const introGoalFocus: Record<IntroProfile["goal"], Text> = {
   travel: L("Pour voyager : entraîne-toi à suivre une rencontre.", "For travel: practise following an encounter.", "Para viajar: practica cómo seguir un encuentro."),
   family: L("Pour les proches : reprends les salutations et les nouvelles.", "For family and friends: revisit greetings and asking how someone is.", "Para familiares y amistades: repasa saludos y cómo preguntar qué tal están."),

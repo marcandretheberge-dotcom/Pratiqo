@@ -40,6 +40,7 @@ import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoLanguageQuickStart } from "@/components/yo/YoLanguageQuickStart";
 import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
 import { RankingNavLink } from "@/components/yo/rankings/RankingNavLink";
+import { TodayNavLink } from "@/components/yo/daily/TodayNavLink";
 import { YoPublicCompanionOnboardingCard } from "@/components/yo/YoPublicCompanionOnboardingCard";
 import { buildYoCatalogItemList, buildYoPratiqoMetadata, resolveYoPratiqoPageLocale } from "@/lib/yo/yopratiqoSeo";
 import { serializeJsonLd } from "@/lib/seo/jsonLd";
@@ -290,6 +291,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
       <main>
         <div className="mx-auto max-w-5xl px-4 py-6 sm:px-8 sm:py-10">
           <h1 className="mb-4 text-sm font-semibold text-emerald-900">YoPratiqo</h1>
+          <TodayNavLink locale={locale} />
           <YoLanguageQuickStart locale={locale} />
           <Link href="/" className="mt-5 inline-flex min-h-11 items-center text-sm font-semibold text-emerald-900 underline underline-offset-4">
             {{fr: "Retour à Pratiqo", en: "Back to Pratiqo", es: "Volver a Pratiqo"}[locale]}

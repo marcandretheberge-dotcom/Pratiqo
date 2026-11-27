@@ -1,6 +1,7 @@
 "use client";
 import { YoLanguageQuickStart } from "./YoLanguageQuickStart";
 import { RankingNavLink } from "@/components/yo/rankings/RankingNavLink";
+import { TodayNavLink } from "@/components/yo/daily/TodayNavLink";
 
 /**
  * YoStudentHubContent
@@ -453,6 +454,7 @@ export function YoStudentHubContent({ cafeLink }: { cafeLink?: React.ReactNode }
       className="mx-auto w-full max-w-6xl space-y-6 pb-12"
     >
       {brandedHeaderBlock}
+      <TodayNavLink locale={l} />
       <YoLanguageQuickStart locale={l} />
       <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4" data-testid="yo-student-hub-rankings">
         <div><h2 className="text-base font-semibold text-emerald-950">{l === "en" ? "Your XP and your friends" : l === "es" ? "Tus XP y tus amigos" : "Tes XP et tes amis"}</h2><p className="mt-1 text-sm text-emerald-800">{l === "en" ? "See your progress and find your place among other learners." : l === "es" ? "Consulta tu progreso y tu posición entre otros estudiantes." : "Retrouve tes progrès et ta place parmi les autres personnes qui apprennent."}</p></div>
