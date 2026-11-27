@@ -39,6 +39,7 @@ import { YoAppValueStrip } from "@/components/yo/YoAppValueStrip";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoLanguageQuickStart } from "@/components/yo/YoLanguageQuickStart";
 import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
+import { RankingNavLink } from "@/components/yo/rankings/RankingNavLink";
 import { YoPublicCompanionOnboardingCard } from "@/components/yo/YoPublicCompanionOnboardingCard";
 import { buildYoCatalogItemList, buildYoPratiqoMetadata, resolveYoPratiqoPageLocale } from "@/lib/yo/yopratiqoSeo";
 import { serializeJsonLd } from "@/lib/seo/jsonLd";
@@ -274,6 +275,7 @@ export default async function YoHubPage({ searchParams }: PageProps) {
             <YoPratiqoLogo size="sm" priority={false} />
           </Link>
           <nav aria-label="YoPratiqo" className="flex items-center gap-2">
+            <RankingNavLink locale={locale} compact />
             <YoLanguageSelector locale={locale} pathname="/yo" availableLocales={["fr", "en"]} />
             <Link
               href={languesHref}

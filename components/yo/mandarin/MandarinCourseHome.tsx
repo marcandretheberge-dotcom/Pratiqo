@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, RotateCcw } from "lucide-react";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
+import { RankingNavLink } from "@/components/yo/rankings/RankingNavLink";
 import { buildYoLocaleHref } from "@/lib/yo/localize";
 import type { JourneyUnit } from "@/lib/yo/learningJourney";
 import { LearningJourney } from "../journey/CourseJourney";
@@ -53,6 +54,7 @@ export function MandarinCourseHome({
           >
             YoPratiqo
           </Link>
+          <RankingNavLink locale={locale} compact />
           <div className="flex rounded-full border border-[#e4dbcb] bg-[#fffdf8] p-1">
             {(["fr", "en", "es"] as const).map((lang) => (
               <Link

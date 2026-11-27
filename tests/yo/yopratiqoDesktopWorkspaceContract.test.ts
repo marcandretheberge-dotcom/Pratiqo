@@ -375,7 +375,7 @@ test("no audited file declares lg:grid-cols-[…] with a top-level comma (browse
     "app/yo/langues/espagnol/page.tsx",
     "app/yo/langues/espagnol/pays/republique-dominicaine/page.tsx",
     "app/yo/langues/espagnol/pays/republique-dominicaine/decouvrir/page.tsx",
-    "app/(app)/student/yopratiqo/page.tsx",
+    "app/yo/mon-parcours/page.tsx",
     "app/(app)/student/progress/page.tsx",
   ];
   for (const rel of sourcesToScan) {

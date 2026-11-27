@@ -1,3 +1,4 @@
+import { productArrivalPath, productReturnPath } from "@/lib/auth/productReturn";
 import { mergeOnboardingRoleConfirmedDashboard } from "@/lib/auth/onboardingRoleChoice";
 import { resolvePostAuthRedirect, type ProfileRole } from "@/lib/auth/postAuthRedirect";
 import {
@@ -34,6 +35,8 @@ export function resolveOAuthCallbackRedirect(input: {
     dashboard?: unknown;
   } | null;
 }): string {
+  const product = productReturnPath(input.next);
+  if (product) return productArrivalPath(product);
   const profileForRedirect = input.profile ??
     (input.intent
       ? {

@@ -128,6 +128,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/student/yopratiqo",
+        destination: "/yo/mon-parcours",
+        permanent: false,
+      },
+      {
         source: "/devenir-tuteur",
         destination: "/devenir-professeur?vertical=academique",
         permanent: false,

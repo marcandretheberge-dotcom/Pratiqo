@@ -42,7 +42,7 @@ def exercise(browser):
 
     def select_goal():
         page.get_by_role("button", name=re.compile("^Francisation au Québec")).click()
-        expect(page.get_by_role("heading", name="Donner mon nom et mes coordonnées")).to_be_focused()
+        expect(page.get_by_role("heading", name="Vérifier un nom et des coordonnées")).to_be_focused()
 
     def answer(name):
         page.get_by_role("radio", name=name, exact=True).check()
@@ -86,7 +86,7 @@ def exercise(browser):
     expect(page.get_by_role("heading", name="Repérer le numéro corrigé")).to_be_focused()
     button("Voir un indice").click()
     answer("418 555-0116")
-    expect(page.get_by_role("status").filter(has_text="À revoir")).to_be_visible()
+    expect(page.get_by_role("status").filter(has_text="Ce numéro finit par 16")).to_be_visible()
     answer("418 555-0161")
     expect(button("Continuer")).to_be_focused()
     page.reload()
@@ -147,7 +147,7 @@ def exercise(browser):
         assert before[field] == after[field], field
     page.goto(base + path)
     page.get_by_role("link", name="Découvrir la mission gratuite").click()
-    expect(page.get_by_role("heading", name="Donner mon nom et mes coordonnées")).to_be_visible()
+    expect(page.get_by_role("heading", name="Vérifier un nom et des coordonnées")).to_be_visible()
     expect(button("Continuer")).to_be_visible()
     assert not errors, errors
     ctx.close()

@@ -74,7 +74,7 @@ function forwardOAuthCodeToCallback(): boolean {
     hasCode: true,
     intent: params.get("intent") ?? "none",
     next: params.get("next") ?? "none",
-    redirect: `/auth/callback?${params.toString()}`,
+    redirect: "/auth/callback",
   });
   const origin = resolveOAuthRedirectOrigin();
   window.location.replace(`${origin}/auth/callback?${params.toString()}`);

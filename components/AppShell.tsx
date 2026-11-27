@@ -119,7 +119,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/student/search", labelKey: "studentTabFind" },
     { href: "/dashboard", labelKey: "studentTabLessons" },
     { href: "/student/progress", labelKey: "studentTabProgress" },
-    { href: "/student/yopratiqo", label: "YoPratiqo" },
+    { href: "/yo/mon-parcours", label: "YoPratiqo" },
     { href: "/cafe", label: "Café des langues" },
     { href: "/student/learners", labelKey: "studentTabLearners" },
     ...(studentPackagesNavEnabled
@@ -343,7 +343,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {STUDENT_NAV.map((tab) => {
                 const active = isStudentNavActive(pathname, tab.href);
                 const text = "labelKey" in tab ? t(tab.labelKey) : tab.label;
-                const isYopratiqoEntry = tab.href === "/student/yopratiqo";
+                const isYopratiqoEntry = tab.href === "/yo/mon-parcours";
                 return (
                   <Link
                     key={tab.href}

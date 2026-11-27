@@ -83,13 +83,5 @@ export function rewardSummary(ledger: RewardLedger, now: number) {
   };
 }
 
-/** Fixed fictional competitors for design review, never represented as live learners. */
-export function demoRanking(xp: number) {
-  return [
-    { id: "demo-1", name: "Alba", xp: 160, color: "#b95568" },
-    { id: "demo-2", name: "Nico", xp: 90, color: "#39769a" },
-    { id: "demo-3", name: "Mila", xp: 45, color: "#99642d" },
-    { id: "demo-4", name: "Sam", xp: 15, color: "#657d43" },
-    { id: "you", name: "", xp, color: "#166c58" },
-  ].sort((a, b) => b.xp - a.xp || a.id.localeCompare(b.id));
-}
+/** Retired preview adapter: rankings now come exclusively from the account-backed route. */
+export function demoRanking(_xp: number): never[] { return []; }

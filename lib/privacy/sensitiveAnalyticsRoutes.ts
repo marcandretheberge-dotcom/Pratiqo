@@ -13,6 +13,8 @@ const SENSITIVE_EXACT = new Set([
 ]);
 
 const SENSITIVE_PREFIXES = [
+  "/auth",
+  "/yo/mon-parcours",
   "/admin",
   "/booking",
   "/dashboard",

@@ -1,3 +1,4 @@
+import { productArrivalPath, productForPath, productHome, productReturnPath } from "@/lib/auth/productReturn";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
@@ -52,13 +53,73 @@ async function trySendStudentWelcomeOnce(
   }
 }
 
+async function applyReferral(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  user: { id: string; email?: string },
+  refCode: string | null,
+) {
+  if (!refCode) return;
+  try {
+    const { data: referrer } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("referral_code", refCode)
+      .neq("id", user.id)
+      .maybeSingle();
+
+    if (referrer?.id) {
+      const { data: updated } = await admin
+        .from("profiles")
+        .update({ referred_by: referrer.id })
+        .eq("id", user.id)
+        .is("referred_by", null)
+        .select("id");
+
+      if (updated?.length) {
+        await awardCredit(
+          referrer.id,
+          "referral",
+          `Parrainage réussi (${user.email ?? "nouvel utilisateur"})`,
+          `referral:${user.id}`,
+          1,
+        );
+        await awardCredit(
+          user.id,
+          "referee_bonus",
+          "Bonus de bienvenue — parrainé par un ami",
+          `referee:${referrer.id}`,
+          1,
+        );
+      }
+    }
+  } catch (e) {
+    console.error("[auth/callback] referral attribution failed", e);
+  }
+}
+
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const canonicalOrigin = resolveRequestCanonicalOrigin(requestUrl);
   const code = requestUrl.searchParams.get("code");
+  const query = requestUrl.searchParams;
+  const productHint = productHome(query.get("product"));
+  const bareReturn = !query.has("next") && !query.has("intent") && !query.has("role");
+  if (!query.has("resumed") && (productHint || (bareReturn && (code || query.has("error"))))) {
+    const recovery = new URL("/auth/reprise", canonicalOrigin);
+    const state = new URLSearchParams();
+    if (code) state.set("ticket", code);
+    if (productHint) state.set("product", productHint.slice(1));
+    for (const key of ["attempt", "ref"]) {
+      const value = query.get(key);
+      if (value) state.set(key, value);
+    }
+    recovery.hash = state.toString();
+    return NextResponse.redirect(recovery, { headers: { "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" } });
+  }
   const cookieStore = await cookies();
   const callbackState = resolveAuthCallbackParams(requestUrl, cookieStore);
   const { next, ref: refCode, intent } = callbackState;
+  const product = productReturnPath(next);
   const pendingIntentCookie = readPendingOnboardingIntentFromCookies(cookieStore);
 
   logAuthFlowDecision("callback", {
@@ -67,7 +128,7 @@ export async function GET(request: Request) {
     origin: requestUrl.origin,
     canonicalOrigin,
     intent: intent ?? "none",
-    next,
+    next: product ? productForPath(product) : next,
     pendingIntentCookie: pendingIntentCookie ?? "none",
     hasCode: Boolean(code),
   });
@@ -76,7 +137,7 @@ export async function GET(request: Request) {
     const loginUrl = buildLoginUrlWithAuthError(canonicalOrigin, {
       authError: "missing_code",
       intent,
-      next: intent ? next : null,
+      next: product ?? (intent ? next : null),
     });
     return NextResponse.redirect(loginUrl);
   }
@@ -87,7 +148,7 @@ export async function GET(request: Request) {
     const loginUrl = buildLoginUrlWithAuthError(canonicalOrigin, {
       authError: "config",
       intent,
-      next: intent ? next : null,
+      next: product ?? (intent ? next : null),
     });
     return NextResponse.redirect(loginUrl);
   }
@@ -120,7 +181,7 @@ export async function GET(request: Request) {
     const loginUrl = buildLoginUrlWithAuthError(canonicalOrigin, {
       authError: "session",
       intent,
-      next: intent ? next : null,
+      next: product ?? (intent ? next : null),
     });
     return applyCookies(NextResponse.redirect(loginUrl), authCookies);
   }
@@ -140,12 +201,28 @@ export async function GET(request: Request) {
     const loginUrl = buildLoginUrlWithAuthError(canonicalOrigin, {
       authError: "session",
       intent,
-      next: intent ? next : null,
+      next: product ?? (intent ? next : null),
     });
     return applyCookies(NextResponse.redirect(loginUrl), authCookies);
   }
 
   const admin = getSupabaseAdmin();
+  if (product) {
+    // Insert-only makes concurrent marketplace onboarding and existing profiles authoritative.
+    const { error } = await admin.from("profiles").upsert({
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.full_name ?? null,
+      role: resolveProfileRoleOnAuth({ existingRole: null, signUpRoleParam: null, email: user.email }),
+    }, { onConflict: "id", ignoreDuplicates: true });
+    if (error) {
+      console.error("[auth/callback] product profile initialization failed", error.code);
+      return NextResponse.redirect(buildLoginUrlWithAuthError(canonicalOrigin, { authError: "profile", next: product }));
+    }
+    await applyReferral(admin, user, refCode);
+    return applyCookies(NextResponse.redirect(new URL(productArrivalPath(product), canonicalOrigin)), authCookies);
+  }
+
   const preferredLocale = normalizeLocale(
     cookieStore.get("pratiqo-locale")?.value ?? (user.user_metadata?.locale as string | undefined),
   );
@@ -216,7 +293,7 @@ export async function GET(request: Request) {
 
   const { data: profile, error: readErr } = await admin
     .from("profiles")
-    .select("role, teacher_onboarding_complete, companion_chosen, dashboard")
+    .select("role, teacher_onboarding_complete, companion_chosen, dashboard, student_onboarding_consent_completed_at, student_onboarding_consent_version")
     .eq("id", user.id)
     .single();
 
@@ -244,44 +321,7 @@ export async function GET(request: Request) {
     return applyCookies(response, [...authCookies, ...pendingOnboardingIntentClearCookieHeaders()]);
   }
 
-  if (refCode) {
-    try {
-      const { data: referrer } = await admin
-        .from("profiles")
-        .select("id")
-        .eq("referral_code", refCode)
-        .neq("id", user.id)
-        .maybeSingle();
-
-      if (referrer?.id) {
-        const { data: updated } = await admin
-          .from("profiles")
-          .update({ referred_by: referrer.id })
-          .eq("id", user.id)
-          .is("referred_by", null)
-          .select("id");
-
-        if (updated?.length) {
-          await awardCredit(
-            referrer.id,
-            "referral",
-            `Parrainage réussi (${user.email ?? "nouvel utilisateur"})`,
-            `referral:${user.id}`,
-            1,
-          );
-          await awardCredit(
-            user.id,
-            "referee_bonus",
-            "Bonus de bienvenue — parrainé par un ami",
-            `referee:${referrer.id}`,
-            1,
-          );
-        }
-      }
-    } catch (e) {
-      console.error("[auth/callback] referral attribution failed", e);
-    }
-  }
+  await applyReferral(admin, user, refCode);
 
   const profileRole = (profile as { role?: string }).role;
   const redirectRole =

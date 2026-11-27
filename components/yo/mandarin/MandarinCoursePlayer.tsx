@@ -43,6 +43,8 @@ import { useMissionCinema } from "../travel/useMissionCinema";
 import { YoSpeechPractice } from "../speech/YoSpeechPractice";
 import { courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
 import { recordReviewAttempt } from "@/lib/yo/review/store";
+import { useRankingAttempt } from "@/lib/yo/rankings/attemptClient";
+import { RankingNavLink } from "@/components/yo/rankings/RankingNavLink";
 
 export function mandarinStages(unit: Unit) {
   return isMandarinAssessment(unit.id)
@@ -95,6 +97,7 @@ export function MandarinCoursePlayer({
   finalIds: string[];
 }) {
   const { progress, ready, stored, update: persist } = useMandarinProgress();
+  const submitRankingAttempt = useRankingAttempt();
   const update = (change: (value: Progress) => Progress) =>
     persist((value) => ({ ...change(value), unit: unit.id }));
   const journey = mandarinJourney(journeyUnits, progress);
@@ -206,9 +209,10 @@ export function MandarinCoursePlayer({
               )[locale]
             }
           </Link>
-          <span className="col-span-2 row-start-2 truncate pb-1 text-xs text-[#776a55]">
+          <span className="row-start-2 truncate pb-1 text-xs text-[#776a55]">
             {unit.number} · {unit.title[locale]}
           </span>
+          <div className="col-start-2 row-start-2 justify-self-end"><RankingNavLink locale={locale} compact /></div>
           <div className="col-start-2 row-start-1 flex rounded-full border border-[#e4dbcb] bg-white p-1">
             {(["fr", "en", "es"] as const).map((lang) => (
               <Link
@@ -453,6 +457,7 @@ export function MandarinCoursePlayer({
                 });
                 // Default-visible pinyin is also help, even when no toggle was clicked.
                 if (accepted && recorded && !isMandarinAssessment(unit.id)) recordReviewAttempt({ language: "zh", itemId: `course:${unit.id}:practice:${currentExercise.id}`, correct: checkAnswer(currentExercise, state.answer), assisted });
+                if (accepted && recorded && !isMandarinAssessment(unit.id) && checkAnswer(currentExercise, state.answer)) submitRankingAttempt({ language: "zh", itemId: `course:${unit.id}:practice:${currentExercise.id}`, answer: state.answer });
                 return accepted && recorded;
               }}
             />

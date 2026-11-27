@@ -24,6 +24,7 @@ import {
   ItalianModuleAudio,
 } from "../italian/ItalianModuleAudio";
 import { ItalianGame } from "../italian/ItalianGames";
+import { useRankingAttempt } from "@/lib/yo/rankings/attemptClient";
 import { ItalianYoppoCoach } from "../italian/ItalianYoppoCoach";
 import { CourseCulturePhoto } from "../italian/course/CourseCulturePhoto";
 import { useItalianCourseProgress } from "../italian/course/useItalianCourseProgress";
@@ -326,6 +327,7 @@ function GermanUnitSession({
   initialActivityId,
   state,
 }: UnitProps & { state: ReturnType<typeof useItalianCourseProgress> }) {
+  const submitRankingAttempt = useRankingAttempt();
   const experience = useCourseExperience();
   const c = copy[locale];
   const initialLesson = Math.max(
@@ -918,7 +920,8 @@ function GermanUnitSession({
                   key={`${activity.id}-${epoch}`}
                   activity={activity}
                   locale={locale}
-                  onAttempt={(correct) => { attempt(correct); }}
+                  onAttempt={(correct) => attempt(correct)}
+                  onAnswer={answer => submitRankingAttempt({ language: experience.language, itemId: `course:${unit.id}:${lesson.id}:${activity.id}`, answer })}
                   onHelp={help}
                   typedDraft={activity.kind === "type" ? { value: typedValue, initialFeedback: wrong ? false : null, onCheck: attempt,
                     onChange: value => { setTypedValue(value); saveSession({}, value); } } : undefined}

@@ -6,7 +6,9 @@ import { useEffect, useRef, useState, type ComponentProps } from "react";
 import { SharedIntro } from "../shared/SharedIntro";
 import { YoppoWelcomeLoading } from "../onboarding/YoppoJournal";
 import { primary, secondary } from "../italian/guided/copy";
-import { dialogue, fresh, goal, missionTitle, notice, questions, restore, storageKey, type Progress } from "@/lib/yo/francisation/mission";
+import { fresh, goal, missionTitle, mistakeLabel, notice, primer, questions, recordAnswer, restore, storageKey, type Progress } from "@/lib/yo/francisation/mission";
+import { atelierClips, libraryClips } from "@/lib/yo/francisation/audio";
+import { FrancisationDialogue } from "./FrancisationDialogue";
 
 export function FrancisationEntry(props: ComponentProps<typeof SharedIntro>) {
   const [progress, setProgress] = useState<Progress | null>(null);
@@ -103,6 +105,12 @@ export function FrancisationEntry(props: ComponentProps<typeof SharedIntro>) {
         <h1 ref={heading} tabIndex={-1} className="text-3xl font-bold">{missionTitle}</h1>
         <p>Bonjour, c’est Yoppo ! On va vérifier le nom et les coordonnées d’un personnage à l’accueil d’un atelier.</p>
         <p className="text-sm">Toutes les fiches sont fictives. Utilise seulement les choix proposés.</p>
+        <details className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+          <summary className="cursor-pointer py-1 font-semibold text-emerald-900">{primer.title}</summary>
+          <p className="mt-3 text-sm">{primer.intro}</p>
+          <dl className="mt-3 space-y-2">{primer.items.map(item => <div key={item.term}><dt className="font-semibold">{item.term}</dt><dd className="text-sm">{item.meaning}</dd></div>)}</dl>
+          <p className="mt-3 rounded-xl bg-white p-3 text-sm">{primer.numberOrder}</p>
+        </details>
         <button type="button" className={primary} onClick={() => {
           if (update({ ...progress, started: true })) setInMission(true);
         }}>{progress.started ? "Continuer" : "Commencer"}</button>
@@ -113,19 +121,18 @@ export function FrancisationEntry(props: ComponentProps<typeof SharedIntro>) {
         <button type="button" className={primary} onClick={() => update({ ...fresh(), active: true, started: true })}>Refaire la mission en pratique</button>
       </> : <>
         <h1 ref={heading} tabIndex={-1} className="text-2xl font-bold">{reviewing ? "Revenir sur une erreur" : question.title}</h1>
-        {reviewing && <p>{mistake >= 0 ? <>Tu avais choisi « {question.options[progress.mistakes[mistake]!]} ». Retrouve la correction.</> : "L’accueil avait inversé les deux derniers chiffres. Retrouve la correction de Camille."}</p>}
-        {questionIndex < 2 ? <section aria-label="Dialogue de l’atelier" className="space-y-2 rounded-xl bg-emerald-50 p-4">
-          <h2 className="font-bold">À l’atelier de cuisine</h2>
-          <p className="text-sm">Transcription du dialogue · Audio à venir</p>
-          <dl>{dialogue.map(([speaker, line], i) => <div key={i} className="mt-2"><dt className="text-sm font-bold text-emerald-900">{speaker}</dt><dd>{line}</dd></div>)}</dl>
-        </section> : <section aria-label="Fiche fictive de la bibliothèque" className="space-y-2 break-words rounded-xl bg-emerald-50 p-4">
+        <p className="text-sm text-emerald-800">{reviewing ? "Une dernière reprise à ton rythme" : `Étape ${progress.step + 1} sur ${questions.length}`}</p>
+        {reviewing && <p>{mistake >= 0 ? <>Tu avais choisi « {mistakeLabel(progress, mistake)} ». Retrouve la correction.</> : "L’accueil avait inversé les deux derniers chiffres. Retrouve la correction de Camille."}</p>}
+        {questionIndex < 2 ? <FrancisationDialogue key={questionIndex} clips={atelierClips} title="À l’atelier de cuisine"/> : <>
+        <section aria-label="Fiche fictive de la bibliothèque" className="space-y-2 break-words rounded-xl bg-emerald-50 p-4">
           <h2 className="font-bold">Fiche de bibliothèque</h2><p>Sam Roy · sam.roy@example.org</p>
           <p><strong>À l’accueil</strong> « J’ai noté sam.ray@example.org. Est-ce exact ? »</p>
-        </section>}
+        </section>
+        <FrancisationDialogue key={`${questionIndex}-${progress.checked}`} clips={progress.checked ? libraryClips : libraryClips.slice(0, 1)} title="À la bibliothèque"/>
+        </>}
         <Question key={progress.step} question={question} checked={progress.checked} helped={progress.hints[questionIndex]}
           onHint={() => update({ ...progress, hints: progress.hints.map((v, i) => i === questionIndex || v) })}
-          onCheck={answer => update({ ...progress, checked: answer === question.correct, mistakes: progress.mistakes.map((v, i) =>
-            i === questionIndex && v === null && answer !== question.correct ? answer : v) })}
+          onCheck={answer => update(recordAnswer(progress, questionIndex, answer))}
           onNext={() => update({ ...progress, step: progress.step + 1, checked: false })}/>
       </>}
       <nav aria-label="Navigation du parcours" className="flex flex-wrap items-center gap-4 border-t pt-4">
@@ -155,7 +162,7 @@ function Question({ question, checked, helped, onHint, onCheck, onNext }: {
         <input type="radio" name="coordonnees" checked={checked ? i === question.correct : answer === i} onChange={() => { setAnswer(i); setWrong(false); }}/>{option}
       </label>)}
     </fieldset>
-    <p role="status">{checked ? question.explanation : wrong ? "À revoir. Compare ton choix avec la fiche ou le dialogue, puis réessaie." : ""}</p>
+    <p role="status">{checked ? question.explanation : wrong && answer !== null ? question.feedback[answer] : ""}</p>
     {checked ? <button ref={nextButton} type="button" className={primary} onClick={onNext}>Continuer</button> : <>
       <button type="button" className={primary} disabled={answer === null} onClick={() => {
         if (answer !== null && onCheck(answer)) {

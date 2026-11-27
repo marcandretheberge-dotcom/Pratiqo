@@ -238,8 +238,6 @@ void (async () => {
   const appBase = toBrowserBase(handoff.appBase);
   const previewLiveUrl = handoff.previewLiveUrl.replace(handoff.appBase, appBase)
     .replace("://127.0.0.1", "://localhost");
-  const sessionUrl = handoff.sessionUrl.replace(handoff.appBase, appBase)
-    .replace("://127.0.0.1", "://localhost");
 
   pushStep(steps, "handoff_loaded", Boolean(handoff.slug && handoff.courseReturn && previewLiveUrl), {
     slug: handoff.slug,
@@ -306,43 +304,11 @@ void (async () => {
       ctaHref,
     );
 
-    // Prefer explicit navigation via CTA href — click()+waitForURL("load") can hang
-    // on /login when background requests never settle.
-    const ctaTarget = ctaHref!.startsWith("http") ? ctaHref! : `${appBase}${ctaHref}`;
-    await page.goto(ctaTarget, { waitUntil: "domcontentloaded", timeout: 120000 });
-    pushStep(
-      steps,
-      "browser_invitation_cta_navigated",
-      /\/(login|cafe)(?:\/|\?|$)/.test(page.url()),
-      page.url(),
-    );
-
-    // Login may auto-redirect when session cookie is recognized by AuthProvider.
-    if (!page.url().includes(`/cafe/${handoff.slug}`)) {
-      try {
-        await page.waitForURL(new RegExp(`/cafe/${handoff.slug}`), {
-          timeout: 20000,
-          waitUntil: "domcontentloaded",
-        });
-      } catch {
-        // Fall through — try completing the handoff via the login `next` param.
-      }
-    }
-
-    if (!page.url().includes(`/cafe/${handoff.slug}`) && page.url().includes("/login")) {
-      const loginUrl = new URL(page.url());
-      const nextPath = loginUrl.searchParams.get("next");
-      if (nextPath && nextPath.includes(`/cafe/${handoff.slug}`)) {
-        // Local sandbox: product login UI is Google-only. With a recognized
-        // createBrowserClient cookie session, follow the preserved `next` deep-link
-        // (still not a production OAuth proof).
-        await page.goto(`${appBase}${nextPath}`, { waitUntil: "domcontentloaded", timeout: 120000 });
-        pushStep(steps, "browser_login_next_handoff", page.url().includes(`/cafe/${handoff.slug}`), {
-          nextPath,
-          url: page.url(),
-        });
-      }
-    }
+    await inviteCta.click({ timeout: 30000 });
+    await page.waitForURL(url => url.pathname === `/cafe/${handoff.slug}`, {
+      waitUntil: "domcontentloaded", timeout: 30000,
+    }).catch(() => {});
+    pushStep(steps, "browser_invitation_cta_navigated", new URL(page.url()).pathname === `/cafe/${handoff.slug}`, page.url());
 
     if (!page.url().includes(`/cafe/${handoff.slug}`)) {
       browserResult = "BLOCKED";

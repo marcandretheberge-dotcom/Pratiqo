@@ -1,6 +1,9 @@
 /** Review the real routes in a backend-free shell; never duplicate the player implementation. */
 import { mkdir, writeFile, symlink } from "node:fs/promises";
 import { join } from "node:path";
+import { personalizedItalianUnits, moduleVisuals } from "../lib/yo/personalized/courseData";
+import { guidedSteps } from "../lib/yo/italian/course/guidedItalian";
+import { guidedMissionOrder } from "../lib/yo/italian/course/guidedMissionOrder";
 import { introCourses } from "../lib/yo/shared/course";
 import { introAudioPaths } from "../lib/yo/shared/audio.server";
 import { courseSteps } from "../lib/yo/shared/steps";
@@ -59,6 +62,11 @@ async function main() {
   {language:"de",slug:"allemand",progressKey:GERMAN_PROGRESS_KEY,units:germanCourseUnits,final:germanExtendedFinal,legacyFinal:germanFinal},
   {language:"pt-BR",slug:"portugais-bresil",progressKey:PORTUGUESE_PROGRESS_KEY,units:portugueseCourseUnits,final:portugueseExtendedFinal,legacyFinal:portugueseFinal},
  ]));
+ const italianUnit = personalizedItalianUnits[0];
+ const italianSteps = guidedSteps(italianUnit, Object.keys(moduleVisuals(italianUnit)));
+ await writeFile(join(out,"first-italian-mission.json"), JSON.stringify({
+   steps: guidedMissionOrder(italianSteps).map(index => italianSteps[index]).filter(step => step.lesson === 0),
+ }));
  await writeFile(join(out,"courses.json"),JSON.stringify(introCourses.map(course=>({course,steps:courseSteps(course)}))));
  await writeFile(join(out,"audio-inventory.json"),JSON.stringify(introCourses.map(c=>({language:c.language,phrases:c.phrases.length,existingPaths:Object.keys(introAudioPaths(c)).length,missing:c.phrases.filter(p=>!introAudioPaths(c)[p.text]).map(p=>p.text)})),null,2));
 }

@@ -18,6 +18,7 @@ type StudentOnboardingConsentGateProps = {
   onBack?: () => void;
   onSuccess?: () => void;
   framed?: boolean;
+  product?: "yo";
 };
 
 export function StudentOnboardingConsentGate({
@@ -25,6 +26,7 @@ export function StudentOnboardingConsentGate({
   onBack,
   onSuccess,
   framed = true,
+  product,
 }: StudentOnboardingConsentGateProps) {
   const router = useRouter();
   const { locale, t } = useLocale();
@@ -51,8 +53,8 @@ export function StudentOnboardingConsentGate({
       acceptedTerms &&
       acceptedPrivacy &&
       acceptedLearningData &&
-      acknowledgedMinorLessons,
-    [actorType, acceptedTerms, acceptedPrivacy, acceptedLearningData, acknowledgedMinorLessons],
+      (product === "yo" || acknowledgedMinorLessons),
+    [product, actorType, acceptedTerms, acceptedPrivacy, acceptedLearningData, acknowledgedMinorLessons],
   );
 
   const submit = async () => {
@@ -74,6 +76,7 @@ export function StudentOnboardingConsentGate({
         headers,
         credentials: "include",
         body: JSON.stringify({
+          product,
           actorType,
           acceptedTerms,
           acceptedPrivacy,
@@ -119,11 +122,11 @@ export function StudentOnboardingConsentGate({
     <div className="w-full max-w-2xl rounded-3xl border border-teal-100 bg-white p-5 shadow-[0_24px_80px_rgba(15,110,86,0.12)] sm:p-7">
       <div className="space-y-3 text-center">
         <p className="text-xs font-black uppercase tracking-[0.18em] text-teal-700">
-          {t("studentConsentEyebrow")}
+          {product === "yo" ? "YoPratiqo" : t("studentConsentEyebrow")}
         </p>
-        <h1 className="text-2xl font-black text-[#214238] sm:text-3xl">{t("studentConsentTitle")}</h1>
+        <h1 className="text-2xl font-black text-[#214238] sm:text-3xl">{product === "yo" ? t("yoProgressConsentTitle") : t("studentConsentTitle")}</h1>
         <p className="mx-auto max-w-xl text-sm font-medium leading-relaxed text-[#5F6F68]">
-          {t("studentConsentIntro")}
+          {product === "yo" ? t("yoProgressConsentIntro") : t("studentConsentIntro")}
         </p>
       </div>
 
@@ -193,11 +196,11 @@ export function StudentOnboardingConsentGate({
               className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700 focus:ring-2 focus:ring-teal-500"
             />
             <span className="text-sm font-semibold leading-snug text-[#2C2C2A]">
-              {t("studentConsentLearningData")}
+              {product === "yo" ? t("yoProgressConsentLearningData") : t("studentConsentLearningData")}
             </span>
           </label>
 
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          {product !== "yo" && <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
             <input
               type="checkbox"
               checked={acknowledgedMinorLessons}
@@ -207,7 +210,7 @@ export function StudentOnboardingConsentGate({
             <span className="text-sm font-semibold leading-snug text-[#2C2C2A]">
               {t("studentConsentMinorLessons")}
             </span>
-          </label>
+          </label>}
         </div>
 
         {error ? (

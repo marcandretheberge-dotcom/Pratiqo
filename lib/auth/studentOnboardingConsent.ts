@@ -1,5 +1,7 @@
 export const STUDENT_ONBOARDING_CONSENT_VERSION = "student_onboarding_consent_v1_2026_06";
 
+export const YO_PROGRESS_CONSENT_VERSION = "yo_progress_consent_v1";
+
 export type StudentOnboardingConsentActorType = "self_14_plus" | "parent_guardian";
 
 export function isStudentOnboardingConsentActorType(

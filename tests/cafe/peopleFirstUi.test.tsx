@@ -11,6 +11,7 @@ require.extensions[".css"] = module => { module.exports = {}; };
 const { CafeCommunityApp } = require("@/components/cafe/community/CafeCommunityApp") as typeof import("@/components/cafe/community/CafeCommunityApp");
 const { createPeopleDemoTransport } = require("@/components/cafe/community/CafePeopleDemo") as typeof import("@/components/cafe/community/CafePeopleDemo");
 const { render, fireEvent, act, cleanup, within } = require("@testing-library/react") as typeof import("@testing-library/react");
+type CafeCommunityTransport = import("@/lib/cafe/communityClient").CafeCommunityTransport;
 const identity = { userId: "00000000-0000-4000-8000-000000000001", accessToken: "local-fixture" };
 async function flush() { await act(async () => { await new Promise(resolve => setImmediate(resolve)); }); }
 
@@ -19,6 +20,10 @@ async function main() {
   const view = render(<CafeCommunityApp identity={identity} locale="en" transport={demo.transport} peopleEnabled videoEnabled={false} />);
   await flush();
   assert.ok(view.getByRole("heading", { name: "Language partners" }));
+  const initialCards = view.getAllByRole("article");
+  assert.ok(within(initialCards[0]).getByText("Online"));
+  assert.ok(within(initialCards[0]).getByText("You can help each other"));
+  assert.ok(within(initialCards.find(card => card.textContent?.includes("Riku"))!).getByText("You can help each other"));
   assert.ok(view.getByText("Bonjour Alex ! Je pratique le français. On fait connaissance ?"), "the introduction is visible before accepting");
   assert.equal(within(view.getByLabelText("Language", { exact: true })).getAllByRole("option").length, 7, "only represented languages plus the all-languages option are shown");
   assert.equal(view.queryByRole("button", { name: /^Enter$/ }), null, "returning members skip repeated onboarding");
@@ -50,7 +55,8 @@ async function main() {
   fireEvent.click(view.getByRole("button", { name: /^Message$/ })); await flush();
   assert.ok(within(view.getByRole("log")).getByText("Bonjour Maya !"), "reopening resumes the conversation");
   fireEvent.click(view.getByRole("button", { name: "Back to messages" })); await flush();
-  fireEvent.click(view.getByRole("button", { name: /^Rooms$/ })); await flush();
+  fireEvent.click(view.getByRole("button", { name: /^People$/ })); await flush();
+  fireEvent.click(view.getByRole("button", { name: "See the tables" })); await flush();
   assert.ok(view.getByRole("button", { name: "Join the chat" }), "public rooms still work");
   fireEvent.click(view.getByRole("button", { name: "Join the chat" })); await flush();
   assert.ok(view.getByRole("button", { name: "Leave the room" }));
@@ -61,4 +67,33 @@ async function main() {
   assert.equal((view.getByRole("checkbox", { name: /Remain visible/ }) as HTMLInputElement).checked, false);
   console.log("PASS people-first UI: language/presence filters, request/retry, recipient acceptance, private messages, reopen, existing rooms, opt-in and photo control");
 }
-main().finally(() => { cleanup(); dom.window.close(); }).catch(error => { console.error(error); process.exitCode = 1; });
+async function limitedDirectoryAndEmptyState() {
+  const demo = createPeopleDemoTransport();
+  let showPeople = true;
+  const transport: CafeCommunityTransport = { ...demo.transport, async snapshot(...args) {
+    const snapshot = await demo.transport.snapshot(...args);
+    if (!snapshot.ok) return snapshot;
+    const extra = Array.from({ length: 8 }, (_, i) => ({
+      id: `90000000-0000-4000-8000-00000000000${i}`, displayName: `Guest ${i}`, nativeLanguages: ["en"], learningLanguages: ["fr"], online: false, roomId: null,
+    }));
+    return { ...snapshot, people: showPeople ? [...snapshot.people, ...extra] : [], friends: [] };
+  } };
+  const view = render(<CafeCommunityApp identity={identity} locale="en" transport={transport} peopleEnabled />);
+  await flush();
+  assert.equal(view.getAllByRole("article").length, 6, "a page never renders more than six people");
+  assert.ok(view.getByText("Page 1 of 3"));
+  fireEvent.click(view.getByRole("button", { name: "Next" }));
+  assert.ok(view.getByText("Page 2 of 3"));
+  fireEvent.change(view.getByLabelText("Language", { exact: true }), { target: { value: "ja" } });
+  assert.equal(view.getAllByRole("article").length, 2, "changing a filter returns to the first page");
+  assert.equal(view.queryByRole("button", { name: "Next" }), null);
+  showPeople = false;
+  await act(async () => { document.dispatchEvent(new window.Event("visibilitychange")); });
+  await flush();
+  fireEvent.click(view.getByRole("button", { name: "Clear filters" }));
+  assert.ok(view.getByText("No one to show right now."));
+  assert.equal(view.queryByText("0 people online"), null);
+  assert.ok(view.getByRole("button", { name: "See the tables" }));
+  console.log("PASS meeting lobby: bounded directory, reset filters, honest empty state");
+}
+main().then(async () => { cleanup(); await flush(); await limitedDirectoryAndEmptyState(); }).finally(() => { cleanup(); dom.window.close(); }).catch(error => { console.error(error); process.exitCode = 1; });

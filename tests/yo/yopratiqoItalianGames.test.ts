@@ -7,6 +7,7 @@ import { ItalianGame } from "@/components/yo/italian/ItalianGames";
 import { activities } from "@/lib/yo/italian/italianModuleData";
 import type { ItalianActivity, ItalianActivityBase, ItalianCafeActivity, ItalianChoiceActivity, ItalianDialogueActivity, ItalianMapActivity, ItalianMatchActivity, ItalianOrderActivity, ItalianTypeActivity, LocaleText } from "@/lib/yo/italian/italianModuleTypes";
 import { checkItalianCafe, checkItalianMap, checkItalianOrder, matchesItalianAnswer, normalizeItalianAnswer, scrambleItalianItems } from "@/lib/yo/italian/italianModuleLogic";
+import type { RankingAnswer } from "@/lib/yo/rankings/contract";
 
 const require = createRequire(path.join(process.cwd(), "package.json"));
 const { JSDOM } = require("jsdom");
@@ -48,9 +49,10 @@ const test = (name: string, run: () => void) => cases.push([name, run]);
 
 function game(activity: ItalianActivity, extra: { onHelp?: () => void; locale?: "fr" | "en" | "es" } = {}) {
   const attempts: boolean[] = [];
+  const answers: RankingAnswer[] = [];
   let helps = 0;
-  const view = render(React.createElement(ItalianGame, { activity, locale: extra.locale ?? "fr", onAttempt: (correct) => attempts.push(correct), onHelp: () => { helps++; extra.onHelp?.(); } }));
-  return { view, attempts, helps: () => helps };
+  const view = render(React.createElement(ItalianGame, { activity, locale: extra.locale ?? "fr", onAttempt: (correct) => attempts.push(correct), onAnswer: answer => answers.push(answer), onHelp: () => { helps++; extra.onHelp?.(); } }));
+  return { view, attempts, answers, helps: () => helps };
 }
 function check(view: ReturnType<typeof render>) { return view.getByRole("button", { name: "Vérifier" }) as HTMLButtonElement; }
 function answerName(activity: ItalianChoiceActivity, id = activity.correctId) { const option = activity.options.find((value) => value.id === id)!; return option.it ?? option.label!.fr; }
@@ -58,8 +60,9 @@ function optionButton(view: ReturnType<typeof render>, name: string) { return wi
 
 test("no game records success or starts audio merely by mounting", () => {
   for (const activity of [choice, matching, order, typing, cafe, map, dialogue, listening]) {
-    const { view, attempts, helps } = game(activity);
+    const { view, attempts, answers, helps } = game(activity);
     assert.deepEqual(attempts, []);
+    assert.deepEqual(answers, [], "mounting never submits an XP answer");
     assert.equal(helps(), 0);
     assert.equal(FakeAudio.instances.length, 0);
     view.unmount();
@@ -67,39 +70,43 @@ test("no game records success or starts audio merely by mounting", () => {
 });
 
 test("choice requires a selected answer and records one success after correction", () => {
-  const { view, attempts } = game(choice);
+  const { view, attempts, answers } = game(choice);
   assert.equal(check(view).disabled, true);
   fireEvent.click(optionButton(view, "Arrivederci!"));
   assert.deepEqual(attempts, []);
   fireEvent.click(check(view));
   assert.deepEqual(attempts, [false]);
+  assert.deepEqual(answers, [], "wrong choices never claim XP");
   assert.ok(view.getByText("On se dit au revoir."));
   fireEvent.click(optionButton(view, "Buongiorno!"));
   fireEvent.click(check(view));
   fireEvent.click(check(view));
   assert.deepEqual(attempts, [false, true]);
+  assert.deepEqual(answers, ["hello"]);
   assert.equal(check(view).disabled, true);
 });
 
 test("matching requires every pair and wrong associations never complete it", () => {
-  const { view, attempts } = game(matching);
+  const { view, attempts, answers } = game(matching);
   const left = within(view.getByRole("group", { name: "Expressions italiennes" }));
   const right = within(view.getByRole("group", { name: "Leur sens" }));
   assert.equal((right.getByRole("button", { name: "Merci" }) as HTMLButtonElement).disabled, true);
   fireEvent.click(left.getByRole("button", { name: "Grazie" }));
   fireEvent.click(right.getByRole("button", { name: "De rien" }));
   assert.deepEqual(attempts, [false]);
+  assert.deepEqual(answers, [], "one pair is not a complete answer");
   fireEvent.click(right.getByRole("button", { name: "Merci" }));
   assert.deepEqual(attempts, [false]);
   fireEvent.click(left.getByRole("button", { name: "Prego" }));
   fireEvent.click(right.getByRole("button", { name: "De rien" }));
   assert.deepEqual(attempts, [false, true]);
+  assert.deepEqual(answers, [{ grazie: "grazie", prego: "prego" }]);
   fireEvent.click(right.getByRole("button", { name: /Merci/ }));
   assert.deepEqual(attempts, [false, true]);
 });
 
 test("word tiles can be removed and rebuilt, and cannot be reused twice", () => {
-  const { view, attempts } = game(order);
+  const { view, attempts, answers } = game(order);
   const pool = within(view.getByRole("group", { name: "Mots disponibles" }));
   assert.equal(check(view).disabled, true);
   for (const word of ["Vorrei", "una", "caffè."]) fireEvent.click(pool.getByRole("button", { name: word }));
@@ -113,6 +120,7 @@ test("word tiles can be removed and rebuilt, and cannot be reused twice", () => 
   fireEvent.click(check(view));
   fireEvent.click(check(view));
   assert.deepEqual(attempts, [false, true]);
+  assert.deepEqual(answers, [["Vorrei", "un", "caffè."]]);
 });
 
 test("written recall accepts case and punctuation while preserving accent distinctions", () => {
@@ -126,7 +134,7 @@ test("written recall accepts case and punctuation while preserving accent distin
 });
 
 test("typed recall and accent keys require an actual correct answer", () => {
-  const { view, attempts } = game(typing);
+  const { view, attempts, answers } = game(typing);
   const input = view.getByRole("textbox", { name: "Ta réponse en italien" }) as HTMLInputElement;
   fireEvent.change(input, { target: { value: "Un caffe" } });
   fireEvent.click(check(view));
@@ -139,6 +147,7 @@ test("typed recall and accent keys require an actual correct answer", () => {
   fireEvent.submit(input.closest("form")!);
   fireEvent.submit(input.closest("form")!);
   assert.deepEqual(attempts, [false, true]);
+  assert.deepEqual(answers, ["Un caffè"], "submit the learner's actual text, including its punctuation, rather than the authored model");
 });
 
 test("accent controls insert at the caret and replace the selected text", () => {
@@ -168,7 +177,7 @@ test("showing a written model marks assistance before the answer is exposed", ()
 });
 
 test("the café checks requested products and quantities, not only an affordable total", () => {
-  const { view, attempts } = game(cafe);
+  const { view, attempts, answers } = game(cafe);
   assert.equal(check(view).disabled, true);
   for (const item of ["Tè", "Tè", "Panino"]) fireEvent.click(view.getByRole("button", { name: `Ajouter ${item}` }));
   fireEvent.click(check(view));
@@ -178,6 +187,7 @@ test("the café checks requested products and quantities, not only an affordable
   fireEvent.click(check(view));
   fireEvent.click(check(view));
   assert.deepEqual(attempts, [false, true]);
+  assert.deepEqual(answers, [{ tea: "0", panino: "1", coffee: "2" }], "submit the actual basket, including removed items at zero");
   assert.equal((view.getByRole("button", { name: "Ajouter Caffè" }) as HTMLButtonElement).disabled, true);
 });
 
@@ -188,7 +198,7 @@ test("café evaluator rejects injected, fractional, negative and over-budget bas
 });
 
 test("map requires the instructed route, supports reset, and only finishes once", () => {
-  const { view, attempts } = game(map);
+  const { view, attempts, answers } = game(map);
   fireEvent.click(view.getByRole("button", { name: "À droite" }));
   fireEvent.click(view.getByRole("button", { name: "En haut" }));
   fireEvent.click(check(view));
@@ -200,6 +210,7 @@ test("map requires the instructed route, supports reset, and only finishes once"
   fireEvent.click(check(view));
   fireEvent.click(check(view));
   assert.deepEqual(attempts, [false, true]);
+  assert.deepEqual(answers, [["up", "right"]]);
 });
 
 test("map boundaries do not teleport Yoppo or count a move; undo restores the route", () => {
@@ -215,7 +226,7 @@ test("map boundaries do not teleport Yoppo or count a move; undo restores the ro
 });
 
 test("listening keeps the stimulus out of accessible names and waits for real playing", () => {
-  const { view, attempts, helps } = game(listening);
+  const { view, attempts, answers, helps } = game(listening);
   assert.equal(view.queryByText(listening.stimulus!), null);
   assert.equal(view.queryByRole("button", { name: `Écouter : ${listening.stimulus}` }), null);
   fireEvent.click(optionButton(view, answerName(listening)));
@@ -228,6 +239,7 @@ test("listening keeps the stimulus out of accessible names and waits for real pl
   fireEvent.click(check(view));
   fireEvent.click(check(view));
   assert.deepEqual(attempts, [true]);
+  assert.deepEqual(answers, [listening.correctId]);
   assert.equal(helps(), 0);
 });
 
@@ -258,12 +270,13 @@ test("reading then hiding a transcript retains the assisted ability to answer", 
 });
 
 test("dialogue completion waits for every turn, including correction of a later mistake", () => {
-  const { view, attempts } = game(dialogue);
+  const { view, attempts, answers } = game(dialogue);
   const first = dialogue.turns[0];
   const firstAnswer = first.options.find((item) => item.id === first.correctId)!;
   fireEvent.click(optionButton(view, firstAnswer.it ?? firstAnswer.label!.fr));
   fireEvent.click(check(view));
   assert.deepEqual(attempts, [], "a single successful turn must not complete the conversation");
+  assert.deepEqual(answers, [], "a partial conversation never submits a ranking answer");
   fireEvent.click(view.getByRole("button", { name: "Poursuivre la conversation" }));
   assert.equal(check(view).disabled, true);
   const last = dialogue.turns[1];
@@ -276,6 +289,7 @@ test("dialogue completion waits for every turn, including correction of a later 
   fireEvent.click(check(view));
   fireEvent.click(check(view));
   assert.deepEqual(attempts, [false, true]);
+  assert.deepEqual(answers, [[first.correctId, last.correctId]], "every selected turn is submitted together once");
   assert.ok(view.getByText("Conversation réussie"));
 });
 
@@ -289,6 +303,14 @@ test("the player's key resets a game when a learner deliberately replays it", ()
   assert.equal(check(view).disabled, true);
   assert.equal(optionButton(view, "Buongiorno!").getAttribute("aria-pressed"), "false");
   assert.deepEqual(attempts, [true]);
+});
+
+test("a rejected stale attempt cannot submit its answer for XP", () => {
+  const answers: RankingAnswer[] = [];
+  const view = render(React.createElement(ItalianGame, { activity: choice, locale: "fr", onAttempt: () => false, onAnswer: answer => answers.push(answer), onHelp: () => {} }));
+  fireEvent.click(optionButton(view, "Buongiorno!"));
+  fireEvent.click(check(view));
+  assert.deepEqual(answers, []);
 });
 
 test("stable scrambling never mutates authored data and order checks reject extra tokens", () => {

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Award, Check, ChevronRight, Headphones, Map as MapIcon, Medal, MessageCircle, Settings2, Sparkles, Target, Trophy, Volume2, VolumeX, X, Zap } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -14,7 +15,7 @@ import type { WordBankEntry } from "@/lib/yo/personalized/types";
 import type { YoLocale } from "@/lib/yo/types";
 import { canPlayItalianTrivia } from "@/lib/yo/italian/trivia";
 import { t } from "@/lib/yo/italian/course/courseAuthoring";
-import { demoRanking, emptyRewards, parseRewards, reconcileRewards, rewardSummary, PREVIEW_PROGRESS_KEY, REWARD_KEY, REWARD_NAMESPACE, type RewardLedger } from "@/lib/yo/rewards/italianPreviewRewards";
+import { emptyRewards, parseRewards, reconcileRewards, rewardSummary, PREVIEW_PROGRESS_KEY, REWARD_KEY, REWARD_NAMESPACE, type RewardLedger } from "@/lib/yo/rewards/italianPreviewRewards";
 import "../italian/travel/illustratedAtlas.css";
 import "./italianRewards.css";
 import { ConversationPostcard } from "./ConversationPostcard";
@@ -115,9 +116,8 @@ function RewardsApp({ units, catalog, locale, banks, audioPaths }: Props) {
     </div>; })}
     <p className="reward-note">{say("Les nouvelles réussites comptent. Reviens demain à ton rythme.", "New successes count. Come back tomorrow at your own pace.", "Cuentan los nuevos logros. Vuelve mañana a tu ritmo.")}</p>
   </section>;
-  const ranking = demoRanking(summary.weekly);
   return <div className="rewards-app" lang={locale} data-italian-rewards-preview>
-    <div className="reward-preview-label">{say("PREVIEW PRIVÉE", "PRIVATE PREVIEW", "VISTA PREVIA PRIVADA")} <span>{say("Progression séparée · classement fictif", "Separate progress · fictional ranking", "Progreso separado · clasificación ficticia")}</span></div>
+    <div className="reward-preview-label">{say("PREVIEW PRIVÉE", "PRIVATE PREVIEW", "VISTA PREVIA PRIVADA")} <span>{say("Progression locale de prévisualisation", "Local preview progress", "Progreso local de vista previa")}</span></div>
     <header className="reward-header">
       <div className="reward-brand"><span>Yo<span>Pratiqo</span></span><small>{say("Le voyage italien", "The Italian journey", "El viaje italiano")}</small></div>
       <div className="reward-header-actions"><span className="reward-xp" aria-label={`${summary.total} XP`}><Zap size={18} fill="currentColor"/><b data-total-xp>{summary.total}</b><small>XP</small></span>
@@ -141,15 +141,10 @@ function RewardsApp({ units, catalog, locale, banks, audioPaths }: Props) {
           <button className="reward-primary" onClick={() => setTab("journey")}>{say("Retour à mon voyage", "Back to my journey", "Volver a mi viaje")}<ChevronRight size={20}/></button>
         </div>}
         {tab === "ranking" && <div className="reward-page">
-          <div className="reward-league-heading"><Trophy size={38}/><p className="reward-eyebrow">{say("Cette semaine", "This week", "Esta semana")}</p><h1>{say("Les voyageurs", "The travelers", "Los viajeros")}</h1><p>{say("Chaque petit progrès compte.", "Every little step counts.", "Cada pequeño avance cuenta.")}</p></div>
-          <p className="reward-demo-notice">{say("Classement de démonstration. Les quatre autres profils sont fictifs ; seuls tes XP viennent de ta pratique dans cette preview.", "Demo ranking. The other four profiles are fictional; only your XP comes from your practice in this preview.", "Clasificación de demostración. Los otros cuatro perfiles son ficticios; solo tus XP vienen de tu práctica en esta vista previa.")}</p>
-          <ol className="reward-ranking">{ranking.map((person, i) => <li key={person.id} className={person.id === "you" ? "is-you" : ""}>
-            <span className="reward-rank">{i === 0 ? <Trophy size={21}/> : i + 1}</span>
-            <span className="reward-avatar" style={{ background: person.color }}>{person.id === "you" ? <CompanionAvatar visualId="travel" state="idle" size="xs" compact locale={locale}/> : person.name[0]}</span>
-            <div><strong>{person.id === "you" ? say("Toi", "You", "Tú") : person.name}</strong><small>{person.id === "you" ? say("Ton voyage italien", "Your Italian journey", "Tu viaje italiano") : say("Profil fictif", "Fictional profile", "Perfil ficticio")}</small></div><b>{person.xp}<small> XP</small></b>
-          </li>)}</ol>
-          <p className="reward-note">{say("Nouvelle semaine chaque lundi, heure de Toronto. Tes XP cumulés et tes acquis restent à toi.", "A new week every Monday, Toronto time. Your total XP and learning progress stay yours.", "Nueva semana cada lunes, hora de Toronto. Conservas tus XP totales y tu aprendizaje.")}</p>
-          <button className="reward-primary" onClick={() => setTab("journey")}>{say("Continuer à apprendre", "Keep learning", "Seguir aprendiendo")}<ChevronRight size={20}/></button>
+          <div className="reward-league-heading"><Trophy size={38}/><h1>{labels.ranking}</h1><p>{say("Retrouve tes XP, ta position et tes amis.", "Find your XP, your position and your friends.", "Encuentra tus XP, tu posición y tus amigos.")}</p></div>
+          <p className="reward-demo-notice">{say("Cette prévisualisation n’affiche aucun profil. Le classement présente les personnes qui ont choisi d’y participer.", "This preview contains no profiles. The rankings show learners who have chosen to participate.", "Esta vista previa no contiene perfiles. La clasificación muestra a las personas que han elegido participar.")}</p>
+          <p className="reward-note">{say("Les points de cette prévisualisation restent locaux. Ouvre le classement pour consulter les XP de ton compte.", "Preview points stay local. Open the rankings to see your account’s XP.", "Los puntos de esta vista previa se quedan aquí. Abre la clasificación para ver los XP de tu cuenta.")}</p>
+          <Link className="reward-primary" href={`/yo/classement${locale === "fr" ? "" : `?lang=${locale}`}`}>{say("Ouvrir le classement", "Open the rankings", "Abrir la clasificación")}<ChevronRight size={20}/></Link>
         </div>}
       </div>
       <aside className="reward-sidebar">{goalPanel}<div className="reward-sidebar-ranking"><Trophy/><div><strong>{summary.weekly} XP</strong><p>{say("cette semaine", "this week", "esta semana")}</p></div><button aria-label={labels.ranking} onClick={() => setTab("ranking")}><ChevronRight/></button></div>

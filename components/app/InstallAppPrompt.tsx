@@ -16,6 +16,7 @@ const SENSITIVE_PREFIXES = [
   "/account",
   "/admin",
   "/api",
+  "/auth",
   "/app",
   "/booking",
   "/checkout",
@@ -32,6 +33,7 @@ const SENSITIVE_PREFIXES = [
   "/teacher",
   "/upgrade",
   "/yo/checkout",
+  "/yo/mon-parcours",
   // Keep the learning controls and Yoppo unobstructed on small screens.
   "/yo/langues/allemand/parcours",
   "/yo/langues/portugais-bresil/parcours",

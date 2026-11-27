@@ -127,7 +127,7 @@ test("loginWithGoogle forwards intentQuery for public student alias", () => {
   assert.match(src, /intentQuery/);
   assert.match(src, /callbackIntent = options\?\.intentQuery \?\? options\?\.intent/);
   const page = read("app/login/page.tsx");
-  assert.match(page, /intentQuery:\s*intentParam === "student" \? "student" : preAuthIntent/);
+  assert.match(page, /intentQuery:\s*intentParam === "student" && preAuthIntent === "learner" \? "student" : preAuthIntent/);
 });
 
 // ── Callback must not canonicalize preview to production ────────────────────

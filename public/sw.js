@@ -15,6 +15,7 @@ const AUTHENTICATED_PREFIXES = [
   "/account",
   "/admin",
   "/api",
+  "/auth",
   "/booking",
   "/checkout",
   "/dashboard",
@@ -28,6 +29,7 @@ const AUTHENTICATED_PREFIXES = [
   "/teacher",
   "/upgrade",
   "/yo/checkout",
+  "/yo/mon-parcours",
 ];
 
 const STATIC_PREFIXES = [

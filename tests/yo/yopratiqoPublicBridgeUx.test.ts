@@ -137,7 +137,7 @@ ok("4) /yo public bridge card uses CompanionAvatar with the travel visual system
 // The login route must still exist where we deep-link to.
 read(LOGIN_PAGE_PATH);
 // The product-shell consistency PR moved the sign-in deep-link from
-// `/student/progress` to `/student/yopratiqo` so a learner who entered
+// `/student/progress` to `/yo/mon-parcours` so a learner who entered
 // through YoPratiqo lands back on the YoPratiqo hub (with their
 // companion + course path) immediately after OAuth — instead of the
 // generic Pratiqo dashboard. `/student/progress` stays reachable as
@@ -149,8 +149,8 @@ read(LOGIN_PAGE_PATH);
 // destination is safe.
 assert.match(
   cardSrc,
-  /["']\/login\?next=\/student\/yopratiqo["']/,
-  "card must deep-link sign-in CTA to /login?next=/student/yopratiqo (the authenticated YoPratiqo hub)",
+  /["']\/login\?next=\/yo\/mon-parcours["']/,
+  "card must deep-link sign-in CTA to /login?next=/yo/mon-parcours (the authenticated YoPratiqo hub)",
 );
 assert.match(
   cardSrc,
@@ -167,7 +167,7 @@ assert.match(
   /Inicia sesión para guardar mi progreso/,
   "ES sign-in CTA copy must be present",
 );
-ok("5) /yo has an audited sign-in CTA wired to /login?next=/student/yopratiqo (YoPratiqo hub)");
+ok("5) /yo has an audited sign-in CTA wired to /login?next=/yo/mon-parcours (YoPratiqo hub)");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 6. /yo links to the Dominican Republic module path
@@ -192,13 +192,13 @@ ok("6) /yo card links to the Dominican Republic Spanish course path");
 // ─────────────────────────────────────────────────────────────────────────
 
 // Post product-shell PR the primary authenticated CTA targets the
-// dedicated YoPratiqo hub at `/student/yopratiqo`, but `/student/progress`
+// dedicated YoPratiqo hub at `/yo/mon-parcours`, but `/student/progress`
 // stays reachable through the secondary "View my full Pratiqo progress"
 // link so the YoPratiqo ↔ Pratiqo bridge is symmetric in both directions.
 assert.match(
   cardSrc,
-  /["']\/student\/yopratiqo["']/,
-  "card must deep-link authenticated users to the YoPratiqo hub at /student/yopratiqo",
+  /["']\/yo\/mon-parcours["']/,
+  "card must deep-link authenticated users to the YoPratiqo hub at /yo/mon-parcours",
 );
 assert.match(
   cardSrc,
@@ -229,7 +229,7 @@ assert.match(
   /["']\/trouver-un-prof["']/,
   "card must keep the audited /trouver-un-prof link as the tertiary CTA",
 );
-ok("7) /yo card links to /student/yopratiqo for authenticated users and keeps /student/progress bridge");
+ok("7) /yo card links to /yo/mon-parcours for authenticated users and keeps /student/progress bridge");
 
 // ─────────────────────────────────────────────────────────────────────────
 // 8. BookingModal still mounts YoBookingTeacherBridgeConsent

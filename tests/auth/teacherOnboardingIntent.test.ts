@@ -118,8 +118,8 @@ test("login page requires explicit intent before Google OAuth", () => {
   assert.match(src, /resolvePreAuthIntent/);
   assert.match(src, /loginWithGoogle\(oauthNext, \{/);
   assert.match(src, /intent:\s*preAuthIntent/);
-  assert.match(src, /intentQuery:\s*intentParam === "student" \? "student" : preAuthIntent/);
-  assert.match(src, /if \(!preAuthIntent \|\| !legalAccepted \|\| busy \|\| !oauthNext\) return/);
+  assert.match(src, /intentQuery:\s*intentParam === "student" && preAuthIntent === "learner" \? "student" : preAuthIntent/);
+  assert.match(src, /if \(!legalAccepted \|\| busy \|\| !oauthNext\) return/);
   assert.doesNotMatch(src, /body: JSON\.stringify\(\{ role: "teacher" \}\)/);
 });
 

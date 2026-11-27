@@ -49,6 +49,7 @@ import { guidedCopy, primary, secondary } from "./copy";
 import { LanguageExplanation } from "../../learning/LanguageExplanation";
 import {pilotPath,showPassPilot,storeRound} from "@/lib/yo/passPilot/proof.client";
 import {tokenPool} from "@/lib/yo/italian/course/guidedItalian";
+import { notifyRankingReplayNeeded, useRankingAttempt } from "@/lib/yo/rankings/attemptClient";
 
 const EMPTY_VISUALS: Record<string, VisualWord[]> = {};
 export type ItalianNavigatorContext = { journey: LearningJourney; progress: CourseProgress; active: boolean; openCurrentMission: () => void; openTrivia: () => void; canReview?: (id: string) => boolean; triviaAvailable?: boolean };
@@ -56,6 +57,7 @@ type Props = { missionStatus?: ReactNode; storageNamespace?: string; Navigator?:
 
 /** Reference pilot. Learning evidence stays in the existing store; this store holds UI drafts only. */
 export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initialLessonId, initialActivityId, resumeMission = false, profile, onConfigure, progressKey, storageNamespace, missionStatus, wordBank, visualWords = EMPTY_VISUALS, Navigator, travelFlorence }: Props) {
+  const submitRankingAttempt = useRankingAttempt();
   const reduceMotion = Boolean(useReducedMotion());
   const city = italianWorldForUnit(unit.id)?.cities.find(item => item.unitId === unit.id)?.name;
   const stamp = unit.id === "u01" ? guidedCopy[locale].stamp
@@ -323,7 +325,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
             {step.stage !== "words" ? <button type="button" className={`${primary} mt-7 w-full`} onClick={advance}>{c.next}<ArrowRight size={18} aria-hidden /></button> : null}
           </> : <>
             {exercise.id === lesson.readingActivityId ? <div className="mb-6 rounded-2xl bg-emerald-50 p-4"><p lang="it" className="text-base leading-7">{lesson.reading.it}</p></div> : null}
-            <GuidedGame key={exercise.id} activity={exercise} locale={locale} paused={overlay!==null || Boolean(scene)} value={ui.game} onChange={updateGame} onAttempt={(correct, assisted) => { recordActivity(exercise.id, correct, assisted); }} onContinue={advance} />
+            <GuidedGame key={exercise.id} activity={exercise} locale={locale} paused={overlay!==null || Boolean(scene)} value={ui.game} onChange={updateGame} onAttempt={(correct, assisted) => { recordActivity(exercise.id, correct, assisted); }} onAnswer={progressKey === GUIDED_PROGRESS_KEY && !storageNamespace ? answer => submitRankingAttempt({ language: "it", itemId: `course:${unit.id}:${lesson.id}:${exercise.id}`, answer }) : undefined} onReplayNeeded={notifyRankingReplayNeeded} onContinue={advance} />
             {!ui.game.complete ? <><button type="button" className={`${secondary} mt-3`} onClick={() => { setHint(true); updateGame({ ...current.current.game, assisted: true }); }}>{c.hint}</button>{hint ? <aside className="mt-2 rounded-2xl bg-emerald-50 p-4"><p className="text-sm leading-6">{exercise.hint[locale]}</p><p className="mt-2 text-xs">{c.hintUsed}</p></aside> : null}</> : null}
           </>}
           {!exercise && step.stage !== "prepare" && !scene && overlay === null && <div className="mt-6"><YoSpeechPractice key={lesson.id} language="it" locale={locale} scenarioId={courseSpeechScenario("it", unit.number)}/></div>}

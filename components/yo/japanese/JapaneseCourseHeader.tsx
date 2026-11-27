@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { RankingNavLink } from "@/components/yo/rankings/RankingNavLink";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { buildYoLocaleHref } from "@/lib/yo/localize";
 import type { YoLocale } from "@/lib/yo/types";
@@ -14,6 +15,7 @@ export function JapaneseCourseHeader({ locale, pathname, backHref, title }: { lo
       <span className="hidden sm:block"><YoPratiqoLogo size="sm" priority={false} /></span>
       <span className="truncate text-sm font-semibold text-slate-800">{title}</span>
     </div>
+    <RankingNavLink locale={locale} compact />
     <nav aria-label={{ fr: "Langue des explications", en: "Explanation language", es: "Idioma de las explicaciones" }[locale]} className="flex shrink-0 rounded-full border border-slate-200 bg-white p-1">
       {(["fr", "en", "es"] as const).map((language) => <Link key={language} href={buildYoLocaleHref(pathname, language)} aria-current={locale === language ? "page" : undefined} aria-label={{ fr: "Français", en: "English", es: "Español" }[language]} className={"flex min-h-8 min-w-8 items-center justify-center rounded-full px-2 text-xs font-semibold focus-visible:outline focus-visible:outline-2 " + (locale === language ? "bg-indigo-700 text-white" : "text-slate-600 hover:bg-slate-100")}>{language.toUpperCase()}</Link>)}
     </nav>

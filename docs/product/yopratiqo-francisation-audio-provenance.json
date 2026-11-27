@@ -1,0 +1,1151 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-11-27",
+  "scope": "Seven utterances for the Francisation au Québec contact-details mission: five at a cooking workshop and two at a library.",
+  "generation": {
+    "service": "CreativeClaw",
+    "provider": "Cartesia",
+    "model": "speech/cartesia-sonic",
+    "voiceSource": "Provider stock voice catalog; no voice cloning or impersonation.",
+    "suppliedParameters": {
+      "apply_saved_pronunciations": false,
+      "extras": {
+        "language_code": "fr",
+        "format": "wav",
+        "sample_rate": "44100",
+        "speed": 1
+      }
+    },
+    "otherParameters": "No volume or additional extras supplied.",
+    "voices": [
+      {
+        "role": "staff",
+        "name": "Félix",
+        "voiceId": "f5e6c270-2aa9-463f-b48b-579a39284ce2",
+        "providerCatalogLanguage": "Canadian-French",
+        "providerCatalogGender": "male",
+        "providerCatalogDescription": "Helpful Professional"
+      },
+      {
+        "role": "learner",
+        "name": "Josette",
+        "voiceId": "3b7d569e-01fc-45ef-b74b-29460956c691",
+        "providerCatalogLanguage": "Canadian-French",
+        "providerCatalogGender": "female",
+        "providerCatalogDescription": "Frontline Helper"
+      }
+    ],
+    "publishingTerms": {
+      "url": "https://creativeclaw.co/terms/",
+      "reviewedAt": "2026-11-27",
+      "termsLastUpdatedAt": "2026-11-23",
+      "basis": "CreativeClaw permits commercial use of generated outputs under its terms, subject to applicable restrictions and third-party provider terms."
+    },
+    "generatedClipCount": 7,
+    "generationCredits": 15,
+    "newTakesAfterAsr": 0
+  },
+  "mediaProcessing": {
+    "tool": "ffmpeg version 7.1.5-0+deb13u1 Copyright (c) 2000-2026 the FFmpeg developers",
+    "codec": "libmp3lame",
+    "quality": "VBR quality 2",
+    "arguments": [
+      "-map_metadata",
+      "-1",
+      "-codec:a",
+      "libmp3lame",
+      "-q:a",
+      "2",
+      "-write_xing",
+      "1",
+      "-id3v2_version",
+      "0"
+    ],
+    "processing": "Individual WAV clips encoded to MP3. No trimming, time stretch, gain change, synthesis, or added background sound.",
+    "formatNote": "MP3 is lossy. Gapless metadata preserves the original decoded sample count; container duration includes encoder padding.",
+    "durationSecondsMeaning": "Measured decoded sample count divided by 44,100 Hz, matching each source PCM duration.",
+    "fileNaming": "Full SHA-256 hash of the published MP3 bytes.",
+    "originalAudioDurationSeconds": 56.64,
+    "publishedMp3Bytes": 773859
+  },
+  "independentAsrReview": {
+    "service": "CreativeClaw",
+    "provider": "ElevenLabs",
+    "model": "elevenlabs-scribe",
+    "languageDetected": "fra",
+    "speakerCountReported": 2,
+    "reviewedAt": "2026-11-27",
+    "result": "All seven word sequences match their expanded synthesis scripts after ignoring punctuation, letter case, and apostrophe typography.",
+    "comparison": "Unicode NFC normalization, case folding, and comparison of consecutive word tokens; digits and email addresses are checked through their explicit spoken expansions.",
+    "keyChecks": [
+      {
+        "clipId": "atelier-2",
+        "expected": "Camille Leduc",
+        "recognized": "Camille Leduc"
+      },
+      {
+        "clipId": "atelier-3",
+        "display": "418 555-0116",
+        "recognized": "quatre un huit cinq cinq cinq zéro un un six"
+      },
+      {
+        "clipId": "atelier-4",
+        "display": "418 555-0161",
+        "recognized": "quatre un huit cinq cinq cinq zéro un six un"
+      },
+      {
+        "clipId": "bibliotheque-1",
+        "display": "sam.ray@example.org",
+        "recognized": "Sam point R A Y arobase E X A M P L E point O R G"
+      },
+      {
+        "clipId": "bibliotheque-2",
+        "display": "sam.roy@example.org",
+        "recognized": "Sam point R O Y arobase E X A M P L E point O R G"
+      }
+    ],
+    "reviewOnlyConcatenation": {
+      "description": "Existing source PCM clips concatenated in listed order with 0.3 seconds of silence between clips, solely for independent ASR. The combined file is not served by the application.",
+      "assetId": "3fbefa22-2f32-42ab-bc9d-7b3fbc569d8e",
+      "sourceUrl": "https://cdn.creativeclaw.co/u/3ce57a61/audio/891b06b1-5ffe-4d5a-b41c-05733322cb6d.wav",
+      "sha256": "0f83cb552d78b609ae677cc71e337ceaaea56159aeee6854c16695c09e752d88",
+      "durationSeconds": 58.44
+    },
+    "jobs": [
+      {
+        "jobId": "88565994-2653-4222-aae4-bf941af84586",
+        "scope": [
+          "atelier-1"
+        ],
+        "status": "completed",
+        "transcriptUrl": "https://cdn.creativeclaw.co/u/3ce57a61/transcripts/9cebf44b-d9b3-459c-bdd8-4a4aa668c878.json",
+        "wordTimingsUrl": "https://cdn.creativeclaw.co/u/3ce57a61/transcripts/4e1e8e17-282a-48b9-92c1-f6041aa69908.json",
+        "provisionalCredits": 2,
+        "settledCredits": 1
+      },
+      {
+        "jobId": "b290b5b6-55a3-4b5c-91c7-9b72593f73ad",
+        "scope": [
+          "atelier-1",
+          "atelier-2",
+          "atelier-3",
+          "atelier-4",
+          "atelier-5",
+          "bibliotheque-1",
+          "bibliotheque-2"
+        ],
+        "status": "completed",
+        "transcriptUrl": "https://cdn.creativeclaw.co/u/3ce57a61/transcripts/27607de3-cd89-44d5-be53-be51afbac848.json",
+        "wordTimingsUrl": "https://cdn.creativeclaw.co/u/3ce57a61/transcripts/9a4264dc-f4e9-4790-9767-3f6826fc459d.json",
+        "provisionalCredits": 2,
+        "settledCredits": 1
+      }
+    ],
+    "authorizedMaximumCredits": 10,
+    "settledCredits": 2,
+    "limitations": "Machine transcription supports script fidelity; it does not establish naturalness, intelligibility for every learner, or a specifically Québec accent."
+  },
+  "humanListeningReview": {
+    "performed": false,
+    "nativeFrenchCanadianReviewPerformed": false,
+    "nativeListeningApprovalClaimed": false,
+    "accentStatus": "Canadian-French is the provider catalog label. No native listener has certified these recordings as Québec French."
+  },
+  "captionStrategy": {
+    "granularity": "One active utterance at a time.",
+    "source": "The complete display transcript is stored with the corresponding MP3 in audio.ts; the player highlights the active clip.",
+    "wordTimingNote": "ASR word times are retained as review evidence, relative to each source WAV; the UI does not claim word-level synchronized captions."
+  },
+  "cost": {
+    "unit": "CreativeClaw credits",
+    "generation": 15,
+    "asr": 2,
+    "totalSettled": 17
+  },
+  "clips": [
+    {
+      "id": "atelier-1",
+      "speaker": "À l’accueil",
+      "voiceRole": "staff",
+      "voiceName": "Félix",
+      "voiceId": "f5e6c270-2aa9-463f-b48b-579a39284ce2",
+      "displayText": "Bonjour ! Vous venez pour l’atelier de cuisine ? À quel nom est la réservation ?",
+      "spokenScript": "Bonjour ! Vous venez pour l’atelier de cuisine ? À quel nom est la réservation ?",
+      "generationJobId": "35ed2ea6-8ea7-4903-bb0d-c4b31b9a10f6",
+      "generationCredits": 2,
+      "generationSourceUrl": "https://cdn.creativeclaw.co/u/3ce57a61/audio/a26c06df-c908-4def-9629-3f77bcfd24ff.wav",
+      "src": "/audio/yo/francisation/50b0250dd64c664b4ed0d62683c2459b3130e4199f13a9b9e7d647baaf3d1320.mp3",
+      "durationSeconds": 3.6,
+      "sourceWav": {
+        "sha256": "5373e6e14ea484df3f0ccc19ddb90a7fb38249de2ea318d9d487ac9ef2b3bc75",
+        "bytes": 317564,
+        "durationSeconds": 3.6,
+        "sampleRateHz": 44100,
+        "channels": 1,
+        "bitsPerSample": 16,
+        "sampleCount": 158760
+      },
+      "publishedMp3": {
+        "path": "public/audio/yo/francisation/50b0250dd64c664b4ed0d62683c2459b3130e4199f13a9b9e7d647baaf3d1320.mp3",
+        "sha256": "50b0250dd64c664b4ed0d62683c2459b3130e4199f13a9b9e7d647baaf3d1320",
+        "bytes": 47124,
+        "containerDurationSeconds": 3.63102,
+        "decodedDurationSeconds": 3.6,
+        "decodedSampleCount": 158760,
+        "sampleRateHz": 44100,
+        "channels": 1
+      },
+      "asr": {
+        "jobId": "b290b5b6-55a3-4b5c-91c7-9b72593f73ad",
+        "reviewAudioStartSeconds": 0.0,
+        "reviewAudioEndSeconds": 3.6,
+        "transcript": "Bonjour, vous venez pour l'atelier de cuisine ? À quel nom est la réservation ?",
+        "wordSequenceMatchesExpandedScript": true,
+        "words": [
+          {
+            "text": "Bonjour,",
+            "startSeconds": 0.14,
+            "endSeconds": 0.62,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "vous",
+            "startSeconds": 0.74,
+            "endSeconds": 0.82,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "venez",
+            "startSeconds": 0.84,
+            "endSeconds": 1.0,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "pour",
+            "startSeconds": 1.02,
+            "endSeconds": 1.12,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "l'atelier",
+            "startSeconds": 1.14,
+            "endSeconds": 1.46,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "de",
+            "startSeconds": 1.48,
+            "endSeconds": 1.54,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "cuisine",
+            "startSeconds": 1.56,
+            "endSeconds": 1.98,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "?",
+            "startSeconds": 2.16,
+            "endSeconds": 2.16,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "À",
+            "startSeconds": 2.2,
+            "endSeconds": 2.26,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "quel",
+            "startSeconds": 2.3,
+            "endSeconds": 2.44,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "nom",
+            "startSeconds": 2.48,
+            "endSeconds": 2.58,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "est",
+            "startSeconds": 2.6,
+            "endSeconds": 2.64,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "la",
+            "startSeconds": 2.68,
+            "endSeconds": 2.76,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "réservation",
+            "startSeconds": 2.8,
+            "endSeconds": 3.42,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "?",
+            "startSeconds": 3.42,
+            "endSeconds": 3.42,
+            "speaker": "speaker_0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "atelier-2",
+      "speaker": "Camille",
+      "voiceRole": "learner",
+      "voiceName": "Josette",
+      "voiceId": "3b7d569e-01fc-45ef-b74b-29460956c691",
+      "displayText": "Bonjour ! C’est au nom de Camille Leduc.",
+      "spokenScript": "Bonjour ! C’est au nom de Camille Leduc.",
+      "generationJobId": "3d5cfd2b-c812-4f05-96e1-8be0dc0dfbc8",
+      "generationCredits": 1,
+      "generationSourceUrl": "https://cdn.creativeclaw.co/u/3ce57a61/audio/db6bca98-00e1-4c31-866d-7de3612c5d65.wav",
+      "src": "/audio/yo/francisation/4661076086f9c037db9d39535ee705f1c06139def707cfac139e2b1766445c86.mp3",
+      "durationSeconds": 2.64,
+      "sourceWav": {
+        "sha256": "962109cc05a9a3d8db9f4a42338f3e15046159f83082a09680a157f7e6b1c300",
+        "bytes": 232892,
+        "durationSeconds": 2.64,
+        "sampleRateHz": 44100,
+        "channels": 1,
+        "bitsPerSample": 16,
+        "sampleCount": 116424
+      },
+      "publishedMp3": {
+        "path": "public/audio/yo/francisation/4661076086f9c037db9d39535ee705f1c06139def707cfac139e2b1766445c86.mp3",
+        "sha256": "4661076086f9c037db9d39535ee705f1c06139def707cfac139e2b1766445c86",
+        "bytes": 35547,
+        "containerDurationSeconds": 2.690612,
+        "decodedDurationSeconds": 2.64,
+        "decodedSampleCount": 116424,
+        "sampleRateHz": 44100,
+        "channels": 1
+      },
+      "asr": {
+        "jobId": "b290b5b6-55a3-4b5c-91c7-9b72593f73ad",
+        "reviewAudioStartSeconds": 3.9,
+        "reviewAudioEndSeconds": 6.54,
+        "transcript": "Bonjour, c'est au nom de Camille Leduc.",
+        "wordSequenceMatchesExpandedScript": true,
+        "words": [
+          {
+            "text": "Bonjour,",
+            "startSeconds": 0.18,
+            "endSeconds": 0.72,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "c'est",
+            "startSeconds": 0.92,
+            "endSeconds": 1.04,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "au",
+            "startSeconds": 1.06,
+            "endSeconds": 1.1,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "nom",
+            "startSeconds": 1.16,
+            "endSeconds": 1.28,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "de",
+            "startSeconds": 1.32,
+            "endSeconds": 1.44,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "Camille",
+            "startSeconds": 1.48,
+            "endSeconds": 1.8,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "Leduc.",
+            "startSeconds": 1.88,
+            "endSeconds": 2.42,
+            "speaker": "speaker_1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "atelier-3",
+      "speaker": "À l’accueil",
+      "voiceRole": "staff",
+      "voiceName": "Félix",
+      "voiceId": "f5e6c270-2aa9-463f-b48b-579a39284ce2",
+      "displayText": "Merci. Pour vous joindre, j’ai le 418 555-0116. C’est bien ça ?",
+      "spokenScript": "Merci. Pour vous joindre, j’ai le quatre, un, huit. Cinq, cinq, cinq. Zéro, un, un, six. C’est bien ça ?",
+      "generationJobId": "1ab4f16b-eb42-41f6-b880-8d0a4ed182d9",
+      "generationCredits": 3,
+      "generationSourceUrl": "https://cdn.creativeclaw.co/u/3ce57a61/audio/ae6bbf70-6693-4880-863b-18a14c04e346.wav",
+      "src": "/audio/yo/francisation/4a822e3c3c08c22dae93db4602c732a33518ad5c8b51a4ff221bb3dde81550f5.mp3",
+      "durationSeconds": 9.2,
+      "sourceWav": {
+        "sha256": "30e4ce3f5146bbc31b23e55907ab1e2d073c59dc37a1a962304a297323efb43c",
+        "bytes": 811484,
+        "durationSeconds": 9.2,
+        "sampleRateHz": 44100,
+        "channels": 1,
+        "bitsPerSample": 16,
+        "sampleCount": 405720
+      },
+      "publishedMp3": {
+        "path": "public/audio/yo/francisation/4a822e3c3c08c22dae93db4602c732a33518ad5c8b51a4ff221bb3dde81550f5.mp3",
+        "sha256": "4a822e3c3c08c22dae93db4602c732a33518ad5c8b51a4ff221bb3dde81550f5",
+        "bytes": 131395,
+        "containerDurationSeconds": 9.247347,
+        "decodedDurationSeconds": 9.2,
+        "decodedSampleCount": 405720,
+        "sampleRateHz": 44100,
+        "channels": 1
+      },
+      "asr": {
+        "jobId": "b290b5b6-55a3-4b5c-91c7-9b72593f73ad",
+        "reviewAudioStartSeconds": 6.84,
+        "reviewAudioEndSeconds": 16.04,
+        "transcript": "Merci. Pour vous joindre, j'ai le quatre un huit cinq cinq cinq zéro un un six. C'est bien ça ?",
+        "wordSequenceMatchesExpandedScript": true,
+        "words": [
+          {
+            "text": "Merci.",
+            "startSeconds": 0.14,
+            "endSeconds": 0.54,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "Pour",
+            "startSeconds": 0.92,
+            "endSeconds": 1.04,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "vous",
+            "startSeconds": 1.08,
+            "endSeconds": 1.18,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "joindre,",
+            "startSeconds": 1.24,
+            "endSeconds": 1.62,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "j'ai",
+            "startSeconds": 1.8,
+            "endSeconds": 1.96,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "le",
+            "startSeconds": 2.0,
+            "endSeconds": 2.08,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "quatre",
+            "startSeconds": 2.22,
+            "endSeconds": 2.6,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "un",
+            "startSeconds": 2.92,
+            "endSeconds": 3.1,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "huit",
+            "startSeconds": 3.42,
+            "endSeconds": 3.82,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "cinq",
+            "startSeconds": 4.18,
+            "endSeconds": 4.58,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "cinq",
+            "startSeconds": 4.84,
+            "endSeconds": 5.2,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "cinq",
+            "startSeconds": 5.46,
+            "endSeconds": 5.84,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "zéro",
+            "startSeconds": 6.24,
+            "endSeconds": 6.62,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "un",
+            "startSeconds": 7.0,
+            "endSeconds": 7.18,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "un",
+            "startSeconds": 7.58,
+            "endSeconds": 7.74,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "six.",
+            "startSeconds": 8.04,
+            "endSeconds": 8.38,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "C'est",
+            "startSeconds": 8.6,
+            "endSeconds": 8.68,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "bien",
+            "startSeconds": 8.72,
+            "endSeconds": 8.86,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "ça",
+            "startSeconds": 8.92,
+            "endSeconds": 9.02,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "?",
+            "startSeconds": 9.04,
+            "endSeconds": 9.04,
+            "speaker": "speaker_0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "atelier-4",
+      "speaker": "Camille",
+      "voiceRole": "learner",
+      "voiceName": "Josette",
+      "voiceId": "3b7d569e-01fc-45ef-b74b-29460956c691",
+      "displayText": "Presque ! C’est le 418 555-0161. Les deux derniers chiffres sont six, un.",
+      "spokenScript": "Presque ! C’est le quatre, un, huit. Cinq, cinq, cinq. Zéro, un, six, un. Les deux derniers chiffres sont six, un.",
+      "generationJobId": "3e6712bb-f787-49dd-a64e-853e7907c27b",
+      "generationCredits": 3,
+      "generationSourceUrl": "https://cdn.creativeclaw.co/u/3ce57a61/audio/8df869b2-b61c-42ae-8b48-0a232e5ff2ae.wav",
+      "src": "/audio/yo/francisation/048977af9eb5ada2b815f1c070e34aedb4f4523ceea0a527f72f49f3f5af3c78.mp3",
+      "durationSeconds": 11.52,
+      "sourceWav": {
+        "sha256": "deb13a6ff4baf4f490f899dd683b2dfc54cf6731c6be51e7b00481562680f6b6",
+        "bytes": 1016108,
+        "durationSeconds": 11.52,
+        "sampleRateHz": 44100,
+        "channels": 1,
+        "bitsPerSample": 16,
+        "sampleCount": 508032
+      },
+      "publishedMp3": {
+        "path": "public/audio/yo/francisation/048977af9eb5ada2b815f1c070e34aedb4f4523ceea0a527f72f49f3f5af3c78.mp3",
+        "sha256": "048977af9eb5ada2b815f1c070e34aedb4f4523ceea0a527f72f49f3f5af3c78",
+        "bytes": 160997,
+        "containerDurationSeconds": 11.546122,
+        "decodedDurationSeconds": 11.52,
+        "decodedSampleCount": 508032,
+        "sampleRateHz": 44100,
+        "channels": 1
+      },
+      "asr": {
+        "jobId": "b290b5b6-55a3-4b5c-91c7-9b72593f73ad",
+        "reviewAudioStartSeconds": 16.34,
+        "reviewAudioEndSeconds": 27.86,
+        "transcript": "Presque. C'est le quatre un huit cinq cinq cinq zéro un six un. Les deux derniers chiffres sont six un.",
+        "wordSequenceMatchesExpandedScript": true,
+        "words": [
+          {
+            "text": "Presque.",
+            "startSeconds": 0.12,
+            "endSeconds": 0.82,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "C'est",
+            "startSeconds": 0.96,
+            "endSeconds": 1.08,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "le",
+            "startSeconds": 1.14,
+            "endSeconds": 1.28,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "quatre",
+            "startSeconds": 1.44,
+            "endSeconds": 2.1,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "un",
+            "startSeconds": 2.24,
+            "endSeconds": 2.46,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "huit",
+            "startSeconds": 2.76,
+            "endSeconds": 3.22,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "cinq",
+            "startSeconds": 3.78,
+            "endSeconds": 4.22,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "cinq",
+            "startSeconds": 4.54,
+            "endSeconds": 5.02,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "cinq",
+            "startSeconds": 5.32,
+            "endSeconds": 5.76,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "zéro",
+            "startSeconds": 6.28,
+            "endSeconds": 6.68,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "un",
+            "startSeconds": 7.1,
+            "endSeconds": 7.32,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "six",
+            "startSeconds": 7.72,
+            "endSeconds": 8.12,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "un.",
+            "startSeconds": 8.4,
+            "endSeconds": 8.56,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "Les",
+            "startSeconds": 8.96,
+            "endSeconds": 9.08,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "deux",
+            "startSeconds": 9.12,
+            "endSeconds": 9.22,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "derniers",
+            "startSeconds": 9.28,
+            "endSeconds": 9.62,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "chiffres",
+            "startSeconds": 9.66,
+            "endSeconds": 10.14,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "sont",
+            "startSeconds": 10.26,
+            "endSeconds": 10.64,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "six",
+            "startSeconds": 10.76,
+            "endSeconds": 11.1,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "un.",
+            "startSeconds": 11.32,
+            "endSeconds": 11.5,
+            "speaker": "speaker_1"
+          }
+        ]
+      }
+    },
+    {
+      "id": "atelier-5",
+      "speaker": "À l’accueil",
+      "voiceRole": "staff",
+      "voiceName": "Félix",
+      "voiceId": "f5e6c270-2aa9-463f-b48b-579a39284ce2",
+      "displayText": "Six, un. Voilà, c’est corrigé !",
+      "spokenScript": "Six, un. Voilà, c’est corrigé !",
+      "generationJobId": "3da1960d-6feb-45ee-820f-20973a90a85f",
+      "generationCredits": 1,
+      "generationSourceUrl": "https://cdn.creativeclaw.co/u/3ce57a61/audio/1826ce43-2f82-4ea0-98c1-1d054663ade5.wav",
+      "src": "/audio/yo/francisation/8fc12789edd4586dde34f2097fcd715704702e3315f80dc5305f408d573ca5b7.mp3",
+      "durationSeconds": 2.64,
+      "sourceWav": {
+        "sha256": "ce27decfea1ebee51f6dec289ef7f22c41b22a79905e0194483d26b5cd53a9bc",
+        "bytes": 232892,
+        "durationSeconds": 2.64,
+        "sampleRateHz": 44100,
+        "channels": 1,
+        "bitsPerSample": 16,
+        "sampleCount": 116424
+      },
+      "publishedMp3": {
+        "path": "public/audio/yo/francisation/8fc12789edd4586dde34f2097fcd715704702e3315f80dc5305f408d573ca5b7.mp3",
+        "sha256": "8fc12789edd4586dde34f2097fcd715704702e3315f80dc5305f408d573ca5b7",
+        "bytes": 33480,
+        "containerDurationSeconds": 2.690612,
+        "decodedDurationSeconds": 2.64,
+        "decodedSampleCount": 116424,
+        "sampleRateHz": 44100,
+        "channels": 1
+      },
+      "asr": {
+        "jobId": "b290b5b6-55a3-4b5c-91c7-9b72593f73ad",
+        "reviewAudioStartSeconds": 28.16,
+        "reviewAudioEndSeconds": 30.8,
+        "transcript": "Six un. Voilà, c'est corrigé.",
+        "wordSequenceMatchesExpandedScript": true,
+        "words": [
+          {
+            "text": "Six",
+            "startSeconds": 0.2,
+            "endSeconds": 0.56,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "un.",
+            "startSeconds": 0.9,
+            "endSeconds": 1.02,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "Voilà,",
+            "startSeconds": 1.36,
+            "endSeconds": 1.64,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "c'est",
+            "startSeconds": 1.88,
+            "endSeconds": 1.98,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "corrigé.",
+            "startSeconds": 2.02,
+            "endSeconds": 2.44,
+            "speaker": "speaker_0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "bibliotheque-1",
+      "speaker": "À l’accueil",
+      "voiceRole": "staff",
+      "voiceName": "Félix",
+      "voiceId": "f5e6c270-2aa9-463f-b48b-579a39284ce2",
+      "displayText": "J’ai noté sam.ray@example.org. Est-ce exact ?",
+      "spokenScript": "J’ai noté Sam, point, R, A, Y, arobase, E, X, A, M, P, L, E, point, O, R, G. Est-ce exact ?",
+      "generationJobId": "6d8bdde8-67d1-42d4-a23a-14c6c2dc5f15",
+      "generationCredits": 2,
+      "generationSourceUrl": "https://cdn.creativeclaw.co/u/3ce57a61/audio/2c10401a-4919-484f-888a-7994c57a3503.wav",
+      "src": "/audio/yo/francisation/52e32517136f9665888448145eb0cc24d10dfed8e9bd4917138315e58180fb16.mp3",
+      "durationSeconds": 12.16,
+      "sourceWav": {
+        "sha256": "2c155818b97503bea2ddebc9eb3f8475d0cb33177c6e713f4c343aa08188d519",
+        "bytes": 1072556,
+        "durationSeconds": 12.16,
+        "sampleRateHz": 44100,
+        "channels": 1,
+        "bitsPerSample": 16,
+        "sampleCount": 536256
+      },
+      "publishedMp3": {
+        "path": "public/audio/yo/francisation/52e32517136f9665888448145eb0cc24d10dfed8e9bd4917138315e58180fb16.mp3",
+        "sha256": "52e32517136f9665888448145eb0cc24d10dfed8e9bd4917138315e58180fb16",
+        "bytes": 163250,
+        "containerDurationSeconds": 12.199184,
+        "decodedDurationSeconds": 12.16,
+        "decodedSampleCount": 536256,
+        "sampleRateHz": 44100,
+        "channels": 1
+      },
+      "asr": {
+        "jobId": "b290b5b6-55a3-4b5c-91c7-9b72593f73ad",
+        "reviewAudioStartSeconds": 31.1,
+        "reviewAudioEndSeconds": 43.26,
+        "transcript": "J'ai noté Sam point R A Y arobase E X A M P L E point O R G. Est-ce exact ?",
+        "wordSequenceMatchesExpandedScript": true,
+        "words": [
+          {
+            "text": "J'ai",
+            "startSeconds": 0.16,
+            "endSeconds": 0.28,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "noté",
+            "startSeconds": 0.34,
+            "endSeconds": 0.68,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "Sam",
+            "startSeconds": 1.019,
+            "endSeconds": 1.6,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "point",
+            "startSeconds": 1.68,
+            "endSeconds": 2.0,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "R",
+            "startSeconds": 2.6,
+            "endSeconds": 2.94,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "A",
+            "startSeconds": 3.08,
+            "endSeconds": 3.24,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "Y",
+            "startSeconds": 3.54,
+            "endSeconds": 3.62,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "arobase",
+            "startSeconds": 4.28,
+            "endSeconds": 5.0,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "E",
+            "startSeconds": 5.1,
+            "endSeconds": 5.28,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "X",
+            "startSeconds": 5.92,
+            "endSeconds": 6.16,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "A",
+            "startSeconds": 6.28,
+            "endSeconds": 6.44,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "M",
+            "startSeconds": 6.88,
+            "endSeconds": 7.08,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "P",
+            "startSeconds": 7.36,
+            "endSeconds": 7.58,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "L",
+            "startSeconds": 8.22,
+            "endSeconds": 8.32,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "E",
+            "startSeconds": 8.62,
+            "endSeconds": 8.78,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "point",
+            "startSeconds": 9.06,
+            "endSeconds": 9.34,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "O",
+            "startSeconds": 9.76,
+            "endSeconds": 9.92,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "R",
+            "startSeconds": 10.46,
+            "endSeconds": 10.56,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "G.",
+            "startSeconds": 10.88,
+            "endSeconds": 11.02,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "Est-ce",
+            "startSeconds": 11.5,
+            "endSeconds": 11.64,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "exact",
+            "startSeconds": 11.68,
+            "endSeconds": 12.06,
+            "speaker": "speaker_0"
+          },
+          {
+            "text": "?",
+            "startSeconds": 12.06,
+            "endSeconds": 12.06,
+            "speaker": "speaker_0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "bibliotheque-2",
+      "speaker": "Sam",
+      "voiceRole": "learner",
+      "voiceName": "Josette",
+      "voiceId": "3b7d569e-01fc-45ef-b74b-29460956c691",
+      "displayText": "Sam Roy. Mon courriel est sam.roy@example.org. On vérifie ensemble ?",
+      "spokenScript": "Sam Roy. Mon courriel est Sam, point, R, O, Y, arobase, E, X, A, M, P, L, E, point, O, R, G. On vérifie ensemble ?",
+      "generationJobId": "699633b8-f021-4af4-b15c-76dc49d69eba",
+      "generationCredits": 3,
+      "generationSourceUrl": "https://cdn.creativeclaw.co/u/3ce57a61/audio/67d87240-f6a4-4c42-a233-981f308d868c.wav",
+      "src": "/audio/yo/francisation/4bb7323fac22782b0218b812831e8d9dbac509816dbb7ae5abc9bbae4034d263.mp3",
+      "durationSeconds": 14.88,
+      "sourceWav": {
+        "sha256": "fb0cfbf4086e09144d68c6b3a218f327841899b4092c1b6bdcff763df4364d87",
+        "bytes": 1312460,
+        "durationSeconds": 14.88,
+        "sampleRateHz": 44100,
+        "channels": 1,
+        "bitsPerSample": 16,
+        "sampleCount": 656208
+      },
+      "publishedMp3": {
+        "path": "public/audio/yo/francisation/4bb7323fac22782b0218b812831e8d9dbac509816dbb7ae5abc9bbae4034d263.mp3",
+        "sha256": "4bb7323fac22782b0218b812831e8d9dbac509816dbb7ae5abc9bbae4034d263",
+        "bytes": 202066,
+        "containerDurationSeconds": 14.915918,
+        "decodedDurationSeconds": 14.88,
+        "decodedSampleCount": 656208,
+        "sampleRateHz": 44100,
+        "channels": 1
+      },
+      "asr": {
+        "jobId": "b290b5b6-55a3-4b5c-91c7-9b72593f73ad",
+        "reviewAudioStartSeconds": 43.56,
+        "reviewAudioEndSeconds": 58.44,
+        "transcript": "Sam Roy. Mon courriel est Sam point R O Y arobase E X A M P L E point O R G. On vérifie ensemble ?",
+        "wordSequenceMatchesExpandedScript": true,
+        "words": [
+          {
+            "text": "Sam",
+            "startSeconds": 0.28,
+            "endSeconds": 0.6,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "Roy.",
+            "startSeconds": 0.68,
+            "endSeconds": 0.98,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "Mon",
+            "startSeconds": 1.34,
+            "endSeconds": 1.46,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "courriel",
+            "startSeconds": 1.5,
+            "endSeconds": 2.02,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "est",
+            "startSeconds": 2.12,
+            "endSeconds": 2.46,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "Sam",
+            "startSeconds": 2.6,
+            "endSeconds": 3.0,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "point",
+            "startSeconds": 3.3,
+            "endSeconds": 3.7,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "R",
+            "startSeconds": 4.46,
+            "endSeconds": 4.52,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "O",
+            "startSeconds": 4.8,
+            "endSeconds": 5.02,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "Y",
+            "startSeconds": 5.28,
+            "endSeconds": 5.36,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "arobase",
+            "startSeconds": 6.12,
+            "endSeconds": 6.84,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "E",
+            "startSeconds": 7.14,
+            "endSeconds": 7.28,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "X",
+            "startSeconds": 7.96,
+            "endSeconds": 8.18,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "A",
+            "startSeconds": 8.32,
+            "endSeconds": 8.48,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "M",
+            "startSeconds": 8.94,
+            "endSeconds": 9.16,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "P",
+            "startSeconds": 9.42,
+            "endSeconds": 9.68,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "L",
+            "startSeconds": 10.16,
+            "endSeconds": 10.36,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "E",
+            "startSeconds": 10.66,
+            "endSeconds": 10.84,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "point",
+            "startSeconds": 11.16,
+            "endSeconds": 11.54,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "O",
+            "startSeconds": 12.06,
+            "endSeconds": 12.26,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "R",
+            "startSeconds": 12.8,
+            "endSeconds": 12.96,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "G.",
+            "startSeconds": 13.18,
+            "endSeconds": 13.4,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "On",
+            "startSeconds": 13.82,
+            "endSeconds": 13.88,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "vérifie",
+            "startSeconds": 13.92,
+            "endSeconds": 14.24,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "ensemble",
+            "startSeconds": 14.28,
+            "endSeconds": 14.7,
+            "speaker": "speaker_1"
+          },
+          {
+            "text": "?",
+            "startSeconds": 14.72,
+            "endSeconds": 14.72,
+            "speaker": "speaker_1"
+          }
+        ]
+      }
+    }
+  ]
+}

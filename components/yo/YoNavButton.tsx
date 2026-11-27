@@ -29,11 +29,7 @@ type YoNavButtonVariant = "desktop" | "mobile";
  * ------------------
  *   • Anonymous / not-yet-logged-in visitor → `/yo` (the public
  *     YoPratiqo product hub).
- *   • Authenticated student → `/student/yopratiqo` (the authenticated
- *     YoPratiqo hub) so logged-in learners land directly on their
- *     companion + course path instead of being kicked back to the
- *     marketing surface. Teachers + admins continue to route to `/yo`
- *     because the authenticated hub is student-only.
+ *   • All signed-in accounts open their private YoPratiqo hub at /yo/mon-parcours.
  *
  * This is intentionally the only routing branch in the component —
  * everything else (label, color, layout) is identical across all
@@ -52,19 +48,15 @@ export function YoNavButton({
   className?: string;
 }) {
   void variant; // intentionally unused — kept for call-site compat
-  const { user, profile, loading } = useAuth();
-  const isStudent =
-    !loading && Boolean(user) && (profile?.role as string | undefined) === "student";
-  // Authenticated students get the in-product YoPratiqo hub. Everyone
-  // else (anonymous, teacher, admin, or while auth is still resolving)
-  // keeps the public `/yo` landing as the safe default.
-  const href = isStudent ? "/student/yopratiqo" : "/yo";
+  const { user, loading } = useAuth();
+  const signedIn = !loading && Boolean(user);
+  const href = signedIn ? "/yo/mon-parcours" : "/yo";
   return (
     <Link
       href={href}
       aria-label="YoPratiqo"
       data-testid="yo-nav-button"
-      data-yo-nav-authenticated={isStudent ? "true" : "false"}
+      data-yo-nav-authenticated={signedIn ? "true" : "false"}
       className={cn(
         "inline-flex shrink-0 items-center whitespace-nowrap rounded px-1 text-sm font-extrabold tracking-tight text-[#F4B400] transition-colors hover:text-[#dca100] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F4B400] focus-visible:ring-offset-2",
         className,

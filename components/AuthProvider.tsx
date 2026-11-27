@@ -4,6 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import type { User } from "@supabase/supabase-js";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../lib/supabase";
+import { usePathname } from "next/navigation";
 import { seedStudentProgress } from "../lib/seed";
 import { authAvatarUrl, authDisplayName } from "../lib/authDisplay";
 import type { StudentSavedLocation } from "@/lib/studentLocation";
@@ -150,6 +151,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const userRef = useRef<User | null>(null);
   userRef.current = user;
 
+  const pathname = usePathname();
+  const studentArea = pathname === "/student" || pathname?.startsWith("/student/");
+  const studentId = profile?.role === "student" && studentArea ? user?.id : null;
+  useEffect(() => {
+    if (studentId) void seedStudentProgress(studentId);
+  }, [studentId]);
+
   useEffect(() => {
     const supabase = getSupabaseClient();
 
@@ -192,8 +200,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         backgroundSyncRef.current += 1;
         return;
       }
-
-      await seedStudentProgress(u.id);
 
       const { row: existing, errorCode } = await loadProfileRow(supabase, u.id);
 
