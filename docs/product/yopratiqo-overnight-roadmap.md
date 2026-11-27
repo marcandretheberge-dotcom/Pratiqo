@@ -1,8 +1,44 @@
-# YoPratiqo — roadmap reconciliation and overnight release
+# YoPratiqo roadmap
 
-Updated November 24–27, 2026 (America/Toronto). This is the current release ledger;
-older documents describe their own historical increment. A merged foundation,
-a hidden preview and a completed learner journey are different states.
+## Active 30-day plan · November 27, 2026
+
+Claude Cowork’s November 27 review sets the order for the next four weeks. Start with the privacy of the learner–teacher handoff and the accuracy of the progress it reports. The week labels are planning targets. The release ledger below records earlier deliveries.
+
+**Starting point.** Claude reviewed source code without running the app, tests or production database queries. The [eight-language inventory](yopratiqo-parity-audit.md) records twelve authored units or modules in each language, placement, optional interest missions, recorded audio and device-local dated review. The [speaking implementation](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/479) and animated [onboarding companion](https://github.com/marcandretheberge-dotcom/Pratiqo/pull/498) also exist. Live speaking, account-synced review and twelve modules of substantive interest-based teaching each need their own evidence. Check the legacy Dominican course, shared introductions and current main courses separately before changing a shared feature.
+
+### Week 1 · Protect learner records and make teacher summaries trustworthy
+
+- [ ] **1. Verify and enforce who can write progress and read a booking summary.** Compare effective production permissions with the intended server write path. Confirm that every teacher read uses the actual booking relationship and active consent, including for previously saved rows. Keep summaries bounded and limited to approved fields. Close with permission tests covering the learner, the booked teacher, a different teacher and withdrawn consent.
+- [ ] **2. Show only what a learner demonstrated.** Remove preset strengths, difficulties, suggested focus and score bands wherever a module completion supplies them. For a learner with insufficient evidence, return `not_enough_signal` and omit the band. Check flashcard rating controls on each route. Keep working dated review available and hide or clearly label controls that only offer practice.
+- [ ] **3. Scope sharing to the appointment.** A learner can grant sharing for an upcoming pending or confirmed booking and withdraw consent afterward. Build the summary from the booked language and display the row for that appointment. Limit requests by account and IP on progress and sharing routes. Verify with a bilingual learner, two bookings and a withdrawal.
+- [ ] **4. Preserve valid progress.** Validate each course–module pair against its catalog, including supported legacy IDs. Bound stored and returned data so genuine progress remains visible. Repeated completion keeps the first completion date. A late “started” event cannot erase it. Check retries and out-of-order saves.
+- [ ] **5. Review the legacy prototype archive.** Establish whether it is still distributed, remove obsolete tracked copies, and verify access restrictions for the associated external project. Record the disposition privately.
+
+### Week 2 · Make retention, product claims and lesson controls match the learner experience
+
+- [ ] **6. Enforce deletion and retention.** Trace an account deletion through progress, shared summaries and any new review records. Implement cleanup for eligible learning data and a scheduled, rerunnable purge for expired records. Verify the policy’s stated “access + one year” period and its start event with the policy owner. A deletion test and a retention-boundary test must show what was removed and when.
+- [ ] **7. Align learner, teacher and checkout copy.** Distinguish content aimed at a CEFR level from a learner’s assessed proficiency. Remove any fallback that assigns A1 without evidence. Describe Yoppo, available recordings, optional microphone use, provider processing and retention as each enabled experience actually works. Check the public offer against the playable itinerary and current checkout state before a paid launch.
+- [ ] **8. Finish an accessible lesson with sound on or off.** Inventory recordings by phrase, use them when available, label device-voice fallback, and provide transcripts and playback speed controls. Check that learners can read, answer and continue with 200% zoom, large system text and keyboard-only navigation on narrow screens. Add automated accessibility checks to CI and record device results.
+
+### Weeks 3–4 · Connect assessment, personalized teaching and review
+
+- [ ] **9. Version the shared curriculum and its interest variants.** Give each core objective a stable ID. Store the exact version of each prompt, answer and media item used. Start with Spanish across all twelve modules, use Italian as the reference, and track the other six languages in the parity inventory. Selected interests should change the main texts, audio, video, vocabulary and tasks. Switching interests preserves prior assessment, review dates and earned XP. Grade the exact variant and map equivalent tasks to one reward slot. [Curriculum specification](yopratiqo-interest-adaptive-curriculum.md)
+- [ ] **10. Tie completion and teacher signals to assessed work.** Save quiz and challenge outcomes server-side, including assistance and content version. Apply each course’s pass rule. “Skip for now” permits continued practice while keeping the objective open. Derive a score band only from sufficient assessed evidence. Extend existing placement against the audit’s proposed 8–12 adaptive items spanning listening, reading and production, plus self-estimate. Verify that moving down preserves earned progress.
+- [ ] **11. Make dated review follow the learner.** Extend existing local queues and inspect the gated server review work before adding storage. Persist grades, interval and next due date per learner and objective, retaining the exact exercise for review. Queue failed saves, show pending status and retry safely when online. Prove that a second device restores the same due work and that reconnecting or switching interests cannot duplicate a grade or reward.
+- [ ] **12. Close the tutor feedback loop.** Refresh the appointment-specific summary about 24 hours before the lesson while consent and eligibility remain valid. Recheck both at read time. After the lesson, let a tutor tag a practiced objective and put it in the learner’s review queue. Verify a cancelled booking, withdrawn consent, and one successful handoff from a completed lesson to the next review.
+
+### Follow-up work from the review
+
+| Work | Completion evidence |
+| --- | --- |
+| Speaking and conversational Yoppo | Confirm provider configuration, consent, training and retention settings, cost limits and eight-language live audio quality before activation. Use bounded server-side turns, structured course context, level-appropriate output and no model tools or default audio logging. Assess speaking quality before reporting a speaking score. |
+| Companion credits and motivation | Verify paid, completed, non-refunded booking eligibility. Set a minimum qualifying value and per-pair caps, and cover refunds and duplicate events. Retain the existing accumulation-only achievement policy and the decision against attendance streaks. |
+| Platform maintenance | Verify nonce-based script policy compatibility, return actionable client errors without internal database details, update companion authentication, correct launch-readiness documentation and clean up obsolete local logs. |
+| Marketplace lifecycle | Run a separate review of booking, rescheduling, packages, refunds and their effect on rewards and teacher sharing. Record its findings independently of YoPratiqo lesson progress. |
+
+**Tracking.** For each item, record the affected journey, the change or evidence already satisfying it, and the result of its acceptance check. When a change depends on a deployment, provider or database setting, record the environment verified. Keep unresolved items open. Eight-language parity, destination-specific cinema, human listening review, Québec francisation and the Yoppo Pass pilot continue under their existing product briefs.
+
+## Release ledger · November 24–27, 2026
 
 ## Direction and release authority
 
