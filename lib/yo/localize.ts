@@ -102,10 +102,18 @@ export function buildYoLocaleHref(
   basePathname: string,
   targetLocale: YoLocale,
 ): string {
-  if (targetLocale === YO_DEFAULT_LOCALE) {
-    return basePathname;
-  }
-  return `${basePathname}?lang=${targetLocale}`;
+  // Keep the selected course, unrelated queries and the complete fragment.
+  // set/delete also remove duplicate lang keys instead of appending a second one.
+  const hashAt = basePathname.indexOf("#");
+  const base = hashAt < 0 ? basePathname : basePathname.slice(0, hashAt);
+  const hash = hashAt < 0 ? "" : basePathname.slice(hashAt);
+  const queryAt = base.indexOf("?");
+  const pathname = queryAt < 0 ? base : base.slice(0, queryAt);
+  const params = new URLSearchParams(queryAt < 0 ? "" : base.slice(queryAt + 1));
+  if (targetLocale === YO_DEFAULT_LOCALE) params.delete("lang");
+  else params.set("lang", targetLocale);
+  const query = params.toString();
+  return `${pathname}${query ? `?${query}` : ""}${hash}`;
 }
 
 /**

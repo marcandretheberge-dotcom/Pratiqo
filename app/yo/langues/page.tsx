@@ -3,6 +3,7 @@ import { YoAppHeader } from "@/components/yo/YoAppHeader";
 import { YoAppShell, YoAppShellScroller } from "@/components/yo/YoAppShell";
 import { YoDesktopAppWorkspace } from "@/components/yo/YoDesktopAppWorkspace";
 import { YoLanguageQuickStart } from "@/components/yo/YoLanguageQuickStart";
+import { TodayNavLink } from "@/components/yo/daily/TodayNavLink";
 import { YoDocumentLanguage } from "@/components/yo/YoDocumentLanguage";
 import { getYoLocale, lstr, t } from "@/lib/yo/localize";
 import { buildYoCatalogItemList, buildYoPratiqoMetadata } from "@/lib/yo/yopratiqoSeo";
@@ -32,6 +33,7 @@ export default async function YoLanguesPage({ searchParams }: PageProps) {
         <YoDesktopAppWorkspace surfaceId="langues" centerMaxWidth="none" center={
           <div className="mx-auto w-full max-w-5xl py-3">
             <h1 className="mb-5 text-sm font-semibold text-emerald-900">{title}</h1>
+            <TodayNavLink locale={locale} />
             <YoLanguageQuickStart locale={locale} />
           </div>
         } />
