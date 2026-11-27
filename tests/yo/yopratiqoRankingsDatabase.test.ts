@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import type { RankingAward, RankingSnapshot } from "../../lib/yo/rankings/contract";
 
-const migration = "supabase/migrations/20261127002505_yo_real_xp_rankings.sql";
+const migration = "supabase/migrations/20261127012305_yo_real_xp_rankings.sql";
 const uid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 async function main() {
   const db = new PGlite();

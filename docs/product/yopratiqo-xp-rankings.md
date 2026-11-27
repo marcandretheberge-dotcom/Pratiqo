@@ -59,14 +59,18 @@ resume. An older partial draft without that evidence keeps its saved learning
 progress and assistance state, then offers a neutral replay notice on completion.
 It cannot fabricate an answer history or award XP merely by loading the draft.
 
-## Release requirements
+## Release evidence
 
 The additive `yo_real_xp_rankings` migration is independent of the earlier gated
-Italian SRS and daily-loop migrations. It must be applied before exposing the
-new API. The new normal ranking route does not use the local rewards-preview
-gate and does not activate the older daily-loop feature flags.
+Italian SRS and daily-loop migrations. It was applied to Pratiqo as migration
+`20261127012305_yo_real_xp_rankings` before the application release. Read-only
+metadata confirmed all five new tables were empty, RLS was enabled and access
+was restricted to the server service role. No test profiles or XP were inserted.
+The new normal ranking route does not use the local rewards-preview gate and
+does not activate the older daily-loop feature flags.
 
-Required verification:
+The reviewed feature commit `ac11dcae71a307cdc2bc343bb53f9cce3e72b66c`
+completed all 18 workflows, covering:
 
 1. Canonical grading across all eight languages and all supported response
    types, including complete matching and dialogue responses.
@@ -76,16 +80,22 @@ Required verification:
    bidirectional blocks and database privileges.
 4. UI loading, sign-in return, empty/error states, real-data projection,
    responsive controls and account-switch races.
-5. Build and existing course regressions on the candidate commit; signed-in
-   HTTP verification with separate disposable accounts before release.
+5. Build, type checking and existing course regressions on the candidate commit.
+
+For this release, the owner explicitly requested removal of fictional profiles,
+push and deployment without further testing. The final cleanup removes the
+legacy demo standings and populated review fixtures. No additional manual test
+run or disposable-account HTTP verification was performed; live authenticated
+award and friendship behavior is not claimed as separately verified.
 
 Run `npm run test:yo-rankings` for the focused release suite. The CI workflow
 `Yo verified XP and rankings` also type-checks the full application. A merged
 branch alone is not evidence of an applied migration or verified production
 behavior; record those separately in the PR/release report.
 
-`tools/yo-rankings-review` renders the actual ranking component with clearly
-labelled synthetic data in a separate loopback-only harness. Its browser smoke
-check covers desktop and narrow layouts, filters and representative empty,
-private and unavailable states. The CI screenshots are visual review evidence;
-they are not evidence of live accounts, applied migrations or production scores.
+`tools/yo-rankings-review` renders the actual ranking component in a separate
+loopback-only harness with no profiles, earned XP or friend requests. Its browser
+smoke script covers desktop and narrow layouts, filters and empty, private and
+unavailable states. CI screenshots are component review evidence; they are not
+evidence of live accounts, applied migrations or production scores. Record the
+final source commit and production deployment separately in PR #497.

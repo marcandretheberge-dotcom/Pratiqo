@@ -25,4 +25,4 @@ export const server = http.createServer(async (request, response) => {
     response.end(request.method === "HEAD" ? undefined : bytes);
   } catch { response.writeHead(404).end("Local review asset unavailable"); }
 });
-server.listen(55857, "127.0.0.1", () => console.log("LOCAL SYNTHETIC REVIEW: http://127.0.0.1:55857/"));
+server.listen(55857, "127.0.0.1", () => console.log("LOCAL EMPTY-STATE REVIEW: http://127.0.0.1:55857/"));
