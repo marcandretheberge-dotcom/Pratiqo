@@ -2,6 +2,7 @@
 import { useCourseExperience } from "./CourseExperience";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { RankingNavLink } from "@/components/yo/rankings/RankingNavLink";
 import type { ReactNode } from "react";
 import type { YoLocale } from "@/lib/yo/types";
 import { t } from "@/lib/yo/german/courseAuthoring";
@@ -124,6 +125,7 @@ export function GermanCourseShell({
             <ArrowLeft size={17} aria-hidden />
             YoPratiqo · {experience.name}
           </Link>
+          <RankingNavLink locale={locale} />
           <nav aria-label={copy[locale].language} className="flex gap-1">
             {(["fr", "en", "es"] as const).map((lang) => (
               <Link

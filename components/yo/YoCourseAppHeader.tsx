@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
 import { CafeNavLink } from "@/components/cafe/community/CafeNavLink";
+import { RankingNavLink } from "@/components/yo/rankings/RankingNavLink";
 import { extractBasePathFromToggleHref } from "@/components/yo/YoLessonDeckHeader";
 import type { YoLocale } from "@/lib/yo/types";
 
@@ -147,6 +148,7 @@ export function YoCourseAppHeader({
         {/* Right: real FR/EN/ES language selector. Replaces the
             one-off "View in English" pill so the user can hop to any
             supported locale without leaving the screen. */}
+        <RankingNavLink locale={l} compact />
         <CafeNavLink preserveCourse />
         <div data-testid="yo-course-app-header-lang-toggle">
           <YoLanguageSelector

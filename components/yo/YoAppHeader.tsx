@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
 import { CafeNavLink } from "@/components/cafe/community/CafeNavLink";
+import { RankingNavLink } from "@/components/yo/rankings/RankingNavLink";
 import type { YoLocale } from "@/lib/yo/types";
 
 const BACK_ARIA: Record<YoLocale, string> = {
@@ -134,6 +135,7 @@ function MobileBar({
         </span>
       </div>
 
+      {selectorPath !== "/yo/classement" ? <RankingNavLink locale={locale} compact /> : null}
       <CafeNavLink preserveCourse />
       <YoLanguageSelector
         locale={locale}
@@ -184,6 +186,7 @@ function DesktopBar({
         </span>
       </div>
 
+      {selectorPath !== "/yo/classement" ? <RankingNavLink locale={locale} /> : null}
       <CafeNavLink preserveCourse full />
       <YoLanguageSelector
         locale={locale}

@@ -10,11 +10,12 @@ import { useAnswerFeedback, YoppoAnswerReaction } from "../../feedback/LearningF
 import { acceptPracticeTap, PracticeAdvanceStatus, usePracticeAdvance } from "../../learning/PracticeAdvance";
 import { Check, X } from "lucide-react";
 import { guidedCopy, primary, secondary } from "./copy";
+import type { RankingAnswer } from "@/lib/yo/rankings/contract";
 
-export function GuidedGame({ activity, locale, value, onChange, onAttempt, onContinue, assessment = false, continueLabel, paused = false }: {
+export function GuidedGame({ activity, locale, value, onChange, onAttempt, onContinue, onAnswer, onReplayNeeded, assessment = false, continueLabel, paused = false }: {
   activity: ItalianActivity; locale: YoLocale; value: GameDraft;
   onChange: (next: GameDraft, before: GameDraft) => void | GameDraft | null; onAttempt: (correct: boolean, assisted: boolean) => void;
-  onContinue: () => void; assessment?: boolean; continueLabel?: string; paused?: boolean;
+  onContinue: () => void; onAnswer?: (answer: RankingAnswer) => void; onReplayNeeded?: () => void; assessment?: boolean; continueLabel?: string; paused?: boolean;
 }) {
   const response = useAnswerFeedback();
   const c = guidedCopy[locale], current = useRef(value);
@@ -38,11 +39,11 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
     if (patch.feedback === false || patch.feedback === null) response.clear();
     current.current = accepted ?? next; return current.current;
   }
-  function report(correct: boolean, complete: boolean) {
+  function report(correct: boolean, complete: boolean, patch: Partial<GameDraft> = {}) {
     const previous = current.current;
     if (previous.complete || previous.feedback === true) return false;
     const assisted = previous.assisted;
-    if (!edit({ feedback: correct, complete, assisted: assisted || (!correct && !assessment) })) return false;
+    if (!edit({ ...patch, feedback: correct, complete, assisted: assisted || (!correct && !assessment) })) return false;
     onAttempt(correct, assisted); return true;
   }
   function check() {
@@ -51,8 +52,22 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
     if (paused || !readyNow || g.complete || g.feedback === true) return;
     const correct = checkGuided(activity, current.current);
     const complete = assessment || (correct && (activity.kind !== "dialogue" || current.current.turn === activity.turns.length - 1));
-    if (activity.kind === "dialogue" && correct && !complete) { if (!edit({ feedback: true })) return; response.correct(`${activity.id}:turn:${current.current.turn}`); flow.arm(); return; }
-    if (!report(correct, complete)) return;
+    const submittedTurns = [...(g.submittedTurns ?? [])];
+    const capturedTurn = activity.kind === "dialogue" && correct && !assessment && submittedTurns.length === g.turn;
+    if (capturedTurn) submittedTurns.push(g.selected!);
+    const turnPatch = capturedTurn ? { submittedTurns } : {};
+    if (activity.kind === "dialogue" && correct && !complete) { if (!edit({ feedback: true, ...turnPatch })) return; response.correct(`${activity.id}:turn:${current.current.turn}`); flow.arm(); return; }
+    if (!report(correct, complete, turnPatch)) return;
+    if (correct && !assessment) {
+      if (activity.kind === "dialogue") {
+        if (submittedTurns.length === activity.turns.length && Array.from(submittedTurns).every(answer => typeof answer === "string")) onAnswer?.(submittedTurns);
+        else if (onAnswer) onReplayNeeded?.();
+      } else if (activity.kind === "type") onAnswer?.(g.tiles.map(index => pool[index]).join(" "));
+      else if (activity.kind === "order") onAnswer?.(g.tiles.map(index => pool[index]));
+      else if (activity.kind === "cafe") onAnswer?.(Object.fromEntries(Object.entries(g.basket ?? {}).map(([id, quantity]) => [id, String(quantity)])));
+      else if (activity.kind === "map") onAnswer?.([...(g.path ?? [])]);
+      else if (g.selected) onAnswer?.(g.selected);
+    }
     if (correct) { response.correct(`${activity.id}:turn:${current.current.turn}`); if (activity.kind !== "cafe" && activity.kind !== "map") flow.arm(); }
   }
   function pair(id: string) {
@@ -60,8 +75,14 @@ export function GuidedGame({ activity, locale, value, onChange, onAttempt, onCon
     if (!g.left || g.pairs.includes(id) || g.complete || activity.kind !== "match") return;
     if (g.left === id) {
       const pairs = [...g.pairs, id];
-      if (pairs.length === activity.pairs.length) { if (!edit({ pairs, left: null }) || !report(true, true)) return; flow.arm(); }
-      else if (!edit({ pairs, left: null, feedback: null })) return;
+      const submittedPairs = { ...g.submittedPairs, [g.left]: id };
+      if (pairs.length === activity.pairs.length) {
+        if (!edit({ pairs, left: null, submittedPairs }) || !report(true, true)) return;
+        if (!assessment && Object.keys(submittedPairs).length === activity.pairs.length) onAnswer?.(submittedPairs);
+        else if (!assessment && onAnswer) onReplayNeeded?.();
+        flow.arm();
+      }
+      else if (!edit({ pairs, left: null, feedback: null, submittedPairs })) return;
       response.correct(`${activity.id}:pair:${id}`);
     } else { if (edit({ feedback: false, assisted: true })) onAttempt(false, g.assisted); }
   }

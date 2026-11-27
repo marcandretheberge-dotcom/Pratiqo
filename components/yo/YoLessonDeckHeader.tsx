@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { YoPratiqoLogo } from "@/components/yo/YoPratiqoLogo";
 import { YoLanguageSelector } from "@/components/yo/YoLanguageSelector";
 import { CafeNavLink } from "@/components/cafe/community/CafeNavLink";
+import { RankingNavLink } from "@/components/yo/rankings/RankingNavLink";
 import {
   YO_LESSON_DECK_CHROME,
   type YoLessonDeckChromeLabels,
@@ -134,6 +135,7 @@ export function YoLessonDeckHeader({
           </span>
         </div>
 
+        <RankingNavLink locale={locale} compact />
         <CafeNavLink preserveCourse />
         <div data-testid="yo-lesson-deck-header-lang-toggle">
           <YoLanguageSelector

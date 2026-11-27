@@ -15,6 +15,7 @@ import { matchesFrenchQuebecAnswer } from "@/lib/yo/frenchQuebec/courseLogic";
 import { courseKeyboard, courseMoney, type TextCourseLanguage } from "@/lib/yo/foundations/experience";
 import { CompanionAvatar } from "@/components/companion/CompanionAvatar";
 import { TYPED_DRAFT_MAX_LENGTH } from "@/lib/yo/foundations/typedDraft";
+import type { RankingAnswer } from "@/lib/yo/rankings/contract";
 
 const C = {
   fr: { check: "Vérifier", correct: "Ecco ! Tu y es.", retry: "Presque. Ajuste et réessaie.", choose: "Choisis une réponse", associate: "Choisis un mot italien, puis son sens.", pair: "Paire trouvée", wrongPair: "Ces deux cartes ne vont pas ensemble. Essaie une autre association.", left: "Expressions italiennes", right: "Leur sens", sentence: "Ta phrase", pool: "Mots disponibles", empty: "Touche les mots pour construire ta phrase.", undo: "Annuler", clear: "Tout remettre", answer: "Ta réponse en italien", model: "Voir un modèle", accent: "Utilise ces touches pour écrire les accents, puis compare avec le modèle.", listen: "le message de l’exercice", transcript: "Lire la transcription (avec aide)", listened: "Audio démarré", beforeListen: "Écoute le message ou choisis la version écrite pour répondre.", written: "Version écrite : cette réussite sera enregistrée avec aide.", cart: "Ta commande", menu: "La carte du bar", fictional: "Prix inventés pour ce jeu.", total: "Total", budget: "Budget", add: "Ajouter", remove: "Retirer", basketHint: "Choisis les produits et les quantités demandés, puis vérifie.", steps: "Déplacements", map: "Plan fictif pour apprendre : ce n’est pas un itinéraire réel.", start: "Départ", destination: "Piazza", you: "Yoppo est ici", boundary: "Tu arrives au bord du plan. Choisis une autre direction.", up: "En haut", down: "En bas", east: "À droite", west: "À gauche", route: "Ton trajet", turn: "Tour", nextTurn: "Poursuivre la conversation", finished: "Conversation réussie", option: "Réponse", listenLine: "Écouter la réplique", matched: "paires trouvées", counter: "quantité" },
@@ -66,7 +67,7 @@ const optionButton = "min-h-14 rounded-2xl border-2 p-4 text-left text-sm font-m
 export interface ItalianAttemptDetail { optionId: string }
 /** Opt-in local continuity. Restoring these values never invokes grading or help callbacks. */
 export interface ItalianTypedDraft { value: string; onChange: (value: string) => void; onCheck: (correct: boolean, renderedText: string) => boolean; initialFeedback?: boolean | null }
-interface GameProps { locale: YoLocale; onAttempt: (correct: boolean, detail?: ItalianAttemptDetail) => void; onHelp: () => void; typedDraft?: ItalianTypedDraft }
+interface GameProps { locale: YoLocale; onAttempt: (correct: boolean, detail?: ItalianAttemptDetail) => unknown; onHelp: () => void; typedDraft?: ItalianTypedDraft; onAnswer?: (answer: RankingAnswer) => void }
 
 function Feedback({ correct, locale, children }: { correct: boolean | null; locale: YoLocale; children?: React.ReactNode }) {
   const { copy } = useGameLanguage(locale);
@@ -88,7 +89,7 @@ function Options({ options, selected, disabled, locale, onSelect }: { options: I
   </div>;
 }
 
-function ChoiceGame({ activity, locale, onAttempt, onHelp }: GameProps & { activity: ItalianChoiceActivity }) {
+function ChoiceGame({ activity, locale, onAttempt, onHelp, onAnswer }: GameProps & { activity: ItalianChoiceActivity }) {
   const { language, copy } = useGameLanguage(locale);
   const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<boolean | null>(null);
@@ -97,7 +98,7 @@ function ChoiceGame({ activity, locale, onAttempt, onHelp }: GameProps & { activ
   const [heard, setHeard] = useState(false);
   const listening = activity.kind === "listen";
   const canAnswer = !listening || heard || transcriptRead;
-  function check() { if (!selected || !canAnswer || feedback === true) return; const correct = selected === activity.correctId; setFeedback(correct); onAttempt(correct, { optionId: selected }); }
+  function check() { if (!selected || !canAnswer || feedback === true) return; const correct = selected === activity.correctId; setFeedback(correct); const accepted = onAttempt(correct, { optionId: selected }); if (correct && accepted !== false) onAnswer?.(selected); }
   return <div>
     {!listening && activity.stimulus ? <p lang={language} className="mb-5 whitespace-pre-line rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-lg leading-relaxed" data-written-stimulus>{activity.stimulus}</p> : null}
     {listening ? <div className="mb-6 rounded-3xl border border-[#dacdb9] bg-[#f8f2e8] p-5">
@@ -113,17 +114,19 @@ function ChoiceGame({ activity, locale, onAttempt, onHelp }: GameProps & { activ
   </div>;
 }
 
-function MatchGame({ activity, locale, onAttempt }: GameProps & { activity: ItalianMatchActivity }) {
+function MatchGame({ activity, locale, onAttempt, onAnswer }: GameProps & { activity: ItalianMatchActivity }) {
   const { language, copy } = useGameLanguage(locale);
   const [selected, setSelected] = useState<string | null>(null);
   const [matched, setMatched] = useState<string[]>([]);
   const [message, setMessage] = useState("");
+  const submittedPairs = useRef<Record<string, string>>({});
   const targets = scrambleItalianItems(activity.pairs, activity.id);
   function match(id: string) {
     if (!selected || matched.includes(id)) return;
     if (id === selected) {
       const next = [...matched, id]; setMatched(next); setSelected(null); setMessage(copy.pair);
-      if (next.length === activity.pairs.length) onAttempt(true);
+      submittedPairs.current = { ...submittedPairs.current, [selected]: id };
+      if (next.length === activity.pairs.length && onAttempt(true) !== false) onAnswer?.({ ...submittedPairs.current });
     } else { setMessage(copy.wrongPair); onAttempt(false); }
   }
   return <div>
@@ -137,14 +140,14 @@ function MatchGame({ activity, locale, onAttempt }: GameProps & { activity: Ital
   </div>;
 }
 
-function OrderGame({ activity, locale, onAttempt }: GameProps & { activity: ItalianOrderActivity }) {
+function OrderGame({ activity, locale, onAttempt, onAnswer }: GameProps & { activity: ItalianOrderActivity }) {
   const { language, copy } = useGameLanguage(locale);
   const pool = scrambleItalianItems([...activity.tokens, ...(activity.distractors ?? [])].map((text, id) => ({ text, id })), activity.id);
   const [chosen, setChosen] = useState<number[]>([]);
   const [feedback, setFeedback] = useState<boolean | null>(null);
   const selected = chosen.map((id) => pool.find((token) => token.id === id)!);
   const solved = feedback === true;
-  function check() { if (!chosen.length || solved) return; const correct = language !== "it" ? answerMatchers[language](selected.map((token) => token.text).join(" "), [activity.answer.join(" ")]) : checkItalianOrder(selected.map((token) => token.text), activity.answer); setFeedback(correct); onAttempt(correct); }
+  function check() { if (!chosen.length || solved) return; const answer = selected.map(token => token.text); const correct = language !== "it" ? answerMatchers[language](answer.join(" "), [activity.answer.join(" ")]) : checkItalianOrder(answer, activity.answer); setFeedback(correct); const accepted = onAttempt(correct); if (correct && accepted !== false) onAnswer?.(answer); }
   return <div>
     <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#6c604e]">{copy.sentence}</p>
     <div role="group" aria-label={copy.sentence} className="flex min-h-28 flex-wrap content-start gap-2 rounded-3xl border-2 border-dashed border-[#cabaa2] bg-[#f8f4ec] p-4">
@@ -156,7 +159,7 @@ function OrderGame({ activity, locale, onAttempt }: GameProps & { activity: Ital
   </div>;
 }
 
-function TypeGame({ activity, locale, onAttempt, onHelp, typedDraft }: GameProps & { activity: ItalianTypeActivity }) {
+function TypeGame({ activity, locale, onAttempt, onHelp, typedDraft, onAnswer }: GameProps & { activity: ItalianTypeActivity }) {
   const { language, copy } = useGameLanguage(locale);
   const [localValue, setLocalValue] = useState("");
   const value = typedDraft?.value ?? localValue;
@@ -176,8 +179,9 @@ function TypeGame({ activity, locale, onAttempt, onHelp, typedDraft }: GameProps
     if (typedDraft) {
       if (!typedDraft.onCheck(correct, value)) { setFeedback(null); setDraftChanged(true); return; }
       setDraftChanged(false);
-    } else { setFeedback(correct); onAttempt(correct); return; }
+    } else { setFeedback(correct); const accepted = onAttempt(correct); if (correct && accepted !== false) onAnswer?.(value); return; }
     setFeedback(correct);
+    if (correct) onAnswer?.(value);
   }
   return <form onSubmit={(event) => { event.preventDefault(); check(); }}>
     {activity.listeningText ? <div className="mb-5"><ItalianModuleAudio text={activity.listeningText} locale={locale} label={copy.listen} onListen={() => setHeard(true)} /><p className="mt-2 text-xs">{read ? copy.written : heard ? copy.listened : copy.beforeListen}</p></div> : null}
@@ -192,7 +196,7 @@ function TypeGame({ activity, locale, onAttempt, onHelp, typedDraft }: GameProps
   </form>;
 }
 
-function CafeGame({ activity, locale, onAttempt }: GameProps & { activity: ItalianCafeActivity }) {
+function CafeGame({ activity, locale, onAttempt, onAnswer }: GameProps & { activity: ItalianCafeActivity }) {
   const { language, copy } = useGameLanguage(locale);
   const [basket, setBasket] = useState<Record<string, number>>({});
   const [feedback, setFeedback] = useState<boolean | null>(null);
@@ -205,12 +209,12 @@ function CafeGame({ activity, locale, onAttempt }: GameProps & { activity: Itali
     <div className="space-y-3">{activity.menu.map((item) => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#e7dfd0] bg-white p-4"><div><p lang={language} className="font-semibold">{item.it}</p><p className="mt-1 text-sm text-[#75644c]">{money(item.priceCents)}</p></div><div className="flex items-center gap-2"><button type="button" className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#d8cbb7] disabled:opacity-30" aria-label={`${copy.remove} ${item.it}`} disabled={!basket[item.id] || feedback === true} onClick={() => change(item.id, -1)}><Minus size={17} aria-hidden /></button><output aria-label={`${item.it} — ${copy.counter}`} className="min-w-7 text-center font-bold">{basket[item.id] ?? 0}</output><button type="button" className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#e7f0e8] text-[#245a46] disabled:opacity-30" aria-label={`${copy.add} ${item.it}`} disabled={(basket[item.id] ?? 0) >= 9 || feedback === true} onClick={() => change(item.id, 1)}><Plus size={17} aria-hidden /></button></div></div>)}</div>
     <div className="my-5 flex items-center justify-between border-b border-dashed border-[#cabaa2] pb-4"><span className="font-semibold">{copy.total}</span><output className={`font-serif text-3xl ${total > activity.budgetCents ? "text-red-800" : "text-[#245a46]"}`}>{money(total)}</output></div>
     <p className="mb-4 text-xs text-[#6c604e]">{copy.fictional} {copy.basketHint}</p>
-    <button type="button" className={italianButton} disabled={!total || feedback === true} onClick={() => { const correct = checkItalianCafe(activity, basket); setFeedback(correct); onAttempt(correct); }}>{copy.check}</button>
+    <button type="button" className={italianButton} disabled={!total || feedback === true} onClick={() => { const correct = checkItalianCafe(activity, basket); setFeedback(correct); const accepted = onAttempt(correct); if (correct && accepted !== false) onAnswer?.(Object.fromEntries(Object.entries(basket).map(([id, quantity]) => [id, String(quantity)]))); }}>{copy.check}</button>
     <Feedback correct={feedback} locale={locale}>{feedback ? activity.explanation[locale] : null}</Feedback>
   </div>;
 }
 
-function MapGame({ activity, locale, onAttempt }: GameProps & { activity: ItalianMapActivity }) {
+function MapGame({ activity, locale, onAttempt, onAnswer }: GameProps & { activity: ItalianMapActivity }) {
   const { language, copy } = useGameLanguage(locale);
   const [path, setPath] = useState<ItalianMapDirection[]>([]);
   const [feedback, setFeedback] = useState<boolean | null>(null);
@@ -238,19 +242,29 @@ function MapGame({ activity, locale, onAttempt }: GameProps & { activity: Italia
     <p role="status" className="mt-3 min-h-5 text-center text-xs text-[#805327]">{boundary ? copy.boundary : `${copy.steps} : ${path.length}`}</p>
     <p aria-label={copy.route} className="mt-2 min-h-5 text-center text-xs">{path.map((direction) => labels[direction]).join(" → ")}</p>
     <p className="my-4 text-xs text-[#6c604e]">{copy.map}</p>
-    <div className="flex flex-wrap gap-3"><button type="button" className={italianButton} disabled={!path.length || feedback === true} onClick={() => { const correct = checkItalianMap(activity, path); setFeedback(correct); onAttempt(correct); }}>{copy.check}</button><button type="button" className="min-h-11 rounded-xl px-3 text-sm underline" disabled={!path.length || feedback === true} onClick={() => { setPath(path.slice(0, -1)); setFeedback(null); setBoundary(false); }}><CornerDownLeft size={16} className="mr-1 inline" aria-hidden />{copy.undo}</button><button type="button" className="min-h-11 rounded-xl px-3 text-sm underline" disabled={!path.length || feedback === true} onClick={() => { setPath([]); setFeedback(null); setBoundary(false); }}>{copy.clear}</button></div>
+    <div className="flex flex-wrap gap-3"><button type="button" className={italianButton} disabled={!path.length || feedback === true} onClick={() => { const correct = checkItalianMap(activity, path); setFeedback(correct); const accepted = onAttempt(correct); if (correct && accepted !== false) onAnswer?.([...path]); }}>{copy.check}</button><button type="button" className="min-h-11 rounded-xl px-3 text-sm underline" disabled={!path.length || feedback === true} onClick={() => { setPath(path.slice(0, -1)); setFeedback(null); setBoundary(false); }}><CornerDownLeft size={16} className="mr-1 inline" aria-hidden />{copy.undo}</button><button type="button" className="min-h-11 rounded-xl px-3 text-sm underline" disabled={!path.length || feedback === true} onClick={() => { setPath([]); setFeedback(null); setBoundary(false); }}>{copy.clear}</button></div>
     <Feedback correct={feedback} locale={locale}>{feedback ? activity.explanation[locale] : null}</Feedback>
   </div>;
 }
 
-function DialogueGame({ activity, locale, onAttempt }: GameProps & { activity: ItalianDialogueActivity }) {
+function DialogueGame({ activity, locale, onAttempt, onAnswer }: GameProps & { activity: ItalianDialogueActivity }) {
   const { language, copy } = useGameLanguage(locale);
   const [turnIndex, setTurnIndex] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<boolean | null>(null);
+  const submittedTurns = useRef<string[]>([]);
   const turn = activity.turns[turnIndex];
   const last = turnIndex === activity.turns.length - 1;
-  function check() { if (!selected || feedback === true) return; const correct = selected === turn.correctId; setFeedback(correct); if (!correct || last) onAttempt(correct); }
+  function check() {
+    if (!selected || feedback === true) return;
+    const correct = selected === turn.correctId;
+    setFeedback(correct);
+    if (correct) submittedTurns.current[turnIndex] = selected;
+    if (!correct || last) {
+      const accepted = onAttempt(correct);
+      if (correct && accepted !== false) onAnswer?.([...submittedTurns.current]);
+    }
+  }
   return <div>
     <div className="mb-5 rounded-3xl rounded-tl-md bg-[#e7f0e8] p-5"><p className="mb-2 text-xs font-bold uppercase tracking-wider text-[#245a46]">{turn.speaker} · {copy.turn} {turnIndex + 1}/{activity.turns.length}</p><p lang={language} className="mb-4 font-serif text-2xl text-[#173c2e]">{turn.line}</p><ItalianModuleAudio text={turn.line} locale={locale} /></div>
     <p className="mb-4 text-sm font-medium">{turn.prompt[locale]}</p>
