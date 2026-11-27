@@ -1,0 +1,9 @@
+{
+  "stage": { "width": 960, "height": 400 },
+  "crop": { "x": 264, "y": 0, "width": 420, "height": 400 },
+  "cell": { "width": 320, "height": 304 },
+  "columns": 6,
+  "framesPerSheet": 36,
+  "fps": 15,
+  "frames": { "listen": 78, "write": 27, "celebrate": 33 }
+}
