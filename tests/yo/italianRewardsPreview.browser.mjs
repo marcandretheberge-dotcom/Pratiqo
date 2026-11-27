@@ -87,10 +87,11 @@ try {
   assert.equal(await page.getByRole('progressbar',{name:'Réussir 5 activités'}).first().getAttribute('value'), '1');
   await page.screenshot({path:out+'/mobile-goals.png',fullPage:true});
   await page.getByRole('button',{name:'Classement',exact:true}).last().click();
-  assert.match(await page.locator('.reward-demo-notice').innerText(), /fictifs/);
-  assert.match(await page.locator('.is-you').innerText(), /5/);
+  assert.match(await page.locator('.reward-demo-notice').innerText(), /aucun profil/);
+  assert.equal(await page.locator('.reward-ranking li').count(), 0);
+  assert.equal(await page.getByRole('link',{name:'Ouvrir le classement',exact:true}).getAttribute('href'), '/yo/classement');
   await page.screenshot({path:out+'/mobile-ranking.png',fullPage:true});
-  results.push('Daily goal updates to 1/5; weekly demo row shows earned XP and labels fictional competitors');
+  results.push('Daily goal updates to 1/5; ranking preview contains no profiles and links to account rankings');
   await page.getByRole('button',{name:'Parler',exact:true}).click();
   const card = page.locator('.reward-postcard');
   assert.equal(await card.locator('h2').textContent(), 'Ciao!');

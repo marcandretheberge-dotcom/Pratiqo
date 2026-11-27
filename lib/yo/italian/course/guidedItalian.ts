@@ -12,6 +12,8 @@ export type GameDraft = {
   selected: string | null; tiles: number[]; pairs: string[]; left: string | null;
   turn: number; feedback: boolean | null; assisted: boolean; heard: boolean;
   transcript: boolean; complete: boolean; basket?: Record<string, number>; path?: ("up" | "down" | "left" | "right")[];
+  // Ordinary bounded lesson resume state, never an offline award-delivery queue.
+  submittedPairs?: Record<string, string>; submittedTurns?: string[];
 };
 export const emptyGame = (): GameDraft => ({ selected: null, tiles: [], pairs: [], left: null, turn: 0, feedback: null, assisted: false, heard: false, transcript: false, complete: false });
 export type GuidedState = {
@@ -92,6 +94,11 @@ export function parseGuided(raw: string | null, unit: CourseUnit, resetAt: numbe
       ![g.assisted, g.heard, g.transcript, g.complete].every(v => typeof v === "boolean")) return fresh;
     if (g.basket !== undefined && (!object(g.basket) || activity?.kind !== "cafe" || Object.entries(g.basket).some(([id,n]) => !activity.menu.some(item=>item.id===id) || !Number.isInteger(n) || Number(n)<0 || Number(n)>9))) return fresh;
     if (g.path !== undefined && (!Array.isArray(g.path) || activity?.kind !== "map" || g.path.length>12 || !g.path.every(d=>["up","down","left","right"].includes(d)))) return fresh;
+    const matchedPairs=g.pairs;
+    if (g.submittedPairs !== undefined && (!object(g.submittedPairs) || activity?.kind !== "match" ||
+      Object.entries(g.submittedPairs).some(([left,right]) => !matchedPairs.includes(left) || !activity.pairs.some(pair=>pair.id===left) || !activity.pairs.some(pair=>pair.id===right)))) return fresh;
+    if (g.submittedTurns !== undefined && (!Array.isArray(g.submittedTurns) || activity?.kind !== "dialogue" || g.submittedTurns.length>Number(g.turn)+1 ||
+      !g.submittedTurns.every((answer,turn)=>typeof answer==="string" && activity.turns[turn]?.options.some(option=>option.id===answer)))) return fresh;
     if (s.view === "challenge" && (s.answers.length !== s.quizIndex || s.submitted)) return fresh;
     if (s.view === "result" && (s.answers.length !== unit.quiz.questions.length || !s.submitted)) return fresh;
     return s as unknown as GuidedState;

@@ -12,6 +12,7 @@
 
 # Testing
 /coverage
+/.artifacts/yo-rankings/
 
 # Next.js
 /.next/

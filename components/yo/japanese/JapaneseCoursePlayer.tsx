@@ -27,6 +27,7 @@ import { YoSpeechPractice } from "../speech/YoSpeechPractice";
 import { courseSpeechScenario } from "@/lib/yo/shared/speechLanguage";
 import { recordReviewAttempt } from "@/lib/yo/review/store";
 import { exerciseDraftRevision } from "@/lib/yo/foundations/typedDraft";
+import { useRankingAttempt } from "@/lib/yo/rankings/attemptClient";
 
 const L = (fr: string, en: string, es: string): JapaneseLocalized => ({ fr, en, es });
 const C = {
@@ -98,6 +99,7 @@ function buildStages(unit: JapaneseCourseUnit, final: boolean): Stage[] {
 export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, finalIds, completionAction, final = false }: {
   unit: JapaneseCourseUnit; locale: YoLocale; sources: JapaneseCourseSource[]; journeyUnits: JourneyUnit[]; finalIds: string[]; completionAction?: ReactNode; final?: boolean;
 }) {
+  const submitRankingAttempt = useRankingAttempt();
   const { progress, update, ready, storageAvailable } = useJapaneseCourseProgress();
   const journey = japaneseJourney(journeyUnits, progress);
   const finalSlug = final ? unit.slug : "bilan-fondations";
@@ -163,6 +165,7 @@ export function JapaneseCoursePlayer({ unit, locale, sources, journeyUnits, fina
     if (!accepted) { drafts.store.refresh(); return null; }
     if (!final) recordReviewAttempt({ language: "ja", itemId: `course:${unit.id}:${stage.kind === "roleplay" ? "roleplay" : "practice"}:${currentActivity.id}`,
       attemptId: "ja-draft-" + exerciseDraftRevision(currentToken), correct: checked.correct, assisted: checked.assisted });
+    if (!final && checked.correct) submitRankingAttempt({ language: "ja", itemId: `course:${unit.id}:${stage.kind === "roleplay" ? "roleplay" : "practice"}:${currentActivity.id}`, answer: rendered.answer });
     return checked;
   }
   function restartActivity() {

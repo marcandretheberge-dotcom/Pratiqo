@@ -102,10 +102,10 @@ test("ledger parsing rejects unknown/duplicate entries and never trusts stored p
   assert.notEqual(PREVIEW_PROGRESS_KEY, ITALIAN_COURSE_PROGRESS_KEY);
 });
 
-test("weekly demo ranking responds to actual preview XP and is deterministic", () => {
-  assert.equal(demoRanking(0).at(-1)?.id, "you");
-  assert.equal(demoRanking(100)[1].id, "you");
-  assert.deepEqual(demoRanking(45), demoRanking(45));
+test("retired preview ranking never supplies fictional standings", () => {
+  assert.deepEqual(demoRanking(0), []);
+  assert.deepEqual(demoRanking(100), []);
+  assert.deepEqual(demoRanking(45), []);
 });
 
 test("review is unavailable by default, on Vercel, or with a hosted database", () => {
@@ -120,7 +120,7 @@ test("review is unavailable by default, on Vercel, or with a hosted database", (
 test("review shares real course/map and has no reward-writing API or entitlement dependency", () => {
   const ui = readFileSync("components/yo/rewards/ItalianRewardsPreview.tsx", "utf8");
   assert.match(ui, /GuidedItalianCourse/); assert.match(ui, /ItalianTravelNavigator/);
-  assert.match(ui, /fictional/); assert.match(ui, /storageNamespace={REWARD_NAMESPACE}/);
+  assert.match(ui, /\/yo\/classement/); assert.match(ui, /storageNamespace={REWARD_NAMESPACE}/);
   assert.doesNotMatch(ui, /fetch\(|supabase|stripe|createClient/);
   const css = readFileSync("components/yo/rewards/italianRewards.css", "utf8");
   assert.match(css, /prefers-reduced-motion:no-preference/);
