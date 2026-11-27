@@ -784,6 +784,15 @@ test("branch did not touch restricted systems", () => {
       assert.doesNotMatch(migration, /GRANT|DISABLE ROW LEVEL SECURITY|CREATE POLICY|price_cents|stripe/i);
       continue;
     }
+    // YoPratiqo audit: server-only writes on YoPratiqo tables.
+    // Fully defended by tests/security/yopratiqoServerOnlyWrites.test.ts.
+    if (file === "supabase/migrations/134_yopratiqo_server_only_writes.sql") {
+      const migration = read(file);
+      assert.match(migration, /REVOKE INSERT, UPDATE ON public\.booking_yopratiqo_learning_summaries FROM authenticated/);
+      assert.match(migration, /REVOKE INSERT, UPDATE ON public\.yopratiqo_progress_snapshots FROM authenticated/);
+      assert.doesNotMatch(migration, /SECURITY DEFINER|DISABLE ROW LEVEL SECURITY|\bGRANT\b|price_cents|stripe|(?:ALTER TABLE|UPDATE|DELETE FROM|INSERT INTO) public\.(?:bookings|booking_payments|teachers|profiles)\b/i);
+      continue;
+    }
     for (const rule of restrictedRules) {
       if (rule.re.test(file)) {
         violations.push(`${file} (${rule.label})`);

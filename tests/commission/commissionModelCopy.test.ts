@@ -309,6 +309,8 @@ test("commission model branch may update canonical commission files but not rest
     "supabase/migrations/131_learner_funnel_measurement.sql",
     "supabase/migrations/132_shared_teacher_slot_claims.sql",
     "supabase/migrations/133_package_fulfillment_slot_date_cast.sql",
+    // YoPratiqo audit: server-only writes. Defended by tests/security/yopratiqoServerOnlyWrites.test.ts.
+    "supabase/migrations/134_yopratiqo_server_only_writes.sql",
   ]);
 
   const approvedAmbassadorMigrationExceptions = new Set<string>([

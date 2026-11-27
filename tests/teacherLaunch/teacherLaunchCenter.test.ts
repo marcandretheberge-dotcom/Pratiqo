@@ -403,6 +403,8 @@ test("forbidden files: PR does not touch Stripe checkout/webhook, Supabase/RLS/m
     "supabase/migrations/131_learner_funnel_measurement.sql",
     "supabase/migrations/132_shared_teacher_slot_claims.sql",
     "supabase/migrations/133_package_fulfillment_slot_date_cast.sql",
+    // YoPratiqo audit: server-only writes. Defended by tests/security/yopratiqoServerOnlyWrites.test.ts.
+    "supabase/migrations/134_yopratiqo_server_only_writes.sql",
     "supabase/migrations/071_student_search_visibility_photo.sql",
     "supabase/migrations/072_teacher_default_lesson_duration.sql",
     "supabase/migrations/073_student_saved_location.sql",
