@@ -25,6 +25,14 @@ async function noOverflow(page, label) {
   }));
   assert.ok(Math.max(size.document, size.body) <= size.viewport + 1, `${label}: horizontal overflow ${JSON.stringify(size)}`);
 }
+async function visibleImagesLoaded(page, label) {
+  const images = await page.locator("img:visible").evaluateAll(elements => elements.map(image => ({
+    src: image.currentSrc || image.src, complete: image.complete, width: image.naturalWidth,
+  })));
+  assert.ok(images.length > 0, `${label}: expected visible product imagery`);
+  const missing = images.filter(image => !image.complete || image.width <= 0);
+  assert.deepEqual(missing, [], `${label}: visible images did not load: ${JSON.stringify(missing)}`);
+}
 try {
   if (!server.listening) await once(server, "listening");
   const readiness = await fetch(origin, { signal: AbortSignal.timeout(5000) });
@@ -75,6 +83,7 @@ try {
           assert.equal(await page.getByRole("heading", { name: copy.empty, exact: true }).count(), 0);
         }
         await noOverflow(page, label);
+        await visibleImagesLoaded(page, label);
         await page.screenshot({ path: path.join(output, `${label}.png`), fullPage: true, animations: "disabled" });
         // One browser interaction sequence suffices; the contract suite covers all filter/action combinations.
         if (scenario === "populated" && width === 1280) {

@@ -17,6 +17,7 @@ export const server = http.createServer(async (request, response) => {
     let file;
     if (pathname === "/") file = path.join(output, "index.html");
     else if (["/app.js", "/app.css"].includes(pathname)) file = path.join(output, pathname);
+    else if (pathname === "/brand/yopratiqo-logo.png") file = path.join(assets, pathname);
     else if (/^\/(images|companion|fonts)\/[a-zA-Z0-9_./%-]+\.(png|jpg|webp|svg|woff2)$/.test(pathname)) file = path.join(assets, pathname);
     else return response.writeHead(404).end("Not part of isolated review");
     const bytes = await fs.readFile(file);
