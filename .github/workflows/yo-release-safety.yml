@@ -28,7 +28,9 @@ jobs:
           node --import tsx tests/yo/yopratiqoReleaseChoices.test.tsx 2>&1 | tee /tmp/yo-release-safety/checks.log
           node --import tsx tests/yo/yopratiqoLessonLink.test.tsx
           npx eslint lib/yo/shared/releaseChoices.ts components/yo/shared/IntroWelcome.tsx components/yo/shared/IntroAudio.tsx components/yo/learning/LessonLink.tsx components/yo/italian/guided/GuidedItalianCourse.tsx
-          git diff --exit-code 5d7edc9da2a35507b4da76b0d56f164168360097 HEAD -- lib/yo/italian/course/courseProgress.ts
+          # Interest editions retain exact historical identities in the catalog.
+          # Verify the existing parser/reset/merge contract instead of freezing its source.
+          node --import tsx tests/yo/yopratiqoItalianCourseProgress.test.ts
           # Verified XP adds bounded answer IDs to resumable drafts; exercise the
           # legacy parser and actual resume behavior instead of freezing this file.
           node --import tsx tests/yo/yopratiqoGuidedItalian.test.ts

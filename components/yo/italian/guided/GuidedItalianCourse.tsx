@@ -50,13 +50,15 @@ import { LanguageExplanation } from "../../learning/LanguageExplanation";
 import {pilotPath,showPassPilot,storeRound} from "@/lib/yo/passPilot/proof.client";
 import {tokenPool} from "@/lib/yo/italian/course/guidedItalian";
 import { notifyRankingReplayNeeded, useRankingAttempt } from "@/lib/yo/rankings/attemptClient";
+import { ItalianInterestDiscovery } from "../interests/ItalianInterestDiscovery";
+import { ItalianInterestProduction } from "../interests/ItalianInterestProduction";
 
 const EMPTY_VISUALS: Record<string, VisualWord[]> = {};
 export type ItalianNavigatorContext = { journey: LearningJourney; progress: CourseProgress; active: boolean; openCurrentMission: () => void; openTrivia: () => void; canReview?: (id: string) => boolean; triviaAvailable?: boolean };
-type Props = { missionStatus?: ReactNode; storageNamespace?: string; Navigator?: ComponentType<ItalianNavigatorContext>; travelFlorence?: CourseUnit; profile?: LearningProfile; onConfigure?: () => void; progressKey?: string; wordBank?: WordBankEntry[]; visualWords?: Record<string, VisualWord[]>; unit: CourseUnit; catalog: CourseCatalog; locale: YoLocale; audioPaths: Record<string, string>; initialLessonId?: string; initialActivityId?: string; resumeMission?: boolean };
+type Props = { progressSeed?: CourseProgress; draftSeed?: string; onProgressSnapshot?: (progress: CourseProgress) => void; onDraftSnapshot?: (key: string, raw: string) => void; missionStatus?: ReactNode; interestControls?: ReactNode; draftKey?: string; onLessonStart?: (lessonId: string) => void; onMapReturn?: () => void; storageNamespace?: string; Navigator?: ComponentType<ItalianNavigatorContext>; travelFlorence?: CourseUnit; profile?: LearningProfile; onConfigure?: () => void; progressKey?: string; wordBank?: WordBankEntry[]; visualWords?: Record<string, VisualWord[]>; unit: CourseUnit; catalog: CourseCatalog; locale: YoLocale; audioPaths: Record<string, string>; initialLessonId?: string; initialActivityId?: string; resumeMission?: boolean };
 
 /** Reference pilot. Learning evidence stays in the existing store; this store holds UI drafts only. */
-export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initialLessonId, initialActivityId, resumeMission = false, profile, onConfigure, progressKey, storageNamespace, missionStatus, wordBank, visualWords = EMPTY_VISUALS, Navigator, travelFlorence }: Props) {
+export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initialLessonId, initialActivityId, resumeMission = false, profile, onConfigure, progressKey, progressSeed, draftSeed, onProgressSnapshot, onDraftSnapshot, storageNamespace, missionStatus, interestControls, draftKey, onLessonStart, onMapReturn, wordBank, visualWords = EMPTY_VISUALS, Navigator, travelFlorence }: Props) {
   const submitRankingAttempt = useRankingAttempt();
   const reduceMotion = Boolean(useReducedMotion());
   const city = italianWorldForUnit(unit.id)?.cities.find(item => item.unitId === unit.id)?.name;
@@ -66,14 +68,18 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   const minimumScore = Math.ceil(unit.quiz.questions.length * unit.quiz.passPercent / 100);
   const stampRule = unit.quiz.questions.length === 5 ? guidedCopy[locale].stampRule
     : t(`Réussis au moins ${minimumScore} questions sur ${unit.quiz.questions.length} sans indice pour gagner ton tampon.`, `Answer at least ${minimumScore} of ${unit.quiz.questions.length} correctly without hints to earn your stamp.`, `Acierta al menos ${minimumScore} de ${unit.quiz.questions.length} sin pistas para ganar tu sello.`)[locale];
-  const c = { ...guidedCopy[locale], stamp, stampRule }, learning = useItalianCourseProgress(catalog, progressKey), { progress, ready, recordActivity, recordAssessment, setResume } = learning;
+  const c = { ...guidedCopy[locale], stamp, stampRule }, learning = useItalianCourseProgress(catalog, progressKey, progressSeed), { progress, ready, recordActivity, recordAssessment, setResume } = learning;
+  useLayoutEffect(() => {
+    if (ready) onProgressSnapshot?.(progress);
+  }, [ready, progress, onProgressSnapshot]);
   const steps = guidedSteps(unit, Object.keys(visualWords));
   const order = guidedMissionOrder(steps);
-  const uiKey = storageNamespace ? `${storageNamespace}.guided.${unit.id}` : progressKey ? `yo.italian.guided.v2.${unit.id}` : GUIDED_KEY;
+  const uiKey = draftKey ?? (storageNamespace ? `${storageNamespace}.guided.${unit.id}` : progressKey ? `yo.italian.guided.v2.${unit.id}` : GUIDED_KEY);
   const tourKey = storageNamespace ? `${storageNamespace}.tour` : TOUR_KEY;
   const say = (fr: string, en: string, es: string) => t(fr,en,es)[locale];
-  const bankHref = `/yo/langues/italien/parcours/${unit.id}/vocabulaire?lang=${locale}`;
-  const reportHref = `/yo/langues/italien/parcours/${unit.id}/bilan?lang=${locale}`;
+  const editionQuery = unit.id === "u01" ? `&edition=${encodeURIComponent(unit.lessons.map(item => item.id).join(","))}` : "";
+  const bankHref = `/yo/langues/italien/parcours/${unit.id}/vocabulaire?lang=${locale}${editionQuery}`;
+  const reportHref = `/yo/langues/italien/parcours/${unit.id}/bilan?lang=${locale}${editionQuery}`;
   const rhythm = profile ? weeklyRhythm(profile.weeklyMinutes) : null;
   const [ui, setUi] = useState<GuidedState>(() => initialGuided());
   const [briefingOpen, setBriefingOpen] = useState(false);
@@ -105,16 +111,20 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
   const { scene, present, finish: finishMission } = useMissionCinema(`${uiKey}:${progress.resetAt}`, { active: ready && loaded && allowed && ui.view !== "map" && overlay === null && !briefingOpen && !taxiOpen && !checkpointOpen });
   useEffect(() => {
     if (!ready || !loaded || !allowed || ui.view !== "mission") return;
+    onLessonStart?.(lesson.id);
     present({ id: `${lesson.id}:start`, kind: "mission-start", title: lesson.title[locale], detail: lesson.goal[locale] });
-  }, [ready, loaded, allowed, ui.view, lesson, locale, present]);
+  }, [ready, loaded, allowed, ui.view, lesson, locale, present, onLessonStart]);
   const due = getDueActivityIds(progress, catalog).filter(id => steps.some(s => s.id === id));
   const missionSteps = order.map(index => steps[index]).filter(s => s.lesson === step.lesson), position = missionSteps.findIndex(s => s.id === step.id);
   const phrases = unit.lessons.filter((l, i) => ui.seen.some(id => id.startsWith(l.id)) || l.activities.some(a => progress.activities[a.id]) || (ui.view === "mission" && i === step.lesson)).flatMap(l => l.vocabulary);
   const notebookWords = wordBank ?? [...new Map(phrases.map(p => [p.it, p])).values()];
 
   function commit(nextState: GuidedState) {
+    if (unit.lessons.some(item => item.discovery)) nextState = { ...nextState, stepId: steps[nextState.step]?.id, assessmentId: unit.quiz.id };
     current.current = nextState; setUi(nextState);
-    try { localStorage.setItem(uiKey, JSON.stringify(nextState)); setStorageAvailable(true); }
+    const raw = JSON.stringify(nextState);
+    onDraftSnapshot?.(uiKey, raw);
+    try { localStorage.setItem(uiKey, raw); setStorageAvailable(true); }
     catch { setStorageAvailable(false); }
   }
   function focus() { requestAnimationFrame(() => { heading.current?.focus({ preventScroll: true }); if (missionContent.current) missionContent.current.scrollTop = 0; }); }
@@ -151,6 +161,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     stop(); setOverlay(null); setBriefingOpen(false); setTaxiOpen(false);
     const s = current.current;
     commit({ ...s, view: "map", resumeView: s.view === "mission" || s.view === "challenge" ? s.view : s.resumeView }); focus();
+    onMapReturn?.();
     if (s.view === "result" && pendingUnlock.current && nextUnit && journey.steps.some(item=>item.unit.id===nextUnit.id&&item.unlocked)) {
       pendingUnlock.current=false; feedback.emit(`unlock:${unit.id}:${s.runStartedAt}`, "unlock");
     }
@@ -209,7 +220,7 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     loadedReset.current = progress.resetAt;
     let nextState = initialGuided(progress.resetAt);
     try {
-      const saved = localStorage.getItem(uiKey);
+      const saved = draftSeed ?? localStorage.getItem(uiKey);
       if (saved) {
         const guided = guidedSteps(unit, Object.keys(visualWords));
         nextState = restoreGuidedMissionDraft(parseGuided(saved, unit, progress.resetAt, Object.keys(visualWords)), guided, guidedMissionOrder(guided));
@@ -218,10 +229,12 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
     } catch { setStorageAvailable(false); setTour(0); }
     // Opening the course always returns to its map; the action resumes the exact unfinished draft.
     if (nextState.view === "mission" || nextState.view === "challenge") nextState = { ...nextState, resumeView: nextState.view, view: "map" };
-    current.current = nextState; setUi(nextState); setLoaded(true);
+    current.current = nextState; setUi(nextState);
+    onDraftSnapshot?.(uiKey, JSON.stringify(nextState));
+    setLoaded(true);
     });
     return () => cancelAnimationFrame(frame);
-  }, [ready, progress.resetAt, unit, uiKey, visualWords, tourKey]);
+  }, [ready, progress.resetAt, unit, uiKey, visualWords, tourKey, draftSeed, onDraftSnapshot]);
   const followIncomingRoute = useEffectEvent(() => {
     if (!loaded || !allowed) return;
     if (resumeMission && !initialLessonId) {
@@ -274,7 +287,8 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
         triviaAvailable={canPlayItalianTrivia(unit, progress)} onOpenTrivia={() => { finishTour(); stopLessonAudio(); setCheckpointOpen(true); }}
         showGuide={tour !== null && !canPlayItalianTrivia(unit, progress)} onDismissGuide={finishTour}/>}
       {ui.view === "map" && <CourseStudyPlan language="it" locale={locale} profile={profile}/>}
-      {ui.view === "map" && <InterestPracticeCard language="it" locale={locale} interests={profile?.interests} city={city}/>}
+      {ui.view === "map" && interestControls}
+      {ui.view === "map" && !unit.lessons.some(item => item.discovery) && <InterestPracticeCard language="it" locale={locale} interests={profile?.interests} city={city}/>}
       {ui.view === "map" && progressKey === GUIDED_PROGRESS_KEY && <CourseDueReview language="it" locale={locale} catalog={catalog}/>}
     </main>
     <Dialog.Root open={ui.view !== "map"} onOpenChange={open => { if (!open) leave(); }}>
@@ -318,17 +332,18 @@ export function GuidedItalianCourse({ unit, catalog, locale, audioPaths, initial
         <div className="yo-mission-content">
           {step.stage === "prepare" ? <VisualVocabulary key={lesson.id} words={visualWords[lesson.id]} lessonId={lesson.id} locale={locale} experienced={profile?.experience !== "new"} resetAt={progress.resetAt} paused={overlay!==null || Boolean(scene)} onReady={advance}/> : !exercise ? <>
             <div className="mb-5 flex items-start gap-3"><CompanionAvatar visualId="travel" state="teacher_ready" locale={locale} size="xs" compact /><p className="pt-2 text-sm leading-6">{lesson.goal[locale]}</p></div>
-            {step.stage === "scene" ? <><p className="mb-4 text-xs font-bold uppercase text-emerald-800">{c.scene}</p><LearningAudio text={lesson.reading.it} locale={locale} /><p lang="it" className="my-5 whitespace-pre-line text-xl leading-9">{lesson.reading.it}</p><button className={secondary} type="button" aria-expanded={translation} onClick={() => setTranslation(!translation)}>{c.translation}</button>{translation ? <p className="mt-3 text-sm leading-7">{lesson.reading.meaning[locale]}</p> : null}</> : null}
+            {step.stage === "scene" ? lesson.discovery ? <ItalianInterestDiscovery key={lesson.id} lesson={lesson} locale={locale} paused={overlay !== null || Boolean(scene)}/> : <><p className="mb-4 text-xs font-bold uppercase text-emerald-800">{c.scene}</p><LearningAudio text={lesson.reading.it} locale={locale} /><p lang="it" className="my-5 whitespace-pre-line text-xl leading-9">{lesson.reading.it}</p><button className={secondary} type="button" aria-expanded={translation} onClick={() => setTranslation(!translation)}>{c.translation}</button>{translation ? <p className="mt-3 text-sm leading-7">{lesson.reading.meaning[locale]}</p> : null}</> : null}
             {step.stage === "words" ? <VocabularyStudy key={`${lesson.id}:${progress.resetAt}`} storageKey={`${storageNamespace ?? "yo"}.study-cursor.v1.${lesson.id}.${progress.resetAt}`} phrases={lesson.vocabulary.slice(0,8)} locale={locale} title={c.notebook} completeLabel={c.next} onComplete={advance}/> : null}
             {step.stage === "language" ? <LanguageExplanation lesson={lesson} locale={locale}/> : null}
             {step.stage === "sounds" ? <><h2 className="mb-4 text-xl font-bold">{c.pronunciation}</h2><p className="text-base leading-7">{lesson.pronunciation.body[locale]}</p><div className="mt-5 space-y-4">{lesson.pronunciation.practice.map(text => <div key={text}><p lang="it" className="mb-2 text-lg font-semibold">{text}</p><LearningAudio text={text} locale={locale} /></div>)}</div></> : null}
+            {step.stage === "production" ? <ItalianInterestProduction key={`${lesson.id}:${progress.resetAt}`} lesson={lesson} locale={locale} resetAt={progress.resetAt} paused={overlay !== null || Boolean(scene)} teacherUrl={teacherUrl}/> : null}
             {step.stage !== "words" ? <button type="button" className={`${primary} mt-7 w-full`} onClick={advance}>{c.next}<ArrowRight size={18} aria-hidden /></button> : null}
           </> : <>
             {exercise.id === lesson.readingActivityId ? <div className="mb-6 rounded-2xl bg-emerald-50 p-4"><p lang="it" className="text-base leading-7">{lesson.reading.it}</p></div> : null}
             <GuidedGame key={exercise.id} activity={exercise} locale={locale} paused={overlay!==null || Boolean(scene)} value={ui.game} onChange={updateGame} onAttempt={(correct, assisted) => { recordActivity(exercise.id, correct, assisted); }} onAnswer={progressKey === GUIDED_PROGRESS_KEY && !storageNamespace ? answer => submitRankingAttempt({ language: "it", itemId: `course:${unit.id}:${lesson.id}:${exercise.id}`, answer }) : undefined} onReplayNeeded={notifyRankingReplayNeeded} onContinue={advance} />
             {!ui.game.complete ? <><button type="button" className={`${secondary} mt-3`} onClick={() => { setHint(true); updateGame({ ...current.current.game, assisted: true }); }}>{c.hint}</button>{hint ? <aside className="mt-2 rounded-2xl bg-emerald-50 p-4"><p className="text-sm leading-6">{exercise.hint[locale]}</p><p className="mt-2 text-xs">{c.hintUsed}</p></aside> : null}</> : null}
           </>}
-          {!exercise && step.stage !== "prepare" && !scene && overlay === null && <div className="mt-6"><YoSpeechPractice key={lesson.id} language="it" locale={locale} scenarioId={courseSpeechScenario("it", unit.number)}/></div>}
+          {!exercise && !lesson.discovery && step.stage !== "prepare" && !scene && overlay === null && <div className="mt-6"><YoSpeechPractice key={lesson.id} language="it" locale={locale} scenarioId={courseSpeechScenario("it", unit.number)}/></div>}
         </div>
       </div> : null}
       {ui.view === "challenge-intro" ? <section className="mx-auto max-w-xl rounded-3xl border border-stone-200 bg-white p-6 sm:p-8"><CompanionAvatar visualId="travel" state="teacher_ready" size="sm" locale={locale} compact /><div className="mt-5"><ItalianCityBossGate unitId={unit.id} locale={locale} variant="challenge"/></div><h1 ref={heading} tabIndex={-1} className="mt-5 text-3xl font-bold outline-none">{c.challenge}</h1><p className="mt-4 text-lg font-semibold">{c.stampRule}</p><p className="mt-4 text-sm leading-7">{unit.quiz.mission?.briefing[locale] ?? unit.quiz.description[locale]}</p><p className="mt-5 rounded-2xl bg-emerald-50 p-4 text-sm leading-7">{c.finalRule}</p><button type="button" className={`${primary} mt-6 w-full`} onClick={startChallenge}>{c.begin}</button><button type="button" className={`${secondary} mt-3 w-full`} onClick={() => move(next >= 0 ? next : 0)}>{c.practice}</button></section> : null}

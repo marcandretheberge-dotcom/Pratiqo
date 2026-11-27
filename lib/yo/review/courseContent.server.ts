@@ -6,7 +6,14 @@ import { courseReviewId } from "./courseRegistry";
 /** Server data boundary: return a single authored exercise, never a full course. */
 export async function findCourseReviewContent(language: TextCourseLanguage, id: string): Promise<CourseReviewContent> {
   let units: readonly CourseUnit[], audioPaths: Record<string, string> = {};
-  if (language === "it") units = (await import("../personalized/courseData")).personalizedItalianUnits;
+  if (language === "it") {
+    const [legacy, interests] = await Promise.all([
+      import("../personalized/courseData"), import("../italian/interests/unitOne"),
+    ]);
+    // Resolve the exact immutable lesson/activity recorded at the time of practice,
+    // including a former interest choice; today's selected plan is not consulted.
+    units = [...legacy.personalizedItalianUnits, ...legacy.personalizedItalianLegacyUnits, ...interests.italianInterestAllUnits];
+  }
   else if (language === "de") units = (await import("../german/courseData")).germanCourseUnits;
   else if (language === "pt-BR") units = (await import("../portuguese/courseData")).portugueseCourseUnits;
   else if (language === "en") units = (await import("../english/courseData")).englishCourseUnits;
@@ -18,6 +25,10 @@ export async function findCourseReviewContent(language: TextCourseLanguage, id: 
       const { activitySpeech } = await import("../italian/course/courseSpeech");
       const { courseAudioPaths } = await import("../italian/course/courseAudio.server");
       audioPaths = courseAudioPaths(activitySpeech(activity));
+      if (lesson.discovery) {
+        const { italianInterestAudioPaths } = await import("../audio/italianInterestPublished");
+        audioPaths = { ...audioPaths, ...italianInterestAudioPaths() };
+      }
     } else if (language === "de") audioPaths = (await import("../german/courseAudio.server")).germanAudioPaths(unit);
     else if (language === "pt-BR") audioPaths = (await import("../portuguese/courseAudio.server")).portugueseAudioPaths(unit);
     else audioPaths = (await import("../foundations/audio.server")).foundationAudioPaths(language, unit);

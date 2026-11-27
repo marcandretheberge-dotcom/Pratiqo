@@ -28,14 +28,19 @@ function asCatalog(catalog: unknown): CourseCatalog | null {
   return Array.isArray(candidate.units) ? candidate : null;
 }
 
-/** Every reviewable activity identity in the Italian catalog. */
+/** Every exact reviewable identity, including retained authored editions.
+ * Retention validates saved history; it does not add visible course units.
+ */
 export function italianCatalogAdapter(catalog: unknown): SrsItemIdentity[] {
   const parsed = asCatalog(catalog);
   if (!parsed) return [];
   const items: SrsItemIdentity[] = [];
-  for (const unit of parsed.units) {
+  const seen = new Set<string>();
+  for (const unit of [...parsed.units, ...(Array.isArray(parsed.retainedUnits) ? parsed.retainedUnits : [])]) {
     for (const lesson of unit.lessons) {
       for (const activityId of lesson.activityIds) {
+        if (seen.has(activityId)) continue;
+        seen.add(activityId);
         items.push({
           id: activityId,
           language: ITALIAN_LANGUAGE,

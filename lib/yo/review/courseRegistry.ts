@@ -19,11 +19,11 @@ export function courseReviewId(unitId: string, lessonId: string, activityId: str
   return `course:${unitId}:${lessonId}:${activityId}`;
 }
 export function courseReviewIds(catalog: CourseCatalog): string[] {
-  return catalog.units.flatMap(unit => unit.lessons.flatMap(lesson =>
-    lesson.activityIds.map(id => courseReviewId(unit.id, lesson.id, id))));
+  return [...new Set([...catalog.units, ...(catalog.retainedUnits ?? [])].flatMap(unit => unit.lessons.flatMap(lesson =>
+    lesson.activityIds.map(id => courseReviewId(unit.id, lesson.id, id)))))];
 }
 export function findCourseReviewId(catalog: CourseCatalog, activityId: string): string | null {
-  for (const unit of catalog.units) for (const lesson of unit.lessons) {
+  for (const unit of [...catalog.units, ...(catalog.retainedUnits ?? [])]) for (const lesson of unit.lessons) {
     if (lesson.activityIds.includes(activityId)) return courseReviewId(unit.id, lesson.id, activityId);
   }
   return null;

@@ -6,7 +6,7 @@ import { checkItalianCafe, checkItalianMap, matchesItalianAnswer } from "../ital
 export const GUIDED_VERSION = 1;
 export const GUIDED_KEY = "yo.italian.guided.v1.u01";
 export const TOUR_KEY = "yo.italian.guided.tour.v1";
-export type GuidedStage = "prepare" | "scene" | "words" | "language" | "sounds" | "exercise";
+export type GuidedStage = "prepare" | "scene" | "words" | "language" | "sounds" | "exercise" | "production";
 export type GuidedStep = { id: string; lesson: number; stage: GuidedStage; activity?: ItalianActivity };
 export type GameDraft = {
   selected: string | null; tiles: number[]; pairs: string[]; left: string | null;
@@ -18,6 +18,8 @@ export type GameDraft = {
 export const emptyGame = (): GameDraft => ({ selected: null, tiles: [], pairs: [], left: null, turn: 0, feedback: null, assisted: false, heard: false, transcript: false, complete: false });
 export type GuidedState = {
   version: 1; resetAt: number; step: number; seen: string[];
+  /** New interest editions bind drafts to authored content, never just a numeric cursor. */
+  stepId?: string; assessmentId?: string;
   view: "map" | "mission" | "challenge-intro" | "challenge" | "result";
   resumeView: "mission" | "challenge" | null; game: GameDraft; quizIndex: number; answers: { correct: boolean; assisted: boolean }[];
   runStartedAt: number; submitted: boolean;
@@ -30,6 +32,7 @@ export function guidedSteps(unit: CourseUnit, preparedLessons: readonly string[]
     ...(preparedLessons.includes(lesson.id) ? [{ id: `${lesson.id}:prepare`, lesson: index, stage: "prepare" as const }] : []),
     ...(["scene", "words", "language", "sounds"] as const).map(stage => ({ id: `${lesson.id}:${stage}`, lesson: index, stage })),
     ...lesson.activities.map(activity => ({ id: activity.id, lesson: index, stage: "exercise" as const, activity })),
+    ...(lesson.discovery ? [{ id: `${lesson.id}:production`, lesson: index, stage: "production" as const }] : []),
   ]);
 }
 export function lessonDone(lesson: CourseLesson, progress: CourseProgress) { return lesson.activities.every(a => progress.activities[a.id]?.completed); }
@@ -84,6 +87,8 @@ export function parseGuided(raw: string | null, unit: CourseUnit, resetAt: numbe
       !s.answers.every(a => object(a) && typeof a.correct === "boolean" && typeof a.assisted === "boolean") ||
       !(s.resumeView === null || s.resumeView === "mission" || s.resumeView === "challenge") || !Array.isArray(s.seen) || !s.seen.every(id => typeof id === "string" && steps.some(step => step.id === id && !step.activity)) ||
       typeof s.runStartedAt !== "number" || !Number.isFinite(s.runStartedAt) || s.runStartedAt < 0 || s.runStartedAt > Date.now() + 300000 || typeof s.submitted !== "boolean") return fresh;
+    if (unit.lessons.some(lesson => lesson.discovery) &&
+      (s.stepId !== steps[Number(s.step)].id || s.assessmentId !== unit.quiz.id)) return fresh;
     const g = s.game;
     const activity = (s.view === "challenge" || s.resumeView === "challenge") ? unit.quiz.questions[s.quizIndex] : steps[s.step].activity;
     if (!Array.isArray(g.tiles) || !g.tiles.every(i => index(i, activity ? tokenPool(activity).length : 0)) || new Set(g.tiles).size !== g.tiles.length ||

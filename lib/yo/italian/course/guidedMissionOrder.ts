@@ -21,6 +21,7 @@ export function guidedMissionOrder(steps: readonly GuidedStep[]): number[] {
       if (found) result.push(found.index);
     }
     result.push(...positions.filter(step => step.stage === "exercise").map(step => step.index));
+    result.push(...positions.filter(step => step.stage === "production").map(step => step.index));
   }
   return result;
 }

@@ -9,8 +9,12 @@ import { syncSrsActivityRecord } from "@/lib/yo/srs/srsClientSync";
 import { recordReviewAttempt } from "@/lib/yo/review/store";
 import { findCourseReviewId, reviewLanguageForCourseKey } from "@/lib/yo/review/courseRegistry";
 
-export function useItalianCourseProgress(catalog: CourseCatalog, storageKey = ITALIAN_COURSE_PROGRESS_KEY) {
-  const [progress, setProgress] = useState(emptyCourseProgress);
+export function useItalianCourseProgress(catalog: CourseCatalog, storageKey = ITALIAN_COURSE_PROGRESS_KEY, initialProgress?: CourseProgress) {
+  // A parent may retain on-device work across a necessary content-edition remount.
+  // The same catalog/reset parser still validates every identity in that snapshot.
+  const [progress, setProgress] = useState(() => initialProgress
+    ? parseCourseProgress(serializeCourseProgress(initialProgress), catalog)
+    : emptyCourseProgress());
   const [ready, setReady] = useState(false);
   const [storageAvailable, setStorageAvailable] = useState(true);
   const latest = useRef(progress);

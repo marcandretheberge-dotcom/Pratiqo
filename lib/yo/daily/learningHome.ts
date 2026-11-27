@@ -16,6 +16,7 @@ import { JAPANESE_PROGRESS_KEY, parseJapaneseProgress, japanesePublicUnitSlug } 
 import { MANDARIN_PROGRESS_KEY, parseProgress } from "../mandarin/progress";
 import { introKey } from "../shared/state";
 import { introReadyToContinue, type IntroContinuationOutline } from "../shared/continuation";
+import { projectStoredItalianInterestCatalog } from "../italian/interests/selection";
 
 export type DailyCourse = {
   kind: "text"; language: TextCourseLanguage; catalog: CourseCatalog; reviewIds: string[];
@@ -66,11 +67,12 @@ export function readDailyNavigation(course: DailyCourse, locale: YoLocale, read:
     kind: language === "it" ? "start" : "introduction", passed: 0, total,
   });
   if (course.kind === "text") {
-    const { catalog } = course;
+    let { catalog } = course;
     const raw = read(textProgressKey(course.language));
     // Match the Italian entry page's read-compatible legacy fallback without migrating it here.
     const progress = parseCourseProgress(raw ?? (language === "it" ? read(ITALIAN_COURSE_PROGRESS_KEY) : null), catalog);
     const profile = language === "it" ? parseProfile(read(profileKey("it")), "it", catalog.units.map(unit => unit.id)) : null;
+    if (language === "it") catalog = projectStoredItalianInterestCatalog(catalog, progress, read, profile?.interests);
     const started = progress.resume || Object.keys(progress.activities).length || Object.keys(progress.assessments).length || Object.keys(progress.productionsUpdatedAt).length;
     if (!started && !profile && !introComplete) return introduction(catalog.units.length);
     const journey = buildCourseJourney(catalog, progress);

@@ -26,6 +26,7 @@ export function interestLanguage(value: string): InterestLanguage | null {
   return id ? ({ it: "it", en: "en", fr: "fr-CA", es: "es", de: "de", pt: "pt-BR", ja: "ja", zh: "zh-CN" } as const)[id] : null;
 }
 export function interestPreferenceKey(language: InterestLanguage) { return `yo.interests.v1.${language}`; }
+export const INTEREST_PREFERENCES_CHANGED_EVENT = "yo:interest-preferences-changed";
 export function readInterestPreferences(language: InterestLanguage): InterestId[] | null {
   try {
     const raw = localStorage.getItem(interestPreferenceKey(language));
@@ -34,6 +35,10 @@ export function readInterestPreferences(language: InterestLanguage): InterestId[
   } catch { return null; }
 }
 export function writeInterestPreferences(language: InterestLanguage, interests: readonly InterestId[]): boolean {
-  try { localStorage.setItem(interestPreferenceKey(language), JSON.stringify(parseInterests(interests))); return true; }
+  try {
+    localStorage.setItem(interestPreferenceKey(language), JSON.stringify(parseInterests(interests)));
+    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(INTEREST_PREFERENCES_CHANGED_EVENT, { detail: { language } }));
+    return true;
+  }
   catch { return false; }
 }

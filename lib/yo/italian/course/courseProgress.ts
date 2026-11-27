@@ -60,9 +60,9 @@ function catalogIndex(catalog: CourseCatalog) {
   const productions = new Set<string>();
   const assessments = new Map<string, number>();
   const lessons = new Map<string, Map<string, Set<string>>>();
-  for (const unit of catalog.units) {
+  for (const unit of [...catalog.units, ...(catalog.retainedUnits ?? [])]) {
     if (!idIsSafe(unit.id)) continue;
-    const unitLessons = new Map<string, Set<string>>();
+    const unitLessons = lessons.get(unit.id) ?? new Map<string, Set<string>>();
     for (const lesson of unit.lessons) {
       if (!idIsSafe(lesson.id)) continue;
       const ids = new Set(lesson.activityIds.filter(idIsSafe));
@@ -72,7 +72,7 @@ function catalogIndex(catalog: CourseCatalog) {
     lessons.set(unit.id, unitLessons);
     if (idIsSafe(unit.productionId)) productions.add(unit.productionId);
   }
-  for (const item of catalog.assessments) {
+  for (const item of [...catalog.assessments, ...(catalog.retainedAssessments ?? [])]) {
     if (idIsSafe(item.id) && integer(item.questionCount, 1, 200)) assessments.set(item.id, item.questionCount);
   }
   return { activities, productions, assessments, lessons };
