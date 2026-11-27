@@ -1,6 +1,6 @@
 # YoPratiqo — roadmap reconciliation and overnight release
 
-Updated November 24–25, 2026 (America/Toronto). This is the current release ledger;
+Updated November 24–27, 2026 (America/Toronto). This is the current release ledger;
 older documents describe their own historical increment. A merged foundation,
 a hidden preview and a completed learner journey are different states.
 
@@ -14,10 +14,29 @@ into live sales. Blocked operations stay visibly unfinished.
 
 Preserve these decisions: no attendance streaks; accumulation-only achievements;
 shared engines from the beginning; Spanish as a market priority; Italian as the
-reference journey; optional interests that change authored practice; no sale of
+reference journey; optional interest selection that shapes the main learning
+materials throughout all twelve modules; no sale of
 unbuilt content; and no new entitlement inferred from local practice or placement.
 English remains in the eight-language scope; it is not silently parked to make a
 parity metric pass.
+
+### Interest-based curriculum clarification — November 27
+
+The founder clarified that interests must shape the whole parcours: substantive
+texts, audio, educational video, vocabulary and tasks about selected subjects,
+while language objectives and progression remain coherent. A history-oriented
+learner and a learner choosing sports plus music should encounter different main
+material throughout all twelve modules. The history of sport or music remains
+eligible under those interests without selecting general history.
+
+The existing 48 optional mini-missions do not fulfil that requirement. Their
+delivery must not close the curriculum-personalization workstream. The
+[corrected curriculum brief](yopratiqo-interest-adaptive-curriculum.md) records the
+full Spanish coverage proposal, the assessed Gemini curriculum/CMS/onboarding
+ideas, mixed-interest rules, exact content and XP identities, media requirements
+and optional tutor handoff. A fixed 70/30 split and A1-to-B1 label are not adopted
+as proven curriculum requirements. The first complete implementation target is
+Spanish across twelve modules; all eight languages remain in scope.
 
 Sources reconciled: the founder's November 23 Codex/cinematic and first-sale briefs,
 the November 24 phase-brief index, the actual main tree at `5631295`, PRs #472,
@@ -28,14 +47,16 @@ of delivery or a promise that an overnight change can complete the entire progra
 
 ## What a premium experience requires
 
-The comparison below uses official product documentation checked November 24,
-2026 in Toronto. It is not an authenticated walkthrough of competitors' apps.
+The competitor comparison uses official product documentation checked November
+24, 2026 in Toronto. The university curriculum reference was added November 27.
+This is not an authenticated walkthrough of competitors' apps.
 
 | Reference | Documented experience | YoPratiqo acceptance criterion |
 | --- | --- | --- |
 | [Duolingo path and practice](https://blog.duolingo.com/duolingo-101-how-to-learn-a-language-on-duolingo/) | A next lesson, placement and personalized practice | One clear next action; preserve an unfinished lesson or assessment; expose the actual longer course after the intro |
 | [Duolingo explanations](https://blog.duolingo.com/explain-my-answer-now-free/) | Error explanations are now free for most learners in seven named courses | Explain the selected and expected phrase using the existing authored concept; never call a correction independent success |
-| [Babbel method](https://www.babbel.com/the-babbel-method) | Practical dialogues, explicit language rules, recaps and error review | Interest changes the place, phrase and recall target while the communication objective stays stable |
+| [Babbel method](https://www.babbel.com/the-babbel-method) | Practical dialogues, explicit language rules, recaps and error review | Teach communication through contextual dialogue and explanations, then retrieve and apply the language in another situation |
+| [University of Michigan Spanish 232 Topics](https://sites.google.com/umich.edu/spanish232specialtopics/home) | Thematically different courses pursue common language requirements and intended proficiency | Selected interests shape substantive main-course materials throughout all twelve modules while preserving coherent language goals; see the corrected curriculum brief |
 | [Babbel review](https://support.babbel.com/hc/en-us/articles/205600228-Vocab-workout-Review) | Performance-based intervals with writing, speaking, listening and recall modes | Real mistakes enter a dated queue; immediate repeated successes cannot race through spaced intervals |
 | [Lingvist recall](https://lingvist.com/help/where-do-i-start/) and [review](https://lingvist.com/help/why-do-i-see-the-same-words/) | Active recall in context and review driven by learning history | Include recall without visible options, explain corrections and reuse difficult material later |
 | [Duolingo depth](https://blog.duolingo.com/courses-teach-advanced-content/) and [Babbel language coverage](https://support.babbel.com/hc/en-us/articles/205600508-Available-languages) | Duolingo documents B2 content for nine major languages; Babbel's levels vary by target/base language | Publish a curriculum/skill matrix. Animation, activity count and a foundation quiz do not establish A2/B1/B2 proficiency |
@@ -49,11 +70,11 @@ availability varies by course, base language, platform and subscription.
 
 | Workstream | State before this increment | Change prepared in this increment | Completion still required |
 | --- | --- | --- | --- |
-| Shared entry | Experience, purpose and pace; interests absent | Six interests, up to three choices, editable, preserved separately from progress, all eight languages | Account preference sync and deeper interest variants within each authored course |
+| Shared entry | Experience, purpose and pace; interests absent | Six interests, up to three choices, editable, preserved separately from progress, all eight languages | Connect selected interests to the actual main-course plan and first lesson; preserve diagnostic/progress boundaries and add account preference sync |
 | Continuity | Intro final mostly returned to the same map | PR #481 deployed original 12-unit/36-lesson EN, ES and Québec French courses. PR #485 preserves unfinished typed unit/assessment answers in the five shared courses. PR #488 preserves shared-intro attempts, help and separate tab changes. PR #490 now preserves Japanese unfinished activity answers and checked attempts, with reset/revision boundaries and stale-check protection | Onboarding/placement recovery, full-course goal/pace guidance and authenticated device restoration |
 | Feedback | Mostly correct phrase/translation in shared intro | Authored concept plus chosen/expected phrase, correct assistance tracking | Broader language-specific correction banks and unseen transfer assessments |
 | Review | IT/DE/PT have dated local review; intro/JA/ZH inconsistent | First release connects seven intros and interest missions. Deployed PR #481 connects actual IT/DE/PT/new EN/ES/FR practice writers plus JA/ZH, and reuses their real answer checkers for dated review | Authenticated ownership, complete two-device restoration and offline server delivery |
-| Interests | Local Parma reason only | 48 authored mini-mission variants: dialogue, venue choice, directions, typed noun recall, changed exit route, later error review | Destination-specific cultural variants throughout the full curricula; these mini-missions are not complete replacement courses |
+| Interests | Local Parma reason only | 48 authored optional mini-mission variants: dialogue, venue choice, directions, typed noun recall, changed exit route, later error review | Incomplete: substantive selected-interest texts, audio, educational video, vocabulary and tasks throughout every module; mixed interests, exact variant grading/review and equivalent XP slots. Follow the [corrected curriculum brief](yopratiqo-interest-adaptive-curriculum.md) |
 | Cinema | Travel MP4s and three still-only mission slots | Three actual 5-second motion clips; opening/success/backpack slots use verified local MP4s | Bespoke destination/mission footage and each specific earned artifact; the generic backpack clip does not display an invented reward |
 | Speech | Bounded eight-language server implementation deployed but disabled | Gateway preview authenticated project OIDC and read credits; credit below one $0.20 reservation stopped the diagnostic before any socket or inference. Its one-time flag is now disabled | Existing Gateway funding or native server credential, observed Realtime configuration acknowledgement, live audio QA in all eight languages and measured quotas, then activation |
 | Recordings | 176 gaps in intro/current Italian inventory; 785 existing MP3 files verified | PR #482 deployed 255 exact-text clips. PR #489 deployed another 1,205 files for EN/ES/FR foundations and 13 Italian corrections; all 1,460 public MP3s now match their reviewed hashes | Thirteen excerpts are still withheld in this frozen bundle; DE/PT/JA/ZH full-course coverage is a separate release. Native listening approval remains outstanding. Device voice is a disclosed preview for unresolved phrases |
