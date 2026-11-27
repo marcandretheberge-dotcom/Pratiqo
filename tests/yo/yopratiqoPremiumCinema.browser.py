@@ -72,7 +72,7 @@ def travel(page, name, reduced):
       const video = document.querySelector('[data-travel-film] video');
       return video && video.currentTime > 0.15 && video.videoWidth === 768;
     }""", timeout=20000)
-    assert film.locator("video").evaluate("video => video.muted && video.playsInline")
+    assert film.locator("video").evaluate("video => !video.muted && video.playsInline")
     film.get_by_role("button", name="Mettre en pause", exact=True).click()
     screenshot(page, name + "-travel")
     film.get_by_role("button", name="Passer", exact=True).click()
@@ -107,7 +107,7 @@ def mission(page, name, reduced, keyboard_guard=False):
       const video = document.querySelector('[data-mission-film] video');
       return video && video.currentTime > 0.15 && video.videoWidth === 1280;
     }""", timeout=20000)
-    assert video.evaluate("video => video.muted && video.playsInline")
+    assert video.evaluate("video => !video.muted && video.playsInline")
     scene.get_by_role("button", name="Mettre en pause", exact=True).click()
     if keyboard_guard:
         screen = page.locator('[data-yo-lesson-deck-screen-host-active="true"]')
