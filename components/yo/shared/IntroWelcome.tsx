@@ -1,6 +1,7 @@
 "use client";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import Link from "next/link";
+import { goal as francisationGoal, purpose } from "@/lib/yo/francisation/mission";
 import { Check } from "lucide-react";
 import { JournalChoice, useYoppoJournal, YoppoWelcomeGuide, YoppoWelcomeLoading } from "../onboarding/YoppoJournal";
 import type { IntroCourse, IntroProfile, Draft } from "@/lib/yo/shared/types";
@@ -18,7 +19,7 @@ import { createSharedWelcomeStore, type SharedWelcomeDraft } from "@/lib/yo/onbo
 import { sameDraft } from "@/lib/yo/onboarding/draftStore";
 import { useOnboardingDraft } from "../onboarding/useOnboardingDraft";
 import { OnboardingDraftNotice } from "../onboarding/OnboardingDraftNotice";
-export function IntroWelcome({course,locale,audio,initial,onComplete,onCancel}:{course:IntroCourse;locale:YoLocale;audio:Record<string,string>;initial?:IntroProfile|null;onComplete:(p:IntroProfile)=>void;onCancel?:()=>void}){
+export function IntroWelcome({course,locale,audio,initial,onComplete,onCancel,onChooseFrancisation}:{course:IntroCourse;locale:YoLocale;audio:Record<string,string>;initial?:IntroProfile|null;onComplete:(p:IntroProfile)=>void;onCancel?:()=>void;onChooseFrancisation?:()=>void}){
  const say=(fr:string,en:string,es:string)=>L(fr,en,es)[locale];
  const journal = useYoppoJournal();
  const store=useMemo(()=>createSharedWelcomeStore(course,initial),[course,initial]);
@@ -80,7 +81,9 @@ export function IntroWelcome({course,locale,audio,initial,onComplete,onCancel}:{
     <JournalChoice key={v} kind={v} label={goalLabels[i]} onPick={() => {
       if(go('interests',{goal:v}))journal.write(goalLabels[i]);
     }}/>
-  )}</div>}
+  )}{onChooseFrancisation && <button type="button" lang="fr-CA" className="yj-option" onClick={() => {
+    if (change({})) onChooseFrancisation();
+  }}><span><strong className="block">{francisationGoal}</strong><span className="block text-sm font-normal">{purpose}</span></span></button>}</div>}
   {step==='interests'&&<><InterestChoices locale={locale} value={interests} onChange={next=>{if(change({interests:next}))journal.write(next.map(id=>interestLabels[id][locale]).join(' · ')||say('Surprends-moi','Surprise me','Sorpréndeme'));}}/><button type="button" className={`${primary} mt-5 w-full`} onClick={()=>go('pace')}>{say('Continuer','Continue','Continuar')}</button></>}
   {step==='pace'&&<><fieldset><legend className="sr-only">{titles.pace}</legend><div className="grid grid-cols-2 gap-3">{[30,60,120,180,0].map(n=><label key={n} data-shared-pace={n} className={`cursor-pointer ${n===0?'col-span-2':''}`}><input className="peer sr-only" type="radio" name="intro-pace" value={n} checked={minutes===n&&!custom} aria-label={n===0?say('À mon rythme','At my pace','A mi ritmo'):`${n} min`} onChange={()=>{if(change({minutes:n,custom:false}))journal.write(paceLabel(n));}}/><span className={`flex min-h-16 items-center justify-between gap-2 rounded-2xl border-2 p-4 font-bold peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 ${minutes===n&&!custom?'border-emerald-700 bg-emerald-50':'border-stone-200 bg-white'}`}><span>{n===0?say('À mon rythme','At my pace','A mi ritmo'):n<60?`${n} min`:`${n/60} h`}{n>0&&<small className="block font-normal">{say('par semaine','per week','por semana')}</small>}</span>{minutes===n&&!custom&&<Check size={22} aria-hidden/>}</span></label>)}</div></fieldset>
    <button type="button" className={`${secondary} mt-2`} aria-expanded={custom} onClick={()=>change({custom:!custom})}>{say('Choisir une autre durée','Choose another duration','Elegir otra duración')}</button>{custom&&<label className="mt-3 block">{say('Minutes par semaine (15 à 1 200)','Minutes per week (15–1,200)','Minutos por semana (15–1200)')}<input type="number" inputMode="numeric" min="15" max="1200" step="1" className="mt-2 min-h-12 w-full rounded-xl border bg-white p-3 text-base" value={customText} maxLength={16} onChange={e=>change({customText:e.target.value.slice(0,16)})}/></label>}

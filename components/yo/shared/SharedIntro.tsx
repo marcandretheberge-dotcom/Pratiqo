@@ -38,12 +38,12 @@ import { InterestPracticeCard } from "../interests/InterestPracticeCard";
 import { IntroDueReview } from "../review/IntroDueReview";
 import { recordIntroReviewAttempt } from "@/lib/yo/review/intro";
 
-type Props={course:IntroCourse;locale:YoLocale;audio:Record<string,string>};
+type Props={course:IntroCourse;locale:YoLocale;audio:Record<string,string>;onChooseFrancisation?:()=>void;editOnReturn?:boolean};
 export function SharedIntro(props:Props){return <LearningFeedbackProvider><IntroPlayer key={props.course.language + "-" + introRevision(props.course)} {...props}/></LearningFeedbackProvider>;}
 const introServerSnapshot = () => null;
-function IntroPlayer({course,locale,audio}:Props){
+function IntroPlayer({course,locale,audio,onChooseFrancisation,editOnReturn}:Props){
  const say=(fr:string,en:string,es:string)=>L(fr,en,es)[locale],steps=courseSteps(course),key=introKey(course.language);
- const [store]=useState(()=>createIntroSyncStore(course)),[editing,setEditing]=useState(false);
+ const [store]=useState(()=>createIntroSyncStore(course)),[editing,setEditing]=useState(Boolean(editOnReturn));
  const snapshot=useSyncExternalStore(store.subscribe,store.getSnapshot,introServerSnapshot);
  const state=snapshot?.state??freshIntro(course),ready=Boolean(snapshot),stored=!snapshot?.storageError;
  const [panel,setPanel]=useState<'notebook'|'settings'|null>(null),latest=useRef(state),heading=useRef<HTMLHeadingElement>(null),live=useRef(true);
@@ -106,7 +106,7 @@ function IntroPlayer({course,locale,audio}:Props){
   <button type="button" className={`${secondary} mt-2`} onClick={()=>window.location.reload()}>{say('Actualiser la leçon','Refresh lesson','Actualizar la lección')}</button>
  </div>:!stored?<p role="status" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm">{say('La sauvegarde est indisponible dans ce navigateur.','Saving is unavailable in this browser.','No se puede guardar en este navegador.')}</p>:null;
  if(!ready)return <YoppoWelcomeLoading locale={locale}/>;
- if(!state.profile||editing)return <>{smallStatus&&<div className="mx-auto max-w-xl px-5 pt-5">{smallStatus}</div>}<IntroWelcome course={course} locale={locale} audio={audio} initial={state.profile} onComplete={profileDone} onCancel={state.profile?()=>setEditing(false):undefined}/></>;
+ if(!state.profile||editing)return <>{smallStatus&&<div className="mx-auto max-w-xl px-5 pt-5">{smallStatus}</div>}<IntroWelcome onChooseFrancisation={onChooseFrancisation} course={course} locale={locale} audio={audio} initial={state.profile} onComplete={profileDone} onCancel={state.profile?()=>setEditing(false):undefined}/></>;
  const step=steps[state.step],mission=course.missions[step.mission],missionSteps=steps.filter(s=>s.mission===step.mission),position=missionSteps.findIndex(s=>s.id===step.id);
  const phrase=(id:string)=>course.phrases.find(p=>p.id===id)!;
  const passed=introPassed(course,state),currentPassed=independentScore(state.answers)>=Math.ceil(course.final.length*.8);
