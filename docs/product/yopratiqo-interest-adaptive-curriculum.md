@@ -2,10 +2,12 @@
 
 Updated November 27, 2026 (America/Toronto).
 
-**Status: corrected product requirements and proposed content architecture.**
-The main-course adaptation described here is not implemented. The existing
-optional interest mini-missions do not satisfy this requirement. This brief
-supersedes the narrower interpretation of interests in the overnight roadmap.
+**Status: full-course product requirements; Italian Unit 1 implemented as the first reference edition.**
+The [Italian Unit 1 release](italian-interest-unit-one-release.md) adapts the main
+learning sequence across all six existing interests. Adaptation across the
+remaining modules and languages remains to be authored and implemented. Optional
+interest mini-missions alone do not satisfy this requirement. This brief
+supersedes the earlier, narrower interpretation of interests in the roadmap.
 
 Inputs: the founder's clarification about history versus sports and music; the
 two supplied Gemini documents (curriculum and CMS schema); the subsequent

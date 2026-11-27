@@ -1,17 +1,24 @@
 import { withApprovedArtwork } from "./approvedVocabulary";
-import { italianCourseUnits } from "../italian/course/courseData";
+import { italianCourseCatalog, italianCourseUnits } from "../italian/course/courseData";
 import { firstMeetingUnit, firstMeetingBank, firstMeetingVisuals } from "./firstMeeting";
 import type { CourseCatalog, CourseUnit } from "../italian/course/courseTypes";
 import type { WordBankEntry } from "./types";
+import { italianInterestAllUnits } from "../italian/interests/unitOne";
+import { retainItalianInterestHistory } from "../italian/interests/selection";
 
 /** Server-only curriculum projection; the legacy course and its stored identifiers stay intact. */
 export const personalizedItalianUnits = [firstMeetingUnit, ...italianCourseUnits.slice(1)];
-export const personalizedItalianCatalog: CourseCatalog = {
+export const personalizedItalianLegacyUnits = [firstMeetingUnit, italianCourseUnits[0]];
+const basePersonalizedItalianCatalog: CourseCatalog = {
  units: personalizedItalianUnits.map(unit=>({id:unit.id,number:unit.number,title:unit.title,subtitle:unit.subtitle,objectives:unit.objectives,
   lessons:unit.lessons.map(l=>({id:l.id,title:l.title,activityIds:l.activities.map(a=>a.id)})),activityIds:unit.lessons.flatMap(l=>l.activities.map(a=>a.id)),
   quizId:unit.quiz.id,productionId:unit.production.id,phraseCount:unit.lessons.reduce((n,l)=>n+l.vocabulary.length,0),photo:unit.cultureStop?.photo})),
  assessments:personalizedItalianUnits.map(unit=>({id:unit.quiz.id,title:unit.quiz.title,unitIds:[unit.id],questionCount:unit.quiz.questions.length,passPercent:unit.quiz.passPercent})),
 };
+export const personalizedItalianCatalog = retainItalianInterestHistory(
+ {...basePersonalizedItalianCatalog, retainedUnits:italianCourseCatalog.units, retainedAssessments:italianCourseCatalog.assessments},
+ [...personalizedItalianLegacyUnits, ...italianInterestAllUnits],
+);
 export const placementChecks = [
  {unitId:"u01",activity:firstMeetingUnit.quiz.questions[0]},
  {unitId:"u01",activity:firstMeetingUnit.quiz.questions[3]},
@@ -25,9 +32,9 @@ export const placementChecks = [
 ];
 export function personalizedUnit(id:string) { return personalizedItalianUnits.find(u=>u.id===id); }
 export function moduleBank(unit:CourseUnit):WordBankEntry[] {
- if(unit.id==="u01") return firstMeetingBank;
+ if(unit.lessons[0]?.id===firstMeetingUnit.lessons[0].id) return firstMeetingBank;
  const phrases=unit.lessons.flatMap(l=>[...l.vocabulary,...l.grammar.examples]);
  return [...new Map(phrases.map(p=>[p.it,p])).values()].map(p=>({...p,group:"expressions" as const}));
 }
 const approvedFirstMeetingVisuals = withApprovedArtwork(firstMeetingVisuals);
-export function moduleVisuals(unit:CourseUnit){return unit.id==="u01"?approvedFirstMeetingVisuals:{};}
+export function moduleVisuals(unit:CourseUnit){return unit.lessons[0]?.id===firstMeetingUnit.lessons[0].id?approvedFirstMeetingVisuals:{};}

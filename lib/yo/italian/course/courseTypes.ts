@@ -14,6 +14,15 @@ export interface CourseLesson {
   readingActivityId?: string;
   activities: ItalianActivity[];
   speaking: { prompt: LocaleText; checklist: LocaleText[] };
+  /** An original, source-backed discovery tied to an immutable interest edition. */
+  discovery?: {
+    interest: string;
+    version: string;
+    question: LocaleText;
+    takeaways: LocaleText[];
+    sources: CourseSource[];
+    authorship: LocaleText;
+  };
 }
 export interface CoursePhoto {
   src: string;
@@ -87,7 +96,7 @@ export interface CourseUnit {
 export interface CourseSource { id: string; title: string; publisher: string; url: string; supports: LocaleText }
 export interface CourseUnitSummary {
   id: string; number: number; title: LocaleText; subtitle: LocaleText; objectives: LocaleText[];
-  lessons: { id: string; title: LocaleText; activityIds: string[] }[];
+  lessons: { id: string; title: LocaleText; activityIds: string[]; phraseCount?: number }[];
   activityIds: string[]; quizId: string; productionId: string; phraseCount: number;
   midpointId?: string;
   photo?: CoursePhoto;
@@ -95,4 +104,7 @@ export interface CourseUnitSummary {
 export interface CourseCatalog {
   units: CourseUnitSummary[];
   assessments: { id: string; title: LocaleText; unitIds: string[]; questionCount: number; passPercent: 80; theme?: "culture"; purpose?: "midpoint" }[];
+  /** Historical authored identities stay valid without adding lessons to the active journey. */
+  retainedUnits?: CourseUnitSummary[];
+  retainedAssessments?: CourseCatalog["assessments"];
 }

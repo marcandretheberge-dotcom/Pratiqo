@@ -20,7 +20,7 @@ import {
 } from "@/lib/yo/italian/course/courseProgress";
 import { personalizedItalianCatalog } from "@/lib/yo/personalized/courseData";
 import {
-  italianCatalogItemIds,
+  italianReviewableItemIds,
   ITALIAN_LANGUAGE,
   ITALIAN_SRS_COURSE_ID,
 } from "@/lib/yo/srs/adapters/italian";
@@ -110,7 +110,7 @@ export type ParseSrsRecordResult =
   | { ok: true; value: ParsedSrsRecordPayload }
   | { ok: false; reason: string };
 
-const activeItemIds = italianCatalogItemIds(personalizedItalianCatalog);
+const reviewableItemIds = italianReviewableItemIds(personalizedItalianCatalog);
 
 const RECORD_KEYS = new Set(["attemptId", "itemId", "language", "correct", "assisted", "at"]);
 
@@ -143,7 +143,7 @@ export function parseSrsRecordPayload(body: unknown): ParseSrsRecordResult {
   if (language !== ITALIAN_LANGUAGE) {
     return { ok: false, reason: `unsupported language: ${String(language)}` };
   }
-  if (!activeItemIds.has(filtered.itemId)) {
+  if (!reviewableItemIds.has(filtered.itemId)) {
     return { ok: false, reason: `unknown itemId: ${filtered.itemId}` };
   }
   if (typeof filtered.correct !== "boolean" || typeof filtered.assisted !== "boolean") {

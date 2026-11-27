@@ -11,6 +11,7 @@ import { matchesFrenchQuebecAnswer } from "../frenchQuebec/courseLogic";
 import type { ItalianActivity, ItalianMapDirection } from "../italian/italianModuleTypes";
 import type { TextCourseLanguage } from "../foundations/experience";
 import { RANKING_LANGUAGES, type RankingAnswer, type RankingAttempt } from "./contract";
+import { rankingRewardItemId } from "./rewardIdentity.server";
 
 const matchText = {
   it: matchesItalianAnswer, de: matchesGermanAnswer, "pt-BR": matchesPortugueseAnswer,
@@ -95,4 +96,14 @@ export async function gradeRankingAttempt(attempt: RankingAttempt): Promise<bool
     // Unknown/retired identifiers and unavailable content never award XP.
     return false;
   }
+}
+
+/** The original content identity remains the learning/review identity. Only the
+ * atomic XP ledger receives the equivalent reward slot, after exact grading.
+ * Answers and client-selected reward identities are never part of this receipt.
+ */
+export async function gradeRankingAttemptForAward(attempt: RankingAttempt): Promise<{ contentItemId: string; rewardItemId: string } | null> {
+  if (!await gradeRankingAttempt(attempt)) return null;
+  const rewardItemId = await rankingRewardItemId(attempt.language, attempt.itemId);
+  return rewardItemId ? { contentItemId: attempt.itemId, rewardItemId } : null;
 }

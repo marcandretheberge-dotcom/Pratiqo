@@ -25,7 +25,7 @@ export function italianTodayNavigation(
   const due = getDueActivityIds(progress, catalog, now);
   const firstDue = new Set(due.slice(0, 1));
   let reviewHref: string | null = null;
-  for (const unit of catalog.units) {
+  for (const unit of [...catalog.units, ...(catalog.retainedUnits ?? [])]) {
     const lesson = unit.lessons.find(l => l.activityIds.some(id => firstDue.has(id)));
     if (lesson) {
       reviewHref = italianCourseHref(locale, unit.id, lesson.id, due[0]);

@@ -15,8 +15,8 @@ import { italianCityIdentity } from "@/lib/yo/italian/cityIdentity";
 import { ItalianCityArtwork } from "./ItalianCityArtwork";
 
 type Status = { ready: boolean; mastered: boolean; best: number | null; practiced: number; total: number };
-export function ItalianAchievementPrintable({ unit, catalog, locale }: {
-  unit: CourseUnitSummary; catalog: CourseCatalog; locale: YoLocale;
+export function ItalianAchievementPrintable({ unit, catalog, locale, edition }: {
+  unit: CourseUnitSummary; catalog: CourseCatalog; locale: YoLocale; edition?: string;
 }) {
   const [status, setStatus] = useState<Status>({ ready: false, mastered: false, best: null, practiced: 0, total: unit.activityIds.length });
   useEffect(() => {
@@ -42,7 +42,7 @@ export function ItalianAchievementPrintable({ unit, catalog, locale }: {
     <nav aria-label={c.heading} className="yo-achievement-controls mb-8 flex flex-wrap items-center gap-3 border-b border-stone-200 pb-5">
       <WordBankPrintButton locale={locale} />
       <Link className="min-h-11 rounded-xl px-3 py-3 text-sm font-semibold text-emerald-900 underline" href={link}>{c.back}</Link>
-      <Link className="min-h-11 rounded-xl px-3 py-3 text-sm font-semibold text-emerald-900 underline" href={`/yo/langues/italien/parcours/${unit.id}/vocabulaire?lang=${locale}`}>{c.notebook}</Link>
+      <Link className="min-h-11 rounded-xl px-3 py-3 text-sm font-semibold text-emerald-900 underline" href={`/yo/langues/italien/parcours/${unit.id}/vocabulaire?lang=${locale}${edition ? `&edition=${encodeURIComponent(edition)}` : ""}`}>{c.notebook}</Link>
     </nav>
     <header className="border-b-2 border-emerald-800 pb-6">
       <p className="text-xs font-black uppercase tracking-widest text-emerald-800">YoPratiqo · Italiano · {c.city}</p>

@@ -22,6 +22,7 @@
 
 import { BUNDLED_AUDIO_REPAIRS } from "./bundledRepairs";
 import { isPublishedPremiumLocalAudioPath } from "./premiumPublished";
+import { isPublishedItalianInterestAudioPath } from "./italianInterestPublished";
 import { YOPRATIQO_AUDIO_BUCKET_DEFAULT } from "@/lib/yo/audio/audioManifest.types-internal";
 
 /** Reserved query string used to bust the browser/CDN cache when audio is regenerated. */
@@ -69,6 +70,12 @@ export function buildPublicAudioUrl(
   // Storage keys may have a leading slash. Bundled premium files still require
   // their exact canonical path, rather than accepting that normalization.
   const normalisedPath = storagePath.replace(/^\/+/, "");
+  if (normalisedPath.startsWith("audio/yo/italian-interests")) {
+    if (!isPublishedItalianInterestAudioPath(storagePath)) return null;
+    return options.version
+      ? `${storagePath}?${YOPRATIQO_AUDIO_VERSION_PARAM}=${encodeURIComponent(options.version)}`
+      : storagePath;
+  }
   if (normalisedPath.startsWith("audio/yo/premium")) {
     if (!isPublishedPremiumLocalAudioPath(storagePath)) return null;
     return options.version
