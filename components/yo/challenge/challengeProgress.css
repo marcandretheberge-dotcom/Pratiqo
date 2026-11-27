@@ -1,0 +1,22 @@
+.yo-challenge-question {
+  flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain;
+  width:100%; max-width:600px; margin:0 auto; padding:4px 24px 24px;
+  scrollbar-gutter:stable;
+}
+.yo-challenge-progress { margin:0 0 26px; }
+.yo-challenge-progress-labels { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; font-size:14px; font-weight:800; color:#164e47; }
+.yo-challenge-progress-labels>span:last-child { display:flex; gap:6px; align-items:center; font-size:12px; color:#526c65; }
+.yo-challenge-progress-total { color:#60756d; font-weight:600; }
+.yo-challenge-steps { display:flex; list-style:none; gap:8px; padding:0; margin:0; }
+.yo-challenge-steps li { position:relative; display:flex; flex:1; align-items:center; justify-content:center; min-width:0; height:28px; border:2px solid #e4ebe8; border-bottom-width:4px; border-radius:9px; background:#f5f8f6; color:#697e75; font-size:12px; font-weight:850; }
+.yo-challenge-steps li[data-state=current] { color:#0d6c60; border-color:#6fc5ae; background:#dff4ec; }
+.yo-challenge-steps li[data-state=correct],.yo-challenge-steps li[data-state=answered] { color:white; border-color:#187865; background:#249b7e; }
+.yo-challenge-steps li[data-state=review] { color:#994336; border-color:#e9b1a6; background:#fff0ec; }
+.yo-challenge-assistance-note { color:#846127; font-size:12px; line-height:1.5; margin:10px 0 0; }
+.yo-challenge-scene-title { color:#56786d; font-size:12px; font-weight:800; line-height:1.45; letter-spacing:.06em; margin:0 0 9px; text-transform:uppercase; outline:none; }
+.yo-challenge-scene-setting { color:#50665f; font-size:15px; line-height:1.6; margin:0 0 18px; }
+.yo-challenge-report-links { display:flex; flex-wrap:wrap; gap:12px; margin-top:14px; }
+.yo-challenge-report-links a { color:#126b5c; text-decoration:underline; text-underline-offset:3px; font-size:13px; font-weight:700; min-height:44px; display:inline-flex; align-items:center; }
+@media(min-width:640px) { .yo-challenge-question { padding:8px 36px 30px; } }
+@media(max-width:360px) { .yo-challenge-question { padding-left:16px; padding-right:16px; } .yo-challenge-steps { gap:5px; } }
+@media(prefers-reduced-motion:no-preference) { .yo-challenge-steps li[data-state=correct] { animation:yo-challenge-step-arrive .22s ease-out; } @keyframes yo-challenge-step-arrive { from { transform:scale(.9); } to { transform:scale(1); } } }

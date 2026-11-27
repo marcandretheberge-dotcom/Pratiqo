@@ -7,6 +7,9 @@ import { unitSpeech } from "@/lib/yo/italian/course/courseSpeech";
 import { FLORENCE_DISCOVERY_PHRASES } from "@/lib/yo/italian/travel/journey";
 import { getYoLocale } from "@/lib/yo/localize";
 import { italianRewardsPreviewEnabled } from "@/lib/yo/rewards/previewGate";
+import "@/components/yo/challenge/finalChallenge.css";
+import "@/components/yo/challenge/challengeGame.css";
+import "@/components/yo/challenge/challengeProgress.css";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Italian journey · Private review", robots: { index: false, follow: false } };

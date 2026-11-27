@@ -1,0 +1,125 @@
+.yo-mission-window[data-final-challenge] {
+  --yo-challenge-ink:#143e35;
+  --yo-challenge-teal:#167c68;
+  --yo-challenge-muted:#60736c;
+  inset:0; display:flex; flex-direction:column; width:100%; max-width:none;
+  height:100dvh; max-height:100dvh; margin:0; padding:0; border:0; border-radius:0;
+  background:#fff; color:var(--yo-challenge-ink); color-scheme:light;
+  overscroll-behavior:contain; overflow-x:hidden; overflow-y:auto;
+}
+.yo-mission-window[data-final-challenge] .yo-mission-header {
+  flex:0 0 auto; position:sticky; top:0; z-index:20; margin:0;
+  padding:calc(10px + env(safe-area-inset-top)) 18px 10px; background:#fff;
+  border-bottom:1px solid #edf1ee; min-height:65px;
+}
+.yo-mission-window[data-final-challenge] .yo-mission-progress p { margin:0; color:#526a61; font-size:12px; font-weight:750; }
+.yo-mission-window[data-final-challenge] .yo-icon-button { background:#f2f6f3; border-radius:14px; color:#456256; }
+.yo-challenge-stage { display:flex; flex:1 1 auto; flex-direction:column; min-width:0; min-height:0; width:100%; text-align:center; }
+.yo-challenge-body { flex:1 1 auto; min-height:0; padding:8px 22px 22px; overflow-y:auto; overscroll-behavior:contain; }
+.yo-challenge-hero { position:relative; isolation:isolate; width:min(100%,360px); height:235px; margin:0 auto 5px; }
+.yo-challenge-hero::before { content:""; position:absolute; z-index:-1; width:184px; height:184px; left:53px; top:28px; border-radius:50%; background:#eff8f4; }
+.yo-challenge-yoppo { position:absolute; width:230px; height:230px; left:21px; bottom:0; object-fit:contain; }
+.yo-challenge-stamp { position:absolute; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; right:5px; bottom:12px; width:126px; min-height:133px; padding:12px 7px 9px; border:5px double #a8beb4; border-radius:25px; transform:rotate(9deg); background:#fff; color:#526e5f; box-shadow:0 5px 0 #eaf0ec; }
+.yo-challenge-stamp[data-earned="true"] { border-color:#1c8069; color:#136a56; background:#f0faf4; box-shadow:0 5px 0 #c9e6d8; }
+.yo-challenge-stamp-top { font-size:8px; font-weight:850; letter-spacing:.19em; }
+.yo-challenge-stamp strong { max-width:100%; overflow-wrap:anywhere; font-size:18px; line-height:1.05; letter-spacing:-.04em; }
+.yo-challenge-stamp-caption { font-size:7px; font-weight:800; letter-spacing:.08em; }
+.yo-challenge-stamp-state { display:inline-flex; align-items:center; gap:3px; margin-top:2px; padding:3px 7px; border-radius:20px; background:#e9f0eb; font-size:8px; font-weight:850; letter-spacing:.06em; }
+.yo-challenge-stamp[data-earned="true"] .yo-challenge-stamp-state { background:#1c8069; color:#fff; }
+.yo-challenge-sparkles { position:absolute; inset:0; pointer-events:none; color:#dbad32; }
+.yo-challenge-sparkles svg { position:absolute; width:23px; height:23px; }
+.yo-challenge-sparkles svg:nth-child(1) { left:13px; top:52px; }
+.yo-challenge-sparkles svg:nth-child(2) { right:25px; top:22px; width:29px; height:29px; }
+.yo-challenge-sparkles svg:nth-child(3) { left:31px; bottom:12px; width:16px; height:16px; }
+.yo-challenge-eyebrow { margin:8px 0 10px; color:#526e5f; font-size:11px; font-weight:850; letter-spacing:.13em; text-transform:uppercase; }
+.yo-challenge-title { margin:0; color:#143e35; font-size:clamp(29px,6.7vw,40px); font-weight:850; line-height:1.1; letter-spacing:-.045em; outline:none; text-wrap:balance; }
+.yo-challenge-title > span { display:block; margin-top:9px; color:#5b7066; font-size:clamp(17px,4.4vw,22px); font-weight:500; line-height:1.35; letter-spacing:-.025em; }
+.yo-challenge-title > span strong { color:#167c68; font-weight:800; }
+.yo-challenge-subtitle { max-width:410px; margin:14px auto 0; color:#61756b; font-size:15px; line-height:1.55; text-wrap:pretty; }
+.yo-challenge-requirements { display:flex; flex-wrap:wrap; justify-content:center; gap:9px 17px; margin:24px auto 14px; }
+.yo-challenge-requirements > span { display:inline-flex; align-items:center; justify-content:center; gap:5px; color:#345d4c; font-size:12px; line-height:1.5; white-space:nowrap; }
+.yo-challenge-requirements svg { color:#268774; flex-shrink:0; }
+.yo-challenge-requirements strong { font-weight:850; }
+.yo-challenge-details { max-width:470px; margin:12px auto 0; text-align:left; }
+.yo-challenge-details summary { display:flex; align-items:center; justify-content:center; gap:7px; min-height:44px; padding:8px; border-radius:10px; color:#4c7060; font-size:12px; font-weight:750; cursor:pointer; list-style:none; }
+.yo-challenge-details summary::-webkit-details-marker { display:none; }
+.yo-challenge-details[open] summary svg { transform:rotate(180deg); }
+.yo-challenge-details-content { border-top:1px solid #e4ece6; padding:12px 0; color:#52695d; font-size:13px; line-height:1.7; }
+.yo-challenge-details-content p + p { margin-top:10px; }
+.yo-challenge-details-content > section { margin-top:0; padding:0; background:transparent; border:0; }
+.yo-challenge-details-content h2 { font-size:15px; }
+.yo-challenge-details-content ul { padding-left:18px; }
+.yo-challenge-footer { position:sticky; bottom:0; z-index:10; flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:5px; width:100%; padding:15px 22px max(14px,env(safe-area-inset-bottom)); border-top:1px solid #e8eeea; background:#fff; }
+.yo-challenge-button { display:flex; align-items:center; justify-content:center; gap:12px; width:100%; max-width:470px; min-height:53px; padding:13px 19px; border:1px solid #146e5b; border-bottom:4px solid #0e5145; border-radius:16px; color:#fff; background:#167c68; font-size:15px; font-weight:800; line-height:1.3; cursor:pointer; transition:background .16s,transform .16s,border-bottom-width .16s; }
+.yo-challenge-button:hover { background:#106c5b; }
+.yo-challenge-button:active { transform:translateY(2px); border-bottom-width:2px; }
+.yo-challenge-text-button { min-height:44px; padding:8px 14px; border-radius:10px; color:#61756b; font-size:12px; font-weight:750; cursor:pointer; }
+.yo-challenge-text-button:hover { color:#126b57; background:#f1f7f3; }
+.yo-challenge-button:focus-visible,.yo-challenge-text-button:focus-visible,.yo-challenge-details summary:focus-visible { outline:3px solid #167c68; outline-offset:4px; }
+.yo-challenge-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; max-width:390px; margin:24px auto 0; }
+.yo-challenge-stat { overflow:hidden; border:2px solid #d4e9df; border-bottom-width:4px; border-radius:18px; background:#fff; }
+.yo-challenge-stat dt { display:flex; justify-content:center; align-items:center; gap:6px; min-height:34px; padding:7px 6px; background:#ecf7f1; color:#2b6d55; font-size:11px; font-weight:800; }
+.yo-challenge-stat dd { padding:11px 5px 13px; color:#166c54; font-size:32px; font-weight:850; letter-spacing:-.04em; line-height:1; }
+.yo-challenge-stat dd span { color:#578f78; font-size:23px; }
+.yo-challenge-stat + .yo-challenge-stat { border-color:#d9e9ed; }
+.yo-challenge-stat + .yo-challenge-stat dt { color:#316e7b; background:#eff7f9; }
+.yo-challenge-stat + .yo-challenge-stat dd { color:#287e8d; }
+.yo-challenge-stat + .yo-challenge-stat dd span { color:#6b9ca7; }
+.yo-challenge-target { margin:16px auto 0; color:#60756a; font-size:13px; }
+.yo-challenge-achievements { margin-top:15px; }
+.yo-challenge-stage[data-challenge-stage="retry"] .yo-challenge-hero::before { background:#f7f5ed; }
+
+@media(min-width:640px) {
+  .yo-mission-window[data-final-challenge] { inset:0; width:calc(100% - 32px); max-width:720px; height:92dvh; max-height:92dvh; margin:auto; border-radius:28px; box-shadow:0 24px 100px #102e3533; }
+  .yo-mission-window[data-final-challenge] .yo-mission-header { padding:14px 25px; min-height:72px; }
+  .yo-challenge-body { padding:12px 42px 24px; }
+  .yo-challenge-hero { height:265px; margin-bottom:12px; }
+  .yo-challenge-yoppo { width:260px; height:260px; left:8px; }
+  .yo-challenge-hero::before { width:210px; height:210px; left:36px; top:29px; }
+  .yo-challenge-stamp { bottom:22px; right:-4px; width:142px; min-height:147px; }
+  .yo-challenge-stamp strong { font-size:21px; }
+  .yo-challenge-subtitle { font-size:16px; }
+  .yo-challenge-footer { padding:18px 42px; }
+  .yo-challenge-requirements { gap:23px; }
+  .yo-challenge-requirements > span { font-size:13px; }
+}
+@media(min-width:640px) and (min-height:741px) and (max-height:820px) {
+  .yo-challenge-hero { width:330px; height:210px; margin-bottom:6px; }
+  .yo-challenge-yoppo { width:215px; height:215px; left:14px; }
+  .yo-challenge-hero::before { width:170px; height:170px; left:36px; top:24px; }
+  .yo-challenge-stamp { width:126px; min-height:132px; right:0; bottom:10px; gap:3px; padding:10px 6px; }
+  .yo-challenge-stamp strong { font-size:19px; }
+}
+@media(max-height:740px) {
+  .yo-challenge-hero { height:180px; width:300px; max-width:100%; margin-bottom:0; }
+  .yo-challenge-yoppo { width:185px; height:185px; left:25px; }
+  .yo-challenge-hero::before { width:145px; height:145px; left:44px; top:19px; }
+  .yo-challenge-stamp { width:110px; min-height:116px; right:3px; bottom:6px; gap:2px; padding:8px 5px; }
+  .yo-challenge-stamp strong { font-size:17px; }
+  .yo-challenge-eyebrow { margin-top:6px; margin-bottom:7px; }
+  .yo-challenge-title { font-size:29px; }
+  .yo-challenge-subtitle { margin-top:10px; font-size:14px; }
+  .yo-challenge-requirements { margin-top:17px; margin-bottom:5px; }
+  .yo-challenge-stats { margin-top:17px; }
+  .yo-challenge-footer { padding-top:11px; padding-bottom:max(10px,env(safe-area-inset-bottom)); }
+}
+@media(max-width:359px) {
+  .yo-challenge-body { padding-left:16px; padding-right:16px; }
+  .yo-challenge-hero { width:285px; }
+  .yo-challenge-yoppo { left:0; }
+  .yo-challenge-stamp { right:0; }
+  .yo-challenge-requirements { gap:8px 12px; }
+  .yo-challenge-stats { gap:8px; }
+  .yo-challenge-stat dt { font-size:10px; }
+}
+@media(prefers-reduced-motion:no-preference) {
+  .yo-challenge-hero[data-celebrate="true"] .yo-challenge-yoppo { animation:yo-challenge-arrive .65s cubic-bezier(.2,.8,.25,1.2) both; }
+  .yo-challenge-hero[data-celebrate="true"] .yo-challenge-stamp[data-earned="true"] { animation:yo-challenge-stamp .55s .16s cubic-bezier(.2,.8,.25,1.15) both; }
+  .yo-challenge-sparkles svg { animation:yo-challenge-spark .65s .2s ease-out both; }
+  .yo-challenge-sparkles svg:nth-child(2) { animation-delay:.32s; }
+  .yo-challenge-sparkles svg:nth-child(3) { animation-delay:.42s; }
+}
+@media(prefers-reduced-motion:reduce) { .yo-challenge-button { transition:none; } }
+@keyframes yo-challenge-arrive { from { opacity:0; transform:translateY(13px) scale(.92); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes yo-challenge-stamp { from { opacity:0; transform:rotate(16deg) scale(1.15); } to { opacity:1; transform:rotate(9deg) scale(1); } }
+@keyframes yo-challenge-spark { from { opacity:0; transform:scale(.4); } to { opacity:1; transform:scale(1); } }
